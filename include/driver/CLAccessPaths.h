@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_CLACCESSPATHS_H
 #define DRIVER_CLACCESSPATHS_H
 
@@ -11,7 +12,7 @@ extern "C" {
 #endif
 
 struct Path {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     OSPathSpec* spec;
     struct Paths* recursive;
     char* dirlist;
@@ -38,7 +39,7 @@ extern Boolean Paths_RemovePath(Paths* paths, UInt16 index);
 extern Path* Paths_GetPath(Paths* paths, UInt16 pathnum);
 extern UInt16 Paths_Count(const Paths* paths);
 extern Path* Paths_FindPathSpec(const Paths* paths, const OSPathSpec* dir);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern Boolean Paths_GatherRecurse(Path* path);
 extern int Paths_CountRecurse(Paths* paths);
 extern void Paths_CopyRecurseFSS(FSSpec* list, Paths* paths, UInt16 count);

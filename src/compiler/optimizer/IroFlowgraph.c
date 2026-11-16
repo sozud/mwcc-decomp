@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #if MWCCPSP
 #include "compiler/IrOptimizer.h"
 #include "compiler/IroMalloc.h"
@@ -74,7 +75,7 @@ static void AddSucc(IRONode* a, IRONode* b) {
     b->numpred++;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (14)
 #endif
@@ -83,13 +84,25 @@ static void AddLabelSucc(IRONode* node, CLabel* label) {
     if (targetnode) {
         AddSucc(node, targetnode);
         targetnode->referenced = TRUE;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     } else {
+#else
+        return;
+    }
+#endif
+#else
+    } else {
+#endif
         CError_FATAL(126);
     }
+#if MWCC_CORE == MWCC_CORE_B52
 }
-#if MWCCPS2_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+}
 #endif
 
 static void AddSwitchSucc(IRONode* node) {
@@ -207,7 +220,7 @@ next_linear:
             count = 0;
             if (IRO_IsThrowingCall(linear)) {
                 count = 0;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 for (action = linear->stmt ? linear->stmt->dobjstack : NULL; action;
                      action = action->prev) {
 #else
@@ -313,7 +326,7 @@ fallthrough:
 
     for (node = IRO_FirstNode; node; node = node->nextnode) {
         for (linear = node->first; linear; linear = linear->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (linear->type == IROLinearAsm &&
                 linear->u.asm_stmt &&
                 (label = func_0052B3F0(linear->u.asm_stmt)) &&
@@ -326,7 +339,7 @@ fallthrough:
 #endif
                 ((IRONode*)label->stmt)->referenced = TRUE;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             for (action = linear->stmt ? linear->stmt->dobjstack : NULL; action;
                  action = action->prev) {
 #else
@@ -334,7 +347,7 @@ fallthrough:
                  action = action->prev) {
 #endif
                 if (action->type == EAT_CATCHBLOCK) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (action->data.catch_block.catch_label &&
                         action->data.catch_block.catch_label->stmt) {
 #else
@@ -344,7 +357,7 @@ fallthrough:
                         ((IRONode*)action->data.catch_block.catch_label->stmt)->referenced = TRUE;
                     }
                 } else if (action->type == EAT_SPECIFICATION) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (action->data.specification.unexp_label &&
                         action->data.specification.unexp_label->stmt) {
 #else
@@ -356,7 +369,7 @@ fallthrough:
                 }
             }
             if (node->first->type == IROLinearLabel &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 (linear->type == IROLinearBeginCatch ||
                  linear->type == IROLinearEndCatch ||
 #else
@@ -373,132 +386,132 @@ fallthrough:
     }
 }
 #else
-void IRO_ComputeSuccPred(void) {
-    CLabel* label;
-    IRONode* node;
-    SInt32 count;
-    ExceptionAction* action;
-    IAEffects effects;
-    UInt16 i;
-    IROLinear* linear;
+    void IRO_ComputeSuccPred(void) {
+        CLabel* label;
+        IRONode* node;
+        SInt32 count;
+        ExceptionAction* action;
+        IAEffects effects;
+        UInt16 i;
+        IROLinear* linear;
 
-    for (label = Labels; label; label = label->next) {
-        label->stmt = NULL;
-    }
-
-    for (node = IRO_FirstNode; node; node = node->nextnode) {
-        node->referenced = FALSE;
-        node->numsucc = 0;
-        node->numpred = 0;
-        node->reachable = FALSE;
-        node->visited = FALSE;
-        if (node->first && node->first->type == IROLinearLabel) {
-            node->first->u.label.label->stmt = (Statement*)node;
+        for (label = Labels; label; label = label->next) {
+            label->stmt = NULL;
         }
-    }
 
-    for (node = IRO_FirstNode; node; node = node->nextnode) {
-        if (!node->first) {
-            if (node->nextnode) {
-                node->succ = oalloc(sizeof(UInt16));
-                AddSucc(node, node->nextnode);
+        for (node = IRO_FirstNode; node; node = node->nextnode) {
+            node->referenced = FALSE;
+            node->numsucc = 0;
+            node->numpred = 0;
+            node->reachable = FALSE;
+            node->visited = FALSE;
+            if (node->first && node->first->type == IROLinearLabel) {
+                node->first->u.label.label->stmt = (Statement*)node;
             }
-        } else {
-            linear = node->last;
-next_linear:
-            switch (linear->type) {
-                case IROLinearReturn:
-                case IROLinearEnd:
-                    break;
-                case IROLinearGoto:
+        }
+
+        for (node = IRO_FirstNode; node; node = node->nextnode) {
+            if (!node->first) {
+                if (node->nextnode) {
                     node->succ = oalloc(sizeof(UInt16));
-                    AddLabelSucc(node, linear->u.label.label);
-                    break;
-                case IROLinearIf:
-                case IROLinearIfNot:
-                    node->succ = oalloc(sizeof(UInt16) * 2);
                     AddSucc(node, node->nextnode);
-                    AddLabelSucc(node, linear->u.label.label);
-                    break;
-                case IROLinearSwitch:
-                    AddSwitchSucc(node);
-                    break;
-                case IROLinearFunccall:
-                    count = 1;
-                    if (linear->stmt && IRO_FunctionCallMightThrowException(linear)) {
-                        for (action = linear->stmt->dobjstack; action; action = action->prev) {
-                            if (action->type == EAT_CATCHBLOCK ||
-                                action->type == EAT_SPECIFICATION) {
-                                count++;
-                            }
-                        }
-                    }
-                    node->succ = oalloc(sizeof(UInt16) * count);
-                    AddSucc(node, node->nextnode);
-                    if (linear->stmt && IRO_FunctionCallMightThrowException(linear)) {
-                        for (action = linear->stmt->dobjstack; action; action = action->prev) {
-                            if (action->type == EAT_CATCHBLOCK) {
-                                AddLabelSucc(node, action->data.catch_block.catch_label);
-                            } else if (action->type == EAT_SPECIFICATION) {
-                                AddLabelSucc(node, action->data.specification.unexp_label);
-                            }
-                        }
-                    }
-                    break;
-                case IROLinearAsm:
-                    CodeGen_GetAsmEffects(linear->u.asm_stmt, &effects);
-                    node->succ =
-                        oalloc(sizeof(UInt16) * (!effects.noFallthrough + effects.numlabels));
-                    if (!effects.noFallthrough) {
-                        AddSucc(node, node->nextnode);
-                    }
-                    for (i = 0; i < effects.numlabels; i++) {
-                        AddLabelSucc(node, effects.labels[i]);
-                    }
-                    break;
-                case IROLinearOp2Arg:
-                    if (linear->nodetype == ECOMMA) {
-                        linear = linear->u.diadic.right;
-                        goto next_linear;
-                    }
-                default:
-                    if (node->nextnode) {
+                }
+            } else {
+                linear = node->last;
+next_linear:
+                switch (linear->type) {
+                    case IROLinearReturn:
+                    case IROLinearEnd:
+                        break;
+                    case IROLinearGoto:
                         node->succ = oalloc(sizeof(UInt16));
+                        AddLabelSucc(node, linear->u.label.label);
+                        break;
+                    case IROLinearIf:
+                    case IROLinearIfNot:
+                        node->succ = oalloc(sizeof(UInt16) * 2);
                         AddSucc(node, node->nextnode);
+                        AddLabelSucc(node, linear->u.label.label);
+                        break;
+                    case IROLinearSwitch:
+                        AddSwitchSucc(node);
+                        break;
+                    case IROLinearFunccall:
+                        count = 1;
+                        if (linear->stmt && IRO_FunctionCallMightThrowException(linear)) {
+                            for (action = linear->stmt->dobjstack; action; action = action->prev) {
+                                if (action->type == EAT_CATCHBLOCK ||
+                                    action->type == EAT_SPECIFICATION) {
+                                    count++;
+                                }
+                            }
+                        }
+                        node->succ = oalloc(sizeof(UInt16) * count);
+                        AddSucc(node, node->nextnode);
+                        if (linear->stmt && IRO_FunctionCallMightThrowException(linear)) {
+                            for (action = linear->stmt->dobjstack; action; action = action->prev) {
+                                if (action->type == EAT_CATCHBLOCK) {
+                                    AddLabelSucc(node, action->data.catch_block.catch_label);
+                                } else if (action->type == EAT_SPECIFICATION) {
+                                    AddLabelSucc(node, action->data.specification.unexp_label);
+                                }
+                            }
+                        }
+                        break;
+                    case IROLinearAsm:
+                        CodeGen_GetAsmEffects(linear->u.asm_stmt, &effects);
+                        node->succ =
+                            oalloc(sizeof(UInt16) * (!effects.noFallthrough + effects.numlabels));
+                        if (!effects.noFallthrough) {
+                            AddSucc(node, node->nextnode);
+                        }
+                        for (i = 0; i < effects.numlabels; i++) {
+                            AddLabelSucc(node, effects.labels[i]);
+                        }
+                        break;
+                    case IROLinearOp2Arg:
+                        if (linear->nodetype == ECOMMA) {
+                            linear = linear->u.diadic.right;
+                            goto next_linear;
+                        }
+                    default:
+                        if (node->nextnode) {
+                            node->succ = oalloc(sizeof(UInt16));
+                            AddSucc(node, node->nextnode);
+                        }
+                }
+            }
+        }
+
+        for (node = IRO_FirstNode; node; node = node->nextnode) {
+            if (node->numpred) {
+                node->pred = oalloc(sizeof(UInt16) * node->numpred);
+            } else {
+                node->pred = NULL;
+            }
+            node->numpred = 0;
+        }
+
+        for (node = IRO_FirstNode; node; node = node->nextnode) {
+            for (i = 0; i < node->numsucc; i++) {
+                AddPred(node->succ[i], node->index);
+            }
+        }
+
+        for (node = IRO_FirstNode; node; node = node->nextnode) {
+            if (node->first && node->first->type == IROLinearLabel) {
+                IROLinear* linear = node->first;
+                do {
+                    if (linear->type == IROLinearBeginCatch ||
+                        linear->type == IROLinearEndCatch ||
+                        linear->type == IROLinearEndCatchDtor) {
+                        node->referenced = TRUE;
+                        break;
                     }
+                } while (linear != node->last && (linear = linear->next));
             }
         }
     }
-
-    for (node = IRO_FirstNode; node; node = node->nextnode) {
-        if (node->numpred) {
-            node->pred = oalloc(sizeof(UInt16) * node->numpred);
-        } else {
-            node->pred = NULL;
-        }
-        node->numpred = 0;
-    }
-
-    for (node = IRO_FirstNode; node; node = node->nextnode) {
-        for (i = 0; i < node->numsucc; i++) {
-            AddPred(node->succ[i], node->index);
-        }
-    }
-
-    for (node = IRO_FirstNode; node; node = node->nextnode) {
-        if (node->first && node->first->type == IROLinearLabel) {
-            IROLinear* linear = node->first;
-            do {
-                if (linear->type == IROLinearBeginCatch ||
-                    linear->type == IROLinearEndCatch ||
-                    linear->type == IROLinearEndCatchDtor) {
-                    node->referenced = TRUE;
-                    break;
-                }
-            } while (linear != node->last && (linear = linear->next));
-        }
-    }
-}
 #endif
 
 #if MWCCPSP
@@ -550,42 +563,42 @@ void IRO_ComputeDom(void) {
     } while (repeat);
 }
 #else
-void IRO_ComputeDom(void) {
-    BitVector* bv;
-    IRONode* node;
-    int repeat;
-    SInt32 i;
+    void IRO_ComputeDom(void) {
+        BitVector* bv;
+        IRONode* node;
+        int repeat;
+        SInt32 i;
 
-    Bv_AllocVector(&IRO_FirstNode->dom, IRO_NumNodes);
-    Bv_SetBit(IRO_FirstNode->index, IRO_FirstNode->dom);
-    for (node = IRO_FirstNode->nextnode; node; node = node->nextnode) {
-        Bv_AllocVector(&node->dom, IRO_NumNodes);
-        Bv_Set(node->dom);
-    }
-
-    Bv_AllocVector(&bv, IRO_NumNodes);
-
-    do {
-        repeat = FALSE;
+        Bv_AllocVector(&IRO_FirstNode->dom, IRO_NumNodes);
+        Bv_SetBit(IRO_FirstNode->index, IRO_FirstNode->dom);
         for (node = IRO_FirstNode->nextnode; node; node = node->nextnode) {
-            if (node->numpred) {
-                Bv_Set(bv);
-                for (i = 0; i < node->numpred; i++) {
-                    Bv_And(IRO_NodeTable[node->pred[i]]->dom, bv);
-                }
-                Bv_SetBit(node->index, bv);
-            } else {
-                Bv_Clear(bv);
-                Bv_SetBit(node->index, bv);
-            }
-
-            if (!Bv_Compare(bv, node->dom)) {
-                Bv_Copy(bv, node->dom);
-                repeat = TRUE;
-            }
+            Bv_AllocVector(&node->dom, IRO_NumNodes);
+            Bv_Set(node->dom);
         }
-    } while (repeat);
-}
+
+        Bv_AllocVector(&bv, IRO_NumNodes);
+
+        do {
+            repeat = FALSE;
+            for (node = IRO_FirstNode->nextnode; node; node = node->nextnode) {
+                if (node->numpred) {
+                    Bv_Set(bv);
+                    for (i = 0; i < node->numpred; i++) {
+                        Bv_And(IRO_NodeTable[node->pred[i]]->dom, bv);
+                    }
+                    Bv_SetBit(node->index, bv);
+                } else {
+                    Bv_Clear(bv);
+                    Bv_SetBit(node->index, bv);
+                }
+
+                if (!Bv_Compare(bv, node->dom)) {
+                    Bv_Copy(bv, node->dom);
+                    repeat = TRUE;
+                }
+            }
+        } while (repeat);
+    }
 #endif
 
 #if MWCCPSP
@@ -689,7 +702,7 @@ void IRO_FindAsmBarriers(void) {
     }
     for (fnode = IRO_FirstNode; fnode; fnode = fnode->nextnode) {
         if (fnode->last) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             for (linear = fnode->first;
                  !fnode->hasAsmBarrier && linear && linear != fnode->last->next;
 #else
@@ -761,7 +774,7 @@ void IRO_BuildFlowgraph(IROLinear* linear) {
         while (!endsNode && scan->next && !(scan->next->flags & IROLF_StartsNode)) {
             if (IRO_FunctionCallMightThrowException(scan)) {
                 count = 0;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 for (action = scan->stmt ? scan->stmt->dobjstack : NULL; action;
                      action = action->prev) {
 #else
@@ -851,99 +864,103 @@ void IRO_RebuildNodeTable(void) {
     }
 }
 #else
-void IRO_BuildFlowgraph(IROLinear* linear) {
-    IROLinear* scan;
-    CLabel* label;
-    ExceptionAction* action;
-    IAEffects effects;
-    IRONode* node;
-    SInt32 i;
-    int endsNode;
+    void IRO_BuildFlowgraph(IROLinear * linear) {
+        IROLinear* scan;
+        CLabel* label;
+        ExceptionAction* action;
+        IAEffects effects;
+        IRONode* node;
+        SInt32 i;
+        int endsNode;
 
-    for (label = Labels; label; label = label->next) {
-        label->stmt = NULL;
-    }
-
-    scan = linear;
-    IRO_NumNodes = 0;
-    IRO_FirstNode = IRO_LastNode = IRO_EndNode = NULL;
-    while (scan) {
-        StartNode(scan);
-        if (scan->type == IROLinearLabel) {
-            scan->u.label.label->stmt = (Statement*)IRO_LastNode;
+        for (label = Labels; label; label = label->next) {
+            label->stmt = NULL;
         }
 
-        endsNode = FALSE;
-        while (!endsNode && scan->next && !(scan->next->flags & IROLF_StartsNode)) {
-            switch (scan->type) {
-                case IROLinearGoto:
-                case IROLinearReturn:
-                case IROLinearEntry:
-                case IROLinearExit:
-                case IROLinearEnd:
-                    endsNode = TRUE;
-                    break;
-                case IROLinearIf:
-                case IROLinearIfNot:
-                case IROLinearSwitch:
-                    endsNode = TRUE;
+        scan = linear;
+        IRO_NumNodes = 0;
+        IRO_FirstNode = IRO_LastNode = IRO_EndNode = NULL;
+        while (scan) {
+            StartNode(scan);
+            if (scan->type == IROLinearLabel) {
+                scan->u.label.label->stmt = (Statement*)IRO_LastNode;
+            }
+
+            endsNode = FALSE;
+            while (!endsNode && scan->next && !(scan->next->flags & IROLF_StartsNode)) {
+                switch (scan->type) {
+                    case IROLinearGoto:
+                    case IROLinearReturn:
+                    case IROLinearEntry:
+                    case IROLinearExit:
+                    case IROLinearEnd:
+                        endsNode = TRUE;
+                        break;
+                    case IROLinearIf:
+                    case IROLinearIfNot:
+                    case IROLinearSwitch:
+                        endsNode = TRUE;
 skip:
-                    if (scan->next->type == IROLinearLabel) {
-                        IROLinear* nw = IRO_NewLinear(IROLinearNop);
-                        nw->index = ++IRO_NumLinear;
-                        nw->next = scan->next;
-                        scan->next = nw;
-                    }
-                    break;
-                case IROLinearFunccall:
-                    if (scan->stmt && IRO_FunctionCallMightThrowException(scan)) {
-                        for (action = scan->stmt->dobjstack; action; action = action->prev) {
-                            if (action->type == EAT_CATCHBLOCK ||
-                                action->type == EAT_SPECIFICATION) {
-                                endsNode = TRUE;
-                                goto skip;
+                        if (scan->next->type == IROLinearLabel) {
+                            IROLinear* nw = IRO_NewLinear(IROLinearNop);
+                            nw->index = ++IRO_NumLinear;
+                            nw->next = scan->next;
+                            scan->next = nw;
+                        }
+                        break;
+                    case IROLinearFunccall:
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+                        if (IRO_FunctionCallMightThrowException(scan)) {
+#else
+                        if (scan->stmt && IRO_FunctionCallMightThrowException(scan)) {
+#endif
+                            for (action = scan->stmt->dobjstack; action; action = action->prev) {
+                                if (action->type == EAT_CATCHBLOCK ||
+                                    action->type == EAT_SPECIFICATION) {
+                                    endsNode = TRUE;
+                                    goto skip;
+                                }
                             }
                         }
-                    }
-                    break;
-                case IROLinearAsm:
-                    CodeGen_GetAsmEffects(scan->u.asm_stmt, &effects);
-                    if (effects.numlabels) {
-                        endsNode = TRUE;
-                    }
-                    break;
-                default:
-                    break;
+                        break;
+                    case IROLinearAsm:
+                        CodeGen_GetAsmEffects(scan->u.asm_stmt, &effects);
+                        if (effects.numlabels) {
+                            endsNode = TRUE;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+                if (!endsNode) {
+                    scan = scan->next;
+                }
             }
-            if (!endsNode) {
-                scan = scan->next;
+
+            if (scan->type == IROLinearEnd) {
+                IRO_EndNode = IRO_LastNode;
             }
+            IRO_LastNode->last = scan;
+            scan = scan->next;
         }
 
-        if (scan->type == IROLinearEnd) {
-            IRO_EndNode = IRO_LastNode;
+        IRO_NodeTable = oalloc(IRO_NumNodes * sizeof(IRONode*));
+        memset(IRO_NodeTable, 0, IRO_NumNodes * sizeof(IRONode*));
+        for (node = IRO_FirstNode, i = 0; node; node = node->nextnode) {
+            IRO_NodeTable[i++] = node;
         }
-        IRO_LastNode->last = scan;
-        scan = scan->next;
-    }
 
-    IRO_NodeTable = oalloc(IRO_NumNodes * sizeof(IRONode*));
-    memset(IRO_NodeTable, 0, IRO_NumNodes * sizeof(IRONode*));
-    for (node = IRO_FirstNode, i = 0; node; node = node->nextnode) {
-        IRO_NodeTable[i++] = node;
+        IRO_ComputeSuccPred();
+        IRO_ComputeDom();
+        IRO_CheckForUserBreak();
     }
-
-    IRO_ComputeSuccPred();
-    IRO_ComputeDom();
-    IRO_CheckForUserBreak();
-}
 #endif
 
 IRONode* IRO_NewFlowGraphNode(void) {
 #if MWCCPSP
     IRONode* node = IRO_malloc(sizeof(IRONode));
 #else
-    IRONode* node = oalloc(sizeof(IRONode));
+        IRONode* node = oalloc(sizeof(IRONode));
 #endif
     memset(node, 0, sizeof(IRONode));
     node->index = IRO_NumNodes;
@@ -1060,7 +1077,7 @@ IRONode* IRO_MergeFlowGraphNodes(IRONode* a, IRONode* b) {
         // 3.0.1 (0x5766B0): IRO_UseDef301's uses
         if (data_006242B8 && data_00625304) {
             IROUse301* use;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             for (use = data_006242B8; use && use != data_00625304->globalnext;
                  use = use->globalnext) {
 #else
@@ -1073,15 +1090,15 @@ IRONode* IRO_MergeFlowGraphNodes(IRONode* a, IRONode* b) {
             }
         }
 #else
-        if (IRO_FirstVarUse && IRO_LastVarUse) {
-            IROUse* use;
-            for (use = IRO_FirstVarUse; use && use != IRO_LastVarUse->globalnext;
-                 use = use->globalnext) {
-                if (use->node == b) {
-                    use->node = a;
+            if (IRO_FirstVarUse && IRO_LastVarUse) {
+                IROUse* use;
+                for (use = IRO_FirstVarUse; use && use != IRO_LastVarUse->globalnext;
+                     use = use->globalnext) {
+                    if (use->node == b) {
+                        use->node = a;
+                    }
                 }
             }
-        }
 #endif
 
         IRO_NodeTable[b->index] = NULL;

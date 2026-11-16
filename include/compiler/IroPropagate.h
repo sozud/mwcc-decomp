@@ -1,31 +1,39 @@
-#if MWCCPS2_B52
-// b52 (3.0 build 52): tools/mwccpsp's 3.0.1 header with its MWCCPSP layouts,
-// packed to 2 bytes like the rest of the b69 tree (IRO_NewStatement: 0x1E bytes,
-// IROLinear's rtype at +0x10). Only MWCCPS2_B69_BUILD=52 searches include/b52.
+#include "compiler/mwcc_core.h"
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #ifndef COMPILER_IROPROPAGATE_H
 #define COMPILER_IROPROPAGATE_H
 
 #include "compiler/common.h"
+#if MWCC_CORE == MWCC_CORE_B52
 #pragma pack(push, 2)
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #pragma pack(push, 2)
-// 3.0.1: 0x2C bytes, 32-bit counts (IRO_ExpressionPropagation 0x5683E0)
 struct IROAssign {
-    IROLinear* linear; // +0
+    IROLinear* linear;
+#if MWCC_CORE == MWCC_CORE_B52
     SInt32 index; // +4
     SInt32 varIndex; // +8
-    IROLinear* linear2; // +0xC
-    BitVector* depends; // +0x10
-    Object* varObj; // +0x14
-    VarRecord* var; // +0x18
-    IROAssign* next; // +0x1C
-    IROAssign* prev; // +0x20
+#else
+    UInt16 index;
+    UInt16 varIndex;
+#endif
+    IROLinear* linear2;
+    BitVector* depends;
+    Object* varObj;
+    VarRecord* var;
+    IROAssign* next;
+    IROAssign* prev;
+#if MWCC_CORE == MWCC_CORE_B52
     SInt32 useCount; // +0x24
-    IRONode* node; // +0x28
+#else
+    UInt16 useCount;
+#endif
+    IRONode* node;
 };
 #pragma pack(pop)
 
@@ -40,7 +48,9 @@ extern void IRO_ExpressionPropagation(void);
 }
 #endif
 
+#if MWCC_CORE == MWCC_CORE_B52
 #pragma pack(pop)
+#endif
 #endif
 #else
 #ifndef COMPILER_IROPROPAGATE_H

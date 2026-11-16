@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef PSP_LOOP301_H
 #define PSP_LOOP301_H
 
@@ -45,7 +46,7 @@ typedef struct RegPressure301 {
 extern Loop301* data_006258BC; // the loop forest
 extern RegPressure301 data_00624E04[7];
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern Loop301* func_0054AB90(
     Boolean blocks
 ); // finds loops (with blocks: plus LOOP301_BLOCK leaves and a root)

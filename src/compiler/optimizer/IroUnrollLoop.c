@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/IroUnrollLoop.h"
 #include "compiler/IroDump.h"
 #include "compiler/IroFlowgraph.h"
@@ -191,6 +192,11 @@ typedef struct LoopPattern {
     CInt64 shift;
 } LoopPattern;
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if defined(__MWERKS__)
+#pragma dont_inline on // b69 calls the header inlines out of line here
+#endif
+#endif
 static void UnrollWhileLoopBody(
     IRONode* header,
     IRONode* fnode2,
@@ -339,7 +345,17 @@ static void UnrollWhileLoopBody(
         }
     } while (++pass < 8);
 }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if defined(__MWERKS__)
+#pragma dont_inline reset
+#endif
+#endif
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if defined(__MWERKS__)
+#pragma dont_inline on // b69 calls the header inlines out of line here
+#endif
+#endif
 static int PatternMatchLoop(
     IRONode* fnode,
     IROLoop* loop,
@@ -493,6 +509,11 @@ static int PatternMatchLoop(
 
     return TRUE;
 }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if defined(__MWERKS__)
+#pragma dont_inline reset
+#endif
+#endif
 
 static UInt32 UnrollWhileLoop(
     IRONode* header, IRONode* fnode2, IRONode* fnode3, IROLoop* loop, UInt32 unrollFactor
@@ -1092,6 +1113,7 @@ static UInt32 UnrollForLoop(
     unrolledBodyEntryTest = list.tail;
 
     label = IRO_NewLabel();
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     IRO_InitList(&list);
     gotoNd = IRO_NewLinear(IROLinearOp1Arg);
     gotoNd->index = ++IRO_NumLinear;
@@ -1099,6 +1121,7 @@ static UInt32 UnrollForLoop(
     gotoNd->u.label.label = label;
     IRO_AddToList(gotoNd, &list);
     IRO_Paste(list.head, list.tail, fnode2->last);
+#endif
 
     IRO_InitList(&list);
     label2 = BuildLabel(&list);
@@ -1170,10 +1193,14 @@ static UInt32 UnrollForLoop(
     newfnode1->last = unrolledBodyEntryTest;
     fnode2->nextnode = newfnode1;
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+    newfnode2 = NULL;
+#else
     newfnode2 = IRO_NewFlowGraphNode();
     newfnode2->first = gotoNd;
     newfnode2->last = gotoNd;
     newfnode1->nextnode = newfnode2;
+#endif
 
     newfnode3 = IRO_NewFlowGraphNode();
     newfnode3->first = saveHead2;
@@ -1751,7 +1778,13 @@ void IRO_TestConstantIterationCount(
                     loopvar2 = loopvar3;
                     loopvar1 = factor;
                 }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+                // b69 0x4D929A: leaves after the first factor for any stride
+                // (== 1 and > 1 both exit), so the factor tried is the largest
+                if (vectorStride >= 1) {
+#else
                 if (vectorStride > 1) {
+#endif
                     break;
                 }
                 factor = CInt64_Add(factor, cint64_negone);

@@ -1,9 +1,10 @@
+#include "compiler/mwcc_core.h"
 #include "driver/TargetOptimizerHelpers-eabi-ppc.h"
 #include "compiler/CParser.h"
 #include "driver/pref_structs.h"
 #include "driver/StringUtils.h"
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // b69 0x421920/0x421950: 3.0.1's MIPS version (tools/mwccpsp's MWCCPSP
 // branch, the PS2 display): the only target flag is -opt [no]intrinsics, in
 // the "PS2 MIPS CodeGen" panel (0x510B94, 0x14 bytes) at +0x0D
@@ -50,7 +51,7 @@ void TargetDisplayOptimizationOptions(Handle txt) {
 #else
 int TargetSetOptFlags(short val, Boolean set) {
     switch (val) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case 'In':
             pMIPSCodeGen.inline_intrinsics = set;
 #else
@@ -58,7 +59,7 @@ int TargetSetOptFlags(short val, Boolean set) {
             pBackEnd.peephole = set;
 #endif
             break;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         case 'Sn':
             pBackEnd.schedule = FALSE;
             break;
@@ -74,7 +75,7 @@ int TargetSetOptFlags(short val, Boolean set) {
 }
 
 void TargetDisplayOptimizationOptions(Handle txt) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (pMIPSCodeGen.inline_intrinsics) {
         HPrintF(
             txt, "\t- inline intrinsics %s\n", (pMIPSCodeGen.inline_intrinsics == 1) ? "on" : "off"

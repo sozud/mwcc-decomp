@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // mwccpsp 3.0.1 FuncLevelAsm.c (0x4F8610..0x4F8800): asm functions.
 #include "compiler/common.h"
 #include "compiler/CError.h"
@@ -32,7 +33,7 @@ extern void func_0046FA90(MPCodeLabel* label);
 extern void func_00482000(Statement* stmt); // assemble an asm statement
 extern void ScanStatements(volatile short endToken); // InlineAsm.c
 extern void newstatement(SInt32 sourceoffset, SInt32 value);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern void CodeGen_GenerateFunction(
     Object* func, Boolean emitreturn, Boolean optimize, Boolean special
 );

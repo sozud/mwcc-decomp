@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_WIN32_H
 #define COMPILER_WIN32_H
 
@@ -95,7 +96,7 @@ typedef struct HINSTANCE__* HINSTANCE;
 typedef HINSTANCE HMODULE;
 struct HRSRC__ {
     int unused;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 };
 typedef struct HRSRC__* HRSRC;
 #include <stdarg.h> // the host's va_list
@@ -295,7 +296,7 @@ __declspec(dllimport) BOOL __stdcall GetFileTime(
 __declspec(dllimport) DWORD __stdcall GetFullPathNameA(
     LPCSTR lpFileName, DWORD nBufferLength, LPSTR lpBuffer, LPSTR* lpFilePart
 );
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 __declspec(dllimport) LPSTR __stdcall GetEnvironmentStrings(void);
 __declspec(dllimport) BOOL __stdcall FreeEnvironmentStringsA(LPSTR lpszEnvironmentBlock);
@@ -307,7 +308,7 @@ __declspec(dllimport) HANDLE __stdcall GetStdHandle(DWORD nStdHandle);
 __declspec(dllimport) UINT __stdcall GetSystemDirectoryA(LPSTR lpBuffer, UINT uSize);
 __declspec(dllimport) void __stdcall GetSystemTime(LPSYSTEMTIME lpSystemTime);
 __declspec(dllimport) DWORD __stdcall GetTickCount(void);
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 __declspec(dllimport) int __stdcall LoadStringA(
     HINSTANCE hInstance, UINT uID, LPSTR lpBuffer, int cchBufferMax

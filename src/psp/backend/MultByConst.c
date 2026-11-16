@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // Multiplication by a constant (0x53EEF0..0x540710): the cheapest sequence
 // of shifts, adds and subtracts that builds the constant, if it beats the
 // multiply instruction (or the 64-bit runtime call). Values are found by a
@@ -59,7 +60,7 @@ static inline MultEntry* FindMultEntry(SInt32 value) {
     int h;
     MultEntry* e;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     // b69 0x502B58 calls abs; CW Pro 6 expands abs inline here and then loses
     // |value| before the remainder (it subtracts q * 0x1FF from the low half of
     // the reciprocal product), which indexed MultHash out of bounds
@@ -83,7 +84,7 @@ static inline MultEntry* FindMultEntry(SInt32 value) {
 
 // what the multiply instruction (or the runtime call) costs
 #if MWCCPS2
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 BE_NOINLINE // b210 MultiplyByConstant calls it
 #else
 __declspec(noinline) // b210 MultiplyByConstant calls it
@@ -110,7 +111,7 @@ __declspec(noinline) // b210 MultiplyByConstant calls it
 }
 
 #if MWCCPS2
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 BE_NOINLINE // b210 MultiplyByConstant calls it
 #else
 __declspec(noinline) // b210 MultiplyByConstant calls it
@@ -140,7 +141,7 @@ __declspec(noinline) // b210 MultiplyByConstant calls it
 }
 
 #if MWCCPS2
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 BE_NOINLINE // b210 MultiplyByConstant calls it
 #else
 __declspec(noinline) // b210 MultiplyByConstant calls it

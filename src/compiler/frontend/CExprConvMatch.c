@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CABI.h"
 #include "compiler/CClass.h"
 #include "compiler/CDecl.h"
@@ -104,7 +105,7 @@ extern Boolean func_0053A8F0(
 ); // CExpr_OverloadFuncMatch
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-4)
 #endif
@@ -120,12 +121,12 @@ static Type* CExpr_GetImplictObjectParamType(Object* object, UInt32* qual) {
     *qual = TYPE_METHOD(object->type)->args->qual & Q_CV;
     return type;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-4)
 #endif
@@ -146,12 +147,12 @@ static Type* CExpr_GetParamType(Object* object, int index, UInt32* qual) {
     *qual = arg->qual & Q_CV;
     return arg->type;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-4)
 #endif
@@ -173,7 +174,7 @@ static Boolean CExpr_HasNParams(Object* object, int count) {
 
     return i == count;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
@@ -726,7 +727,7 @@ static Boolean CExpr_OverloadFuncMatch(
     return FALSE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-6)
 #endif
@@ -844,7 +845,7 @@ static Boolean CExpr_StandardConversionMatch(
 #if MWCCPSP
             if (COPTS_GONE(objective_c) && CObjC_IsCompatibleType(expr->rtype, type2)) {
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (COPTS_X.objective_c && CObjC_IsCompatibleType(expr->rtype, type2)) {
 #else
             if (copts.objective_c && CObjC_IsCompatibleType(expr->rtype, type2)) {
@@ -1023,15 +1024,19 @@ static Boolean CExpr_StandardConversionMatch(
             short depth;
             Boolean isambigbase;
 
-            CError_ASSERT(
 #if MWCCPSP
+            CError_ASSERT(
                 CExprConvMatch_LINE996,
-#else
-                996,
-#endif
                 IS_TYPE_CLASS(TYPE_MEMBER_POINTER(type2)->ty2) &&
                     IS_TYPE_CLASS(TYPE_MEMBER_POINTER(type1)->ty2)
             );
+#else
+            CError_ASSERT(
+                996,
+                IS_TYPE_CLASS(TYPE_MEMBER_POINTER(type2)->ty2) &&
+                    IS_TYPE_CLASS(TYPE_MEMBER_POINTER(type1)->ty2)
+            );
+#endif
             if (!is_memberpointerequal(
                     TYPE_MEMBER_POINTER(type2)->ty1, TYPE_MEMBER_POINTER(type1)->ty1
                 )) {
@@ -1164,7 +1169,7 @@ static Boolean CExpr_StandardConversionMatch(
         expr, type2, qual2, mode, refFlag, implicit_object, result
     );
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -1429,7 +1434,7 @@ static ENode* CExpr_UserConversion(
             expr, CDecl_NewPointerType(TYPE(TYPE_METHOD(tfunc)->theclass)), expr->flags, FALSE
         );
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         newExpr = CExpr_NewENode(EFUNCCALL);
 #else
         newExpr = lalloc(sizeof(ENode));
@@ -1594,7 +1599,7 @@ static inline ENode* CExpr_DerivedToBase(
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-7)
 #endif
@@ -1655,7 +1660,7 @@ static ENode* CExpr_ClassReferenceConversion(
 
     return NULL;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
@@ -2220,7 +2225,7 @@ do_int_float_conversion:
                             } else {
                                 refExpr = promote(expr, type);
                                 refExpr->flags = cv;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                                 // b52 (0x4F283B) marks a new implicit conversion
                                 // node (0x80): the optimizer's expression compare
                                 // then tells it from an explicit cast
@@ -2242,7 +2247,7 @@ do_int_float_conversion:
                                     inner->rtype = type;
                                     inner->flags = cv;
                                     inner->data.intval = CExpr_IntConstConvert(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                         type, TYPE(&stofsulong), inner->data.intval
 #else
                                         type, TYPE(&stunsignedlong), inner->data.intval
@@ -2253,7 +2258,7 @@ do_int_float_conversion:
                             }
                             if (type->size != 4) {
                                 expr = makemonadicnode(expr, ETYPCON);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 expr->rtype = TYPE(&stofsulong);
 #else
                                 expr->rtype = TYPE(&stunsignedlong);
@@ -2300,7 +2305,7 @@ do_int_float_conversion:
                             if (!ENODE_IS(expr, EINTCONST)) {
                                 expr = makemonadicnode(expr, ETYPCON);
                             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             expr->rtype = TYPE(&stofsulong);
 #else
                             expr->rtype = TYPE(&stunsignedlong);
@@ -2420,7 +2425,7 @@ ENode* CExpr_AssignmentPromotion(ENode* expr, Type* type2, UInt32 qual2, Boolean
     return CExpr_Convert(expr, type2, qual2, FALSE, checkAccess);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (45)
 #endif
@@ -2479,7 +2484,7 @@ static Boolean CExpr_IsBetterMatch(Match* a, Match* b, int count) {
 
     return FALSE;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -2505,7 +2510,7 @@ static Boolean CExpr_MatchArgs(
             return FALSE;
         }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         newExpr = CExpr_NewENode(EINTCONST);
 #else
         newExpr = lalloc(sizeof(ENode));
@@ -2608,7 +2613,7 @@ static Object* CExpr_GetMatchObject(Match* match, HashNameNode* name) {
 static Match* CExpr_FindBestMatch(
     Match* matches, int count, HashNameNode* name, ObjectList** outList, ENodeList* argExprs
 ) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Match* b69_dead;
 #endif
     Match* best;
@@ -2617,7 +2622,7 @@ static Match* CExpr_FindBestMatch(
     ObjectList* list;
 
     best = matches;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (b69_dead = scan = matches->next; scan; scan = scan->next) {
 #else
     for (scan = matches->next; scan; scan = scan->next) {
@@ -3195,7 +3200,7 @@ static Boolean CExpr_MatchOperands(
     return TRUE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (94)
 #endif
@@ -3519,7 +3524,7 @@ Boolean CExpr_CondOperatorMatch(ENode* left, ENode* right, Conversion* conv) {
 
     return FALSE;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
@@ -3866,14 +3871,11 @@ static ENode* CExpr_ClassCopyInit(TypeClass* tclass, ENode* expr1, ENode* expr2)
     expr1 = makemonadicnode(expr1, EINDIRECT);
     expr1->rtype = TYPE(tclass);
     return expr1;
-#if !MWCCPS2_B52
 }
-#endif
 #if MWCCPSP
 
 #endif
-#if MWCCPSP_NATIVE
-#if !MWCCPS2_B52
+#if MWCCPSP_NATIVE && (!MWCC_CORE || MWCC_CORE > MWCC_CORE_B52)
 // The native build runs 2.4.7's versions where 3.0.1's are not written yet
 // (the hybrid build calls the original's code at these addresses).
 ENode* func_00539280(
@@ -3926,6 +3928,5 @@ ENode* func_00535E10(ENode* funcexpr, ENodeList* args) {
 
     CError_Error(ERR_CALL_NON_FUNCTION);
     return nullnode();
-#endif
 }
 #endif

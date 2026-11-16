@@ -1,8 +1,9 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_COMMON_H
 #define COMPILER_COMMON_H
 #include "version.h"
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // the MIPS back end (src/psp/backend) marks functions __declspec(noinline)
 // for CW 9.2; CW Pro 6 has no such declspec
 #define BE_NOINLINE
@@ -198,7 +199,7 @@ typedef union MWVector128 MWVector128;
 #define NULL 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #ifdef __MWERKS__
 #define HEADER_INLINE inline
 #else
@@ -258,7 +259,7 @@ typedef enum TemplParamType {
 } TemplParamType;
 
 struct TemplParamID {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     UInt16 index;
     UInt8 nindex;
     TemplParamType type;
@@ -330,7 +331,7 @@ enum {
 #define FITS_IN_SHORT(value) ((value) == ((short)(value)))
 #define FITS_IN_USHORT(value) ((value) == ((unsigned short)(value)))
 #define FITS_IN_HI_SHORT(value) ((value) == (value & 0xFFFF0000))
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #define FITS_IN_SHORT2(value) (((short)(value)) == (value))
 #define HIGH_PART(value) ((short)(((value) >> 16) + (((value) >> 15) & 1)))
 #define LOW_PART(value) ((short)(value))
@@ -369,7 +370,7 @@ typedef enum RegClass {
     RegClass_VR = 2,
     RegClass_FPR = 3,
     RegClass_GPR = 4,
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     RegClassMax = 5,
     RegClass_CRBIT = 6,
     RegClass_DCR = 7
@@ -411,7 +412,7 @@ union MWVector128 {
     UInt8 uc[16];
     UInt16 us[8];
     UInt32 ul[4];
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     float f[4];
 };
 #pragma pack(pop)

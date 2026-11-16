@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/CLDropinCallbacks_V10.h"
 #include "driver/CLAccessPaths.h"
 #include "driver/CLBrowser.h"
@@ -29,7 +30,7 @@
 #include "driver/StringUtils.h"
 #include <stdio.h>
 #if MWCCPSP_NATIVE
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 extern "C" FILE* win32_fopen(const char* path, const char* mode);
 #define fopen win32_fopen
 #endif
@@ -37,7 +38,7 @@ extern "C" FILE* win32_fopen(const char* path, const char* mode);
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern "C" FILE* win32_fopen(const char* path, const char* mode);
 #define fopen win32_fopen
 #endif

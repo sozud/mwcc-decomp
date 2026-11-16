@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_CLMAIN_H
 #define DRIVER_CLMAIN_H
 
@@ -18,7 +19,7 @@ extern "C" {
 typedef struct CLState {
     int argc;
     char** argv;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
     char** envp; // 3.0.1: a copy of the environment (Main_CopyEnvironment)
 #endif

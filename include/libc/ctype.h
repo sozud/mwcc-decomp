@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef MWCC_HOST_PROBE_CTYPE_H
 #define MWCC_HOST_PROBE_CTYPE_H
 
@@ -18,7 +19,7 @@ int toupper(int c);
 #endif
 MSL_CTYPE_INLINE int isdigit(int c) {
     return __ctype_map[(int)(unsigned char)(c)] & 0x10;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 }
 MSL_CTYPE_INLINE int isspace(int c) {
     return __ctype_map[(int)(unsigned char)(c)] & 0x06;

@@ -1,5 +1,6 @@
+#include "compiler/mwcc_core.h"
 #ifndef MWCC_HOST_PROBE_STDDEF_H
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #define MWCC_HOST_PROBE_STDDEF_H
 
 #ifdef __cplusplus

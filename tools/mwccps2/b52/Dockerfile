@@ -17,6 +17,7 @@ RUN python3 tools/mwccps2/b52/get_orig.py && test -f orig/PS2_3_0_b52/mwccps2.ex
 COPY include include
 COPY src src
 COPY tools/mwccpsp tools/mwccpsp
+COPY tools/mwccps2/native_core.py tools/mwccps2/native_core.py
 COPY tools/mwccps2/b52 tools/mwccps2/b52
 ARG JOBS
 RUN python3 tools/mwccps2/b52/native_b52.py -j "${JOBS:-$(nproc)}" -o /mwccps2-b52

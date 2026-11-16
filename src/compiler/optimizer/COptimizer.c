@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/COptimizer.h"
 #include "compiler/IrOptimizer.h"
 #include "compiler/CError.h"
@@ -23,7 +24,7 @@ static Boolean stmtchanged;
 static short setbytes;
 static COptBlock* currentblock;
 static ENode* mexpr;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 static COptCSE* csenodes[IRO_MAXEXPR]; // 124 entries: stmtchanged is 0xA4 bytes further up in b52
 #else
 static COptCSE* csenodes[MAXEXPR];
@@ -171,7 +172,7 @@ static void optimizeif(Statement* stmt) {
     stmt->label = finallabel(stmt->label, stmt);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (24)
 #endif
@@ -209,7 +210,7 @@ static void optimizeswitch(Statement* stmt) {
         stmt->label = swcase ? swcase->label : info->defaultlabel;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -314,7 +315,7 @@ static void removeunusedlabels(Statement* stmt) {
                 if ((label = InlineAsm_GetReferencedLabel(scan))) {
                     label->stmt->marked = TRUE;
                 }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                 if ((label = InlineAsm_GetReferencedLabel2(scan))) {
                     label->stmt->marked = TRUE;
                 }
@@ -372,7 +373,7 @@ static void optimizebranches(Statement* stmt) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (35)
 #endif
@@ -403,12 +404,12 @@ void SetVarUsage(Object* obj, Boolean noregister) {
         vi->noregister = TRUE;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (49)
 #endif
@@ -474,7 +475,7 @@ static void checkexpression(ENode* expr) {
             case EXORASS:
             case EORASS:
             case ECOMMA:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             case EMIN:
             case EMAX:
 #endif
@@ -519,7 +520,7 @@ static void checkexpression(ENode* expr) {
             case ESCOPEBEGIN:
             case ESCOPEEND:
 #else
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case EVECTOR128CONST:
 #endif
 #endif
@@ -535,7 +536,7 @@ static void checkexpression(ENode* expr) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -621,7 +622,7 @@ static void colorcode(Statement* stmt) {
     while (stmt && !stmt->marked) {
         stmt->marked = TRUE;
         switch (stmt->type) {
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case ST_GOTOEXPR:
                 return;
 #endif
@@ -646,7 +647,7 @@ static void colorcode(Statement* stmt) {
                 if ((label = InlineAsm_GetReferencedLabel(stmt))) {
                     colorcode(label->stmt);
                 }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                 if ((label = InlineAsm_GetReferencedLabel2(stmt))) {
                     colorcode(label->stmt);
                 }
@@ -895,7 +896,7 @@ Statement* COpt_Optimizer(Object* obj, Statement* stmt) {
     copt_isleaffunction = TRUE;
     if (copts.globaloptimizer) {
         stmt = IRO_Optimizer(obj, stmt);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else {
         SInt8 level = copts.optimizationlevel;
         copts.optimizationlevel = 0;

@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/CLDependencies.h"
 #include "driver/CLDropinCallbacks_V10.h"
 #include "driver/CLErrors.h"
@@ -142,7 +143,7 @@ CW_CALLBACK UCBLoadObjectData(CWPluginContext context, SInt32 whichfile, CWMemHa
 }
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (25)
 #endif
@@ -319,7 +320,7 @@ CW_CALLBACK UCBStoreObjectData(CWPluginContext context, SInt32 whichfile, CWObje
 
     return cwNoErr;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -390,7 +391,7 @@ CW_CALLBACK UCBDisplayLines(CWPluginContext context, SInt32 nlines) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (35)
 #endif
@@ -408,12 +409,12 @@ CW_CALLBACK UCBBeginSubCompile(
 #endif
     return cwErrRequestFailed;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (35)
 #endif
@@ -429,7 +430,7 @@ CW_CALLBACK UCBEndSubCompile(CWPluginContext subContext) {
 #endif
     return cwErrRequestFailed;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -458,7 +459,7 @@ CW_CALLBACK UCBGetPrecompiledHeaderSpec(
 #if MWCCPSP
     OS_ASSERT(475, file != NULL);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     OS_ASSERT(455, file != NULL);
 #else
     OS_ASSERT(420, file != NULL);
@@ -539,7 +540,7 @@ CW_CALLBACK UCBGetPrecompiledHeaderSpec(
     return cwNoErr;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (35)
 #endif
@@ -555,12 +556,12 @@ CW_CALLBACK UCBGetResourceFile(CWPluginContext context, CWFileSpec* filespec) {
 #endif
     return cwErrRequestFailed;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (35)
 #endif
@@ -578,7 +579,7 @@ CW_CALLBACK UCBPutResourceFile(
 #endif
     return cwErrRequestFailed;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -814,7 +815,7 @@ CW_CALLBACK UCBStoreUnit(
 #if MWCCPSP
         OS_ASSERT(845, srcfile != NULL);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         OS_ASSERT(826, srcfile != NULL);
 #else
         OS_ASSERT(791, srcfile != NULL);
@@ -962,7 +963,7 @@ CW_CALLBACK UCBOSErrorMessage(CWPluginContext context, const char* message, OSEr
     return cwNoErr;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (35)
 #endif
@@ -981,7 +982,7 @@ CW_CALLBACK UCBGetModifiedFiles(
 #endif
     return cwNoErr;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -1018,7 +1019,7 @@ CW_CALLBACK UCBGetSuggestedObjectFileSpec(
     return cwNoErr;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (35)
 #endif
@@ -1053,7 +1054,7 @@ CW_CALLBACK UCBGetStoredObjectFileSpec(
         return cwNoErr;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif

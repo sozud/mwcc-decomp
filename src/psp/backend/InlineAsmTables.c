@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // mwccpsp 3.0.1 inline assembler name tables (0x53E980..0x53ECC0, next to
 // GCCInlineAsm.c's InlineAsm_SkipComment): mnemonics map to the opcodes that
 // spell them, register names to a class and number.
@@ -9,7 +10,7 @@
 #include <stdlib.h>
 #endif
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 // a mnemonic and the opcodes with that name (0x1C bytes)
 typedef struct AsmMnemonic {
     struct AsmMnemonic* next;
@@ -37,16 +38,16 @@ static AsmRegister* asm_registers[0x200]; // 0x606070
 void* func_0053E980(char* name) {
 #endif
 #if MWCCPS2
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     int h;
 #endif
 #endif
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     AsmMnemonic* m;
 
 #endif
 #if MWCCPS2
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     h = CHash(name);
     for (m = asm_mnemonics[(UInt8)h]; m; m = m->next) {
         if (!strcmp(m->name, name)) {
@@ -61,7 +62,7 @@ for (m = asm_mnemonics[CHash(name) & 0xFF]; m; m = m->next) {
     }
 }
 #endif
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     return NULL;
 }
 
@@ -115,7 +116,7 @@ void* func_0053EBB0(char* name) {
     AsmRegister* r;
 #endif
 #if MWCCPS2
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     char** pname;
 
     for (r = asm_registers[CHash(name) & 0x1FF]; r != NULL; r = r->next) {
@@ -135,7 +136,7 @@ for (r = asm_registers[CHash(name) & 0x1FF]; r; r = r->next) {
 }
 return NULL;
 #endif
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 }
 
 void func_0053EC00(char* name, SInt16 rclass, SInt16 num, void* extra) {

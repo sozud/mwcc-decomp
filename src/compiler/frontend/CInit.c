@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CInit.h"
 #if MWCCPSP
 #include "compiler/Exceptions.h"
@@ -280,7 +281,7 @@ static ENode* CInit_ParseInitializer(ENode* expr) {
                 case ',':
                 case ';':
                 case '}':
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     // b52 (0x45D6D7): the initializer list parser passes NULL
                     if (!expr) {
                         expr = lalloc(sizeof(ENode));
@@ -641,7 +642,7 @@ Boolean CInit_RelocInitCheck(ENode* expr, Object** objptr, CInt64* valptr, Boole
 #if MWCCPSP
                 *valptr = CMach_CalcIntDiadic(TYPE_UNSIGNED_OFFSET, valcheck1, '+', valcheck2);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 *valptr = CMach_CalcIntDiadic(TYPE(&stofsulong), valcheck1, '+', valcheck2);
 #else
                 *valptr = CMach_CalcIntDiadic(TYPE(&stunsignedlong), valcheck1, '+', valcheck2);
@@ -668,7 +669,7 @@ Boolean CInit_RelocInitCheck(ENode* expr, Object** objptr, CInt64* valptr, Boole
 #if MWCCPSP
                 *valptr = CMach_CalcIntDiadic(TYPE_UNSIGNED_OFFSET, valcheck1, '-', valcheck2);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 *valptr = CMach_CalcIntDiadic(TYPE(&stofsulong), valcheck1, '-', valcheck2);
 #else
                 *valptr = CMach_CalcIntDiadic(TYPE(&stunsignedlong), valcheck1, '-', valcheck2);
@@ -702,7 +703,7 @@ static void CInit_InitTypePointer(
 #if MWCCPSP
                 CMach_InitIntMem(TYPE(&stunsignedint), val, db->buffer + db->size);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 CMach_InitIntMem(TYPE(&stofsulong), val, db->buffer + db->size);
 #else
                 CMach_InitIntMem(TYPE(&stunsignedlong), val, db->buffer + db->size);
@@ -777,7 +778,7 @@ static void CInit_InitTypeMemberPointer(
 ) {
     expr = CExpr_AssignmentPromotion(expr, TYPE(tmptr), qual & (Q_CONST | Q_VOLATILE), TRUE);
     if (ENODE_IS(expr, EINTCONST)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         CMach_InitIntMem(TYPE(&stofslong), expr->data.intval, db->buffer + db->size);
 #else
         CMach_InitIntMem(TYPE(&stsignedlong), expr->data.intval, db->buffer + db->size);
@@ -1365,7 +1366,7 @@ static void CInit_InitType(
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // ---------------------------------------------------------------------------
 // b52's initializer engine for braced aggregate data (3.0.1's design): the
 // values come from a cursor over either a parsed list of CInitItems (locals,
@@ -2435,7 +2436,7 @@ static ENode* CInit_InitConcat(ENode* prev, ENode* base, SInt32 offset, Type* ty
 #if MWCCPSP
     addr = CEXPR_COPYENODE(base);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     addr = CExpr_CopyENode(base);
 #else
     addr = lalloc(sizeof(ENode));
@@ -2477,14 +2478,14 @@ static ENode* CInit_RegisterDtorObject(Type* type, Object* dtor, ENode* objexpr)
         return objexpr;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     expr = CExpr_NewENode(EFUNCCALL);
 #else
     expr = lalloc(sizeof(ENode));
     expr->type = EFUNCCALL;
 #endif
     expr->cost = 4;
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     expr->flags = 0;
 #endif
     expr->rtype = CDecl_NewPointerType(type);
@@ -2543,7 +2544,7 @@ static Boolean CInit_ConstructGlobalObject(
 #if MWCCPSP
         expr = makediadicnode(expr, intconstnode(TYPE_UNSIGNED_OFFSET, offset), EADD);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         expr = makediadicnode(expr, intconstnode(TYPE(&stunsignedint), offset), EADD);
 #else
         expr = makediadicnode(expr, intconstnode(TYPE(&stunsignedlong), offset), EADD);
@@ -2648,7 +2649,7 @@ static Boolean CInit_ConstructAutoObject(
 #if MWCCPSP
                     makediadicnode(objexpr, intconstnode(TYPE_UNSIGNED_OFFSET, offset), EADD);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     makediadicnode(objexpr, intconstnode(TYPE(&stofsulong), offset), EADD);
 #else
                     makediadicnode(objexpr, intconstnode(TYPE(&stunsignedlong), offset), EADD);
@@ -2702,7 +2703,7 @@ static void CInit_ExprPointer(TypePointer* tptr, ENode* expr) {
 #if MWCCPSP
                 TYPE_UNSIGNED_OFFSET, val, cinit_initinfo->buffer + cinit_initinfo->expr_offset
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 TYPE(&stofsulong), val, cinit_initinfo->buffer + cinit_initinfo->expr_offset
 #else
                 TYPE(&stunsignedlong), val, cinit_initinfo->buffer + cinit_initinfo->expr_offset
@@ -2773,7 +2774,7 @@ static void CInit_ExprEnum(TypeEnum* tenum, ENode* expr) {
 static void CInit_ExprMemberPointer(TypeMemberPointer* tmptr, ENode* expr) {
     if (ENODE_IS(expr, EINTCONST)) {
         CMach_InitIntMem(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             TYPE(&stofslong),
 #else
             TYPE(&stsignedlong),
@@ -3499,11 +3500,13 @@ inline_data:
     return NULL;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-3)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (4386)
+#endif
 #endif
 void CInit_ExportConst(Object* obj) {
     char buffer[64];
@@ -3523,7 +3526,7 @@ void CInit_ExportConst(Object* obj) {
 #if MWCCPSP
             CMach_InitIntMem(TYPE_UNSIGNED_OFFSET, obj->u.data.u.intconst, buffer);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             CMach_InitIntMem(TYPE(&stofsulong), obj->u.data.u.intconst, buffer);
 #else
             CMach_InitIntMem(TYPE(&stunsignedlong), obj->u.data.u.intconst, buffer);
@@ -3543,9 +3546,11 @@ void CInit_ExportConst(Object* obj) {
         CInit_DeclareData(obj, buffer, NULL, obj->type->size);
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -3615,12 +3620,12 @@ Statement* CInit_ConstructClassArray(
 static void CInit_InitializeClassArray(Object* obj, TypeClass* tclass, Boolean isGlobal) {
     Object* ctor;
     Object* dtor;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     SInt32 count;
     SInt32 i;
 #endif
     ENode* expr;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt32 i;
     SInt32 count;
 #endif
@@ -3658,7 +3663,7 @@ static void CInit_InitializeClassArray(Object* obj, TypeClass* tclass, Boolean i
 #if MWCCPSP
                     expr = makediadicnode(expr, intconstnode(TYPE_UNSIGNED_OFFSET, offset), EADD);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     expr = makediadicnode(expr, intconstnode(TYPE(&stunsignedint), offset), EADD);
 #else
                     expr = makediadicnode(expr, intconstnode(TYPE(&stunsignedlong), offset), EADD);
@@ -3949,7 +3954,7 @@ ENode* CInit_AutoObject(Object* obj, Type* type, UInt32 qual) {
     Type* newtype;
     Object* newobj;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // b52: a local's list is parsed first (CInit_ParseInitRecord(type, TRUE)
     // from 0x4783D6); a compound literal's '}' is read after the list is used
     if (tk == '{') {
@@ -3974,7 +3979,7 @@ ENode* CInit_AutoObject(Object* obj, Type* type, UInt32 qual) {
         CScope_AddGlobalObject(obj);
     }
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     if (IS_TYPE_VECTOR(type) && !db.nonconst) {
         if (obj) {
             obj_expr = create_objectrefnode(obj);
@@ -3983,7 +3988,7 @@ ENode* CInit_AutoObject(Object* obj, Type* type, UInt32 qual) {
         }
 #endif
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         const_expr = CExpr_NewENode(EVECTOR128CONST);
         const_expr->rtype = type;
         const_expr->data.vector128val = *((MWVector128*)db.buffer);
@@ -4021,48 +4026,47 @@ ENode* CInit_AutoObject(Object* obj, Type* type, UInt32 qual) {
         newtype = CDecl_NewStructType(type->size, CMach_GetTypeAlign(type));
     }
     newobj = CInit_CreateStaticDataObject(newtype, 0, NULL);
-#if !MWCCPS2_B52
     if (db.list || !CInit_IsAllZero(db.buffer, db.size)) {
-        CInit_DeclareReadOnlyData(newobj, db.buffer, db.list, db.size);
-    } else {
-        CInit_DeclareReadOnlyData(newobj, NULL, NULL, db.size);
-    }
-#endif
-
-#if MWCCPS2_B52
-    // __clear(obj, size) instead of copying a zero image
-    if (db.list || !CInit_IsAllZero(db.buffer, db.size)) {
+#if MWCC_CORE == MWCC_CORE_B52
         extern Object* clear_func;
-        CInit_DeclareData(newobj, db.buffer, db.list, db.size);
 #endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+        CInit_DeclareData(newobj, db.buffer, db.list, db.size);
+#if MWCC_CORE == MWCC_CORE_B52
         indirect_expr = makemonadicnode(obj_expr, EINDIRECT);
         indirect_expr->rtype = newtype;
         expr = makediadicnode(indirect_expr, create_objectnode(newobj), EASS);
-#if MWCCPS2_B52
         (void)clear_func;
+#endif
+#else
+        CInit_DeclareReadOnlyData(newobj, db.buffer, db.list, db.size);
+#endif
     } else {
+#if MWCC_CORE == MWCC_CORE_B52
         extern Object* clear_func;
         expr = funccallexpr(
             clear_func, obj_expr, intconstnode(CABI_GetSizeTType(), newtype->size), NULL, NULL
         );
+#elif MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+        // b69 (0x45D2A4): the initialiser image is ordinary data (.data), not read-only
+        CInit_DeclareData(newobj, NULL, NULL, db.size);
+#else
+        CInit_DeclareReadOnlyData(newobj, NULL, NULL, db.size);
+#endif
     }
-    if (0)
+
+#if MWCC_CORE != MWCC_CORE_B52
+    indirect_expr = makemonadicnode(obj_expr, EINDIRECT);
+    indirect_expr->rtype = newtype;
+    expr = makediadicnode(indirect_expr, create_objectnode(newobj), EASS);
 #endif
 
-#if MWCCPS2_B52
-        if (db.list || !CInit_IsAllZero(db.buffer, db.size)) {
-            CInit_DeclareData(newobj, db.buffer, db.list, db.size);
-        } else {
-            CInit_DeclareData(newobj, NULL, NULL, db.size);
-        }
-
-#endif
     for (entry = db.nonconst; entry; entry = entry->next) {
         expr = CInit_InitConcat(expr, obj_expr, entry->offset, entry->type, entry->expr);
     }
 
     if (!obj) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         ENode* objval = CExpr_CopyENode(obj_expr);
 #else
         ENode* objval = lalloc(sizeof(ENode));
@@ -4085,7 +4089,7 @@ static void CInit_GlobalObject(Object* obj) {
     ENode* obj_expr;
     ENode* expr;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // b52: a global's braced initializer is read from the token stream
     // (CInit_ParseInitRecord(type, FALSE) from 0x461214)
     if (tk == '{') {
@@ -4097,7 +4101,7 @@ static void CInit_GlobalObject(Object* obj) {
 
     IsCompleteType(obj->type);
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // b52 (0x45D5D0): an all-zero image becomes uninitialised data; no
     // read-only case
     if (db.buffer && !db.list && CInit_IsAllZero(db.buffer, db.size)) {
@@ -4109,7 +4113,7 @@ static void CInit_GlobalObject(Object* obj) {
         CInit_DeclareData(obj, db.buffer, db.list, db.size);
 #endif
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     CInit_DeclareData(obj, db.buffer, db.list, db.size);
 #endif
 
@@ -4251,7 +4255,7 @@ void CInit_InitializeStaticData(Object* obj, InitExprRegisterCB cb) {
             if (tk == '=') {
                 tk = lex();
             }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             // b52: a static local's list is parsed first (0x478440)
             if (tk == '{') {
                 CInit_InitBraced(&db, obj->type, obj->qual, copts.cplusplus, CIB_LIST);
@@ -4552,11 +4556,11 @@ void CInit_InitializeData(Object* obj) {
 #endif
 
 Object* CInit_DeclareString(char* data, SInt32 size, Boolean ispascal, Boolean iswide) {
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     PooledString* str;
 #endif
     Object* obj;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PooledString* str;
 #endif
     PooledString* scan;
@@ -4679,11 +4683,13 @@ PooledString* CInit_DeclarePooledWString(char* data, SInt32 size) {
     return str;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-9)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (2711)
+#endif
 #endif
 #if MWCCPSP
 #undef CError_B145_SHIFT
@@ -4727,7 +4733,7 @@ void CInit_RewriteString(ENode* expr, Boolean unused) {
 #if MWCCPSP
             expr->data.diadic.right = intconstnode(TYPE_UNSIGNED_OFFSET, str->offset);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             expr->data.diadic.right = intconstnode(TYPE(&stofsulong), str->offset);
 #else
             expr->data.diadic.right = intconstnode(TYPE(&stunsignedlong), str->offset);
@@ -4746,9 +4752,11 @@ void CInit_RewriteString(ENode* expr, Boolean unused) {
         );
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif

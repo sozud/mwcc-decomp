@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/FunctionCalls.h"
 #include "compiler/CError.h"
 #include "compiler/CFunc.h"
@@ -114,7 +115,7 @@ static ArgInfo* analyze_arguments(
 #if MWCCPSP
               !COPTS_GONE(incompatible_sfpe_double_params))) &&
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
               !COPTS_X.incompatible_sfpe_double_params)) &&
 #else
               !copts.incompatible_sfpe_double_params)) &&
@@ -239,7 +240,7 @@ static ArgInfo* analyze_arguments(
 #if MWCCPSP
         } else if (IS_TYPE_VEC2X32FLOAT(type) && COPTS_GONE(processor) == CPU_PPCGEKKO) {
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (IS_TYPE_VEC2X32FLOAT(type) && COPTS_X.processor == CPU_PPCGEKKO) {
 #else
         } else if (IS_TYPE_VEC2X32FLOAT(type) && copts.processor == CPU_PPCGEKKO) {
@@ -365,7 +366,7 @@ static void pass_in_memory(ArgInfo* info) {
 #if MWCCPSP
     } else if (IS_TYPE_VEC2X32FLOAT(type) && COPTS_GONE(processor) == CPU_PPCGEKKO) {
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (IS_TYPE_VEC2X32FLOAT(type) && COPTS_X.processor == CPU_PPCGEKKO) {
 #else
     } else if (IS_TYPE_VEC2X32FLOAT(type) && copts.processor == CPU_PPCGEKKO) {
@@ -417,7 +418,7 @@ static void pass_in_register(ArgInfo* info) {
 #if MWCCPSP
     } else if (IS_TYPE_VEC2X32FLOAT(type) && COPTS_GONE(processor) == CPU_PPCGEKKO) {
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (IS_TYPE_VEC2X32FLOAT(type) && COPTS_X.processor == CPU_PPCGEKKO) {
 #else
     } else if (IS_TYPE_VEC2X32FLOAT(type) && copts.processor == CPU_PPCGEKKO) {
@@ -718,7 +719,7 @@ void call_function(ENode* expr, Operand* output) {
 #if MWCCPSP
         if (has_floats && !COPTS_GONE(soft_float)) {
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (has_floats && !COPTS_X.soft_float) {
 #else
         if (has_floats && !copts.soft_float) {
@@ -775,7 +776,7 @@ void call_function(ENode* expr, Operand* output) {
 #if MWCCPSP
     } else if (IS_TYPE_VEC2X32FLOAT(resultType) && COPTS_GONE(processor) == CPU_PPCGEKKO) {
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (IS_TYPE_VEC2X32FLOAT(resultType) && COPTS_X.processor == CPU_PPCGEKKO) {
 #else
     } else if (IS_TYPE_VEC2X32FLOAT(resultType) && copts.processor == CPU_PPCGEKKO) {

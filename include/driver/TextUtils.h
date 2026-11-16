@@ -1,10 +1,11 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_TEXTUTILS_H
 #define DRIVER_TEXTUTILS_H
 
 #include "compiler/common.h"
 #include "driver/oslib.h"
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #ifdef __cplusplus
 extern "C" {
 #endif

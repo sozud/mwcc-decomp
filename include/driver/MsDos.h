@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_MSDOS_H
 #define DRIVER_MSDOS_H
 
@@ -35,7 +36,7 @@ extern int __stdcall OS_Execute(
     const char* stdoutfile,
     const char* stderrfile,
     int* exitcode
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 );
 extern char* __stdcall OS_GetDirPtr(char* path);
 extern int OS_CanonPath(const char* src, char* dst);
@@ -78,7 +79,7 @@ extern void __stdcall OS_InvalidateHandle(OSHandle* hand);
 extern Boolean __stdcall OS_ValidHandle(OSHandle* hand);
 extern int __stdcall OS_OSErrorToMacError(int err);
 extern void __stdcall OS_TimeToMac(OSTime sectm, UInt32* secs);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern void __stdcall OS_MacToTime(UInt32 secs, OSTime* sectm);
 extern SInt16 __stdcall OS_RefToMac(int ref);
 extern int OS_MacToRef(SInt16 refnum);

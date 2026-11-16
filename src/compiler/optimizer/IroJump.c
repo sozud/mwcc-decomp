@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/IroJump.h"
 #include "compiler/IroDump.h"
 #include "compiler/IroFlowgraph.h"
@@ -8,7 +9,7 @@
 #include "compiler/Switch.h"
 
 #if MWCCPSP
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 static Boolean CheckChain(CLabel** labelptr) {
 #else
 // 3.0.1 (0x58D6E0): CheckChain; a goto that ends a loop (IROLF_EndLoop) is
@@ -16,7 +17,7 @@ static Boolean CheckChain(CLabel** labelptr) {
 Boolean func_0058D6E0(CLabel** labelptr) {
 #endif
     IRONode* node;
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     IROLinear* linear;
     CLabel* lab;
     CLabel* label;
@@ -26,7 +27,7 @@ Boolean func_0058D6E0(CLabel** labelptr) {
         if (node->first &&
             node->first->type == IROLinearLabel &&
             node->first->u.label.label == *labelptr) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             IROLinear* linear;
             CLabel* lab;
 #else
@@ -40,7 +41,7 @@ Boolean func_0058D6E0(CLabel** labelptr) {
                 }
             }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (linear->type == IROLinearGoto && *labelptr != linear->u.label.label) {
 #else
             if (linear->type == IROLinearGoto &&
@@ -52,7 +53,7 @@ Boolean func_0058D6E0(CLabel** labelptr) {
                 return TRUE;
             }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (lab && *labelptr != lab) {
 #else
             if (lab && label != lab) {
@@ -83,7 +84,7 @@ Boolean IRO_DoJumpChaining(void) {
                 linear = node->last;
                 switch (linear->type) {
                     case IROLinearGoto:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         if (CheckChain(&linear->u.label.label)) {
 #else
                         if (!(linear->flags & IROLF_EndLoop)) {
@@ -91,13 +92,13 @@ Boolean IRO_DoJumpChaining(void) {
 #endif
                             changed = TRUE;
                         }
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
                 }
 #endif
                 break;
                 case IROLinearIf:
                 case IROLinearIfNot:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (CheckChain(&linear->u.label.label)) {
 #else
                                 if (func_0058D6E0(&linear->u.label.label)) {
@@ -108,7 +109,7 @@ Boolean IRO_DoJumpChaining(void) {
                 case IROLinearSwitch:
                     info = linear->u.swtch.info;
                     for (curcase = info->cases; curcase; curcase = curcase->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         if (CheckChain(&curcase->label)) {
 #else
                                     if (func_0058D6E0(&curcase->label)) {
@@ -116,7 +117,7 @@ Boolean IRO_DoJumpChaining(void) {
                             changed = TRUE;
                         }
                     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (CheckChain(&info->defaultlabel)) {
 #else
                                 if (func_0058D6E0(&info->defaultlabel)) {
@@ -135,7 +136,7 @@ Boolean IRO_DoJumpChaining(void) {
 while (changed)
     ;
 
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 // 3.0.1 recomputes the graph once anything was chained
 if (result) {
     IRO_ComputeSuccPred();
@@ -416,7 +417,7 @@ Boolean IRO_RemoveRedundantJumps(void) {
             linear = node->last;
             switch (linear->type) {
                 case IROLinearGoto:
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
                     if (linear->flags & IROLF_EndLoop) {
                         break;
                     }
@@ -428,7 +429,7 @@ Boolean IRO_RemoveRedundantJumps(void) {
                              scan->u.label.label != linear->u.label.label))) {
                         scan = scan->next;
                     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     while (1) {
                         if (!scan) {
                             break;
@@ -455,7 +456,7 @@ Boolean IRO_RemoveRedundantJumps(void) {
                     while (scan && scan->type == IROLinearNop) {
                         scan = scan->next;
                     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (scan && scan->type == IROLinearGoto) {
 #else
                         if (scan && scan->type == IROLinearGoto && !(scan->flags & IROLF_EndLoop)) {
@@ -491,7 +492,7 @@ Boolean IRO_RemoveRedundantJumps(void) {
                              scan2->u.label.label != linear->u.label.label))) {
                         scan2 = scan2->next;
                     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     while (1) {
                         if (!scan2) {
                             break;

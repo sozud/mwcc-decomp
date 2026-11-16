@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/CLIO.h"
 #include "compiler/win32.h"
 #include "driver/CLErrors.h"
@@ -20,7 +21,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #include <string.h>
 #endif
 #if MWCCPSP_NATIVE
@@ -28,7 +29,7 @@
 extern FILE* win32_fopen(const char* path, const char* mode);
 #define fopen win32_fopen
 #endif
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #include <string.h>
 #endif
 

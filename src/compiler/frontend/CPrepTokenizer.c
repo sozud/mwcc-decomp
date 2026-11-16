@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CPrepTokenizer.h"
 #include "compiler/CError.h"
 #include "compiler/CInt64.h"
@@ -305,7 +306,7 @@ loop:
             pos = (char*)p++;
             if (tokenstacklevel <= 0 && in_assembler && copts.asmpoundcomment) {
                 spaceskip = TRUE;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 // b69 0x477AF1: the block comment loop reused (the character
                 // after '#' is skipped like the '*' of a block comment); the
                 // comment ends before a NUL at the end of the text, '"', CR,
@@ -322,7 +323,7 @@ loop:
                 return CPrep_SkipNewCommentChar;
 #endif
                         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         p[-1] = ' ';
                     }
                     if (c == '\\') {
@@ -452,7 +453,7 @@ mid_backslash:
                     goto loop;
                 }
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             // b69 (0x477DB6): in a GCC asm string (the assembler lexing with
             // cprep_nostring) the \n, \r, \t and \v escapes are white space
             if (cprep_nostring && in_assembler) {
@@ -468,7 +469,7 @@ mid_backslash:
 #endif
                 nextcharpos = (char*)p;
                 return c;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             }
             nextcharpos = (char*)p;
             return c;
@@ -1329,7 +1330,7 @@ static short intsuffix(short t, Boolean allowUnsigned) {
             break;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     // b69 (0x4789A0): a letter after the number is only an error when
     // preprocessing, and not w..z (VU field letters); the compiler takes it as
     // the next token (an asm `1f`)
@@ -1369,7 +1370,7 @@ static short intsuffix(short t, Boolean allowUnsigned) {
             return IT_ULONGLONG;
         }
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     // b69 0x478B80: then the 16-byte integer (atom 13)
     if (CInt64_IsInRange(tkintconst, stint128.size)) {
         return ATOM_INT128;
@@ -1385,7 +1386,7 @@ static short intsuffix(short t, Boolean allowUnsigned) {
 #define FLOATSUFFIX() floatsuffix()
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // b69 0x478BE0: the float atoms follow ATOM_INT128 (14, 16, 17)
 #define F_FLOAT ATOM_FLOAT
 #define F_DOUBLE ATOM_DOUBLE
@@ -1458,7 +1459,7 @@ static short floatsuffix(short token) {
         case 'F':
             pos = nextcharpos;
             token = *pos;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             whichtype = F_FLOAT;
 #else
             whichtype = IT_FLOAT;
@@ -1471,7 +1472,7 @@ static short floatsuffix(short token) {
         case 'L':
             pos = nextcharpos;
             token = *pos;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             whichtype = F_LONGDOUBLE;
 #else
             whichtype = IT_LONGDOUBLE;
@@ -1482,7 +1483,7 @@ static short floatsuffix(short token) {
             if (!copts.ANSIstrict) {
                 pos = nextcharpos;
                 token = *pos;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 whichtype = F_DOUBLE;
 #else
                 whichtype = IT_DOUBLE;
@@ -1494,7 +1495,7 @@ static short floatsuffix(short token) {
             break;
         default:
             if (copts.float_constants) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 whichtype = F_FLOAT;
 #else
                 whichtype = IT_FLOAT;
@@ -1503,7 +1504,7 @@ static short floatsuffix(short token) {
                     tkfloatconst = CMach_CalcFloatConvert(TYPE(&stfloat), tkfloatconst);
                 }
             } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 whichtype = F_DOUBLE;
 #else
                 whichtype = IT_DOUBLE;
@@ -1519,7 +1520,7 @@ static short floatsuffix(short token) {
         (token == '_') ||
         (token >= '0' && token <= '9')) {
         CPrep_Error(ERR_ILLEGAL_TOKEN);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         whichtype = F_DOUBLE;
 #else
         whichtype = IT_DOUBLE;
@@ -1796,7 +1797,7 @@ StringPtr CPrep_SkipNewComment(StringPtr str) {
                 if (copts.multibyteaware && COS_IsMultiByte(str, p - 1)) {
                     continue;
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if (InlineAsm_gccmode && *p == 'n') {
                     CPrep_SkipNewCommentChar = *++p;
                     return p;
@@ -1813,7 +1814,7 @@ StringPtr CPrep_SkipNewComment(StringPtr str) {
                 }
                 continue;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             // b69 (0x479010): in a GCC asm string a comment ends at a line
             // feed, the string's end or a \n escape (whose next character
             // becomes the skip character)
@@ -2046,11 +2047,13 @@ static short tcret(void) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (55)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (38)
+#endif
 #endif
 #if MWCCPSP
 #undef CError_B145_SHIFT
@@ -2175,9 +2178,11 @@ static short tapos(short _t) {
 
     return TK_INTCONST;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -2399,7 +2404,7 @@ static short tless(short t) {
         pos = nextcharpos;
         return '[';
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // GCC's <? (minimum) under #pragma gcc_extensions (b52 0x480ED2)
     if (t == '?' && copts.gcc_extensions) {
         pos = nextcharpos;
@@ -2461,7 +2466,7 @@ static short tgrea(short t) {
             return TK_SHR;
         }
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // GCC's >? (maximum) under #pragma gcc_extensions (b52 0x480F9C)
     if (t == '?' && copts.gcc_extensions) {
         pos = nextcharpos;
@@ -2481,7 +2486,7 @@ static short tatsg(short t) {
 #if MWCCPSP
     if (in_assembler) {
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (COPTS_X.objective_c || in_assembler) {
 #else
     if (copts.objective_c || in_assembler) {
@@ -2493,7 +2498,7 @@ static short tatsg(short t) {
         cprep_idarray['@'] = save_idarray;
 
 #if !MWCCPSP
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (COPTS_X.objective_c) {
 #else
         if (copts.objective_c) {
@@ -3035,7 +3040,7 @@ static short tchrb(void) {
         }
     }
 #if !MWCCPSP
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (COPTS_X.objective_c) {
 #else
     if (copts.objective_c) {
@@ -3206,7 +3211,7 @@ static short tchri(void) {
         }
     }
 #if !MWCCPSP
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (COPTS_X.objective_c) {
 #else
     if (copts.objective_c) {
@@ -3297,7 +3302,7 @@ static short tchro(void) {
         }
     }
 #if !MWCCPSP
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (COPTS_X.objective_c) {
 #else
     if (copts.objective_c) {
@@ -3653,7 +3658,7 @@ static short tchr_(void) {
     if (!strcmp("__asm__", tkidentifier->name)) {
         return TK_ASM;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!strcmp("__const", tkidentifier->name)) {
         return TK_CONST;
     }
@@ -3702,7 +3707,7 @@ static short tchr_(void) {
             return TK_U_IMAGINARY;
         }
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     // b69 0x47B786: the PS2 types (custom type tokens 0x113/0x114); no
     // __vec2x32float__ or __vector
     if (!strcmp("__fixed__8x8", tkidentifier->name)) {
@@ -3712,7 +3717,7 @@ static short tchr_(void) {
         return TK_UU_VEC2X32FLOAT_UU;
 #endif
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!strcmp("__int128", tkidentifier->name)) {
         return TK_CUSTOM_TYPE_114;
 #else
@@ -3831,7 +3836,7 @@ typedef struct StringChunk {
 } StringChunk;
 
 static void CPrep_StringConCat(Boolean isWide) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt32 b69_dead;
 #endif
     StringChunk* chunks;
@@ -3851,7 +3856,7 @@ static void CPrep_StringConCat(Boolean isWide) {
     cprep_strconcat = TRUE;
 
     chunks = NULL;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     b69_dead = offset = tksize;
 #else
     offset = tksize;
@@ -3935,11 +3940,13 @@ static void CPrep_StringConCat(Boolean isWide) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (55)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (171)
+#endif
 #endif
 #if MWCCPSP
 #undef CError_B145_SHIFT
@@ -4068,9 +4075,11 @@ skipped:
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif

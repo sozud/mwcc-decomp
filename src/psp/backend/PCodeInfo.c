@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include <stdarg.h>
 #include "psp/BE.h"
@@ -14,7 +15,7 @@
 // A branch's label operand.
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 17 // b145 asserts
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-418)
 #endif
@@ -30,7 +31,7 @@ MOperand* func_0048FAE0(MPCode* pc) {
     CError_Internal("PCodeInfo.c", CError_B145_LINE(1509));
     return NULL;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -51,13 +52,13 @@ SInt16 func_004903F0(void) {
 // case lists are read from the original's compare chain); func_00490400 calls it
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 17 // b145 asserts
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 BE_NOINLINE SInt32 func_0048FBE0(UInt16 op) {
 #else
 __declspec(noinline) SInt32 func_0048FBE0(UInt16 op) {
 #endif
     if (!(data_006115F8[op].flags & 6)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         // b69 0x49AA80 returns 0 for an opcode that does not access memory
         // (LocalCSE.c's is128bitop 0x49AC60 asks for every copied value);
         // only the switch's default asserts
@@ -67,7 +68,7 @@ __declspec(noinline) SInt32 func_0048FBE0(UInt16 op) {
         return 0;
     }
     switch (op) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x91):
         case OPC(0x92):
         case OPC(0xC3):
@@ -83,7 +84,7 @@ __declspec(noinline) SInt32 func_0048FBE0(UInt16 op) {
         case 0x47F:
 #endif
             return 1;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x94):
         case OPC(0x95):
         case OPC(0xCA):
@@ -99,7 +100,7 @@ __declspec(noinline) SInt32 func_0048FBE0(UInt16 op) {
         case 0x480:
 #endif
             return 2;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x9B):
         case OPC(0x9D):
         case OPC(0x9E):
@@ -171,7 +172,7 @@ __declspec(noinline) SInt32 func_0048FBE0(UInt16 op) {
         case 0x488:
 #endif
             return 4;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x93):
         case OPC(0x96):
         case OPC(0x97):
@@ -232,7 +233,7 @@ __declspec(noinline) SInt32 func_0048FBE0(UInt16 op) {
 #endif
             return 8;
             // b210 keeps these in groups of their own (separate return blocks)
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x10B):
         case OPC(0x10D):
 #else
@@ -240,7 +241,7 @@ __declspec(noinline) SInt32 func_0048FBE0(UInt16 op) {
         case 0x10D:
 #endif
             return 4;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x10A):
         case OPC(0x10C):
 #else
@@ -248,7 +249,7 @@ __declspec(noinline) SInt32 func_0048FBE0(UInt16 op) {
         case 0x10C:
 #endif
             return 8;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x164):
         case OPC(0x173):
 #else
@@ -256,7 +257,7 @@ __declspec(noinline) SInt32 func_0048FBE0(UInt16 op) {
         case 0x173:
 #endif
             return 8;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x1D1):
         case OPC(0x1D2):
         case OPC(0x263):
@@ -429,7 +430,7 @@ extern SInt16 data_00625E74; // 16-byte register move
 MPCode* func_00490280(MOperand* src, MOperand* dst) {
     if (src->kind == 0) {
         if (src->rclass == 0) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             return makepcode(
                 (src->flags & 0x2000) ? data_00625E74 : data_00625E48, dst->reg, src->reg
             );
@@ -439,7 +440,7 @@ MPCode* func_00490280(MOperand* src, MOperand* dst) {
             );
 #endif
         } else if (src->rclass == 1) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             return makepcode(
                 (src->flags & 0x8000) ? MACRO_OP(0x9A) : MACRO_OP(0x99), dst->reg, src->reg
             );
@@ -449,13 +450,13 @@ MPCode* func_00490280(MOperand* src, MOperand* dst) {
             );
 #endif
         } else if (src->rclass == 5) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             return makepcode(OPC(0x2AF), 0xF, dst->reg, src->reg);
 #else
             return makepcode(0x2AF, 0xF, dst->reg, src->reg);
 #endif
         } else if (src->rclass == 3) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             return makepcode(OPC(0x281), dst->reg, src->reg, 0);
 #else
             return makepcode(0x281, dst->reg, src->reg, 0);
@@ -499,49 +500,49 @@ extern SInt32 data_00624788;
 #if MWCCPS2
 int func_0048FB20(MPCode* pc) {
     switch (pc->op) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x91):
 #else
         case 0x91:
 #endif
         case MACRO_OP(0x50):
             return 3;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x92):
 #else
         case 0x92:
 #endif
         case MACRO_OP(0x49):
             return 2;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x94):
 #else
         case 0x94:
 #endif
         case MACRO_OP(0x51):
             return 5;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x95):
 #else
         case 0x95:
 #endif
         case MACRO_OP(0x52):
             return 4;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x9D):
 #else
         case 0x9D:
 #endif
         case MACRO_OP(0x55):
             return (UInt8)((data_00624788 == 4) ? (UInt8)1 : (UInt8)7);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xA0):
 #else
         case 0xA0:
 #endif
         case MACRO_OP(0x5C):
             return (UInt8)((data_00624788 == 4) ? (UInt8)1 : (UInt8)6);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x93):
         case OPC(0x99):
         case OPC(0x9A):
@@ -601,7 +602,7 @@ UInt16 storeopcode(MPCode* pcode) {
 
     if (pcode->flags & 0x20002) {
         switch (pcode->op) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x91):
 #else
             case 0x91:
@@ -611,7 +612,7 @@ UInt16 storeopcode(MPCode* pcode) {
             case MACRO_OP(0x50):
                 op = MACRO_OP(0x75);
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x94):
 #else
             case 0x94:
@@ -621,21 +622,21 @@ UInt16 storeopcode(MPCode* pcode) {
             case MACRO_OP(0x51):
                 op = MACRO_OP(0x76);
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x9D):
 #else
             case 0x9D:
 #endif
                 op = 0xCB;
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x9E):
 #else
             case 0x9E:
 #endif
                 op = 0xD0;
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x9F):
 #else
             case 0x9F:
@@ -651,21 +652,21 @@ UInt16 storeopcode(MPCode* pcode) {
             case MACRO_OP(0x5B):
                 op = MACRO_OP(0x7E);
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0xA1):
 #else
             case 0xA1:
 #endif
                 op = 0xCD;
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0xA2):
 #else
             case 0xA2:
 #endif
                 op = 0xCE;
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0xA3):
 #else
             case 0xA3:
@@ -676,7 +677,7 @@ UInt16 storeopcode(MPCode* pcode) {
             case MACRO_OP(0x57):
                 op = MACRO_OP(0x79);
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x93):
 #else
             case 0x93:
@@ -686,42 +687,42 @@ UInt16 storeopcode(MPCode* pcode) {
             case MACRO_OP(0x4A):
                 op = MACRO_OP(0x6F);
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x99):
 #else
             case 0x99:
 #endif
                 op = 0xC8;
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x9A):
 #else
             case 0x9A:
 #endif
                 op = 0xC9;
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x9C):
 #else
             case 0x9C:
 #endif
                 op = 0xC8;
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x96):
 #else
             case 0x96:
 #endif
                 op = 0xC5;
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x97):
 #else
             case 0x97:
 #endif
                 op = 0xC6;
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x98):
 #else
             case 0x98:
@@ -740,14 +741,14 @@ UInt16 storeopcode(MPCode* pcode) {
             case MACRO_OP(0x4D):
                 op = MACRO_OP(0x72);
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x1D1):
 #else
             case 0x1D1:
 #endif
                 op = 0x1D2;
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x263):
 #else
             case 0x263:
@@ -775,7 +776,7 @@ SInt32 func_0048FFA0(MPCode* store, MPCode* load) {
         if (size > 16) {
             return 0;
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if ((store->op == OPC(0x1D2) && load->op == OPC(0x1D1)) ||
             (store->op == MACRO_OP(0x7F) && load->op == MACRO_OP(0x5D))) {
 #else
@@ -788,7 +789,7 @@ SInt32 func_0048FFA0(MPCode* store, MPCode* load) {
     if (size > 8) {
         return 0;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if ((store->op == OPC(0xC4) && load->op == OPC(0x93)) ||
         (store->op == MACRO_OP(0x6F) && load->op == MACRO_OP(0x4A))) {
 #else
@@ -798,7 +799,7 @@ SInt32 func_0048FFA0(MPCode* store, MPCode* load) {
         return 1;
     }
     if (size == 4) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if ((store->op == OPC(0xCB) && load->op == OPC(0x9D)) ||
             (store->op == MACRO_OP(0x77) && load->op == MACRO_OP(0x55))) {
 #else
@@ -807,7 +808,7 @@ SInt32 func_0048FFA0(MPCode* store, MPCode* load) {
 #endif
             return 1;
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if ((store->op == OPC(0xCD) && load->op == OPC(0xA1)) ||
             (store->op == MACRO_OP(0x79) && load->op == MACRO_OP(0x56))) {
 #else
@@ -818,7 +819,7 @@ SInt32 func_0048FFA0(MPCode* store, MPCode* load) {
         }
     }
     if (size == 1) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if ((store->op == OPC(0xC3) && load->op == OPC(0x91)) ||
             (store->op == MACRO_OP(0x75) && load->op == MACRO_OP(0x50))) {
 #else
@@ -968,7 +969,7 @@ int func_004901D0(MPCode* pc) {
     if (pc->unk38) {
         return 0;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (pc->argcount == 3 &&
         (pc->args[2].kind == 2 || pc->args[2].kind == 3) &&
         pc->args[1].kind == 0 &&
@@ -984,7 +985,7 @@ int func_004901D0(MPCode* pc) {
         return 1;
     }
     switch (pc->op) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x90):
 #else
         case 0x90:
@@ -1012,13 +1013,13 @@ void func_00490370(void) {
     CInt64 n;
 
     if (copts.optimizesize || !copts.mips_option3A) {
+#if MWCC_CORE != MWCC_CORE_B52
         return;
     }
-#if !MWCCPS2_B52
     if (data_006246B4->weight < 8) {
+#endif
         return;
     }
-#endif
     if ((SInt8)copts.mips_option39 > 2) {
         CInt64_SetLong(&n, (SInt8)copts.mips_option39);
         emitpcode(BE_NUM_OPDEFS - 2, n);
@@ -1189,11 +1190,11 @@ MPCode* func_00490400(UInt16 op, va_list args) {
                 arg->rclass = 2;
                 arg->reg = 0;
 #if MWCCPS2 && MWCCPS2_BUILD < 210
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                 arg->flags = effect;
 #endif
                 format++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 arg->flags = effect;
 #else
                 pc->flags = 0x100; // b145
@@ -1296,7 +1297,7 @@ MPCode* func_00490400(UInt16 op, va_list args) {
                             if (((Object*)count)->datatype == DLOCAL && arg->reg != data_00625E3E) {
                                 pc->alias = make_alias((Object*)count, 0, 0);
                             } else if (((Object*)count)->datatype == DLOCAL) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 pc->alias = make_alias(
                                     (Object*)count,
                                     memarg->value - ((Object*)MOP_OBJ(*memarg))->u.var.offset,
@@ -1358,7 +1359,7 @@ MPCode* func_00490400(UInt16 op, va_list args) {
                 break;
             case 'K':
                 switch (pc->op) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     case OPC(0x68):
                     case OPC(0x69):
                     case OPC(0x6A):
@@ -1399,7 +1400,7 @@ MPCode* func_00490400(UInt16 op, va_list args) {
                             arg->kind = 7;
                         }
                         break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     case OPC(0x26C):
                     case OPC(0x273):
                     case OPC(0x27C):
@@ -1433,7 +1434,7 @@ MPCode* func_00490400(UInt16 op, va_list args) {
                         arg->reg = 0x16;
                         arg->flags = effect;
                         break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     case OPC(0x26B):
                     case OPC(0x272):
                     case OPC(0x295):
@@ -1463,7 +1464,7 @@ MPCode* func_00490400(UInt16 op, va_list args) {
                         arg->reg = 0x15;
                         arg->flags = effect;
                         break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     case OPC(0x2D1):
                     case OPC(0x2D3):
                     case OPC(0x2D5):

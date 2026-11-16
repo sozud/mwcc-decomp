@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/IroPropagate.h"
 #include "compiler/IroCSE.h"
 #if MWCCPSP
@@ -198,7 +199,7 @@ static void CheckUnorderedRegionsForDefs(
 #if MWCCPSP
 // 0x551740: 3.0.1 also leaves a call's arguments out unless their order is
 // free (no #pragma opt_defineargorder and an argument order hook)
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 void func_00551740(
     IROLinear* nd, IROLinear* excluded, BitVector* kills, BitVector* uses, Boolean* found
 ) {
@@ -240,7 +241,7 @@ void func_00551740(
 #endif
 #if MWCCPSP
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (348)
 #endif
@@ -272,13 +273,23 @@ static Boolean PropagationHasDefsInUnorderedRegions(IROLinear* use, IROLinear* v
 
     return found;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
 int IRO_IsRegable(Object* obj) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+    VarInfo* b69_dead;
+#endif
+#endif
     if (obj->datatype == DLOCAL && obj->u.var.info) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+        b69_dead = obj->u.var.info;
+#endif
+#endif
         return !obj->u.var.info->noregister;
     }
     return FALSE;
@@ -308,7 +319,7 @@ static Boolean IsPropagatable(IROLinear* linear) {
             !is_volatile_object(srcObj) &&
             IRO_TypesEqual(obj->type, linear->rtype)) {
             if (!Inline_IsObjectData(linear->u.diadic.right->u.monadic->u.node->data.objref)) {
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 #if VERSION == VERSION_GC_2_0P2
                 if (obj->datatype == DLOCAL && obj->u.var.info && obj->u.var.info->noregister) {
                     return FALSE;
@@ -399,7 +410,7 @@ static Boolean func_00569690(IROLinear* linear) {
     Object* obj;
     Object* srcObj;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (linear->type == IROLinearOp2Arg &&
         linear->nodetype == EASS &&
 #else
@@ -407,7 +418,7 @@ static Boolean func_00569690(IROLinear* linear) {
         linear->nodetype == EASS &&
 #endif
         (obj = IRO_IsVariable(linear->u.diadic.left)) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         obj->type == linear->rtype &&
 #else
         (obj->type == linear->rtype || IRO_TypesEqual(obj->type, linear->rtype)) &&
@@ -419,7 +430,7 @@ static Boolean func_00569690(IROLinear* linear) {
         if (func_00555C60(linear->u.diadic.right)) {
             return TRUE;
         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if ((srcObj = IRO_IsVariable(linear->u.diadic.right)) &&
             !is_volatile_object(srcObj) &&
 #else
@@ -562,7 +573,7 @@ Boolean IRO_CopyAndConstantPropagation(void) {
             if (IRO_IsVariable(linear) && !(linear->flags & IROLF_Assigned)) {
                 if ((var = IRO_FindVar(linear->u.monadic->u.node->data.objref, FALSE, TRUE))) {
                     for (ass2 = IRO_FirstAssign; ass2; ass2 = ass2->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         if (ass2->varIndex == var->index &&
                             Bv_IsBitSet(PROP_BIT(ass2->index), avail) &&
                             (func_00555C60(ass2->linear2) ||
@@ -574,7 +585,7 @@ Boolean IRO_CopyAndConstantPropagation(void) {
                              node->loopdepth <= ass2->node->loopdepth) &&
 #endif
                             !func_00569790(linear, ass2->linear2) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                             func_0055C810(
                                 linear->rtype, ass2->linear->rtype, ass2->varObj != NULL
                             )) {
@@ -588,7 +599,7 @@ Boolean IRO_CopyAndConstantPropagation(void) {
                                 *enode = *ass2->linear2->u.node;
                                 if (func_00555B30(enode)) {
                                     if (linear->flags & IROLF_BitfieldIndirect) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                                         IRO_TruncateBitfieldValueToType(
                                             &enode->data.intval, linear->rtype, var->bitfieldType
                                         );
@@ -613,7 +624,7 @@ Boolean IRO_CopyAndConstantPropagation(void) {
                                     linear->flags |= IROLF_BitfieldIndirect;
                                 }
                             }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                             IRO_Dump(
                                 "Found propagation at %d from %d\n",
                                 linear->index,
@@ -630,7 +641,7 @@ Boolean IRO_CopyAndConstantPropagation(void) {
                         }
                     }
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             } else if (linear->type == IROLinearAsm &&
                        IRO_GetAsmEffectsHook &&
                        IRO_Hook5 &&
@@ -645,7 +656,7 @@ Boolean IRO_CopyAndConstantPropagation(void) {
 
                 IRO_GetAsmEffectsHook(linear->u.asm_stmt, &effects);
                 for (i = 0; i < effects.numoperands; i++) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (effects.operands[i].type == 0 &&
                         effects.operands[i].offset == 0 &&
 #else
@@ -655,7 +666,7 @@ Boolean IRO_CopyAndConstantPropagation(void) {
                         effects.operands[i].size == effects.operands[i].object->type->size &&
                         (var = IRO_FindVar(effects.operands[i].object, FALSE, TRUE))) {
                         for (ass2 = IRO_FirstAssign; ass2; ass2 = ass2->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                             if (ass2->varIndex == var->index &&
                                 Bv_IsBitSet(PROP_BIT(ass2->index), avail) &&
 #else
@@ -672,7 +683,7 @@ Boolean IRO_CopyAndConstantPropagation(void) {
                                     CError_FATAL(1680);
                                 }
                                 ((void (*)(Statement*, Object*, ENode*))IRO_Hook5)(
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                                     linear->u.asm_stmt, effects.operands[i].object, enode
                                 );
 #else
@@ -972,7 +983,7 @@ Boolean IRO_CopyAndConstantPropagation(void) {
 #if MWCCPSP
 extern Boolean func_00555B30(ENode* expr); // IroLogicalSelection.c: an integer constant
 extern Boolean func_005575F0(Object* obj); // IroNonRegLoopAccesses.c: IRO_IsRegable
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 extern void func_0056AB70(
     IROLinear* linear, Boolean alloc, Boolean stop, Boolean recurse
 ); // IroCSE.c
@@ -985,7 +996,7 @@ extern VarRecord* IRO_FindAssigned301(IROLinear* linear, Boolean* isBitfield);
 
 // 0x550F30: the linear may kill variables (3.0.1 IsIntGenKillCandidate)
 PROP_NOINLINE Boolean func_00550F30(IROLinear* linear) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     return linear->type == IROLinearFunccall ||
         linear->type == IROLinearAsm ||
         ((linear->type == IROLinearOp1Arg || linear->type == IROLinearOp2Arg) &&
@@ -1000,7 +1011,7 @@ PROP_NOINLINE Boolean func_00550F30(IROLinear* linear) {
 
 // a scalar that #pragma opt_propagateequivalentscalartypes treats by size
 static inline Boolean IsEquivalentScalar(Type* type) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     return (IS_TYPE_INT(type) && TYPE_INTEGRAL(type)->integral <= IT_LONGDOUBLE) ||
         IS_TYPE_ENUM(type) ||
         IS_TYPE_POINTER_ONLY(type) ||
@@ -1020,7 +1031,7 @@ PROP_NOINLINE Boolean func_0055C810(Type* a, Type* b, Boolean isVar) {
     if (IS_TYPE_POINTER_ONLY(a) && IS_TYPE_POINTER_ONLY(b)) {
         return TRUE;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (copts.opt_propagateequivalentscalartypes &&
         IsEquivalentScalar(a) &&
         IsEquivalentScalar(b)) {
@@ -1088,7 +1099,7 @@ Boolean func_00569790(IROLinear* use, IROLinear* value) {
 static inline Boolean IsPropagatableExpr301(IROLinear* nd) {
     Object* obj;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (nd->type == IROLinearOp2Arg &&
         nd->nodetype == EASS &&
         !(nd->flags & IROLF_Reffed) &&
@@ -1105,7 +1116,7 @@ static inline Boolean IsPropagatableExpr301(IROLinear* nd) {
         if (!func_005575F0(obj)) {
             return FALSE;
         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (nd->u.diadic.right->type == IROLinearOperand &&
             nd->u.diadic.right->u.node->type == ESTRINGCONST) {
 #else
@@ -1180,7 +1191,7 @@ void IRO_ExpressionPropagation(void) {
         Bv_AllocVector(&avail, IRO_NumAssign);
 
         for (linear = node->first; linear; linear = linear->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (IRO_IsVariable(linear) &&
                 !(linear->flags & IROLF_Assigned) &&
 #else
@@ -1189,7 +1200,7 @@ void IRO_ExpressionPropagation(void) {
 #endif
                 (var = IRO_FindVar(linear->u.monadic->u.node->data.objref, FALSE, TRUE))) {
                 for (ass = IRO_FirstAssign; ass; ass = ass->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (ass->varIndex == var->index &&
                         Bv_IsBitSet(PROP_BIT(ass->index), avail) &&
 #else
@@ -1197,7 +1208,7 @@ void IRO_ExpressionPropagation(void) {
                         Bv_IsBitSet(PROP_BIT(ass->index), avail) &&
 #endif
                         !func_00569790(linear, ass->linear2) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         func_0055C810(
                             linear->rtype, ass->linear->rtype, IRO_IsVariable(ass->linear2) != NULL
                         )) {
@@ -1211,7 +1222,7 @@ void IRO_ExpressionPropagation(void) {
                             *enode = *ass->linear2->u.node;
                             if (func_00555B30(enode)) {
                                 if (linear->flags & IROLF_BitfieldIndirect) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                                     IRO_TruncateBitfieldValueToType(
                                         &enode->data.intval, linear->rtype, var->bitfieldType
                                     );
@@ -1244,7 +1255,7 @@ void IRO_ExpressionPropagation(void) {
                             IRO_InitList(&list);
                             IRO_DuplicateExpr(ass->linear->u.diadic.right, &list);
                             if (IS_TYPE_FLOAT(ass->linear->rtype) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                                 (!IRO_Hook16 ||
                                  ((Boolean (*)(IROLinear*))IRO_Hook16)(ass->linear))) {
 #else
@@ -1254,7 +1265,7 @@ void IRO_ExpressionPropagation(void) {
                                 IROLinear* cast = IRO_NewLinear(IROLinearOp1Arg);
                                 cast->index = ++IRO_NumLinear;
                                 cast->rtype = ass->linear->rtype;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                                 if (IS_TYPE_INT(cast->rtype) &&
                                     TYPE_INTEGRAL(cast->rtype)->integral == IT_BOOL) {
 #else
@@ -1272,7 +1283,7 @@ void IRO_ExpressionPropagation(void) {
                             IRO_LocateFather_Cut_And_Paste(linear, list.tail);
                             linear = list.tail;
                         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         IRO_Dump(
                             "Found expression propagation at %d from %d\n",
                             linear->index,
@@ -1303,7 +1314,7 @@ void IRO_ExpressionPropagation(void) {
                             Bv_ClearBit(ass->index, avail);
                         }
                         if ((obj = IRO_IsVariable(ass->linear->u.diadic.right))) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                             if ((var = IRO_FindVar(obj, FALSE, TRUE)) &&
                                 Bv_IsBitSet(PROP_BIT(var->index), IRO_VarKills)) {
 #else

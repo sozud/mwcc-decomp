@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_CLTARG_H
 #define DRIVER_CLTARG_H
 
@@ -21,7 +22,7 @@ enum {
     LinkModel_Overlay1 = 2
 };
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 // 3.0.1: the shell keeps its own target info (0x820 bytes, Target_New)
 typedef struct ShellTargetInfo {
@@ -45,7 +46,7 @@ struct Target {
         UInt32 linesCompiled;
         UInt32 codeSize;
         UInt32 iDataSize;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         UInt32 uDataSize;
     } info;
     CWTargetInfo* targetinfo;

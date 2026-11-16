@@ -1,8 +1,9 @@
+#include "compiler/mwcc_core.h"
 #if MWCCPSP
 #include "compiler/CScope.h"
 #include <string.h>
 #include <stdlib.h>
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // the b69 tree's stdlib.h has no bsearch (MSL's)
 extern void* bsearch(
     const void* key,
@@ -210,7 +211,9 @@ void IRO_InitializeIsAssociativeENodeTypeArray(void) {
     IsAssociativeENodeType[EDEFINE] = FALSE;
     IsAssociativeENodeType[EREUSE] = FALSE;
     IsAssociativeENodeType[EASSBLK] = FALSE;
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     IsAssociativeENodeType[EVECTOR128CONST] = FALSE;
+#endif
     IsAssociativeENodeType[ECONDASS] = FALSE;
 }
 #endif
@@ -650,7 +653,7 @@ static inline Boolean IsIntConst301(IROLinear* nd) {
         return FALSE;
     }
     type = nd->rtype;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!((type->type == TYPEINT && TYPE_INTEGRAL(type)->integral < IT_17) ||
           type->type == TYPEPOINTER ||
 #else
@@ -697,7 +700,7 @@ void func_0058C570(IROLinear* nd) {
             expr = NULL;
             if (nd->nodetype == ETYPCON && nd->rtype->type == TYPEFLOAT) {
                 if (copts.opt_convertfpconsts) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     expr = func_00551500(
                         CMach_CalcFloatConvertFromInt(operand->rtype, val),
                         IRO_UnqualifiedType(nd->rtype)
@@ -742,7 +745,7 @@ void func_0058C570(IROLinear* nd) {
             break;
 
         case IROLinearOp2Arg:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (IsIntConst301(nd->u.diadic.left) &&
                 !IsIntConst301(nd->u.diadic.right) &&
 #else
@@ -762,7 +765,7 @@ void func_0058C570(IROLinear* nd) {
                     nd->u.diadic.right->u.node->data.intval = val;
                 } else {
                     nd->u.diadic.right->u.node->data.floatval = CMach_CalcFloatMonadic(
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         nd->u.diadic.right->rtype, '-', nd->u.diadic.right->u.node->data.floatval
                     );
 #else
@@ -771,13 +774,17 @@ void func_0058C570(IROLinear* nd) {
 #endif
                 }
             }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
+            // b52 (0x529D39): the types must be the same objects (no
+            // IRO_TypesEqual), and the inner node takes its left side's type
+            // as it is
             if (IsIntConst301(nd->u.diadic.right) &&
                 IsAssociativeENodeType[nd->nodetype] &&
                 nd->u.diadic.left->type == IROLinearOp2Arg &&
                 nd->u.diadic.left->nodetype == nd->nodetype &&
-                (nd->u.diadic.left->rtype == nd->rtype ||
-                 IRO_TypesEqual(nd->u.diadic.left->rtype, nd->rtype)) &&
+                nd->u.diadic.left->rtype == nd->rtype &&
+                IsIntConst301(nd->u.diadic.left->u.diadic.right) &&
+                nd->u.diadic.left->u.diadic.right->rtype == nd->u.diadic.right->rtype) {
 #else
             if (IsIntConst301(nd->u.diadic.right) &&
                 IsAssociativeENodeType[nd->nodetype] &&
@@ -785,14 +792,8 @@ void func_0058C570(IROLinear* nd) {
                 nd->u.diadic.left->nodetype == nd->nodetype &&
                 (nd->u.diadic.left->rtype == nd->rtype ||
                  IRO_TypesEqual(nd->u.diadic.left->rtype, nd->rtype)) &&
-#endif
                 IsIntConst301(nd->u.diadic.left->u.diadic.right) &&
                 (nd->u.diadic.left->u.diadic.right->rtype == nd->u.diadic.right->rtype ||
-#if MWCCPS2_B52
-                 IRO_TypesEqual(
-                     nd->u.diadic.left->u.diadic.right->rtype, nd->u.diadic.right->rtype
-                 ))) {
-#else
                  IRO_TypesEqual(
                      nd->u.diadic.left->u.diadic.right->rtype, nd->u.diadic.right->rtype
                  ))) {
@@ -801,7 +802,11 @@ void func_0058C570(IROLinear* nd) {
                 nd->u.diadic.left = inner->u.diadic.left;
                 inner->u.diadic.left = inner->u.diadic.right;
                 inner->u.diadic.right = nd->u.diadic.right;
+#if MWCC_CORE == MWCC_CORE_B52
+                inner->rtype = inner->u.diadic.left->rtype;
+#else
                 inner->rtype = IRO_UnqualifiedType(inner->u.diadic.left->rtype);
+#endif
                 nd->u.diadic.right = inner;
                 nd = inner;
             }
@@ -855,7 +860,7 @@ void func_0058C570(IROLinear* nd) {
                         folded = TRUE;
                         break;
                     case ELESS:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         CInt64_SetULong(
                             &val,
                             is_unsigned(nd->u.diadic.left->rtype) ? CInt64_LessU(v1, v2)
@@ -871,7 +876,7 @@ void func_0058C570(IROLinear* nd) {
                         folded = TRUE;
                         break;
                     case EGREATER:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         CInt64_SetULong(
                             &val,
                             is_unsigned(nd->u.diadic.left->rtype) ? CInt64_GreaterU(v1, v2)
@@ -887,7 +892,7 @@ void func_0058C570(IROLinear* nd) {
                         folded = TRUE;
                         break;
                     case ELESSEQU:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         CInt64_SetULong(
                             &val,
                             is_unsigned(nd->u.diadic.left->rtype) ? CInt64_LessEqualU(v1, v2)
@@ -903,7 +908,7 @@ void func_0058C570(IROLinear* nd) {
                         folded = TRUE;
                         break;
                     case EGREATEREQU:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         CInt64_SetULong(
                             &val,
                             is_unsigned(nd->u.diadic.left->rtype) ? CInt64_GreaterEqualU(v1, v2)
@@ -980,7 +985,7 @@ void func_0058C570(IROLinear* nd) {
                         folded = isInt = TRUE;
                         break;
                     case ELESSEQU:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         CInt64_SetULong(
                             &val, CMach_CalcFloatDiadicBool(nd->rtype, f1, TK_LESS_EQUAL, f2)
                         );
@@ -992,7 +997,7 @@ void func_0058C570(IROLinear* nd) {
                         folded = isInt = TRUE;
                         break;
                     case EGREATEREQU:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         CInt64_SetULong(
                             &val, CMach_CalcFloatDiadicBool(nd->rtype, f1, TK_GREATER_EQUAL, f2)
                         );
@@ -1004,7 +1009,7 @@ void func_0058C570(IROLinear* nd) {
                         folded = isInt = TRUE;
                         break;
                     case EEQU:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         CInt64_SetULong(
                             &val, CMach_CalcFloatDiadicBool(nd->rtype, f1, TK_LOGICAL_EQ, f2)
                         );
@@ -1016,7 +1021,7 @@ void func_0058C570(IROLinear* nd) {
                         folded = isInt = TRUE;
                         break;
                     case ENOTEQU:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         CInt64_SetULong(
                             &val, CMach_CalcFloatDiadicBool(nd->rtype, f1, TK_LOGICAL_NE, f2)
                         );
@@ -1079,14 +1084,14 @@ void IRO_ConstantFolding(void) {
 static Boolean evalconst301(IROLinear* nd) {
     Type* t;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     return IRO_IsIntConstant(nd);
 #endif
     if (nd->type != IROLinearOperand || !nd->u.node || nd->u.node->type != EINTCONST) {
         return FALSE;
     }
     t = nd->rtype;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     return (t->type == TYPEINT && TYPE_INTEGRAL(t)->integral < IT_17) ||
         t->type == TYPEPOINTER ||
         t->type == TYPEENUM;
@@ -1097,7 +1102,7 @@ static Boolean evalconst301(IROLinear* nd) {
 #endif
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // b52 (0x52A930): integers only (IRO_IsIntConstant); the truth is taken
 // before the condition is nopped; a switch keeps the value and the case list
 // first and matches a case's range; only the edges and dominators are redone
@@ -1107,11 +1112,11 @@ extern void IRO_ComputeDom(void);
 Boolean IRO_EvaluateConditionals(void) {
     IRONode* fnode;
     IROLinear* nd;
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     IROLinear* cond;
 #endif
     Boolean changed = FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     int isTrue;
 #else
     Boolean isZero;
@@ -1126,7 +1131,7 @@ Boolean IRO_EvaluateConditionals(void) {
         switch (nd->type) {
             case IROLinearIf:
             case IROLinearIfNot:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (IRO_IsIntConstant(nd->u.label.cond)) {
                     isTrue = !CInt64_IsZero(&nd->u.label.cond->u.node->data.intval);
                     IRO_NopOut(nd->u.label.cond);
@@ -1147,7 +1152,7 @@ Boolean IRO_EvaluateConditionals(void) {
                 }
                 break;
             case IROLinearSwitch:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (IRO_IsIntConstant(nd->u.swtch.cond)) {
                     val = nd->u.swtch.cond->u.node->data.intval;
 #else
@@ -1156,7 +1161,7 @@ Boolean IRO_EvaluateConditionals(void) {
                     val = cond->u.node->data.intval;
 #endif
                     switchInfo = nd->u.swtch.info;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     swcase = switchInfo->cases;
                     IRO_NopOut(nd->u.swtch.cond);
 #else
@@ -1164,7 +1169,7 @@ Boolean IRO_EvaluateConditionals(void) {
 #endif
                     nd->type = IROLinearGoto;
                     found = FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     while (swcase) {
                         if (CInt64_GreaterEqual(val, swcase->min) &&
                             CInt64_LessEqual(val, swcase->max)) {
@@ -1177,7 +1182,7 @@ Boolean IRO_EvaluateConditionals(void) {
                             nd->u.label.label = swcase->label;
                             break;
                         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         swcase = swcase->next;
 #endif
                     }
@@ -1187,7 +1192,7 @@ Boolean IRO_EvaluateConditionals(void) {
                     changed = TRUE;
                 }
                 break;
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
             default:
                 break;
 #endif
@@ -1195,7 +1200,7 @@ Boolean IRO_EvaluateConditionals(void) {
     }
 
     if (changed) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         IRO_ComputeSuccPred();
         IRO_ComputeDom();
 #else
@@ -1616,7 +1621,7 @@ static int ReduceConsecutiveIf(IRONode* startnode, IRONode* endnode) {
 }
 
 #if MWCCPSP
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 // 3.0.1 (0x58BC10..0x58C350): a run of nodes that each branch on the same
 // variable being equal to one of a set of consecutive constants becomes one
 // unsigned range test on the last node.
@@ -1626,7 +1631,7 @@ extern Type* func_0055CA90(Type* type); // the unsigned type of the same size
 #if MWCCPS2 // IroUtil.c has b210's copy (0x566620)
 extern Object* func_00554070(IROLinear* nd);
 #else
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 // 0x554070: cond is `var == c` (c an integer constant of a small int type);
 // the variable, else NULL
 Object* func_00554070(IROLinear* cond) {
@@ -1655,18 +1660,18 @@ Object* func_00554070(IROLinear* cond) {
 }
 #endif
 #endif
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 
 // the node holds nothing but nops and labels before its condition
 #endif
 #if MWCCPS2
 static inline Boolean condonly(IRONode* fnode) { // b210 inlines it (0x58C000, 0x58C140)
 #else
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 static Boolean condonly(IRONode* fnode) {
 #endif
 #endif
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     IROLinear* nd;
 
     if (fnode->numpred > 1) {
@@ -1903,13 +1908,13 @@ IRONode* func_0058C260(IRONode* fnode) {
 #endif
 int IRO_SimplifyConditionals(void) {
     IRONode* fnode;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     IRONode* start;
 #endif
     IRONode* end;
     int changed = FALSE;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     for (fnode = IRO_FirstNode; fnode; fnode = fnode->nextnode) {
         if (fnode->last->type == IROLinearIf) {
             start = end = fnode;
@@ -1924,14 +1929,14 @@ int IRO_SimplifyConditionals(void) {
                 func_0058BE70(fnode, end)) {
 #endif
                 changed = TRUE;
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
                 fnode = end->nextnode;
             } else {
                 fnode = fnode->nextnode;
 #endif
             }
         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     }
 
 #endif
@@ -2066,7 +2071,7 @@ void IRO_EvaluateStandardFunctionCalls(IROLinear* linear) {
     IROList list;
 
     for (; linear; linear = linear->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (linear->type == IROLinearFunccall &&
             !(linear->u.funccall.functype->flags & FUNC_INTRINSIC) &&
 #else
@@ -2076,7 +2081,7 @@ void IRO_EvaluateStandardFunctionCalls(IROLinear* linear) {
             linear->u.funccall.callee->type == IROLinearOperand &&
             linear->u.funccall.callee->u.node->type == EOBJREF &&
             (obj = linear->u.funccall.callee->u.node->data.objref)) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (!obj ||
                 !obj->name ||
                 !IRO_IsFunctionObject(obj) ||
@@ -2131,7 +2136,7 @@ VarRecord* func_0057B6C0(void) {
     Object* obj;
 
     for (var = IRO_FirstVar; var; var = var->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if ((obj = var->object) &&
             (obj->datatype == DDATA || obj->datatype == DABSOLUTE) &&
 #else
@@ -2139,7 +2144,7 @@ VarRecord* func_0057B6C0(void) {
                 (obj->datatype == DDATA || obj->datatype == DABSOLUTE) &&
 #endif
             obj->sclass != TK_STATIC &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             (!copts.cplusplus ||
              CScope_IsStdNameSpace(obj->nspace) ||
              obj->nspace == cscope_root) &&
@@ -2168,7 +2173,7 @@ Boolean func_0057B7A0(Object* obj) {
     char* name;
     IROStdFunc* entry;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // b52 (0x53AAB0) has the same lookup on its own table (0x5720E0, 480
     // entries, errno-only handler 0x53ABE0), but the headers' enabled bytes
     // (0x572050.., 15 of them) are 0 in the image and no b52 code writes them
@@ -2192,7 +2197,7 @@ Boolean func_0057B7A0(Object* obj) {
         name = obj->name->name;
     }
     entry = name ? bsearch(name, IRO_StdFuncs, 480, sizeof(IROStdFunc), StdFuncCompare) : NULL;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (entry &&
         entry->header &&
         entry->header->enabled &&

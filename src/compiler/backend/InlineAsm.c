@@ -1,4 +1,5 @@
-#if MWCCPS2_B52
+#include "compiler/mwcc_core.h"
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #define MWCCPSP 1
 #define MWCCPS2 1
 #define MWCCPS2_BUILD 69
@@ -101,7 +102,7 @@ CLabel* InlineAsm_LookupLabel(HashNameNode* name) {
 CLabel* InlineAsm_DeclareLabel(HashNameNode* name) {
     CLabel* label = newlabel();
     label->name = name;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     label->next = Labels, Labels = label; // -inline off keeps the comma's value
 #else
     label->next = Labels;
@@ -398,7 +399,7 @@ static CInt64 PrimaryExpression(void) {
     MLookupResult result;
     CInt64 value;
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     CInt64_SetULong(&value, 0);
 #endif
     switch (tk) {
@@ -458,7 +459,7 @@ static CInt64 PrimaryExpression(void) {
             InlineAsm_SyntaxError(ERR_UNEXPECTED_TOKEN);
     }
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     return value;
 #endif
 }
@@ -481,7 +482,7 @@ static CInt64 ConstantExpressionTail(CInt64 value) {
         if (GetPrec(left_token) >= right_prec) {
             value = CMach_CalcIntDiadic(TYPE(&stsignedlonglong), value, left_token, right);
         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             value = CMach_CalcIntDiadic(
                 TYPE(&stsignedlonglong), value, left_token, ConstantExpressionTail(right)
             );
@@ -502,7 +503,7 @@ CInt64 InlineAsm_Int64Expression(void) {
     CInt64 left;
 
     left = PrimaryExpression();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     return GetPrec(tk) == 0 ? left : ConstantExpressionTail(left);
 #else
     return GetPrec(tk) != 0 ? ConstantExpressionTail(left) : left;
@@ -704,7 +705,7 @@ static void ScanOptionalLabel(void) {
 extern void func_00483F30(void); // set up the MIPS assembler
 extern void func_00483C40(void); // an assembler directive
 extern void func_00483B20(void); // an instruction
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #define func_0053D790 InlineAsm_gcc_parse // b69: 0x50C030
 #endif
 extern void func_0053D790(void); // GCC-style operands after ':'
@@ -777,7 +778,7 @@ void ScanStatements(volatile short endToken) {
             }
         }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         // b69: a "\n" left in a GCC-style string ends the instruction
         if (tk == '\\') {
             tk = lex();
@@ -789,7 +790,7 @@ void ScanStatements(volatile short endToken) {
         if (tk == ';' || tk == TK_EOL) {
             CPrep_TokenStreamFlush();
             tk = lex();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (tk != '"' &&
                    (UInt16)(tk - TK_STRING) > 1 &&
                    tk != TK_INTCONST &&
@@ -884,13 +885,13 @@ static void ScanStatements(volatile short endToken, AssemblerType mode) {
 
 #endif
 #if MWCCPSP
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 void InlineAsm_ScanStatements(volatile short endToken) {
     ScanStatements(endToken);
 }
 #endif
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 void InlineAsm_ScanFunction(volatile short endToken) {
     ScanStatements(endToken);
 }
@@ -1159,7 +1160,7 @@ char* InlineAsm_DumpStatement(Statement* stmt) {
 
 #endif
 #if MWCCPSP
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #define data_00625EC1 cprep_nostring // b69 keeps GC's name (0x57E161)
 #else
 // 3.0.1: the MIPS assembler's statements (compiler/InlineAsmMIPS.h)
@@ -1170,12 +1171,12 @@ extern char* func_00481FE0(MAsmInstruction* mi); // the instruction's mnemonic
 
 void InlineAsm_Assemble(void) {
     short token = (tk == '(') ? ')' : '}';
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     char save_cpp = copts.cplusplus;
 #endif
     char save_pc = copts.asmpoundcomment;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     data_00625FD6 = copts.cplusplus;
 #else
     data_00625FD6 = save_cpp;
@@ -1225,7 +1226,7 @@ void InlineAsm_PackAsmStatement(Statement* stmt, Statement* first, void** output
 #endif
                 break;
             case MOpnd_Lab:
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 op->u.lab.label =
                     (CLabel*)(SInt32)CInline_GetStatementNumber(first, op->u.lab.label->stmt);
 #else
@@ -1248,15 +1249,15 @@ void InlineAsm_UnpackAsmStatement(
     MAsmInstruction* mi;
     MAsmOperand* op;
     int i;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     MAsmInstruction* src;
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     src = data;
 #endif
     mi = galloc(size);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     memcpy(mi, src, size);
 #else
     memcpy(mi, data, size);

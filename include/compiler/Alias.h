@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_ALIAS_H
 #define COMPILER_ALIAS_H
 
@@ -26,7 +27,7 @@ struct Alias {
     SInt32 size;
     int valuenumber;
     PCode* valuepcode;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     UInt32* membervec;
     int index;
     AliasType type;

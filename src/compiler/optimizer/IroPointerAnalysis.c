@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CInt64.h"
 #include "compiler/common.h"
 #include "compiler/objects.h"
@@ -5,7 +6,7 @@
 #include "compiler/types.h"
 #include "driver/oslib.h"
 #if MWCCPSP
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #define ASSERT_FUNCNAME
 #else
 #define ASSERT_FUNCNAME 0,
@@ -42,7 +43,7 @@
 #undef IRO_ASSERT_T
 #undef IRO_ASSERT_MSG
 #if MWCCPSP
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #define IRO_ASSERT(line, expr) \
     ((expr) ? (void)0 \
             : __assertion_failed( \
@@ -404,7 +405,7 @@ static Boolean ObjectIsAnExtendedParamCandidate(Object* obj) {
     IRO_ASSERT(1042, obj != NULL);
 
     return Inline_IsObjectData(obj) ||
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 #if VERSION < VERSION_GC_2_5
         obj->datatype == DABSOLUTE ||
 #endif
@@ -414,7 +415,7 @@ static Boolean ObjectIsAnExtendedParamCandidate(Object* obj) {
         obj->datatype == DINLINEFUNC;
 }
 
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 #if VERSION < VERSION_GC_2_5
 #undef CError_LINE_SHIFT
 #define CError_LINE_SHIFT 1
@@ -2516,7 +2517,7 @@ static ExtendedParam* CreateExtendedParam(
     return ep;
 }
 
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 #if VERSION < VERSION_GC_2_5
 #undef CError_LINE_SHIFT
 #define CError_LINE_SHIFT -1
@@ -4252,7 +4253,7 @@ static Boolean LinearNodeIsInFlowgraphNode(IROLinear* nd, IRONode* fnode) {
     IROLinear* scan;
 
     if (fnode && (first = fnode->first) && (last = fnode->last)) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         for (scan = first; scan && scan != last->next; scan = scan->next) {
             if (scan == nd) {
                 return TRUE;
@@ -4399,7 +4400,7 @@ static void EvalProcAction(IROLinear* Int, Boolean isFirst) {
                    Int->u.node->type == EOBJREF &&
                    (obj = Int->u.node->data.objref) &&
                    obj->datatype == DLOCAL) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             ObjectSet_Add(fnode->addressed, obj);
         } else if (Int->type == IROLinearAsm) {
             longjmp(stAbortPointerAnalysis, 1);
@@ -4456,7 +4457,7 @@ static void EvalProcAction(IROLinear* Int, Boolean isFirst) {
     }
 }
 
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 #if VERSION < VERSION_GC_2_5
 #undef CError_LINE_SHIFT
 #define CError_LINE_SHIFT 9
@@ -4729,21 +4730,21 @@ static void InvalidatePointsToFunctions(Object* proc) {
 
 static void InitialSetup(void) {}
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (1099)
 #endif
 static void PointerAnalysis_HeapErrorProc(void) {
     longjmp(stAbortPointerAnalysis, 2);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
 #if MWCCPSP
 // 3.0.1 (0x4CF9A0): no allocator here; the unknown object is set up each time
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // that nothing else touches; &stUnknown (0x584E94, 17 references) stays in
 // this unit's block, its fields never set
 Object stUnknownSetup;
@@ -4758,7 +4759,7 @@ void PointerAnalysis_Setup(void) {
     stUnknown.type = TYPE(&stunsignedlong);
     stUnknown.datatype = DDATA;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef stUnknown
 #endif
 #else
@@ -5740,6 +5741,13 @@ void PointerAnalysis_PragmaMode(void) {
 }
 
 #pragma sym off
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+#if defined(__MWERKS__)
+#pragma dont_inline on // b69 calls the header inlines out of line here
+#endif
+#endif
+#endif
 static void ParseLocationSet(
     LocationSet* loc,
     Type* rtype,
@@ -6021,6 +6029,13 @@ static void ParseLocationSet(
     *resultIsReturnValue = isReturnValue;
     *resultFailed = failed;
 }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+#if defined(__MWERKS__)
+#pragma dont_inline reset
+#endif
+#endif
+#endif
 #pragma sym reset
 
 static void ParseLocationSetSet(

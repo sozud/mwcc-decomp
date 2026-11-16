@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_CLPLUGINS_H
 #define DRIVER_CLPLUGINS_H
 
@@ -23,7 +24,7 @@ struct Plugin {
 };
 
 extern const ToolVersionInfo* Plugin_GetToolVersionInfo(void);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern const char* Plugin_GetDropInName(Plugin* pl);
 extern DropInFlags* Plugin_GetDropInFlags(Plugin* pl);
 extern OSType Plugin_GetPluginType(Plugin* pl);

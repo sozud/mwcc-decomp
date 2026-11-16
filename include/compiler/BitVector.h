@@ -1,9 +1,10 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_BITVECTOR_H
 #define COMPILER_BITVECTOR_H
 
 #include "compiler/common.h"
 #include "compiler/CError.h"
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #pragma pack(push, 2)
 #endif
 
@@ -18,7 +19,7 @@ struct BitVector {
 
 extern void Bv_AllocVector(BitVector** bv, UInt32 size);
 extern void Bv_ClearBit(UInt32 bit, BitVector* bv);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern void Bv_And(const BitVector* a, BitVector* b);
 extern void Bv_Or(const BitVector* a, BitVector* b);
 extern Boolean Bv_BitsInCommon(const BitVector* a, const BitVector* b);
@@ -60,10 +61,14 @@ extern Boolean Bv_IsEmpty(const BitVector* bv);
 
 HEADER_INLINE void Bv_SetBit(UInt32 bit, BitVector* bv) {
     if ((bit / 32) < bv->size) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         bv->data[bit / 32] |= 1 << (bit & 31);
     } else {
+#if MWCC_CORE == MWCC_CORE_B52
         CError_FATAL(80); // 3.0.1: "BitVector.h", 0x50
+#else
+        CError_FATAL(56);
+#endif
 #else
         bv->data[bit / 32] |= 1 << (bit & 31);
     } else {
@@ -83,7 +88,7 @@ HEADER_INLINE void Bv_SetBit(UInt32 bit, BitVector* bv) {
 }
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #pragma pack(pop)
 #endif
 #endif

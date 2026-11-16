@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CParser.h"
 #include "compiler/IroPointerAnalysis.h"
 #include "compiler/IrOptimizer.h"
@@ -62,7 +63,7 @@ Object* rt_ptmf_scall;
 Object* rt_ptmf_call4;
 Object* rt_ptmf_scall4;
 Object* rt_ptmf_null;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 Object* rt_builtin_next_arg; // b69 0x57ABAC
 #endif
 Object* rt_som_new;
@@ -82,7 +83,7 @@ Object* Xicth_func;
 Object* Xecth_func;
 Object* Xunex_func;
 CompilerLinkerOptions copts;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 COptsX coptsx; // fields b69's copts does not have (CParser.h)
 #endif
 GList name_mangle_list;
@@ -121,14 +122,11 @@ static struct SFuncList* cparser_sfunclist;
 
 Type sttemplexpr = {TYPETEMPLDEPEXPR, 0};
 Type stillegal = {TYPEILLEGAL, 1};
-#if MWCCPS2_B52
+#if !MWCCPSP_NATIVE || (MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52)
 Type stvoid = {TYPEVOID, 0};
-#endif
-#if !MWCCPSP_NATIVE
-Type stvoid = {TYPEVOID, 0};
-#endif // natively in src/native/exe_data.c, padded: 3.0.1 reads it as a TypeIntegral
+#endif // natively in src/native/exe_data.c (but b69's and b52's here), padded: 3.0.1 reads it as a TypeIntegral
 TypePointer void_ptr = {TYPEPOINTER, 0, &stvoid, 0};
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // b52 0x5601F8: char * (__clear's first parameter, Intrinsics.c); undefined before, so the
 // native linked a stub in its place
 TypePointer char_ptr = {TYPEPOINTER, 4, TYPE(&stchar), 0};
@@ -467,7 +465,7 @@ static void CParser_SetupRuntimeObjects(void) {
     rt_ptmf_null = CParser_NewGlobalDataObject(NULL);
     rt_ptmf_null->type = &stvoid;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     rt_builtin_next_arg =
         CParser_NewRTFunc(TYPE(&stvoid), GetHashNameNodeExport("__builtin_next_arg"), 2, 0);
     TYPE_FUNC(rt_builtin_next_arg->type)->flags |= 0x200;
@@ -543,7 +541,7 @@ void CParser_Setup(void) {
     CClass_Init();
     CIRTrans_Setup();
 #if !MWCCPSP // no Objective-C in 3.0.1
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     CObjC_Setup();
 #endif
 #endif
@@ -598,7 +596,7 @@ void CParser_Cleanup(void) {
     CTempl_Cleanup();
     CIRTrans_Cleanup();
 #if !MWCCPSP // no Objective-C in 3.0.1
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     CObjC_Cleanup();
 #endif
 #endif
@@ -782,12 +780,12 @@ HashNameNode* CParser_AppendUniqueName(char* prefix) {
     char buf[256];
     char* dst;
     int i;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     int b69_dead;
 #endif
 
     dst = buf;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (b69_dead = i = 0; *prefix && i < 240; i++) {
 #else
     for (i = 0; *prefix && i < 240; i++) {
@@ -852,13 +850,13 @@ HashNameNode* CParser_AppendUniqueNameFile(char* prefix) {
     int i;
     int j;
     int len;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     int b69_dead;
     int b69_dead2;
 #endif
 
     dst = buf;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (b69_dead2 = i = 0; *prefix && i < 200; i++) {
 #else
     for (i = 0; *prefix && i < 200; i++) {
@@ -877,7 +875,7 @@ HashNameNode* CParser_AppendUniqueNameFile(char* prefix) {
     COS_FileGetFSSpecInfo(&cparamblkptr->sourcefile, NULL, NULL, filename);
     src = (char*)&filename[1];
     len = filename[0];
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (b69_dead = j = 0; j < len && i < 255; j++, b69_dead = i++) {
 #else
     for (j = 0; j < len && i < 255; j++, i++) {
@@ -895,7 +893,7 @@ HashNameNode* CParser_AppendUniqueNameFile(char* prefix) {
 #endif
 
 static HashNameNode* CParser_GetUnnamedNameSpaceName(void) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     int b69_dead;
 #endif
     unsigned char filename[256];
@@ -917,7 +915,7 @@ static HashNameNode* CParser_GetUnnamedNameSpaceName(void) {
 #endif
         src = (char*)&filename[1];
         len = filename[0];
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         for (b69_dead = i = 0; i < len && dst < &buf[254]; i++) {
 #else
         for (i = 0; i < len && dst < &buf[254]; i++) {
@@ -990,7 +988,7 @@ static void CParser_SetCFMFlags(Object* object, DeclInfo* declinfo) {
 }
 
 void CParser_UpdateObject(Object* object, DeclInfo* declinfo) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (declinfo && ((volatile DeclInfo*)declinfo)->section) {
 #else
     if (declinfo && declinfo->section) {
@@ -1018,7 +1016,7 @@ void CParser_UpdateObject(Object* object, DeclInfo* declinfo) {
         }
     }
 #elif !MWCCPSP // 3.0.1 has no register or interrupt info here
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     if (declinfo && object->datatype == DDATA && !object->u.data.reginfo.reg) {
         object->u.data.reginfo = declinfo->reginfo;
     }
@@ -1084,7 +1082,7 @@ Object* CParser_NewLocalDataObject(DeclInfo* declinfo, Boolean add_to_locals) {
     object->access = ACCESSPUBLIC;
     object->datatype = DLOCAL;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // a number of the "@N" names that follow)
     object->u.var.uid = CParser_GetUniqueID();
 
@@ -1097,7 +1095,7 @@ Object* CParser_NewLocalDataObject(DeclInfo* declinfo, Boolean add_to_locals) {
     }
 
     if (add_to_locals) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         CFunc_AppendLocal(object);
 #else
         ObjectList* list = lalloc(sizeof(ObjectList));
@@ -1202,7 +1200,7 @@ FuncArg* CParser_NewFuncArg(void) {
     return arg;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (97)
 #endif
@@ -1238,7 +1236,7 @@ Type* atomtype(void) {
             return TYPE(&stsignedlonglong);
         case ATOM_ULONGLONG:
             return TYPE(&stunsignedlonglong);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case ATOM_INT128:
             return TYPE(&stint128);
 #endif
@@ -1256,12 +1254,12 @@ Type* atomtype(void) {
             return TYPE(&stlongdouble);
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (97)
 #endif
@@ -1354,7 +1352,7 @@ Object* CParser_FindDeallocationObject(
         first_time = FALSE;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -1492,7 +1490,7 @@ static Boolean is_arglistequal(FuncArg* a, FuncArg* b) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (100)
 #endif
@@ -1548,12 +1546,12 @@ short is_memberpointerequal(Type* a, Type* b) {
     arg_b = arg_b->next;
     return is_arglistsame(arg_a, arg_b);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (101)
 #endif
@@ -1622,12 +1620,12 @@ restart:
             return FALSE;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (102)
 #endif
@@ -1693,13 +1691,13 @@ restart:
             return 0;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
 short CParser_CompareArgLists(FuncArg* a, FuncArg* b) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     FuncArg* b69_dead;
 #endif
     Boolean old_argmatch_used;
@@ -1812,7 +1810,7 @@ short CParser_CompareArgLists(FuncArg* a, FuncArg* b) {
         }
 
         a = a->next;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead = b = b->next;
 #else
         b = b->next;
@@ -1826,7 +1824,7 @@ short CParser_CompareArgLists(FuncArg* a, FuncArg* b) {
 }
 
 Boolean is_arglistsame(FuncArg* a, FuncArg* b) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     FuncArg* b69_dead;
 #endif
     if (a == &oldstyle) {
@@ -1861,7 +1859,7 @@ Boolean is_arglistsame(FuncArg* a, FuncArg* b) {
         }
 
         a = a->next;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead = b = b->next;
 #else
         b = b->next;
@@ -1972,7 +1970,7 @@ Type* CParser_GetWCharType(void) {
 #endif
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (100)
 #endif
@@ -2030,7 +2028,7 @@ short CParser_GetOperator(ENodeType t) {
             return TK_LOGICAL_NE;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -2217,7 +2215,7 @@ Boolean isdeclaration(UInt8 scanDeclarator, UInt8 requireName, UInt8 isNewExpres
         return FALSE;
 #else
         if (!(tk == TK_IDENTIFIER &&
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
               COPTS_X.altivec_model &&
 #else
               copts.altivec_model &&
@@ -2255,7 +2253,7 @@ Boolean islookaheaddeclaration(void) {
         return FALSE;
 #else
         if (!(tk == TK_IDENTIFIER &&
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
               COPTS_X.altivec_model &&
 #else
               copts.altivec_model &&
@@ -2388,7 +2386,8 @@ Boolean CParser_TryParamList(Boolean stopAtComma) {
 
 Type* CParser_RemoveTopMostQualifiers(Type* type, UInt32* qual) {
     switch (type->type) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
         case TYPEARRAY:
             TYPE_POINTER(type)->target =
                 CParser_RemoveTopMostQualifiers(TYPE_POINTER(type)->target, qual);
@@ -2516,6 +2515,137 @@ Boolean CParser_IsReadOnly(Type* type, UInt32 qual) {
     }
     return result;
 }
+#else
+        case TYPEARRAY:
+            TYPE_POINTER(type)->target =
+                CParser_RemoveTopMostQualifiers(TYPE_POINTER(type)->target, qual);
+            return type;
+        case TYPEPOINTER:
+            if (TYPE_POINTER(type)->qual & Q_CONST) {
+                TypePointer* newtype = galloc(sizeof(TypePointer));
+                *newtype = *TYPE_POINTER(type);
+                newtype->qual = 0;
+                return TYPE(newtype);
+            }
+            return type;
+        case TYPEMEMBERPOINTER:
+            if (TYPE_MEMBER_POINTER(type)->qual & Q_CONST) {
+                TypeMemberPointer* newtype = galloc(sizeof(TypeMemberPointer));
+                *newtype = *TYPE_MEMBER_POINTER(type);
+                newtype->qual = 0;
+                return TYPE(newtype);
+            }
+            return type;
+        default:
+            *qual = 0;
+            return type;
+    }
+}
+
+UInt32 CParser_GetTypeQualifiers(Type* type, UInt32 qual) {
+    while (IS_TYPE_ARRAY(type)) {
+        type = TYPE_POINTER(type)->target;
+    }
+
+    switch (type->type) {
+        case TYPEPOINTER:
+            qual = TYPE_POINTER(type)->qual;
+            break;
+        case TYPEMEMBERPOINTER:
+            qual = TYPE_MEMBER_POINTER(type)->qual;
+            break;
+        default:
+            break;
+    }
+
+    return qual;
+}
+
+UInt32 CParser_GetCVTypeQualifiers(Type* type, UInt32 qual) {
+    while (IS_TYPE_ARRAY(type)) {
+        type = TYPE_POINTER(type)->target;
+    }
+
+    switch (type->type) {
+        case TYPEPOINTER:
+            qual = TYPE_POINTER(type)->qual;
+            break;
+        case TYPEMEMBERPOINTER:
+            qual = TYPE_MEMBER_POINTER(type)->qual;
+            break;
+        default:
+            break;
+    }
+
+    return qual & (Q_CONST | Q_VOLATILE);
+}
+
+#if VERSION >= VERSION_GC_2_5 || 0 // b52's 3.0 optimizer calls CParser_IsReadOnly
+static Boolean CParser_ClassHasMutableMember(TypeClass* tclass) {
+    ClassList* base;
+    ObjMemberVar* ivar;
+    Type* type;
+    UInt32 qual;
+
+    for (base = tclass->bases; base; base = base->next) {
+        if (CParser_ClassHasMutableMember(base->base)) {
+            return TRUE;
+        }
+    }
+
+    for (ivar = tclass->ivars; ivar; ivar = ivar->next) {
+        type = ivar->type;
+        qual = ivar->qual;
+        while (type->type == TYPEARRAY) {
+            type = TYPE_POINTER(type)->target;
+        }
+        switch (type->type) {
+            case TYPEPOINTER:
+                qual = TYPE_POINTER(type)->qual;
+                break;
+            case TYPEMEMBERPOINTER:
+                qual = TYPE_MEMBER_POINTER(type)->qual;
+                break;
+            default:
+                break;
+        }
+        if (qual & Q_MUTABLE) {
+            return TRUE;
+        }
+        if (type->type == TYPECLASS && CParser_ClassHasMutableMember(TYPE_CLASS(type))) {
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
+Boolean CParser_IsReadOnly(Type* type, UInt32 qual) {
+    int result;
+    while (type->type == TYPEARRAY) {
+        type = TYPE_POINTER(type)->target;
+    }
+    switch (type->type) {
+        case TYPEPOINTER:
+            qual = TYPE_POINTER(type)->qual;
+            break;
+        case TYPEMEMBERPOINTER:
+            qual = TYPE_MEMBER_POINTER(type)->qual;
+            break;
+        default:
+            break;
+    }
+    if (!(qual & Q_CONST)) {
+        return FALSE;
+    }
+    result = TRUE;
+    if (type->type == TYPECLASS && (!CParser_ClassHasMutableMember(TYPE_CLASS(type))) == FALSE) {
+        result = FALSE;
+    }
+    return result;
+}
+#endif
+#endif
 #else
         case TYPEARRAY:
             TYPE_POINTER(type)->target =
@@ -2857,7 +2987,7 @@ static Type* getthetype(short token, short size, short signedness) {
 }
 
 void TypedefDeclInfo(DeclInfo* declinfo, Type* type, UInt32 qual) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Type* b69_dead;
 #endif
     if (type->type == TYPEPOINTER) {
@@ -2875,7 +3005,7 @@ void TypedefDeclInfo(DeclInfo* declinfo, Type* type, UInt32 qual) {
         declinfo->qual &= ~(Q_RESTRICT | Q_REFERENCE | Q_VOLATILE | Q_CONST);
         declinfo->qual |= qual & (Q_ALIGNED_MASK | Q_REFERENCE | Q_PASCAL | Q_VOLATILE | Q_CONST);
     } else if (type->type == TYPEMEMBERPOINTER) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead = type;
 #endif
         declinfo->thetype = galloc(sizeof(TypeMemberPointer));
@@ -2955,7 +3085,7 @@ static void CParser_ParseAttributeFunctionSummary(DeclInfo* declinfo) {
 #undef CError_LINE_SHIFT
 #define CError_LINE_SHIFT -48
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern SInt32 func_00464210(char* name); // b69 0x489510: section number by name (ObjGen.c)
 
 // b69 0x430AC0: aligned, nothrow, section (the MIPS section table, stored in
@@ -2964,7 +3094,8 @@ extern SInt32 func_00464210(char* name); // b69 0x489510: section number by name
 #if defined(__MWERKS__)
 #pragma dont_inline on // b69 calls the header inlines out of line here
 #endif
-// b52 0x431920: set qualifier bits on t's pointer (past any arrays), or on *qual
+
+#if MWCC_CORE == MWCC_CORE_B52
 static void CParser_ApplyQual52(Type* t, UInt32* qual, UInt32 bits, UInt32 mask) {
     while (IS_TYPE_ARRAY(t)) {
         t = TYPE_POINTER(t)->target;
@@ -2978,6 +3109,7 @@ static void CParser_ApplyQual52(Type* t, UInt32* qual, UInt32 bits, UInt32 mask)
     }
 }
 
+#endif
 #endif
 #if MWCCPSP
 // 3.0.1: the target's attributes first (func_004642D0), then aligned/packed,
@@ -3207,7 +3339,7 @@ void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
 void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
     CInt64 val64;
     SInt32 val;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt32 section;
 #endif
 
@@ -3221,7 +3353,7 @@ void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
             return;
         }
         do {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             // b52 (0x4319E0) also takes the const keyword, as the name "const"
             if ((tk = lex()) == TK_CONST) {
                 tkidentifier = GetHashNameNodeExport("const");
@@ -3279,7 +3411,7 @@ void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
                         CError_Error(ERR_NOT_STRUCT_UNION_CLASS);
                     }
                 } else if (declinfo) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     UInt32 savedqual = declinfo->qual;
 #endif
                     declinfo->qual &= ~Q_ALIGNED_MASK;
@@ -3330,7 +3462,7 @@ void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
                             CError_FATAL(2828);
                             break;
                     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     // b52 (0x431C61 -> 0x431920): the alignment goes on the
                     // declarator's (element) pointer type when there is one
                     {
@@ -3366,7 +3498,7 @@ void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
                     CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
                     return;
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if ((section = func_00464210(tkstring))) {
                     declinfo->section = section;
 #else
@@ -3380,7 +3512,7 @@ void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
                     CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
                     return;
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             } else if (!strcmp(tkidentifier->name, "mode") ||
                        !strcmp(tkidentifier->name, "__mode__")) {
                 if ((tk = lex()) != '(') {
@@ -3402,13 +3534,15 @@ void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
                 }
             } else if (!strcmp(tkidentifier->name, "noreturn") ||
                        !strcmp(tkidentifier->name, "__noreturn__")) {
+#if MWCC_CORE == MWCC_CORE_B52
             } else if (!strcmp(tkidentifier->name, "unused") ||
                        !strcmp(tkidentifier->name, "__unused__")) {
+#endif
 #endif
             } else if (!strcmp("function_summary", tkidentifier->name)) {
                 CParser_ParseAttributeFunctionSummary(declinfo);
             } else {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 // b52 (0x431F47): any other attribute is ignored, a warning
                 // only under warn_illpragma, its argument list skipped
                 int depth;
@@ -3419,7 +3553,7 @@ void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
                 CError_Error(ERR_ILLEGAL_UNSUPPORTED_ATTRIBUTE);
 #endif
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (lookahead() == '(') {
                     depth = 1;
                     tk = lex();
@@ -3454,13 +3588,13 @@ void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
         }
         tk = lex();
     } while ((int)tk == TK_UU_ATTRIBUTE_UU);
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 
     if ((int)tk == TK_ASM && declinfo) {
         CMach_ParseGlobalRegisterVariable(declinfo);
 #endif
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if defined(__MWERKS__)
 #pragma dont_inline reset
 #endif
@@ -4897,7 +5031,7 @@ handle_vector:
                 typetoken = -1;
                 goto bailOut;
             case TK_IDENTIFIER:
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if (COPTS_X.altivec_model &&
 #else
             if (copts.altivec_model &&
@@ -4911,7 +5045,7 @@ handle_vector:
                     }
                 }
                 if (!typetoken && !signedness && !typesize) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     if (COPTS_X.objective_c && !strcmp(tkidentifier->name, "id")) {
 #else
                 if (copts.objective_c && !strcmp(tkidentifier->name, "id")) {
@@ -4984,13 +5118,13 @@ some_shared_label:
                             typetoken = -1;
                             tk = lex();
                             if (tk == '<' &&
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 COPTS_X.objective_c &&
 #else
                             copts.objective_c &&
 #endif
                                 IS_TYPE_CLASS(di->thetype) &&
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 B69_OBJCINFO(TYPE_CLASS(di->thetype))) {
 #else
                             TYPE_CLASS(di->thetype)->objcinfo) {
@@ -5268,7 +5402,7 @@ void CParser_NewClassAction(TypeClass* tclass) {
     cparser_classactions = act;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (493)
 #endif
@@ -5292,7 +5426,7 @@ void CParser_CallBackAction(Object* obj) {
         CError_FATAL(4601);
 #endif
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
@@ -5376,7 +5510,7 @@ void CParser_ParseGlobalDeclaration(void) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-4)
 #endif
@@ -5445,7 +5579,7 @@ static void CParser_ParseLinkageSpecification(DeclInfo* di) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -5653,7 +5787,7 @@ declaration:
                 }
             default:
                 CParser_GetDeclSpecs(di, TRUE);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if ((Boolean)(di->storageclass == TK_AUTO || di->storageclass == TK_REGISTER)) {
 #else
             if ((Boolean)(di->storageclass == TK_AUTO)) {
@@ -5663,7 +5797,7 @@ declaration:
                 }
                 if (tk != ';') {
                     scandeclaratorlist(di);
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                     if (di->storageclass == TK_REGISTER && !di->reginfo.reg) {
                         CError_Error(ERR_ILLEGAL_STORAGE_CLASS);
                         di->storageclass = 0;
@@ -5756,7 +5890,7 @@ void cparser(void) {
         }
 
         CClass_GenThunks();
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         if (cparamblkptr->precompile != 1) {
             CObjC_GenerateModule();
         }

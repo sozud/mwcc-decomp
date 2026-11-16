@@ -1,0 +1,911 @@
+// Hand-placed b69 addresses, with the evidence. Loaded after symbols.txt and
+// symbols.derived.txt (and wins over both).
+// copts: the compileroptions table's offsets (re/b69/pragmas.txt) all agree with
+// our layout at this base; four byte-matching CParser functions vote for it
+// (CParser_GetWCharType, a false byte-match, and one CMachine function differ).
+copts = 0x0057DB28;
+// pointer_generation (0x4679C0, derived) is CExpr_RewriteConst(pointer_generation2(expr)):
+// its two calls are 0x467920 then 0x466740.
+CExpr.c/pointer_generation2 = 0x00467920;
+CExpr_RewriteConst = 0x00466740;
+// CLT_dummymain: return 0 (xor eax,eax; ret 4), just before CLT_GetDropInFlags; the
+// command-line plugin record CLMain.c registers points at it
+CLMain.c/CLT_dummymain = 0x0040ABC0;
+// b69's command-line parser tool is 3.0.1's ParserGlue-psp.c (src/psp-driver
+// under MWCCPS2_B69): Dispatch_PreParse (0x4058E0) picks parser_mw or
+// parser_gcc by --mw-compat/--gcc-compat/MWCL_GCC_COMPAT, storing gcc_compat;
+// RegisterStaticParserToolInfo (0x405A60) pushes parser_dispatch; the records
+// name PreParse/MidParse/PostParse and the Dispatch_ callbacks (0x405A40 and
+// 0x405A50 are both `return 0`). PreParse sets useDefaultIncludes (byte, 1),
+// PostParse's first SetupPragmas table is the far_call/mips16 one.
+parser_mw = 0x0051D08C;
+parser_gcc = 0x0051D120;
+parser_dispatch = 0x0051D1C8;
+PreParse = 0x004056F0;
+MidParse = 0x00405730;
+PostParse = 0x004057C0;
+Dispatch_PreParse = 0x004058E0;
+Dispatch_MidParse = 0x00405A40;
+Dispatch_PostParse = 0x00405A50;
+useDefaultIncludes = 0x00510E3C;
+gcc_compat = 0x0057AB64;
+ps2_targetPragmas = 0x00510E5C;
+// functions.csv merges 0x40D3FA..0x40D6C5: Opt_SavePrefs (0x40D3FA, calls
+// Parser_StorePanels), Opt_MaybeMoveAccessPaths (0x40D40A, calls
+// MoveSystemPathsIntoUserList), then Opt_HandleOutputName from 0x40D425 to
+// ValidateToolState (672 bytes, our size); b69's option lists point at 0x40D425
+Opt_HandleOutputName = 0x0040D425;
+// ObjGen_Finish: the only InitGList(&glist, 0x8000) in b69 (0x48A005), after
+// which glist.data goes to cparamblkptr+0x34 and the sizes to +0x10/+0x18/+0x14
+// (the derived 0x4E6D50 is a preprocessor loop over tokens)
+ObjGen_Finish = 0x00489FE0;
+// the "PS2 MIPS CodeGen" preference panel: b69's parser panel table (0x51CFE8)
+// gives 0x510B94, 0x14 bytes; TargetSetOptFlags writes +0x0D for 'In'
+pMIPSCodeGen = 0x00510B94;
+// ParserHelpers-cc.c in b69 order, ahead of SetupPragmas (0x40DBB5, exact):
+// Opt_AddStringToDefines (two AddStringToHandle(&definesHandle) calls),
+// Opt_DefineSymbol ("Option '-D|d' is not supported with this plugin"),
+// Opt_UndefineSymbol ("Option -%s is not supported ..."), Opt_AddPrefixFile
+// (definesHandle default, snprintf, the same message); b69's option lists
+// point at the first three
+Opt_AddStringToDefines = 0x0040D927;
+Opt_DefineSymbol = 0x0040D952;
+Opt_UndefineSymbol = 0x0040DA0D;
+Opt_AddPrefixFile = 0x0040DAA4;
+// stint128: atomtype (0x42EFC0) returns it for atom 13, CMach_GetCustomType
+// (0x458FC0) for token 0x114, CParser_ParseAttribute's mode(TI) (0x431015)
+// stores it; its bytes are {TYPEINT, 16, IT 0x12} right before CMachine.c's
+// file name
+stint128 = 0x00536128;
+// CodeGen_GetAsmEffects (0x4C0B00, derived): the opcode table it indexes
+// (imul 0x2C; add 0x56E958 at 0x4C0B1A), the register-type test it calls at
+// 0x4C0C40 (0x50C2B0: ps2_IsQuadwordClass, recursive on a lone base class) and
+// the access-size helper it calls at 0x4C0E49 (0x49AA80, b145's func_0048FBE0)
+data_006115F8 = 0x0056E958;
+ps2_IsQuadwordClass = 0x0050C2B0;
+func_0048FBE0 = 0x0049AA80;
+// LocalCSE.c (0x4A6D20..0x4A7F55, assert "LocalCSE.c" line 573 in matchvalues'
+// kind-1 case): GC 2.4.7's ValueNumbering.c on MIPS pcode
+// (src/psp/backend/LocalCSE.c). The pipeline at 0x436000 calls 0x4A7F00 with
+// no argument; it clears 0x57B6C8 (the flag the code generator tests before
+// its "After removecommonsubexpressions" dumps), calls 0x4A4FE0 (walks
+// pcbasicblocks testing flags & 0x60006: gather_alias_info), 0x4A6D20 (oalloc
+// of 0xC * used_virtual_registers[c] per class into 0x563608[7]), clears block
+// flag 4, runs 0x4A6D70 + 0x4A7E20 per unvisited block, then freeoheap. The
+// statics: valueceiling (set to 0x7FFFFFFF), stackedvalues (list of 0x2E-byte
+// records), regvalue[7], opvalue[0x462] in this order at 0x563600.
+BE_RemoveCommonSubexpressions = 0x004A7F00;
+removedcommonsubexpressions = 0x0057B6C8;
+data_006245C0 = 0x0057B6C8;
+gather_alias_info = 0x004A4FE0;
+// update_alias_value: called (alias, pcode) by simplestore and (alias, 0) by
+// pointerstore/operatetomemory; a 3-way switch on alias->type (+0x2C) whose first
+// case calls killmemory(alias, pcode) (0x4A5230 is inside it)
+update_alias_value = 0x004A5210;
+// insertpcodebefore(anchor, pc): pc->next = anchor, pc->prev = anchor->prev,
+// block->first = pc when anchor was first
+insertpcodebefore = 0x00498770;
+// coloring: functioncall kills every CSE only when it is set (GC's test)
+coloring = 0x0057B6F0;
+// n_real_registers: propagatecopiesto compares a register and its copy with it
+data_00624744 = 0x0057C704;
+// PCodeInfo.c helpers LocalCSE calls when it reuses a value: a register copy
+// of src into dst (makepcode with the move opcodes per class; the third
+// argument picks the 128-bit move for class 0), whether pcode's operation is
+// 16 bytes wide (copts byte 0x57DB5F and func_0048FBE0(op) == 16), and
+// whether a load can take the value a store wrote (alias size <= 8, or <= 16
+// with the copts byte, and matching store/load opcode pairs)
+mips_makecopyinstruction = 0x0049A830;
+mips_is128bitop = 0x0049AC60;
+mips_can_reuse_stored_value = 0x0049A9D0;
+LocalCSE.c/_b69sec.bss = 0x00563600;
+LocalCSE.c/valueceiling = 0x00563600;
+LocalCSE.c/stackedvalues = 0x00563604;
+LocalCSE.c/regvalue = 0x00563608;
+LocalCSE.c/opvalue = 0x00563624;
+LocalCSE.c/allocatecsedatastructures = 0x004A6D20;
+LocalCSE.c/initializecsedatastructures = 0x004A6D70;
+LocalCSE.c/labelvalue = 0x004A6E00;
+LocalCSE.c/unlabelvalue = 0x004A6E30;
+LocalCSE.c/stackregistervalue = 0x004A6E60;
+LocalCSE.c/stackmemoryvalue = 0x004A6EA0;
+LocalCSE.c/unstackvalue = 0x004A6EE0;
+LocalCSE.c/samevalue = 0x004A6F60;
+LocalCSE.c/killregister = 0x004A6FC0;
+LocalCSE.c/killallCSEs = 0x004A7090;
+LocalCSE.c/killregisters = 0x004A70D0;
+LocalCSE.c/copyregister = 0x004A7110;
+LocalCSE.c/matchvalues = 0x004A71D0;
+LocalCSE.c/chooselocation = 0x004A7410;
+LocalCSE.c/findavailablevalue = 0x004A7490;
+LocalCSE.c/addavailablevalue = 0x004A7590;
+LocalCSE.c/isCSEop = 0x004A7680;
+LocalCSE.c/isCSEload = 0x004A7710;
+LocalCSE.c/registercopy = 0x004A7750;
+LocalCSE.c/recentlystored = 0x004A77C0;
+LocalCSE.c/simpleload = 0x004A7810;
+LocalCSE.c/simplestore = 0x004A7940;
+LocalCSE.c/pointerload = 0x004A7960;
+LocalCSE.c/pointerstore = 0x004A7A20;
+LocalCSE.c/arithmeticop = 0x004A7A40;
+LocalCSE.c/functioncall = 0x004A7AF0;
+LocalCSE.c/operatefrommemory = 0x004A7B20;
+LocalCSE.c/operatetomemory = 0x004A7BF0;
+LocalCSE.c/propagatecopiesto = 0x004A7C10;
+LocalCSE.c/removecsesfrombasicblock = 0x004A7C90;
+LocalCSE.c/getvaluestate = 0x004A7D70;
+LocalCSE.c/setvaluestate = 0x004A7D90;
+LocalCSE.c/forkvaluestate = 0x004A7DB0;
+LocalCSE.c/regressvaluestate = 0x004A7DD0;
+LocalCSE.c/removecsesfromextendedbasicblock = 0x004A7E20;
+// matchvalues: the "LocalCSE.c" literal of its CError_Internal(573) call
+LocalCSE.c/_b69at216 = 0x0053CC50;
+// worst_case_ptr: gather_alias_info (0x4A4FE0) stores it into every load, store,
+// memory operation and call without an alias, as GC does (the bytes match ours)
+worst_case_ptr = 0x00552630;
+// Alias.c statics: b69 initialize_aliases (0x4A4D10) clears aliases 0x5535D0,
+// n_aliases 0x5535CC, n_gathered_aliases 0x5535C8 and alias_hash[997] from
+// 0x552634, then stores make_alias_set() in worst_case_ptr (0x552630): no
+// set_aliases (dropped under MWCCPS2_B69), so the statics start at 0x552634
+Alias.c/_b69sec.bss = 0x00552634;
+// bitvectorinitialize(vec, size, value): (size + 31) >> 5 words set to value;
+// gather_alias_info calls it on each set alias's member vector
+bitvectorinitialize = 0x005050E0;
+// InlineAsm.c (MIPS, 0x4F8A70..0x4F99D0; assert name "InlineAsm.c" at
+// 0x4F8C55): FuncLevelAsm.c's Assembler (0x4E7D50) calls ScanStatements
+// (0x4F94A0) with '}'; it calls the MIPS set-up 0x4B4690 first, clears
+// InlineAsm_gccmode, setjmps InlineAsm_assemblererror (0x567EA4), and
+// dispatches '.' to 0x4B6640 and the rest to ScanOptionalLabel (0x4F93E0,
+// MakeLocalLabel's "@%i_%i" caller) and 0x4B67D0, ':' to
+// InlineAsm_gcc_parse (0x50C030: gcc_name_list_index = -1 then the
+// output/input/killed/replace calls). AssemblerError is longjmp(0x567EA4, 1);
+// SyntaxError tests backtracking (0x57C890) and longjmps backtrack
+// (0x56B480). The functions in between follow 3.0.1's order: DefineLabel
+// (LookupLabel, DeclareLabel, CFunc_AppendStatement(ST_LABEL)),
+// LookupSymbolMIPS (CScope_FindName switch), isclassmember (CScope_FindName
+// on the class and its bases), StructMemberOffset (ismember/isclassmember),
+// StructArrayMemberOffset ('['), PrimaryExpression and
+// ConstantExpressionTail (CInt64 ops, GetPrec, CMach_CalcIntDiadic),
+// Int64Expression, ConstantExpression (CInt64_GetULong 0x431130),
+// InlineAsm_Assemble (tk == '(' test, ASMstmtnb 0x567AA0, first_ST_ASM
+// 0x57B134, copts.cplusplus saved in 0x57E15A), Pack (galloc, memcpy,
+// CInline_GetLocalID), Unpack (CInline_GetLocalObj), CheckLocalUsage
+// (SetVarUsage 0x4B7FD0), GetReferencedLabel (type 4), GetObjectOffset.
+AssemblerError = 0x004F8A70;
+InlineAsm_SyntaxError = 0x004F8A80;
+InlineAsm_LookupLabel = 0x004F8AB0;
+InlineAsm_DeclareLabel = 0x004F8AD0;
+InlineAsm.c/InlineAsm_DefineLabel = 0x004F8AF0;
+InlineAsm_LookupSymbolMIPS = 0x004F8B40;
+InlineAsm.c/isclassmember = 0x004F8C80;
+InlineAsm_StructMemberOffset = 0x004F8CE0;
+InlineAsm_StructArrayMemberOffset = 0x004F8DD0;
+InlineAsm.c/PrimaryExpression = 0x004F8F20;
+InlineAsm.c/ConstantExpressionTail = 0x004F91C0;
+InlineAsm_Int64Expression = 0x004F9300;
+InlineAsm_ConstantExpression = 0x004F9370;
+MakeLocalLabel = 0x004F93A0;
+InlineAsm.c/ScanOptionalLabel = 0x004F93E0;
+ScanStatements = 0x004F94A0;
+InlineAsm_Assemble = 0x004F9730;
+InlineAsm_PackAsmStatement = 0x004F97D0;
+InlineAsm_UnpackAsmStatement = 0x004F9870;
+InlineAsm_CheckLocalUsage = 0x004F98F0;
+InlineAsm_GetReferencedLabel = 0x004F9940;
+InlineAsm_GetObjectOffset = 0x004F9980;
+InlineAsm_gcc_parse = 0x0050C030;
+CInt64_GetULong = 0x00431130;
+SetVarUsage = 0x004B7FD0;
+InlineAsm_assemblererror = 0x00567EA4;
+backtrack = 0x0056B480;
+backtracking = 0x0057C890;
+InlineAsm.c/ASMstmtnb = 0x00567AA0;
+first_ST_ASM = 0x0057B134;
+data_00625FD6 = 0x0057E15A;
+allow_array_expressions = 0x005455D0;
+// InlineAsm.c's .bss is ASMstmtnb (offset 0; Assemble's inc, MakeLocalLabel's
+// sprintf argument) then buffer. Its literals (numbers move when the unit's
+// includes change): the assert file name, then "@%i_%i"
+InlineAsm.c/_b69sec.bss = 0x00567AA0;
+InlineAsm.c/_b69at134 = 0x005455D4; // "InlineAsm.c"
+InlineAsm.c/_b69at277 = 0x005455E0; // MakeLocalLabel's "@%i_%i"
+// InlineAsmRegisters.c (b69: the MIPS assembler's register names): the
+// set-up 0x4B4690 calls 0x50ABA0 (clears 64 words at 0x56A018) and then
+// 0x50ABC0 393 times with (name, class, number, 0); 0x50AC10 is the lookup
+// over the same buckets (CHash & 0x3F, strcmp of the name at +4)
+InlineAsm_InitializeRegisters = 0x0050ABA0;
+InlineAsm_InsertRegister = 0x0050ABC0;
+InlineAsm_LookupRegister = 0x0050AC10;
+InlineAsmRegisters.c/_b69sec.bss = 0x0056A018; // hashedregisters
+// InlineAsmMnemonics.c (b69; assert name at 0x545FB8): the set-up 0x4B4690
+// calls 0x50C1B0 (clears 256 words at 0x56A118) and 0x50C1D0 for each
+// opcode's name and alias; 0x4B67D0 calls the lookup 0x50C260
+InlineAsm_InitializeMnemonics = 0x0050C1B0;
+InlineAsm_InsertMnemonic = 0x0050C1D0;
+InlineAsm_LookupMnemonic = 0x0050C260;
+InlineAsmMnemonics.c/_b69sec.bss = 0x0056A118; // hashedmnemonics
+InlineAsmMnemonics.c/_b69at40 = 0x00545FB8; // "InlineAsmMnemonics.c"
+// InlineAsmMIPS.c (b69): the instruction scanner 0x4B67D0 (ScanStatements'
+// callee) reads the mnemonic with 0x4B44F0 into its buffer, looks it up
+// (InlineAsm_LookupMnemonic) and parses each opcode's operands with 0x4B3E40
+func_00487F60 = 0x004B44F0;
+func_00488180 = 0x004B3E40;
+// the MIPS set-up 0x4B4690: nomacro copy (from copts.nomacro, 0x57DB59; the
+// directive's nomacro/macro write it), the noat flag (.set at/noat),
+// allow_array_expressions = 1, the last branch = 0
+data_00625E7F = 0x0057E048;
+data_00625E98 = 0x0057E045;
+data_005D161C = 0x005455D0;
+data_00624C3C = 0x0057B7CC;
+// 0x4B44F0 (the mnemonic reader) clears the VFPU write mask 0x57E037 and
+// 0x57E14B, then ORs x 8, y 4, z 2, w 1 into 0x57E037 (0xF without a suffix)
+data_00625EA1 = 0x0057E037;
+data_00625ECD = 0x0057E14B;
+// MIPSError (b69 0x50AAF0..0x50ABA0, Error before Warning as in 3.0.1's
+// non-PS2 order): 0x50AAF0 longjmps on trychain, calls the VA reporter with
+// (FALSE, FALSE) and AssemblerError under in_assembler; 0x50AB50 returns on
+// trychain or copts.supress_warnings and reports with isWarning TRUE. The
+// operand parser 0x4B3E40 warns 0x64/0x66 (3.0.1 1/3 + 0x63), errors 0x65.
+func_004C5940 = 0x0050AAF0;
+func_004C5890 = 0x0050AB50;
+// the operand parser 0x4B3E40 (b145's func_00488180 shape): rec->flags = 4
+// when 0x57E16C is set (b145: volatileasm | data_00625EAC); 0x57C92C cleared
+// before the operands and tested for flag 8 after; 0x57E157 set around the
+// lex of a gcc-mode ",p" operand. Its callees by format letter: immediate in
+// range 0x4B3150 ('<', 'c', 'i', 'j', ... with (min, max)), label 0x4B3C60
+// ('l', 'p' with 0; 'a', 'q', 'b' with 1), register 0x4B36A0 ((rclass, sub,
+// mode); 'd', 's', 't', 'D'..'W', 'G', 'P'), memory/address 0x4B34B0
+// ('A' 0, 'o'/'U' 1), 'f' 0x4B3420 (float constant bits, error 0x90 otherwise),
+// the plain 'I' 0x4B3480 (type 0, InlineAsm_Int64Expression).
+volatileasm = 0x0057E16C;
+data_00624810 = 0x0057C92C;
+InlineAsm_labelref = 0x0057E157;
+func_0048AA50 = 0x004B3150;
+func_00488EB0 = 0x004B3C60;
+func_004890B0 = 0x004B36A0;
+func_00489410 = 0x004B34B0;
+InlineAsm_FloatOperand = 0x004B3420;
+InlineAsm_IntOperand = 0x004B3480;
+// 0x4B3150 (the range-checked immediate) writes 0x57DC2E 1 for "%hi(" and 2
+// for "%lo(" and tests its bit 0 for the >> 16 / & 0xFFFF choice
+data_00625E5A = 0x0057DC2E;
+// the asm statement to pcode 0x4B7360 (3.0.1 func_00482000): .set calls
+// 0x498670 (makepclabel then 0x498630: 3.0.1's func_0046FA50) and masks the
+// block flags 0x57DF8E; a call adds 0x498F60 (the sum of the seven register
+// counts at 0x57B67C: func_00461F50) less 0x4B3130 (class 5 only:
+// func_004B8990) operands, filled from the class tables at 0x56B100 (32 per
+// class); the instruction comes from 0x4B68E0; 0x57DFBE is cleared after
+// use; the current block is copied to 0x57C7E0 at the end
+func_0046FA50 = 0x00498670;
+func_00461F50 = 0x00498F60;
+func_004B8990 = 0x004B3130;
+data_006241E0 = 0x0057B67C;
+data_0060E038 = 0x0056B100;
+data_00625E56 = 0x0057DF8E;
+data_00625E7E = 0x0057DFBE;
+data_00624C18 = 0x0057C7E0;
+func_00482330 = 0x004B68E0;
+// b69's GCC asm operand name lookup: 0x50AEF0 (gcc_parse_name) passes
+// tkidentifier, its gcc_name_list entry (0x22 bytes at 0x56BFC0) and a flag;
+// 0x4B7860 is InlineAsm_LookupSymbolMIPS's body plus that flag (assert
+// "InlineAsmMIPS.c" 2655) and calls 0x4B7A70 with each enclosing class's scope
+func_00482000 = 0x004B7360;
+InlineAsm_GCCLookupSymbol = 0x004B7860;
+InlineAsm_GCCLookupMember = 0x004B7A70;
+// b69's GCCInlineAsm.c (0x50AC60..0x50C1B0; b145's MIPS file): InlineAsm_gcc_parse
+// 0x50C030 sets gcc_name_list_index 0x57D714 to -1, clears the 20 six-byte
+// operand records at 0x56C268 with 0x50AEC0, zeroes 0x57C758, then calls
+// output 0x50B820 / input 0x50B7C0 (each: 0x50B760 = attribute 0x50ACC0 + name
+// 0x50AEF0 per operand), killed 0x50B890 and the replacement 0x50C000 (per
+// statement 0x50B920); gcc_name_list's 0x22-byte entries are at 0x56BFC0
+GCCInlineAsm.c/gcc_parse_attribute = 0x0050ACC0;
+GCCInlineAsm.c/gcc_clear_operands = 0x0050AEC0;
+GCCInlineAsm.c/gcc_parse_name = 0x0050AEF0;
+GCCInlineAsm.c/gcc_parse_expression = 0x0050B760;
+GCCInlineAsm.c/gcc_parse_input = 0x0050B7C0;
+GCCInlineAsm.c/gcc_parse_output = 0x0050B820;
+GCCInlineAsm.c/gcc_parse_killed = 0x0050B890;
+GCCInlineAsm.c/gcc_replace_arg_st_asm = 0x0050B920;
+GCCInlineAsm.c/gcc_replace_arg = 0x0050C000;
+InlineAsm_gcc_parse = 0x0050C030;
+gcc_name_list = 0x0056BFC0;
+gcc_name_list_index = 0x0057D714;
+gcc_operands = 0x0056C268;
+data_006242D0 = 0x0057C758;
+// gcc_parse_name 0x50AEF0 tests e->rtype with 0x50C2B0 (ps2_IsQuadwordClass)
+// then 0x50C370 and takes TPTR_TARGET on success: the pointer form
+ps2_IsQuadwordClassPointer = 0x0050C370;
+// gcc_replace_arg_st_asm 0x50B920 calls 0x4B7760 where b210's calls
+// ps2_gcc_quadmove (b69 opcodes 0x23D/0x23B, operand 1 in class 5)
+ps2_gcc_quadmove = 0x004B7760;
+rt_builtin_next_arg = 0x0057ABAC; // CParser_SetupRuntimeObjects 0x42E351, CExpr_ParseNextArg 0x468E3C
+// BE_DumpPCode (0x4A5B90): empty in b69 (a bare ret); the pipeline at 0x435E80
+// calls it after each pass with (name, label) when debug_listing is on
+BE_DumpPCode = 0x004A5B90;
+// func_00482330 (0x4B68E0) calls: make_alias (0x4A4E70: asserts its object,
+// GC 2.4.7 make_alias), ObjGen_GetObjectAddress (0x489CC0: basereg -1 and
+// near 0 for no object, as 3.0.1 ObjGen.c), is_const_object (0x4305D0:
+// CParser_IsConst(type, qual) of its object, next to is_volatile_object),
+// ps2_IsQuadwordClassLocal (0x50C3D0: DLOCAL in locals, then
+// ps2_IsQuadwordClass, as b210 0x4D20B0)
+make_alias = 0x004A4E70;
+ObjGen_GetObjectAddress = 0x00489CC0;
+is_const_object = 0x004305D0;
+ps2_IsQuadwordClassLocal = 0x0050C3D0;
+// CodeGen_PropagateIntoAsm (0x4C0A40): IRO_CopyAndConstantPropagation
+// (0x4CA7F0) calls it right after CodeGen_GetAsmEffects (0x4C0B00), with
+// the GC 2.4.7 arguments (stmt, object, EOBJREF expression)
+CodeGen_PropagateIntoAsm = 0x004C0A40;
+// CClass_IsDestructor follows CClass_IsConstructor (0x45ECF0, derived from its callers)
+// and tests FUNC_IS_DTOR (0x2000); the GC 2.0 guess put it at 0x45ECF0
+CClass_IsDestructor = 0x0045ED20;
+// Placed by byte search (our object's bytes, relocation slots masked, equal b69's
+// at exactly one functions.csv start; the reference check in build_b69 then passes):
+// driver
+ParserHelpers.c/MatchesExtension = 0x0040CD36;
+Opt_SavePrefs = 0x0040D3FA;
+DisplayWarningOptions = 0x0040DEB0;
+AddOverlayGroup = 0x0040F2B9;
+AddOverlay = 0x0040F302;
+// CompilerTools.c (the GC 2.0 anchor guesses were wrong)
+AppendGListNoData = 0x00432BB0;
+NameHashExportReset = 0x00432FC0;
+InitNameHash = 0x00432FF0;
+initheaps = 0x00433130;
+CTool_GetPathName = 0x004337A0;
+// Unmangle.c
+Unmangle.c/Unmangle_BufferInit = 0x004F77C0;
+Unmangle.c/Unmangle_BufferAppendChar = 0x004F77E0;
+Unmangle.c/Unmangle_BufferAppendString = 0x004F7800;
+Unmangle.c/Unmangle_BufferTerminate = 0x004F7840;
+Unmangle.c/Unmangle_TemplateParams = 0x004F7860;
+Unmangle.c/Unmangle_ClassName = 0x004F7EB0;
+Unmangle.c/Unmangle_QClassName = 0x004F7F30;
+Unmangle.c/Unmangle_PointerType = 0x004F80C0;
+Unmangle.c/Unmangle_ArrayType = 0x004F81A0;
+Unmangle.c/Unmangle_FunctionType = 0x004F8280;
+Unmangle.c/Unmangle_Pointer = 0x004F8330;
+Unmangle.c/Unmangle_FuncArgList = 0x004F85C0;
+// MSL / startup
+__wcstoul = 0x00411630;
+__wcstoull = 0x00411910;
+isdigit = 0x00405A90;
+mainCRTStartup = 0x00401000;
+// Unmangle.c in source order: Unmangle_SpecialName between Unmangle_TemplateParams
+// (0x4F7860) and Unmangle_ClassName (0x4F7EB0); MWUnmangleClassName and MWUnmangle
+// after Unmangle_FuncArgList (0x4F85C0)
+Unmangle.c/Unmangle_SpecialName = 0x004F7960;
+MWUnmangleClassName = 0x004F86C0;
+// Placed by object order: between byte-matching anchors, our functions in object order
+// aligned with b69's function starts by mnemonic similarity; each of these then
+// byte-matches b69 at that address (cov-scratch orderplace.py)
+CCompiler.c/store_compile_results = 0x00420050;
+CABI.c/CABI_AllocateBases = 0x00452980;
+CABI.c/CABI_AllocateVirtualBasePointers = 0x00452A10;
+CABI.c/CABI_AllocateVirtualBases = 0x00452C60;
+CABI.c/CABI_FindZeroDeltaVPtr = 0x00452CC0;
+CABI.c/CABI_GetBaseVTableSize = 0x00452DE0;
+CABI_LayoutClass = 0x004530D0;
+CABI.c/CABI_GetVBasePtr = 0x00453750;
+CABI.c/CABI_InitVBaseCtorOffsets = 0x004538B0;
+CABI.c/CABI_IsOperatorNew = 0x00453BC0;
+CABI_ConstructorCallsNew = 0x00453C30;
+CABI.c/CABI_DestroyMembers = 0x00454F50;
+CABI.c/CABI_DestroyVBases = 0x00455130;
+CBrowse_Setup = 0x004E7F00;
+CBrowse_Finish = 0x004E7FC0;
+CBrowse.c/AppendGList = 0x004E8070;
+CBrowse_AddClassMemberVar = 0x004E8440;
+CBrowse_AddClassMemberData = 0x004E8680;
+CBrowse_EndClass = 0x004E8770;
+CBrowse_AddStructMember = 0x004E8970;
+CBrowse_EndStruct = 0x004E8A30;
+CClass_GenThunks = 0x0045E3A0;
+CClass_IsEmpty = 0x0045E630;
+CClass_OverridesBaseMember = 0x0045F830;
+CClass.c/CClass_GetCovariantType = 0x0045FCB0;
+CClass_MemberDef = 0x00460700;
+CExcept_ActionNeedsDestruction = 0x004E9700;
+CExcept_RegisterLocalArray = 0x004E97E0;
+CExcept_RegisterDeleteObject = 0x004E9840;
+CException.c/CExcept_FindLocalObject = 0x004E99A0;
+CExcept_ArrayInit = 0x004E99F0;
+CExcept_RegisterMember = 0x004E9A50;
+CException.c/CExcept_DestroyLocalPointer = 0x004E9C00;
+CExcept_ActionCleanup = 0x004E9D20;
+CException.c/CExcept_MangleNameSpaceName = 0x004E9DD0;
+CException.c/CExcept_MangleClassName = 0x004E9E20;
+CException.c/CExcept_MakeBaseClassListAmbig = 0x004E9ED0;
+CException.c/CExcept_GetBaseClassList = 0x004E9F10;
+CException.c/CExcept_MangleClass = 0x004E9FE0;
+CException.c/CExcept_GetTypeID = 0x004EA070;
+CException.c/CExcept_TypeID = 0x004EA190;
+CException.c/CExcept_CallCopyCtor = 0x004EA370;
+CException.c/CExcept_MightNeedDtor = 0x004EA640;
+CException.c/CExcept_CatchExpressionInit = 0x004EA7E0;
+CInt64_IsOne = 0x004BC750;
+CMangler_VTableName = 0x0044F180;
+CMangler.c/CMangler_MangleClassName = 0x0044F630;
+CPrec.c/CPrec_InitAddressHashTable = 0x004E1E60;
+CPrec.c/CPrec_InitPointerHashTable = 0x004E1E80;
+CPrec.c/CPrec_NewAddrPatch = 0x004E1F00;
+CPrec.c/CPrec_SetupBuiltIn = 0x004E2370;
+CPrec.c/CPrec_AppendNamePatch = 0x004E2710;
+CPrec.c/CPrec_AppendString = 0x004E2730;
+CPrec.c/CPrec_RawMemPatch = 0x004E27A0;
+CPrec.c/CPrec_GetTypeEnumPatch = 0x004E2C10;
+CPrec.c/CPrec_GetTypeFuncPatch = 0x004E2EE0;
+CPrec.c/CPrec_GetTypeMemberPointerPatch = 0x004E2FA0;
+CPrec.c/CPrec_GetVTablePatch = 0x004E32A0;
+CPrec.c/CPrec_GetSOMInfoPatch = 0x004E3340;
+CPrec.c/CPrec_GetTemplFuncInstancePatch = 0x004E36E0;
+CPrec.c/CPrec_GetTemplateFriendPatch = 0x004E38D0;
+CPrec.c/CPrec_GetTemplateFunctionPatch = 0x004E3B20;
+CPrec.c/CPrec_GetSwitchInfoPatch = 0x004E4650;
+CPrec.c/CPrec_GetInlineAsmPatch = 0x004E46B0;
+CPrec.c/CPrec_GetLocObjectPatch = 0x004E4830;
+CPrec.c/CPrec_GetObjTypePatch = 0x004E4A30;
+CPrec.c/CPrec_GetObjTypeTagPatch = 0x004E4A80;
+CPrec.c/CPrec_GetObjMemberVarPatch = 0x004E4B20;
+CPrec.c/CPrec_GetNameSpaceObjectListPatch = 0x004E4F80;
+CPrec.c/CPrec_GetNameSpaceNamePatch = 0x004E5020;
+CPrec.c/CPrec_GenerateTokenStreamPatches = 0x004E5740;
+CPrec.c/CPrec_FlushRawBuffer = 0x004E5850;
+CPrec.c/CPrec_FlushBufferCheck = 0x004E58C0;
+CRTTI.c/CRTTI_CreateSubClassList = 0x004FD9A0;
+CRTTI.c/CRTTI_IncompleteCheck = 0x004FE390;
+CSOM_CheckFuncType = 0x00450440;
+CSOM.c/CSOM_SetNibble = 0x004511F0;
+CSOM.c/CSOM_GenerateSignature = 0x004512D0;
+CSOM.c/CSOM_GenerateMethodNames = 0x00451340;
+CSOM.c/CSOM_GetCurrentSOMClass = 0x004518A0;
+CSOM_PragmaCallStyle = 0x00451C90;
+CSOM.c/CSOM_MakeTempCondition = 0x00451E50;
+CSOM_New = 0x00451ED0;
+CSOM_InitAutoClass = 0x00452040;
+CSOM.c/CSOM_FindIntroClassOffset = 0x004520B0;
+CSOM.c/CSOM_ComputeSOMSelf = 0x00452200;
+CScope_SetClassScope = 0x0044AB90;
+CScope_SetClassDefScope = 0x0044ABE0;
+CScope_SetMethodScope = 0x0044ACA0;
+CScope.c/CScope_ObjectIsFunction = 0x0044AD30;
+CScope_IsEmptySymTable = 0x0044AD50;
+CScope.c/CScope_BuildTypeAssociatedNameSpaceList = 0x0044B0A0;
+CScope.c/CScope_BuildAssociatedNameSpaceList = 0x0044B130;
+CScope.c/CScope_IsSameObject = 0x0044B160;
+CScope.c/CScope_GetAccessPath = 0x0044BE40;
+CScope.c/CScope_GetBaseAccessPathEnd = 0x0044DE40;
+CScope_AddClassUsingDeclaration = 0x0044E400;
+CScope_ParseUsingDirective = 0x0044E8C0;
+CTemplateClass.c/CTemplClass_SetupActionErrorRef = 0x004EBFD0;
+CTemplateClass.c/CTemplClass_AppendTemplateAction = 0x004EC010;
+CTemplClass_RegisterUsingDecl = 0x004EC0A0;
+CTemplClass_RegisterFriend = 0x004EC0E0;
+CTemplClass_RegisterEnumType = 0x004EC1F0;
+CTemplClass_RegisterEnumerator = 0x004EC220;
+CTemplClass_RegisterObjectInit = 0x004EC270;
+CTemplClass_RegisterObjectDef = 0x004EC2B0;
+CTemplateClass.c/CTemplClass_PartialClassIsMoreSpecialized = 0x004ECF70;
+CTemplClass_FindPartialTemplate = 0x004ED090;
+CTemplClass_DefineNestedClass = 0x004ED180;
+CTemplateClass.c/CTemplClass_CopyNestedClass = 0x004ED210;
+CTemplateClass.c/CTemplClass_CompleteObjectInit = 0x004EE040;
+CTemplateFunc.c/CTemplFunc_SetupTypeDeduce = 0x004F52C0;
+CTempl_CheckFuncInstance = 0x004F5680;
+CTempl_DeduceFunc = 0x004F5740;
+CTemplateFunc.c/CTempl_GetSpecifiedType = 0x004F5AF0;
+CTemplateFunc.c/CTempl_DeduceTemplDepTemplate = 0x004F5C90;
+CTemplateFunc.c/CTempl_DeduceTemplateType = 0x004F5CC0;
+CTemplateFunc.c/CTempl_DeduceTemplateTypeBase = 0x004F5D00;
+CTemplateFunc.c/CTempl_DeduceQualTemplate = 0x004F5DB0;
+CTemplateFunc.c/CExpr_DeduceFromObjList = 0x004F7080;
+CTemplateFunc.c/CTemplFunc_TemplateNestLevel = 0x004F74F0;
+CTemplateNew.c/CTempl_MemberParseLex = 0x00474DC0;
+CTemplateNew.c/CTempl_GetTemplateNestIndex = 0x00475160;
+CTemplateNew.c/CTempl_SetupClassParamNameSpace = 0x00475AF0;
+CTempl_IsQualifiedMember = 0x00475B00;
+CTemplateNew.c/CTempl_FindConversionFuncName = 0x00476090;
+CTemplateNew.c/CTempl_ParseConversionFunctionTemplate = 0x00476100;
+CTemplTool_InsertTemplateParameter = 0x0047C1C0;
+CTemplateTools.c/CTemplTool_GetFirstRealArg = 0x0047C650;
+CTemplTool_RemoveTemplateArgumentNameSpace = 0x0047CAE0;
+CTemplTool_CheckTemplArgType = 0x0047D150;
+CTemplTool_MakeGlobalTemplArgCopy = 0x0047D260;
+CTemplateTools.c/CTemplTool_FindNestedClass = 0x0047D570;
+CTemplateTools.c/CTemplTool_FindNestedTemplateInstance = 0x0047DDB0;
+CTemplateTools.c/CTemplTool_FindTemplArg = 0x0047E0D0;
+CTemplateTools.c/CTemplTool_DeduceExSpecCopy = 0x0047E910;
+Parameter.c/Param_String = 0x0042ABBC;
+LockGList = 0x00432B20;
+UnlockGList = 0x00432B30;
+getheaperror = 0x00433260;
+setheaperror = 0x00433270;
+clock = 0x00410B20;
+?what@bad_alloc@std@@UBEPBDXZ = 0x00426FF0;
+CPrec.c/CPrec_FileAlign = 0x004E5BB0;
+PrecompilerWrite = 0x004E5F60;
+CPrec.c/CPrec_ReadData = 0x004E6070;
+CPrec.c/CPrec_ReadRawBuffer = 0x004E60C0;
+CPrec.c/CPrec_RelocateBuiltins = 0x004E6280;
+// IroSubable.c: IRO_IsSubableExpression's operand case calls CodeGen.c's
+// func_004323D0 (0x439D00); IsSubscript is the xor eax,eax; ret before it. Its
+// calls name IRO_IsConstant (EINTCONST/EFLOATCONST test) and IRO_IsRegable
+// (DLOCAL, info, !noregister); the anchor guesses 0x4D1C20/0x4CE9A0 were wrong.
+IRO_IsSubableExpression = 0x004E1B00;
+IroSubable.c/IsSubscript = 0x004E1AF0;
+IRO_IsConstant = 0x004BE040;
+IRO_IsRegable = 0x004CA5F0;
+// IRO_Optimizer's calls after IRO_PreLinearize: IRO_TransformTree (0x4C9860,
+// the ?gc guess 0x452C60 is CABI code), which calls LiftPostIncrements for
+// expression statements; IRO_Linearize (0x4C3080) calls LinearizeExpr at
+// 0x4C2B80 (functions.csv splits it at 0x4C2BA0).
+IRO_TransformTree = 0x004C9860;
+IroTransform.c/LiftPostIncrements = 0x004C96F0;
+IRO_Linearize = 0x004C3080;
+IroLinearForm.c/LinearizeExpr = 0x004C2B80;
+// IRO_TransformTree's three per-statement calls, in order (the ?gc guesses in
+// 0x44B000..0x452100 are front-end code)
+IroTransform.c/TransformExprTree = 0x004C8FE0;
+IroTransform.c/TransformExprTree2 = 0x004C9600;
+IroTransform.c/TransformExprTree1 = 0x004C93E0;
+// deleteunreachableblocks (0x4986A0) calls computedepthfirstordering at
+// 0x498830 (a symbols.guess145.txt name): build_b69.py's proven_refs binds
+// it, else the hybrid's copy would call our differing one and crash
+deleteunreachableblocks = 0x004986A0;
+// C_Compiler (0x43CB00) cleans up with ObjGen_CodeCleanup (0x48AF20) and then
+// PointerAnalysis_Cleanup at 0x487B40 (the b145 placement; GC 2.0's anchor
+// guess 0x4D46F0 is wrong)
+PointerAnalysis_Cleanup = 0x00487B40;
+
+// findplace.py (asm-scratch, from cov-scratch): our function's bytes, relocation
+// slots masked, equal one b69 function start and no other; the relocation check
+// then verifies every reference. Replaces wrong anchor/b145 guesses.
+PPCError.c/PPCError_VAErrorMessage = 0x0050AA90;
+PPCError_Error = 0x0050AAF0;
+available_registers = 0x00498DF0;
+volatile_registers = 0x00498E20;
+CCompiler.c/IsJapaneseSystem = 0x0043A310;
+CCompiler.c/GetLicense = 0x0043A330;
+CCompiler.c/ReleaseLicense = 0x0043A3B0;
+CDecl_CheckArrayIntegr = 0x00443560;
+CDecl.c/CDecl_IsEnumClassTypeOrRef = 0x00443BE0;
+CDecl.c/CDecl_TemplatePTM = 0x00444600;
+CDecl.c/CDecl_MakeDefaultCtorType = 0x00449960;
+CDecl.c/CDecl_MakeAssignmentOperatorType = 0x00449CB0;
+CDecl.c/CDecl_SpecializeTemplateClass = 0x0044A550;
+CError_GetQualifiedName = 0x004564D0;
+CError_GetFunctionName = 0x00456550;
+CError_ErrorFuncCall = 0x00456D50;
+CExpr_MakeNameLookupResultExpr = 0x004682B0;
+CExpr.c/CExpr_NewPTMType = 0x00468390;
+CExpr.c/CExpr_ParseNextArg = 0x00468D70;
+CExpr.c/CExpr_BuiltInComputeType = 0x00468FB0;
+CExpr.c/CExpr_ParseBuiltin = 0x004691D0;
+CExpr.c/CExpr_SimpleExplicitConversion = 0x00469660;
+CExpr.c/CExpr_MemberPointerCast = 0x0046B660;
+CExpr_ParseAsmExpr = 0x004700F0;
+CExpr2.c/CExpr_DerefETEMPCopy = 0x004EEE50;
+CExpr2.c/CExpr_CalcStdAssign = 0x004EFD10;
+CExpr2.c/is_compatible_conversion = 0x004F0CE0;
+CExpr_ConvertToIntegral = 0x004F1610;
+CExpr_GetFuncMatchArgs = 0x004F1E20;
+CExpr2.c/CExpr_IsObjrefPlusX = 0x004F21E0;
+CExpr2.c/CExpr_IsStaticType = 0x004F2240;
+CExpr2.c/CExpr_ConvertEMember = 0x004F28A0;
+CExpr2.c/CExpr_DeleteFuncCall = 0x004F3D00;
+CExpr2.c/scan_type_name = 0x004F3F80;
+CExpr2.c/cv_qualifier_list = 0x004F3FE0;
+CExpr2.c/scan_new_type_name = 0x004F4200;
+CExpr2.c/CExpr_NewExceptionSafeAlloc = 0x004F4350;
+CExpr2.c/CExpr_NewClass = 0x004F4990;
+CExprConvMatch.c/CExpr_GetImplictObjectParamType = 0x004F9A20;
+CExprConvMatch.c/CExpr_GetParamType = 0x004F9AB0;
+CExprConvMatch.c/CExpr_HasNParams = 0x004F9B50;
+CExpr_DerivedToBase = 0x004FB860;
+CExprConvMatch.c/CExpr_GetMatchObject = 0x004FC670;
+CExprConvMatch.c/CExpr_MatchOperands = 0x004FD1A0;
+CFunc.c/CFunc_LoopIncrement = 0x00470220;
+CFunc.c/CFunc_LoopDecrement = 0x00470260;
+CFunc.c/adjustargumenttype = 0x004703D0;
+CFunc.c/CFunc_IsInObjList = 0x00470470;
+CFunc.c/CFunc_DefaultArg = 0x004705B0;
+findlabel = 0x00470A30;
+CheckCLabels = 0x00470B40;
+CFunc.c/DestructorNeeded = 0x00470D30;
+CFunc.c/FindLastNonCommonStackObj = 0x00470DE0;
+CFunc.c/DestructorReturnTransform = 0x00470E10;
+CFunc.c/DestructorIfTransform = 0x00470F10;
+CFunc.c/ifstatement = 0x00471F80;
+CFunc.c/checklabel = 0x00472330;
+CFunc.c/CFunc_AutoResultCheck = 0x00472460;
+CFunc.c/CFunc_FunctionRedefinedCheck = 0x004742D0;
+CFunc.c/CFunc_DeclareFuncName = 0x00474320;
+CInit.c/CInit_SetData = 0x004595E0;
+CInit.c/CInit_GetInitObject = 0x004599B0;
+CInline.c/CInline_MakeNotNot = 0x004613A0;
+CInline.c/CInline_CopyExpressionSave = 0x00461D70;
+CInline.c/CInline_TranslateID = 0x00461DD0;
+CInline.c/CInline_GetLabelStatementNumber = 0x00461E20;
+CInline.c/CInline_CopyEMemberInfo = 0x00461EE0;
+CInline.c/CInline_GetObjectSFlags = 0x00462640;
+CInline.c/CInline_ReturnCheck = 0x00462C50;
+CInline.c/EstimateExpandedSizeOfExpr = 0x00463180;
+CInline_AddTemplateFunctionAction = 0x00465A00;
+CInline.c/CInline_AddFRefList_ExAction = 0x00465AF0;
+CInline.c/CInline_AddFRefList_Statement = 0x00465BF0;
+CParser.c/CParser_ParseNameSpace = 0x004325E0;
+CPrep.c/cannotopenerror = 0x0043AD80;
+CPrep_RemoveSpecialMacros = 0x0043AF50;
+CPrep_WarningName = 0x0043C5D0;
+CPrep_GetSourceFilePath = 0x0043C7C0;
+CPrep.c/CPrep_MacroRedefError = 0x0043D400;
+CPrep.c/pragma_precompile_target = 0x0043F150;
+CPrep.c/pragma_push = 0x0043F780;
+CPrep.c/pragma_pop = 0x0043F7B0;
+CPrepTokenizer.c/tohex = 0x00478D90;
+CPrepTokenizer.c/tmult = 0x00479A60;
+CPrepTokenizer.c/tless = 0x00479AF0;
+CPrepTokenizer.c/tequa = 0x00479BA0;
+CPrepTokenizer.c/tgrea = 0x00479BD0;
+CPrepTokenizer.c/texcl = 0x00479CE0;
+CPrepTokenizer.c/tplus = 0x00479D10;
+CPrepTokenizer.c/tminu = 0x00479D60;
+CPrepTokenizer.c/torrr = 0x00479DF0;
+CPrepTokenizer.c/tampe = 0x00479E40;
+CPrepTokenizer.c/tpowe = 0x00479E90;
+CPrepTokenizer.c/tdivi = 0x00479ED0;
+CPrepTokenizer.c/tchrL = 0x0047A2A0;
+CPrepTokenizer.c/tchrc = 0x0047A530;
+CPrepTokenizer.c/tchrd = 0x0047A6B0;
+CPrepTokenizer.c/tchre = 0x0047A7B0;
+CPrepTokenizer.c/tchrf = 0x0047A8A0;
+CPrepTokenizer.c/tchrg = 0x0047A970;
+CPrepTokenizer.c/tchrl = 0x0047AAB0;
+CPrepTokenizer.c/tchrp = 0x0047AD50;
+CPrepTokenizer.c/tchrr = 0x0047AE20;
+CPrepTokenizer.c/tchrs = 0x0047AF00;
+CPrepTokenizer.c/tchru = 0x0047B220;
+CPrepTokenizer.c/tchrv = 0x0047B2E0;
+CPrepTokenizer.c/tchr_ = 0x0047B4B0;
+CPreprocess.c/CPrep_DumpWString = 0x004E6AB0;
+CSOM_MemberVarAccess = 0x004525C0;
+COptimizer.c/finallabel = 0x004B7B10;
+COptimizer.c/optimizegoto = 0x004B7B50;
+COptimizer.c/removeif = 0x004B7BA0;
+COptimizer.c/optimizebranches = 0x004B7F80;
+COptimizer.c/checkexpression = 0x004B8030;
+COptimizer.c/removeunusedcode = 0x004B8210;
+COptimizer.c/COpt_ReturnCheck = 0x004B8280;
+COptimizer.c/COpt_Optimize = 0x004B8300;
+IROUseDef.c/MakeUse = 0x004CB710;
+IROUseDef.c/IsIncOrDec = 0x004CBA00;
+IROUseDef.c/IsOtherSelfAssignment = 0x004CBA70;
+IROUseDef.c/UpdateUse = 0x004CBC00;
+IROUseDef.c/PropagateIncsAndDecs = 0x004CCC70;
+IROUseDef.c/AllLoopDefUsesAreInSimpleLoopDefs = 0x004CD780;
+IROUseDef.c/MarkRemovableLoopDefs = 0x004CD800;
+IROUseDef.c/GetOperand = 0x004CDF40;
+IROUseDef.c/SplitOffRange = 0x004CE1E0;
+Bv_Set = 0x0050C630;
+IroCSE.c/IRO_DoesNotHaveVectorOperand = 0x004C4440;
+IRO_RemoveExpr = 0x004C45E0;
+IroCSE.c/IRO_MakeReplacementEmbedded = 0x004C4E70;
+IroCSE.c/MoveCommonSub = 0x004C4FD0;
+IroCSE.c/ReplaceCommonSub = 0x004C5150;
+IroDump.c/DumpLinearNode = 0x004C5650;
+IRO_DumpAfterPhase = 0x004C5CB0;
+IRO_DumpFlowgraph = 0x004C5D00;
+IRO_DumpExprs = 0x004C5E50;
+IroEval.c/EEquConst = 0x004D1A60;
+IroEval.c/VEquConst = 0x004D1A90;
+IroEval.c/IsConsecutive = 0x004D1AC0;
+IroEval.c/leftLeaveOf = 0x004D1BE0;
+IroEval.c/checkNode = 0x004D1C20;
+IroEval.c/checkLabel = 0x004D1C70;
+IroEval.c/checkExpr = 0x004D1CB0;
+IroEval.c/checkStruct = 0x004D1CF0;
+IroEval.c/MarkPattern1 = 0x004D1D90;
+IRO_SimplifyConditionals = 0x004D2430;
+IroExprRegeneration.c/FindFlowgraphNodeThatStartsWithLabel = 0x004DEF60;
+IroExprRegeneration.c/StatementContainsSideEffect = 0x004DF160;
+IroExprRegeneration.c/CheckUnorderedRegionForSideEffectsAndUses = 0x004DF420;
+IroExprRegeneration.c/IsLogicalExpressionAssign = 0x004E0900;
+IroExprRegeneration.c/IsPossibleLogicalExpressionStart = 0x004E0B40;
+IRO_RegenerateExpressions = 0x004E1860;
+IroFlowgraph.c/AddSucc = 0x004BFDA0;
+IroFlowgraph.c/AddSwitchSucc = 0x004BFE00;
+IroFlowgraph.c/AddPred = 0x004BFE60;
+IRO_NewFlowGraphNode = 0x004C0480;
+IroLinearForm.c/MakeLeftChildAsAssignment = 0x004C13A0;
+IroLinearForm.c/CreateTempAssignmentToZero = 0x004C1600;
+// ToOne follows ToZero (same shape, copies cint64_one)
+IroLinearForm.c/CreateTempAssignmentToOne = 0x004C1730;
+IroLinearForm.c/GenerateCondExpression = 0x004C1860;
+IroLinearForm.c/PutTempOnNullCheckList = 0x004C19B0;
+IroLinearForm.c/GetTempFromtheList = 0x004C19F0;
+IroLinearForm.c/GenerateNullcheckExprTempAssignment = 0x004C1A30;
+IroLinearForm.c/GenerateLabel = 0x004C1E70;
+IroLinearForm.c/TransformLogicalAndLHS = 0x004C20E0;
+IroLinearForm.c/TransformLogicalOrLHS = 0x004C2400;
+IroLinearForm.c/NewStatement = 0x004C3300;
+FindMustReach1 = 0x004DA810;
+IroLoop.c/IsSafeTypcon = 0x004DAA70;
+IroLoop.c/NoSubableSubExprs = 0x004DC480;
+IroLoop.c/MakeLoopEntry = 0x004DDD30;
+FindAssignmenttoInductionVar = 0x004DDE70;
+IroLoop.c/IsTypconVar = 0x004DDF10;
+IroLoop.c/AddAddendLinear = 0x004DE910;
+IroLoop.c/IsAssignmentReductionCandidate = 0x004DED90;
+IroMalloc.c/Block_construct = 0x004FEDD0;
+IroMalloc.c/Block_subBlock = 0x004FEE30;
+IroMalloc.c/Block_link = 0x004FEEC0;
+IroMalloc.c/Block_unlink = 0x004FEF40;
+IroMalloc.c/SubBlock_construct = 0x004FEFA0;
+IroMalloc.c/SubBlock_merge_prev = 0x004FF080;
+IroMalloc.c/link_block = 0x004FF180;
+IroMalloc.c/unlink_block = 0x004FF1D0;
+IroMalloc.c/link_new_block = 0x004FF210;
+IroMalloc.c/allocate_from_var_pools = 0x004FF260;
+IroMalloc.c/allocate_from_fixed_pools = 0x004FF3D0;
+IRO_malloc = 0x004FF500;
+IroPointerAnalysis.c/ObjectIsRestrictQualified = 0x0047EEB0;
+CInt64_IsNegative = 0x00443980;
+PointerAnalysis_PragmaMode = 0x00488700;
+IroPropagate.c/VarIsUsedInOtherFNodes = 0x004CA210;
+IroPropagate.c/IsIntGenKillCandidate = 0x004CA720;
+IroPropagate.c/IsPropagatableExpr = 0x004CA760;
+IroRangePropagation.c/ERnewRecord = 0x004D29C0;
+IroRangePropagation.c/EREandHasNoUse = 0x004D2A20;
+IroRangePropagation.c/ERfoldOperand = 0x004D3340;
+IRO_RangePropagateInFNode = 0x004D46F0;
+IroTransform.c/IRO_SwitchChildren = 0x004C68D0;
+IroTransform.c/ReplaceExprWithConst = 0x004C68F0;
+IroTransform.c/ReplaceExprWithLeftChild = 0x004C6970;
+IroTransform.c/ReplaceExprWithRightChild = 0x004C69C0;
+IroTransform.c/ReplaceExprWithMonaminRight = 0x004C6A10;
+IroTransform.c/ReplaceExprWithMonaminLeft = 0x004C6A70;
+IroTransform.c/switchFatherLeft = 0x004C6B10;
+IroTransform.c/DoTransformations12 = 0x004C71F0;
+IroTransform.c/DoTransformations13 = 0x004C72D0;
+IroTransform.c/ReverseOpForMonmin = 0x004C8AD0;
+IroTransform.c/AddAddend = 0x004C8BE0;
+IroTransform.c/NarrowIsBitfield = 0x004C9950;
+BuildNewFinalvalue = 0x004D9980;
+IroUnrollLoop.c/BuildPreAlignTemp = 0x004D9AB0;
+IroUnrollLoop.c/BuildNewFinalvalue_DoWhile = 0x004D9D00;
+IroUnrollLoop.c/BuildUnrolledFinalvalue_DoWhile = 0x004D9EA0;
+BuildUnrolledBodyEntryTest = 0x004DA0D0;
+IRO_ExprsSameSemantically = 0x004BE6A0;
+IroUtil.c/FindFirst = 0x004BE8A0;
+IRO_CutAndPasteAfter = 0x004BE970;
+IRO_IsConstantNegativeOne = 0x004BEA80;
+IRO_ClipExpr = 0x004BEFD0;
+IRO_MoveExpression = 0x004BF030;
+IRO_DuplicateExprRange = 0x004BF170;
+IRO_AssignToTemp = 0x004BF790;
+IRO_WalkExcActions = 0x004BFB10;
+ResetVars = 0x004CE9A0;
+IroVars.c/IRO_HandleExceptionActions = 0x004CE9E0;
+IRO_ZapVarPtrs = 0x004CEBB0;
+IroVars.c/DisableEntries = 0x004D0720;
+ansifp_x86.c/__scalenum = 0x00405C70;
+ELFImportGlue.c/ELFImport_IsArchive = 0x00420980;
+ELFImportGlue.c/ELFImport_ScanObject = 0x004208D0;
+ELFImportGlue.c/ELFImport_ReadSection = 0x00420840;
+ELFImportGlue.c/ELFImport_Get32 = 0x004206C0;
+ELFImportGlue.c/ELFImport_Get16 = 0x00420690;
+ELFImportGlue.c/ELFImport_IsELF = 0x00420640;
+ELFImportGlue.c/ELFImport_Error = 0x00420500;
+PostParse = 0x004057C0;
+MidParse = 0x00405730;
+RegisterCompilerResources = 0x0040C370;
+BE_InsertNops = 0x004B1980;
+BE_schedule.c/b69_movable = 0x004B1220;
+BE_schedule.c/nextnonempty = 0x004B1300;
+func_00436860 = 0x00435CA0;
+CodeGen_InitCompiler = 0x00436720;
+func_004B4650 = 0x004A5F30;
+func_0049DD90 = 0x004B26A0;
+func_004A4260 = 0x004B8720;
+func_004A3AA0 = 0x004B89E0;
+func_00493F90 = 0x004A2270;
+func_0045C740 = 0x004BC660;
+Intrinsics.c/Intrinsics_DefUnary = 0x004BA650;
+Intrinsics.c/Intrinsics_DefBinary = 0x004BA6B0;
+func_0054AAB0 = 0x004AFDD0;
+func_0054AD10 = 0x004AFC80;
+BE_LoopInvariants = 0x004AC060;
+MIPS_Peephole.c/func_005493A0 = 0x00506990;
+func_0048AEF0 = 0x004ABB80;
+func_00464B20 = 0x004594E0;
+func_004A4320 = 0x004B86A0;
+func_004A5A60 = 0x00499D50;
+func_004A5360 = 0x0049A3A0;
+func_00461F80 = 0x00498F20;
+func_00461DF0 = 0x00499020;
+func_00461EE0 = 0x00498F80;
+func_004621F0 = 0x00498CE0;
+func_00462090 = 0x00498E60;
+func_00462050 = 0x00498EA0;
+func_004B4A90 = 0x004ACA20;
+func_004B4DE0 = 0x004ACAF0;
+LocalCSE_ours.c/mips_is128bitop = 0x0049AC60;
+// IroUtil.c/FindFirst is the 206-byte function at 0x4BE8A0, not 0x4556B0 (a
+// cerror_locktoken setter that the old derived name came from via IRO_FindFirst)
+// CInline_GetLocalID (0x461AF0) calls CInline_GetLocalID2 out of line (CInline.c
+// is -inline off in b69)
+CInline_GetLocalID2 = 0x00461B80;
+// CExpr2.c is -inline off in b69: CExpr_ConversionIteratorNext (0x4F0E70) calls
+// CExpr_ConversionIteratorIsHidden out of line at 0x4F0DD0
+CExpr_ConversionIteratorIsHidden = 0x004F0DD0;
+// out-of-line inlines in -inline off units, read from the call slots of
+// byte-identical callers (relocaddr.py): CInit_InitializeData, CInt64_Div/Mod/Not,
+// CExpr_IsBetterStandardConv, CExpr_SetQualConversionResult
+CFunc_CheckClassCtors = 0x00473E50;
+CInt64_iszero = 0x004BC730;
+CInt64_NegInline = 0x004BC970;
+// CInt64_Add/Sub/Neg call it with (&lhs, &rhs, carry)
+CInt64.c/CInt64_AddWords = 0x004BC8C0;
+CExpr_IsPointerToBoolConv = 0x004FA0D0;
+CExpr_CompareQualifiers = 0x004FA350;
+// CInit.c is -inline off: CInit_InitializeData calls CInit_GlobalObject at 0x45D370
+CInit.c/CInit_GlobalObject = 0x0045D370;
+CExprConvMatch.c/CExpr_ClassReferenceConversion = 0x004FB920;
+CInt64_ConvertFromLongDouble = 0x004BD930;
+CMach_GetBackEndOptions = 0x00459010;
+CMach_SetBackEndOptions = 0x004591B0;
+// IroExprRegeneration.c: b69's order is HasSideEffectsBeforeUse (0x4DF1B0, 5 args,
+// recursing into itself) then UsesAKilledVarBeforeUse (0x4DF290, 6 args); the guesses swapped them
+IroExprRegeneration.c/HasSideEffectsBeforeUse = 0x004DF1B0;
+IroExprRegeneration.c/UsesAKilledVarBeforeUse = 0x004DF290;
+// CompilerTools.c: CTool_EndianConvertWord64 (16-byte CInt64 by value, memcpy of 8 bytes;
+// called by CMach_InitIntMem's size-8 case); the GC guess put AppendGListNoData here
+CTool_EndianConvertWord64 = 0x00433770;
+// LoopDetection69.c (0x4AF430..0x4AFDE0; src/psp/backend/LoopDetection69.c; GC's optimizer has a LoopDetection.c):
+// findloopsinflowgraph 0x4AFCB0 is called by the padloop pass (0x436515) and
+// loop invariants (0x4AC070); its statics at 0x565B78 (block-set bits, the
+// natural-loop stack, header count, header list, dominators), the loop forest
+// 0x57C7B8, the loop counter 0x57C7A0 (stored as the 16-bit id), per-class
+// pressure records 0x57C810 (0xC each, read by looppressure 0x4AFD4E); the
+// listing hook 0x4A5BC0 is an empty function; insertpreheader calls 0x498920
+LoopDetection69.c/_b69sec.bss = 0x00565B78;
+LoopDetection69.c/setbits = 0x00565B78;
+LoopDetection69.c/loopstack = 0x00565B7C;
+LoopDetection69.c/nloopheaders = 0x00565B80;
+LoopDetection69.c/loopheaders = 0x00565B84;
+LoopDetection69.c/dominators = 0x00565B88;
+data_00624BA8 = 0x0057C7A0;
+data_00624E04 = 0x0057C810;
+data_00625418 = 0x0057C908;
+func_004AFFC0 = 0x004A5BC0;
+func_0046F660 = 0x00498920;
+LoopDetection69.c/computedominators69 = 0x004AF430;
+LoopDetection69.c/findloopheaders69 = 0x004AF5E0;
+LoopDetection69.c/initblockset = 0x004AF670;
+LoopDetection69.c/addblock = 0x004AF6B0;
+LoopDetection69.c/isexit = 0x004AF710;
+LoopDetection69.c/findnaturalloop69 = 0x004AF760;
+LoopDetection69.c/addlooptolist69 = 0x004AF890;
+LoopDetection69.c/findloops = 0x004AF920;
+LoopDetection69.c/insertpreheader = 0x004AF9C0;
+LoopDetection69.c/makeroot = 0x004AFA90;
+LoopDetection69.c/addblockleaves = 0x004AFB10;
+LoopDetection69.c/walkloop = 0x004AFC20;
+LoopDetection69.c/looppressure = 0x004AFD20;
+LoopDetection69.c/computepressure = 0x0050A020;
+LoopDetection69.c/stepback = 0x00509F20;
+LoopDetection69.c/startblock = 0x00509ED0;
+// what LoopDetection69.c's pressure code calls: 0x4A59A0 copies each class's
+// live-out (ClassLiveness 0x57CA40, 0xC each: n, blocks, current) into current
+// with bitvectorcopy 0x505070 (dst, src, n); 0x50A051 calls 0x498DF0 per class
+// for the available register count
+func_004C3460 = 0x004A59A0;
+data_0062541C = 0x0057CA40;
+bitvectorcopy = 0x00505070;
+func_00462160 = 0x00498DF0;
+// computedominators69's bit-vector calls (0x4AF558 copy, 0x4AF574 intersect,
+// 0x4AF5A6 changed: (dst, src, n), its result tested) and startblock's count
+// (0x509EFD: (vec, n) into the class's live count)
+bitvectorintersect = 0x00505110;
+bitvectorchanged = 0x005050A0;
+bitvectorcount = 0x00505170;

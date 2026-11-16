@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "psp/ELFgen.h"
 #include <string.h>
 #include "compiler/CError.h"
@@ -36,7 +37,7 @@
         } \
     } while (0)
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // b52's .bss (0x59F200..0x59F270) holds all but elf_ehdr (a global,
 // 0x5B4CC4), elf_nullsym lowest: statics declared in the reverse order
 #else
@@ -52,7 +53,7 @@ ELFSection** elf_sections;
 static SInt32 elf_sectioncapacity;
 #endif
 Elf32_Ehdr elf_ehdr;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 static SInt32 elf_sectioncapacity;
 static ELFSection** elf_sections;
 static ELFSection* elf_symtab;
@@ -218,7 +219,7 @@ static void ELF_WriteSymEntry(ELFSection* section, Elf32_Sym* sym) {
     PUT16(p, sym->st_shndx);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 ELFSymbol* ELF_NewSymbol(
     char* name, UInt16 shndx, UInt8 bind, UInt8 type, UInt32 size, void* data, UInt32 align
 ) {
@@ -242,7 +243,7 @@ ELFSymbol* ELF_NewSymbol(
     return sym;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 void ELF_DefineSymbol(
     ELFSymbol* sym, UInt16 shndx, UInt8 bind, UInt8 type, UInt32 size, void* data, UInt32 align
 ) {
@@ -296,7 +297,7 @@ void ELF_DefineSymbol(
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 ELFSymbol* ELF_NewUndefinedSymbol(
     char* name, UInt16 shndx, UInt8 bind, UInt8 type, UInt32 size, UInt32 value
 ) {

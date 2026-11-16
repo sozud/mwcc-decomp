@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_PREF_STRUCTS_H
 #define DRIVER_PREF_STRUCTS_H
 
@@ -90,7 +91,7 @@ typedef struct PCmdLineCompiler {
     char sbmPath[256];
     Boolean canonicalIncludes;
     Boolean keepObjects;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
     Boolean gccDepends; // +0x2D2: -gccdep: the dependency file goes with the object (GetOutputFile)
 #endif
@@ -149,7 +150,7 @@ typedef struct PFrontEndC {
     Boolean objective_c;
     Boolean defer_codegen;
     Boolean templateparser;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
     // 3.0.1: C99, bottom-up inlining and a prefix file name (0x140 bytes)
     Boolean c99;

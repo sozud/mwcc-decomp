@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_CFUNC_H
 #define COMPILER_CFUNC_H
 
@@ -25,7 +26,7 @@ typedef enum StatementType {
     ST_GOTOEXPR,
     ST_ASM,
     ST_BEGINLOOP,
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     ST_ENDLOOP,
     ST_ILLEGAL
 } StatementType;
@@ -85,7 +86,7 @@ typedef struct LoopInfo {
     short unused8;
     Statement* stmt;
 } LoopInfo;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 struct Statement {
     Statement* next;
     StatementType type;
@@ -105,7 +106,7 @@ struct Statement {
     CLabel* label;
     struct ExceptionAction* dobjstack;
     SInt32 sourceoffset;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     HashNameNode* sourcefilepath;
 };
 #pragma pack(pop)
@@ -177,7 +178,7 @@ extern SInt32 symdeclend;
 extern DeclBlock* CFunc_NewDeclBlock(void);
 extern void CFunc_RestoreBlock(DeclBlock* block);
 extern void CFunc_SetupLocalVarInfo(Object* obj);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 extern void CFunc_AppendLocal(Object* object);
 #endif
 extern Boolean CFunc_ParseFakeArgList(Boolean stopAtComma);
@@ -219,7 +220,7 @@ extern void InitExpr_Register(ENode* expr, Object* object);
 extern void CFunc_GenerateDummyFunction(Object* func);
 extern void CFunc_GenerateSingleExprFunc(Object* func, ENode* expr);
 extern void CFunc_GenerateDummyCtorFunc(Object* func, Object* real_ctor);
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 extern void CFunc_AppendLocal(Object* object);
 #endif

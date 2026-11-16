@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_CLPLUGINREQUESTS_H
 #define DRIVER_CLPLUGINREQUESTS_H
 
@@ -28,7 +29,7 @@ extern Boolean SendParserRequest(
     const char* build_time,
     const ToolVersionInfo* build_tool
 );
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern Boolean SendCompilerRequest(Plugin* plugin, File* file, SInt16 stage);
 extern Boolean SendTargetInfoRequest(Target* targ, Plugin* linker, SInt32 dropinflags);
 extern Boolean SendLinkerRequest(Plugin* plugin, SInt32 dropinflags, CWTargetInfo* targetInfo);

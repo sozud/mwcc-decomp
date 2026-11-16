@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_CWPLUGINSPRIVATE_H
 #define DRIVER_CWPLUGINSPRIVATE_H
 
@@ -13,7 +14,7 @@ extern "C" {
 #endif
 
 #pragma pack(push, 2)
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 // 3.0.1: the plugin's target info with shell specs (0xE22 bytes; the
 // CWCompilerLinkerContext constructor, 0x41A8A0/0x41A9C0)
@@ -66,7 +67,7 @@ struct CWPluginPrivateContext {
 #endif
 
     SInt32 request;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt32 apiVersion;
     void* shellContext;
     void* pluginStorage;
@@ -87,12 +88,17 @@ struct CWPluginPrivateContext {
 #endif
 #endif
     SInt32 shellSignature;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt32 pluginType;
     SInt32 numFiles;
     SInt32 numOverlayGroups;
+#if MWCC_CORE == MWCC_CORE_B52
     SInt32 callbackOSError; // b52, as 3.0.1: 32-bit (build_tool at +0x49C)
     SInt32 pluginOSError;
+#else
+    OSErr callbackOSError;
+    OSErr pluginOSError;
+#endif
 #else
     SInt32 pluginType;
     SInt32 numFiles;
@@ -117,7 +123,7 @@ struct CWPluginPrivateContext {
 struct CWCompilerLinkerContext : CWPluginPrivateContext {
     CWCompilerLinkerContext();
     ~CWCompilerLinkerContext();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 
     SInt32 whichfile;
     CWFileSpec sourcefile;
@@ -142,7 +148,7 @@ struct CWCompilerLinkerContext : CWPluginPrivateContext {
     Boolean recordbrowseinfo;
     void* reserved;
     SInt32 sequenceID;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     CWCompilerLinkerContext* parentPB;
     void* targetStorage;
     SInt32 reservedcompiler[7];
@@ -308,7 +314,7 @@ extern CW_CALLBACK CWAllocMemHandle(
     CWPluginContext context, SInt32 size, Boolean useTempMemory, CWMemHandle* handle
 );
 extern CW_CALLBACK CWFreeMemHandle(CWPluginContext context, CWMemHandle handle);
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 extern CW_CALLBACK CWAllocateMemory(
     CWPluginContext context, SInt32 size, Boolean isPermanent, void** ptr

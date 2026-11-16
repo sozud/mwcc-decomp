@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // mwccpsp 3.0.1: the back end's per-function optimizer driver
 // (0x4AF700..0x4AF9FF). The original unit name is not known.
 #include "compiler/common.h"
@@ -14,7 +15,7 @@ void func_004AFA00(Object* func, Boolean all); // below
 extern void func_004B11D0(int unk); // removecommonsubexpressions
 #if MWCCPS2 && MWCCPS2_BUILD < 210
 // b145's removecommonsubexpressions takes no argument
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #define CSE_PASS(arg) ((void (*)(void))func_004B11D0)()
 #else
 #define CSE_PASS(arg) ((void (*)(void))func_004B11D0)()
@@ -40,7 +41,7 @@ extern void pipeline1(Object* func); // b210: R5900 pipeline pass (pipeline1.c, 
 #endif
 extern SInt32 data_00624BA0;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #define LISTING(name, title) \
     do { \
         TRACE_PCODE(title); \
@@ -221,7 +222,7 @@ void func_004AFA00(Object* func, Boolean all) {
         if (block->pcodecount <= 0) {
             continue;
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         for (pc = block->first; pc && !(pc->flags & 0x108); pc = pc->next) {}
 #else
         for (pc = block->first; pc && !(pc->flags & 0x108); pc = pc->next) {}
@@ -230,7 +231,7 @@ void func_004AFA00(Object* func, Boolean all) {
             continue;
         }
         pc = block->last;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (pc && pc->op == OPC(0x39)) {
 #else
         if (pc && pc->op == 0x39) {
@@ -241,7 +242,7 @@ void func_004AFA00(Object* func, Boolean all) {
             deletepcode(pc);
         }
         pc = block->last;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (pc && (pc->flags & 1) && pc->op != OPC(0x39)) {
 #else
         if (pc && (pc->flags & 1) && pc->op != 0x39) {
@@ -251,7 +252,7 @@ void func_004AFA00(Object* func, Boolean all) {
 
 merge:
         link = block->successors;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (link->block != next ||
             !link ||
             link->next ||
@@ -280,7 +281,7 @@ merge:
             for (pc = next->first; pc && !(pc->flags & 0x108); pc = pnext) {
                 pnext = pc->next;
                 deletepcode(pc);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if (pc->op == OPC(0x39)) {
 #else
                 if (pc->op == 0x39) {

@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_EXCEPTIONS_H
 #define COMPILER_EXCEPTIONS_H
 
@@ -26,7 +27,7 @@ typedef enum ExceptionActionType {
     EAT_SPECIFICATION,
     EAT_TERMINATE,
     EAT_DESTROYBASE,
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
     // 3.0.1 has two more kinds (CExcept_ActionNeedsDestruction 0x4E1CF0);
     // the second carries its answer in a byte at +8
@@ -35,7 +36,7 @@ typedef enum ExceptionActionType {
 #endif
 #endif
     EAT_NACTIONS
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 } ExceptionActionType;
 
 #pragma pack(push, 2)
@@ -128,7 +129,7 @@ struct ExceptionAction {
             Object** unexp_id;
             CLabel* unexp_label;
             Object* unexp_info_object;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } specification;
     } data;
     ExceptionActionType type;

@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include "compiler/CError.h"
 #include "psp/BE.h"
@@ -50,7 +51,7 @@ static inline SInt32 ps2_reg(MOperand* a) {
 #endif
 
 // b210: an operand's 128-bit constant keeps its low word at +0x10
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // value at +2 (3.0.1 and b210 read the value's low half)
 #define ENC_REG(a) ((SInt16)(a)->value)
 
@@ -155,7 +156,7 @@ void BE_EncodeInstruction(MPCode* pc, SInt32 pass) {
                     argi++;
                     break;
                 case '@':
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     if (pc->op == OPC(0x3EF)) {
 #else
                     if (pc->op == 0x3EF) {
@@ -284,7 +285,7 @@ void BE_EncodeInstruction(MPCode* pc, SInt32 pass) {
                     argi++;
                     break;
                 case 'd':
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     pc->word |= ENC_REG(arg) << 11;
 #else
                     pc->word |= (SInt16)arg->value << 11;
@@ -298,7 +299,7 @@ void BE_EncodeInstruction(MPCode* pc, SInt32 pass) {
                     } else
 #endif
                     {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         pc->word |= ENC_REG(arg) << 21;
 #else
                     pc->word |= (SInt16)arg->value << 21;
@@ -307,7 +308,7 @@ void BE_EncodeInstruction(MPCode* pc, SInt32 pass) {
                     argi++;
                     break;
                 case 'P':
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     pc->word |= ENC_REG(arg) * 2;
 #else
                     pc->word |= (SInt16)arg->value * 2;
@@ -330,7 +331,7 @@ void BE_EncodeInstruction(MPCode* pc, SInt32 pass) {
                     break;
                 case 'x':
                     if (wide) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         pc->word |= ENC_REG(arg) << 6;
 #else
                         pc->word |= (SInt16)arg->value << 6;
@@ -428,7 +429,7 @@ void BE_EncodeInstruction(MPCode* pc, SInt32 pass) {
                     argi++;
                     break;
                 case 't':
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     pc->word |= ENC_REG(arg) << 16;
 #else
                     pc->word |= (SInt16)arg->value << 16;
@@ -514,25 +515,25 @@ void BE_EncodeInstruction(MPCode* pc, SInt32 pass) {
     }
 
     op = pc->op;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (op >= OPC(0x2EF) && op <= OPC(0x32E)) {
 #else
     if (op >= 0x2EF && op <= 0x32E) {
 #endif
         pc->word |= ((pc->word & 0xF800) >> 11) << 21;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (op >= OPC(0x32F) && op <= OPC(0x337)) {
 #else
     } else if (op >= 0x32F && op <= 0x337) {
 #endif
         pc->word |= ((pc->word & 0x1F0000) >> 16) << 21;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (op >= OPC(0x338) && op <= OPC(0x353)) {
 #else
     } else if (op >= 0x338 && op <= 0x353) {
 #endif
         pc->word |= ((pc->word & 0xF800) >> 11) << 16;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (op >= OPC(0x354) && op <= OPC(0x37D)) {
 #else
     } else if (op >= 0x354 && op <= 0x37D) {
@@ -551,7 +552,7 @@ void BE_EncodeFinal(MPCode* pc) {
     char* label;
 
     if (pc->flags & 1) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (pc->op == OPC(0x39)) {
 #else
         if (pc->op == 0x39) {
@@ -619,7 +620,7 @@ static void BE_CountInstruction(MPCode* pc) {
 
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -17 // b145 asserts
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-182)
 #endif
@@ -693,13 +694,20 @@ void BE_LayoutAndEncode(struct Object* func) {
                         data_00624DF4 = align;
                     }
                     while (data_00603F70 & (align - 1)) {
+#if MWCC_CORE == MWCC_CORE_B52
                         if (pc == block->first) {
                             block->codeoffset += 4;
                         }
-#if MWCCPS2
-#if MWCCPS2_B52
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         nop = makepcode(OPC(0x2ED), fillvalue);
 #else
+                        if (pc == block->first) {
+                            block->codeoffset += 4;
+                        }
+#endif
+#if MWCCPS2
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                         nop = makepcode(0x2ED, fillvalue);
 #endif
 #else
@@ -760,7 +768,7 @@ void BE_LayoutAndEncode(struct Object* func) {
     }
     *data_006241D8 = data_00625208;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -777,7 +785,7 @@ extern MOperand* func_0048FAE0(MPCode* pc); // a branch's label operand
 extern void func_0054AD10(void (*func)(Loop301*));
 
 static inline Boolean ps2_isbranch(MPCode* pc) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     return (pc->flags & 0x10000000) ||
         pc->op == OPC(0x39) ||
         pc->op == OPC(0x38A) ||
@@ -802,7 +810,7 @@ void ps2_padloop_4C2960(MPCodeBlock* block) {
     if (block->flags2E & 0x4000) {
         return;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!last ||
         (!(last->flags & 0x10000000) &&
          last->op != OPC(0x39) &&
@@ -836,27 +844,56 @@ void ps2_padloop_4C2960(MPCodeBlock* block) {
         b = block;
         while (target != b) {
             count += b->pcodecount;
+#if MWCC_CORE == MWCC_CORE_B52
             for (q = b->first; q; q = q->next) {
                 if (q->flags & 0x100000) {
                     count--;
                 }
             }
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+            for (q = b->first; q; q = q->next) {
+                if (q->flags & 0x100000) {
+                    count--;
+                }
+            }
+#endif
             b = b->prev;
             if (!b) {
                 break;
             }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+            if (b->last && (b->last->flags & 0x100000)) {
+                count--;
+            }
+#endif
+#endif
             if (count >= 7) {
                 return;
             }
         }
         if (b) {
             count += b->pcodecount;
+#if MWCC_CORE == MWCC_CORE_B52
             for (q = b->first; q; q = q->next) {
                 if (q->flags & 0x100000) {
                     count--;
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+                    for (q = b->first; q; q = q->next) {
+                        if (q->flags & 0x100000) {
+                            count--;
+#endif
+                        }
+#if MWCC_CORE == MWCC_CORE_B52
+                    }
                 }
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             }
         }
+#endif
         if (count >= 7) {
             return;
         }
@@ -865,7 +902,7 @@ void ps2_padloop_4C2960(MPCodeBlock* block) {
             q->flags &= ~0x40000000;
         }
         while (count < 7) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             insertpcodebefore(last, makepcode(OPC(0xBA)));
 #else
             insertpcodebefore(last, makepcode(0xBA));
@@ -913,7 +950,7 @@ static void ps2_dividefix_block(MPCodeBlock* block) {
     likely = pc->flags & 1;
     lastmf = -1;
     for (pc = block->first, i = 1; pc; pc = pc->next, i++) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (pc->op == OPC(0xF3) ||
             pc->op == OPC(0x366) ||
             pc->op == OPC(0x101) ||
@@ -927,7 +964,7 @@ static void ps2_dividefix_block(MPCodeBlock* block) {
             pc->op == 0x125) {
 #endif
             if (lastmf == i - 1) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 insertpcodebefore(pc, makepcode(OPC(0xBA)));
 #else
                 insertpcodebefore(pc, makepcode(0xBA));
@@ -936,7 +973,7 @@ static void ps2_dividefix_block(MPCodeBlock* block) {
             }
             if (likely && block->pcodecount - i <= 3) {
                 while (block->pcodecount - i <= 3) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     insertpcodeafter(pc, makepcode(OPC(0xBA)));
 #else
                     insertpcodeafter(pc, makepcode(0xBA));
@@ -945,7 +982,7 @@ static void ps2_dividefix_block(MPCodeBlock* block) {
             }
             if (follows && i < 3) {
                 while (i < 3) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     insertpcodebefore(pc, makepcode(OPC(0xBA)));
 #else
                     insertpcodebefore(pc, makepcode(0xBA));
@@ -953,7 +990,7 @@ static void ps2_dividefix_block(MPCodeBlock* block) {
                     i++;
                 }
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (pc->op == OPC(0xDF)) {
 #else
         } else if (pc->op == 0xDF) {
@@ -966,17 +1003,22 @@ static void ps2_dividefix_block(MPCodeBlock* block) {
 // 0x4C4910
 void ps2_dividefix_4C4910(Object* func) {
     MPCodeBlock* block;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     MPCodeBlock* b69_dead;
 #endif
 
     ps2_dividefix_prev = NULL;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (b69_dead = block = data_00624FD0; block; b69_dead = block = block->next) {
+#if MWCC_CORE == MWCC_CORE_B52
+        if (block->pcodecount && !(block->flags2E & 0x80) && !(block->flags2E & 0x4000)) {
+#else
+        if (block->pcodecount && !(block->flags2E & 0x4000)) {
+#endif
 #else
     for (block = data_00624FD0; block; block = block->next) {
-#endif
         if (block->pcodecount && !(block->flags2E & 0x80) && !(block->flags2E & 0x4000)) {
+#endif
             ps2_dividefix_block(block);
         }
         ps2_dividefix_prev = block;

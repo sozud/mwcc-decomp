@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include "compiler/BitVectors.h"
 #include "psp/BE.h"
@@ -87,11 +88,13 @@ SInt32 func_004C3310(MPCode* pc) {
     if (pc->flags & 0x14098D) {
         return 0;
     }
+#if MWCC_CORE != MWCC_CORE_B52
     if (pc->block->flags2E & 3) {
         return 0;
     }
+#endif
     for (k = pc->argcount, op = pc->args; k--; op++) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (op->kind == 0 &&
             (op->flags & 2) &&
             bitvectorgetbit(op->reg, data_0062541C[op->rclass].current)) {
@@ -103,10 +106,16 @@ SInt32 func_004C3310(MPCode* pc) {
             return 0;
         }
     }
+#if MWCC_CORE == MWCC_CORE_B52
+    // b52 (0x4BB5C8): dead at any optimization level, -O0 included
+#else
     if (copts.optimizationlevel > 0) {
-        return 1;
-    }
-    return 0;
+#endif
+    return 1;
+#if MWCC_CORE != MWCC_CORE_B52
+}
+return 0;
+#endif
 }
 
 // Step the live sets backwards over pc: kill its results, add its operands.
@@ -166,16 +175,16 @@ void func_004C37C0(char rclass) {
             } else {
                 for (k = 0; k < data_00603F88->count; k++) {
                     if (rclass == data_00603F88->entries[k].rclass) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         bitvectorsetbit(
                             data_00603F88->entries[k].reg,
                             data_0062541C[rclass].blocks[block->number].liveout
                         );
 #else
-                        bitvectorsetbit(
-                            data_00603F88->entries[k].reg,
-                            data_0062541C[rclass].blocks[block->number].liveout
-                        );
+                            bitvectorsetbit(
+                                data_00603F88->entries[k].reg,
+                                data_0062541C[rclass].blocks[block->number].liveout
+                            );
 #endif
                     }
                 }

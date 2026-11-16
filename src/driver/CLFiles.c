@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/CLFiles.h"
 #include "driver/CLLoadAndCache.h"
 #if MWCCPSP
@@ -11,7 +12,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (4)
 #endif
@@ -25,7 +26,7 @@ File* File_New(void) {
         return file;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -54,7 +55,7 @@ void File_Free(File* file) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (5)
 #endif
@@ -66,12 +67,12 @@ Boolean Files_Initialize(Files* this) {
 #endif
     return TRUE;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (5)
 #endif
@@ -92,7 +93,7 @@ Boolean Files_Terminate(Files* this) {
 
     return TRUE;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif
@@ -101,7 +102,7 @@ Boolean Files_AddFile(Files* this, File* file) {
     return Files_InsertFile(this, file, this->fileCount);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (5)
 #endif
@@ -132,12 +133,12 @@ Boolean Files_InsertFile(Files* this, File* file, SInt32 position) {
     *scan = file;
     return TRUE;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (5)
 #endif
@@ -158,7 +159,7 @@ File* Files_GetFile(Files* this, SInt32 filenum) {
     }
     return file;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif

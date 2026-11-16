@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_OBJECTS_H
 #define COMPILER_OBJECTS_H
 
@@ -71,7 +72,7 @@ enum {
     OBJECT_INTERNAL = 0x10,
     OBJECT_IMPORT = 0x20,
     OBJECT_EXPORT = 0x40,
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     OBJECT_LIB_EXPORT = 0x60
 };
 #pragma pack(push, 2)
@@ -89,7 +90,7 @@ struct ObjectList {
     ObjectList* next;
     Object* object;
 };
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 struct ObjBase {
     UInt8 otype;
     AccessType access;
@@ -103,7 +104,7 @@ struct ObjBase {
 #endif
 #endif
 };
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 struct ObjEnumConst {
     UInt8 otype;
     AccessType access;
@@ -121,7 +122,7 @@ struct ObjEnumConst {
     Type* type;
     CInt64 val;
 };
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 struct ObjNameSpace {
     UInt8 otype;
     AccessType access;
@@ -136,7 +137,7 @@ struct ObjNameSpace {
 #endif
     NameSpace* nspace;
 };
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 struct ObjType {
     UInt8 otype;
     AccessType access;
@@ -152,7 +153,7 @@ struct ObjType {
     Type* type;
     UInt32 qual;
 };
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 struct ObjMemberVar {
     UInt8 otype;
     AccessType access;
@@ -173,7 +174,7 @@ struct ObjMemberVar {
     UInt32 qual;
     UInt32 offset;
 };
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 struct ObjTypeTag {
     UInt8 otype;
     AccessType access;
@@ -188,7 +189,7 @@ struct ObjTypeTag {
 #endif
     Type* type;
 };
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 struct ObjMemberVarPath {
     UInt8 otype;
     AccessType access;
@@ -216,7 +217,7 @@ struct InlineXRef {
     UInt16 xrefoffset;
     UInt16 numxrefs;
     struct {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         UInt32 offset;
         SInt32 varoffset;
     } xref[1];
@@ -270,7 +271,7 @@ struct Object {
     struct VarRecord* varptr;
     union {
         struct {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             union {
                 CInt64 intconst;
                 Float* floatconst;
@@ -347,7 +348,7 @@ struct Object {
             TemplFuncInstance* inst;
             struct PTFList* ptfList;
             ObjectList* argList;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } func;
         struct {
             VarInfo* info;
@@ -387,7 +388,7 @@ struct Object {
         SInt16 intrinsic;
         ENode* expr;
         UInt32 address;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
         struct {
             struct Object* function; // a label object's function (IRO_CollectAddressedLabels)
@@ -399,7 +400,7 @@ struct Object {
 struct ObjectTemplated {
     Object object;
     Object* parent;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
     // 3.0.1: the instance stack when a templated function was first referenced
     // (CInline_ObjectAddrRef; sizeof is 0x48 in CTemplClass_CopyObject)
@@ -414,10 +415,11 @@ struct VarInfo {
     SInt16 varnumber;
     Boolean noregister;
     Boolean used;
-#if MWCCPS2_B52
-    // b52: two bytes (func_00438160 tests +0x2D), flags +0x2E, rclass +0x2F,
-    // reg +0x30, sizeof 0x34 (CodeGen_GetNewVarInfo allocates 0x34)
-    UInt8 unk24[2];
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+    // b69's VarInfo is 0x34 bytes (CodeGen_GetNewVarInfo 0x4337F0 allocates
+    // and clears 0x34); 0x434410 (func_00438160) tests +0x2D, stores the
+    // class at +0x2F (5 or 0) and the register at +0x30, 0x4341E0 the same
+    UInt8 unk24[2]; // +0x2C; [1] the VU0 flag (gcc_replace_arg_st_asm, +0x2D)
 #else
 #if MWCCPS2
     UInt8 unk24
@@ -429,20 +431,27 @@ struct VarInfo {
 #endif
     UInt8 flags;
     UInt8 rclass;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt16 reg;
     SInt16 regHi;
-#if !MWCCPS2_B52
+};
+// b210's register-bound data objects read a class at +0x2E and a byte at
+// +0x2F of the VarInfo at Object+0x3C; b69 has no such objects (nothing
+// sets u.data.info), so these paths never run
+#define VI_B210_CLASS(vi) ((vi)->rclass)
+#define VI_B210_2F(vi) ((vi)->flags)
+#pragma pack(pop)
+#define PS2_VARINFO_AT(vi, x86off) ((char*)(vi) + (x86off))
+#else
+    SInt16 reg;
+    SInt16 regHi;
 #if MWCCPS2
     UInt8 unk2C[2]; // mwccps2 b210: CodeGen_GetNewVarInfo allocates 0x38
 #elif MWCCPSP
     UInt8 unk2C[4]; // 3.0.1: CodeGen_GetNewVarInfo allocates 0x30
 #endif
-#endif
 };
 #pragma pack(pop)
-#if MWCCPS2_B52
-#define PS2_VARINFO_AT(vi, x86off) ((char*)(vi) + (x86off))
-#else
 #if MWCCPS2
 // b210 code addresses VarInfo's tail by its x86 offsets (0x2C..0x37: the
 // register-variable record's class at +0x2E, register at +0x32); natively

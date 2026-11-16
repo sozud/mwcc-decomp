@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef MWCC_HOST_PROBE_ERRNO_H
 #define MWCC_HOST_PROBE_ERRNO_H
 
@@ -13,7 +14,7 @@ typedef struct _ThreadLocalData {
     unsigned long random_next;
     unsigned char* strtok_n;
     unsigned char* strtok_s;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     void* thread_handle;
     struct tm gmtime_tm;
     char asctime_result[26];

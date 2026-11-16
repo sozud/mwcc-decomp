@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/BitVectors.h"
 #include "compiler/CompilerTools.h"
 #include <string.h>
@@ -46,7 +47,7 @@ int bitvectorchanged(UInt32* dst, UInt32* src, SInt32 len) {
 }
 
 void bitvectorinitialize(UInt32* vec, SInt32 len, UInt32 initval) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     int b69_dead;
 #endif
     int i = (len + 31) >> 5;
@@ -54,7 +55,7 @@ void bitvectorinitialize(UInt32* vec, SInt32 len, UInt32 initval) {
     while (i != 0) {
         *vec = initval;
         vec++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead = --i;
 #else
         i--;

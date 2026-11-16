@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/cc-eabi-ppc-mw.h"
 #include "driver/cc-eabi-ppc.h"
 #include "driver/CWPlugins.h"
@@ -5,7 +6,7 @@
 #include "driver/oslib.h"
 
 void GetStaticTarget(OSType* cpu, OSType* os) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     *cpu = 'mips';
     *os = 'psx2';
 #else

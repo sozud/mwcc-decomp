@@ -1,8 +1,9 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_CPREC_H
 #define COMPILER_CPREC_H
 
 #include "compiler/common.h"
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 #include "driver/COSToolsCLT.h"
 #endif
@@ -16,7 +17,7 @@ extern char* precomp_target_str;
 
 extern void SetupPrecompiler(Boolean isPrecompiling);
 extern void CleanupPrecompiler(void);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern void PreComp_StaticData(Object* obj, const void* data, OLinkList* links, SInt32 size);
 extern void PrecompilerWrite(void);
 extern void PrecompilerRead(short refnum, void* buffer);

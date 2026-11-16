@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_CWPLUGINS_H
 #define DRIVER_CWPLUGINS_H
 
@@ -386,7 +387,7 @@ typedef struct BasePluginCallbacks {
     CWPLUGIN_ENTRY (*GetFamilyList)(const struct CWFamilyList** familyList);
     CWPLUGIN_ENTRY (*GetHelpInfo)(const CWHelpInfo** helpInfo);
     CWPLUGIN_ENTRY (*GetVersionInfo)(const VersionInfo** versionInfo);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     CWPLUGIN_ENTRY (*GetFileTypeMappings)(const OSFileTypeMappingList** mappingList);
 } BasePluginCallbacks;
 

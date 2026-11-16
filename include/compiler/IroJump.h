@@ -1,8 +1,9 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_IROJUMP_H
 #define COMPILER_IROJUMP_H
 
 #include "compiler/common.h"
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #pragma pack(push, 2)
 #endif
 
@@ -20,7 +21,7 @@ extern Boolean IRO_RemoveLabels(void);
 }
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #pragma pack(pop)
 #endif
 #endif

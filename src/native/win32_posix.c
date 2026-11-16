@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // POSIX versions of the Win32 calls the 3.0.1 driver makes (native build
 // only). Only what a command-line compile needs is real: files,
 // directories, the current directory, times and memory. Processes,
@@ -37,7 +38,7 @@ static DWORD last_error;
 
 static DWORD win32_error(int e) {
     switch (e) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case 0:
             return 0;
         case ENOENT:
@@ -57,7 +58,7 @@ static DWORD win32_error(int e) {
             return 4; // ERROR_TOO_MANY_OPEN_FILES
 #endif
         case EACCES:
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case EPERM:
             return 5; // ERROR_ACCESS_DENIED
         case EBADF:
@@ -126,7 +127,7 @@ static void windows_path(char* p) {
 }
 
 // the MSL assertion handler (3.0.1's four-argument form)
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 void __assertion_failed(
     char const* condition, char const* filename, char const* funcname, int lineno
 ) {
@@ -175,7 +176,7 @@ BOOL __stdcall FreeEnvironmentStringsA(LPSTR lpszEnvironmentBlock) {
 }
 
 HANDLE __stdcall CreateFileA(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     LPCSTR lpFileName,
     DWORD dwDesiredAccess,
     DWORD dwShareMode,
@@ -205,7 +206,7 @@ HANDLE __stdcall CreateFileA(
         flags = O_RDONLY;
     }
     switch (dwCreationDisposition) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case 1:
             flags |= O_CREAT | O_EXCL;
             break; // CREATE_NEW
@@ -254,7 +255,7 @@ BOOL __stdcall CloseHandle(HANDLE hObject) {
 }
 
 BOOL __stdcall ReadFile(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     HANDLE hFile,
     LPVOID lpBuffer,
     DWORD nNumberOfBytesToRead,
@@ -282,7 +283,7 @@ BOOL __stdcall ReadFile(
 }
 
 BOOL __stdcall WriteFile(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     HANDLE hFile,
     LPCVOID lpBuffer,
     DWORD nNumberOfBytesToWrite,
@@ -321,7 +322,7 @@ DWORD __stdcall GetFileSize(HANDLE hFile, LPDWORD lpFileSizeHigh) {
     return (DWORD)st.st_size;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 DWORD __stdcall SetFilePointer(
     HANDLE hFile, LONG lDistanceToMove, PLONG lpDistanceToMoveHigh, DWORD dwMoveMethod
 ) {
@@ -336,7 +337,7 @@ DWORD __stdcall SetFilePointer(
     if (lpDistanceToMoveHigh) {
         off = ((off_t)*lpDistanceToMoveHigh << 32) | (UInt32)lDistanceToMove;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     r = lseek(
         FD_OF(hFile),
         off,
@@ -401,7 +402,7 @@ BOOL __stdcall GetFileTime(
 }
 
 BOOL __stdcall SetFileTime(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     HANDLE hFile,
     const FILETIME* lpCreationTime,
     const FILETIME* lpLastAccessTime,
@@ -501,7 +502,7 @@ static void collapse_dots(char* path) {
     strcpy(path, out);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 DWORD __stdcall GetFullPathNameA(
     LPCSTR lpFileName, DWORD nBufferLength, LPSTR lpBuffer, LPSTR* lpFilePart
 ) {
@@ -568,7 +569,7 @@ static BOOL find_next(FindState* fs, LPWIN32_FIND_DATAA data) {
         memset(data, 0, sizeof(*data));
         snprintf(full, sizeof(full), "%s/%s", fs->dirpath, de->d_name);
         if (stat(full, &st) == 0) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             data->dwFileAttributes =
                 S_ISDIR(st.st_mode) ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
 #else
@@ -635,7 +636,7 @@ static HANDLE std_handles[3] = {HANDLE_OF(0), HANDLE_OF(1), HANDLE_OF(2)};
 
 HANDLE __stdcall GetStdHandle(DWORD nStdHandle) {
     switch ((int)nStdHandle) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case -10:
             return std_handles[0];
         case -11:
@@ -669,7 +670,7 @@ BOOL __stdcall SetStdHandle(DWORD nStdHandle, HANDLE hHandle) {
     return TRUE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 BOOL __stdcall GetConsoleScreenBufferInfo(
     HANDLE hConsoleOutput, PCONSOLE_SCREEN_BUFFER_INFO lpConsoleScreenBufferInfo
 ) {
@@ -769,7 +770,7 @@ HGLOBAL __stdcall GlobalFree(HGLOBAL hMem) {
 
 // processes, resources, version info and messages: not available natively
 BOOL __stdcall CreateProcessA(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     LPCSTR lpApplicationName,
     LPSTR lpCommandLine,
     LPSECURITY_ATTRIBUTES lpProcessAttributes,
@@ -866,7 +867,7 @@ DWORD __stdcall GetFileVersionInfoSizeA(LPCSTR lptstrFilename, LPDWORD lpdwHandl
     return 0;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 BOOL __stdcall GetFileVersionInfoA(
     LPCSTR lptstrFilename, DWORD dwHandle, DWORD dwLen, LPVOID lpData
 ) {
@@ -883,7 +884,7 @@ BOOL __stdcall VerQueryValueA(LPCVOID pBlock, LPCSTR lpSubBlock, LPVOID* lplpBuf
 }
 
 DWORD __stdcall FormatMessageA(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     DWORD dwFlags,
     LPCVOID lpSource,
     DWORD dwMessageId,
@@ -922,7 +923,7 @@ UINT __stdcall GetWindowsDirectoryA(LPSTR lpBuffer, UINT uSize) {
 
 // Shift-JIS file name wrappers (src/host/ShiftJIS.c): paths are passed through as is
 HANDLE __stdcall ShiftJIS_CreateFileA(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     LPCSTR lpFileName,
     DWORD dwDesiredAccess,
     DWORD dwShareMode,
@@ -941,7 +942,7 @@ HANDLE __stdcall ShiftJIS_CreateFileA(
 #endif
 ) {
     return CreateFileA(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         lpFileName,
         dwDesiredAccess,
         dwShareMode,
@@ -969,7 +970,7 @@ DWORD __stdcall ShiftJIS_GetFileSize(HANDLE hFile, LPDWORD lpFileSizeHigh) {
 }
 
 BOOL __stdcall ShiftJIS_ReadFile(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     HANDLE hFile,
     LPVOID lpBuffer,
     DWORD nNumberOfBytesToRead,

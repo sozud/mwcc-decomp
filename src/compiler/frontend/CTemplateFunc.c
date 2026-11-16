@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CTemplateFunc.h"
 #include "compiler/CABI.h"
 #include "compiler/CDecl.h"
@@ -366,7 +367,7 @@ TemplFuncInstance* CTempl_DeduceFunc(
     return CTempl_CheckFuncInstance(object1, tfunc, args, object2);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-2)
 #endif
@@ -468,7 +469,7 @@ static Boolean CTempl_FuncIsAtLeastAsSpecialized(Object* func1, Object* func2) {
 
     return TRUE;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -527,11 +528,13 @@ Object* CTempl_PartialOrdering(Object* object, ObjectList* list, int argcount) {
     return object;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-2)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (19)
+#endif
 #endif
 int CTempl_GetTemplateArgumentExpressionIndex(TemplArg* arg) {
 #if MWCCPSP
@@ -547,9 +550,11 @@ int CTempl_GetTemplateArgumentExpressionIndex(TemplArg* arg) {
 
     return -1;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -564,13 +569,13 @@ static Type* CTempl_GetSpecifiedType(
     return CTemplTool_DeduceTypeCopy(&deduce, type, resultQual);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-2)
 #endif
 static Boolean CTempl_DeduceTemplateArgs(TemplArg* args1, TemplArg* args2, TemplArg* argArray) {
     int index;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     TemplArg* b69_dead;
 #endif
 
@@ -652,14 +657,14 @@ static Boolean CTempl_DeduceTemplateArgs(TemplArg* args1, TemplArg* args2, Templ
         }
 
         args1 = args1->next;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead = args2 = args2->next;
 #else
         args2 = args2->next;
 #endif
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -773,7 +778,7 @@ static Boolean CTempl_DeduceQualTemplate(
     return FALSE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if defined(__MWERKS__)
 #pragma dont_inline on // b69 calls the header inlines out of line here
 #endif
@@ -1019,13 +1024,13 @@ static Boolean CTempl_DeduceTypeTemplDep(
             return TRUE;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if defined(__MWERKS__)
 #pragma dont_inline reset
 #endif
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-2)
 #endif
@@ -1036,7 +1041,7 @@ static Boolean CTempl_DeduceFuncType(TypeFunc* tfunc1, TypeFunc* tfunc2, TemplAr
     Type* type1;
     UInt32 qual2;
     UInt32 qual1;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     FuncArg* b69_dead;
 #endif
 
@@ -1094,7 +1099,7 @@ static Boolean CTempl_DeduceFuncType(TypeFunc* tfunc1, TypeFunc* tfunc2, TemplAr
         }
 
         arg1 = arg1->next;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead = arg2 = arg2->next;
 #else
         arg2 = arg2->next;
@@ -1102,7 +1107,7 @@ static Boolean CTempl_DeduceFuncType(TypeFunc* tfunc1, TypeFunc* tfunc2, TemplAr
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (32)
 #endif
@@ -1187,9 +1192,11 @@ static Boolean CTempl_DeduceType1(
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -1420,7 +1427,7 @@ Boolean CTempl_DeduceType(
     return FALSE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-2)
 #endif
@@ -1511,7 +1518,7 @@ static Boolean CTempl_TypeNeedsDeduction(Type* type) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -1519,7 +1526,7 @@ static Boolean CTempl_TypeNeedsDeduction(Type* type) {
 static Boolean CTempl_MatchTemplFunc(
     Object* object, DeduceInfo* info, FuncArg* args, ENodeList* exprs, ArgMatch* best
 ) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     FuncArg* b69_dead;
 #endif
     ArgMatch match;
@@ -1643,7 +1650,7 @@ static Boolean CTempl_MatchTemplFunc(
         }
 
         exprs = exprs->next;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead = args = args->next;
 #else
         args = args->next;
@@ -1769,12 +1776,12 @@ static Boolean CExpr_DeduceFromObjList(FuncArg* arg, NameSpaceObjectList* list, 
     return FALSE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-2)
 #endif
 Object* CTempl_DeduceFromFunctionCall(Object* funcobj, TemplArg* templargs, ENodeList* argexprs) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     FuncArg* b69_dead;
 #endif
     DeduceInfo info;
@@ -1845,7 +1852,7 @@ Object* CTempl_DeduceFromFunctionCall(Object* funcobj, TemplArg* templargs, ENod
             }
 
             argexprs = argexprs->next;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             b69_dead = arg = arg->next;
 #else
             arg = arg->next;
@@ -1869,12 +1876,12 @@ Object* CTempl_DeduceFromFunctionCall(Object* funcobj, TemplArg* templargs, ENod
         return NULL;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-2)
 #endif
@@ -1926,7 +1933,7 @@ Object* CTempl_DeduceFromConversion(Object* funcobj, Type* type, UInt32 qual) {
     return CTempl_GetCreateFuncInstance(funcobj, info.args, NULL)->object;
 #endif
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -1944,11 +1951,13 @@ static int CTemplFunc_TemplateNestLevel(NameSpace* nspace) {
     return level;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-2)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (165)
+#endif
 #endif
 static Boolean CTemplFunc_SameFuncType(TypeFunc* a, TypeFunc* b) {
     FuncArg* arg1;
@@ -1994,18 +2003,22 @@ static Boolean CTemplFunc_SameFuncType(TypeFunc* a, TypeFunc* b) {
 
     return is_arglistsame(arg1, arg2);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-2)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (169)
+#endif
 #endif
 Object* CTempl_TemplateFunctionCheck(DeclInfo* di, NameSpaceObjectList* nsol) {
     TemplArg* arg;
@@ -2098,9 +2111,11 @@ Object* CTempl_TemplateFunctionCheck(DeclInfo* di, NameSpaceObjectList* nsol) {
     di->requireTemplateClassMember = 0;
     return NULL;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif

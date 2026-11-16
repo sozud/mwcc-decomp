@@ -37,8 +37,9 @@ src/compiler/driver/cc-eabi-ppc.c
 src/compiler/driver/cc-eabi-ppc-mw.c
 src/driver/libimp-eabi-ppc.c
 src/compiler/driver/ParserGlue-eabi-ppc-cc.c
-# b52 only (MWCCPS2_B52; tools/mwccps2/b52/units.txt)
+# the b69 line only (b69, b52: tools/mwccps2/b69/units.txt, tools/mwccps2/b52/units.txt)
 src/psp/backend/BETrace.c
 src/psp/backend/InlineAsmMnemonics.c
 src/psp/backend/LocalCSE.c
-src/psp/frontend/FEInterfaceB52.c
+src/psp/backend/LoopDetection69.c
+src/psp/frontend/FEInterfaceB69.c

@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_DROPINCOMPILERLINKER_H
 #define DRIVER_DROPINCOMPILERLINKER_H
 
@@ -38,7 +39,7 @@ enum {
     linkOutputNone,
     linkOutputFile,
     linkOutputDirectory
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 };
 
 typedef struct CWBrowseOptions {
@@ -172,7 +173,7 @@ typedef struct CWTargetInfoV7 {
     CWDataType debuggerCreator;
     CWDataType runHelperCreator;
     SInt32 reserved2[2];
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // b52's is 0x720 bytes, as 3.0.1's (CWCompilerLinkerContext.callbacks at
     // +0xE22, CWDisplayLines); the fields' places in it are not known yet
     UInt8 b52_unk[0x720 - 0x41E];

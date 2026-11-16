@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_CLIO_H
 #define DRIVER_CLIO_H
 
@@ -20,7 +21,7 @@ enum {
 typedef struct MessageRef {
     OSSpec sourcefile;
     OSSpec errorfile;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     char* sourceline;
     SInt32 linenumber;
     SInt32 tokenoffset;

@@ -1,4 +1,5 @@
-#if MWCCPS2_B52
+#include "compiler/mwcc_core.h"
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #ifndef COMPILER_CERROR_H
 #define COMPILER_CERROR_H
 
@@ -8,10 +9,14 @@
 #define CError_LINE_SHIFT 0
 // b69's own line offsets (2.4.5 sources), set around single functions
 #define CError_B69_SHIFT 0
-// b52's own line offsets on top of b69's, set around single functions
+#if MWCC_CORE != MWCC_CORE_B52
+#define CError_LINE (CError_LINE_SHIFT + CError_B69_SHIFT)
+#endif
+// the MIPS back end (3.0.1 sources) also names these; without them
+#if MWCC_CORE == MWCC_CORE_B52
 #define CError_B52_SHIFT 0
 #define CError_LINE (CError_LINE_SHIFT + CError_B69_SHIFT + CError_B52_SHIFT)
-// the MIPS back end (3.0.1 sources) also names these; without them
+#endif
 // CError_B145_LINE(n) compiled as a call to an undeclared function
 #define CError_PS2_SHIFT 0
 #define CError_B145_SHIFT 0
@@ -49,8 +54,13 @@ extern "C" {
 // clang-format off
 // b52 numbers its messages from 1, as 3.0.1 does (CPrep_MacroRedefError passes
 // 9 where b69 passes 108, to the same CPrep_WarningName); b69 from 100
+#if MWCC_CORE == MWCC_CORE_B52
 #define CError_ERR_SHIFT 99
 #define CError_MSG_BASE 10099 // message numbers shown to the user
+#else
+#define CError_ERR_SHIFT 0
+#define CError_MSG_BASE 10000
+#endif
 enum {
     ERR_ILLEGAL_CHARACTER_CONSTANT = 100 - CError_ERR_SHIFT,
     ERR_ILLEGAL_STRING_CONSTANT = 101 - CError_ERR_SHIFT,

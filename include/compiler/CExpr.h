@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_CEXPR_H
 #define COMPILER_CEXPR_H
 
@@ -30,7 +31,7 @@ enum {
     CheckResult_Promotion,
     CheckResult_Conversion,
     CheckResult_UserConversion
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 };
 
 #pragma pack(push, 2)
@@ -53,7 +54,7 @@ struct ArgMatch {
     ComparisonValues standard;
     SInt16 userconversions;
     ComparisonValues userStandard;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     struct ObjectList* list;
 };
 #pragma pack(pop)
@@ -99,7 +100,7 @@ extern ENode* CExpr_New_EBINNOT_Node(ENode* input);
 extern ENode* unary_expression(void);
 extern ENode* do_castnullcheck(ENode* condexpr, ENode* nullcheckexpr);
 extern ENode* CExpr_SafeClassPointerCast(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     ENode* expr, TypeClass* a, TypeClass* b, Boolean typconflag, Boolean pathcheckflag
 );
 extern ENode* PointerToMemberCast(
@@ -197,7 +198,7 @@ extern void CExpr_MatchCV(Type* t1, UInt32 q1, Type* t2, UInt32 q2, ArgMatch* ma
 extern ENode* CExpr_FuncCallSix(
     Object* func, ENode* arg1, ENode* arg2, ENode* arg3, ENode* arg4, ENode* arg5, ENode* arg6
 );
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern ENode* funccallexpr(Object* func, ENode* arg1, ENode* arg2, ENode* arg3, ENode* arg4);
 extern ENode* CExpr_AdjustFunctionCall(ENode* expr);
 extern ENode* CExpr_IsTempConstruction(ENode* expr, Type* type, ENode** resultexpr);
@@ -214,7 +215,7 @@ extern ENode* create_objectnode2(Object* obj);
 extern ENode* create_objectrefnode(Object* obj);
 extern ENode* CExpr_MakeObjRefNode(Object* obj, Boolean markUsed);
 extern Boolean CExpr_IsLValue(ENode* expr);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern ENode* CExpr_TempModifyExpr(ENode* expr);
 extern ENode* promote(ENode* expr, Type* type);
 extern void CExpr_ArithmeticConversion(ENode** left, ENode** right);
@@ -238,15 +239,13 @@ extern short iszero(ENode* expr);
 extern ENode* makecommaexpression(ENode* left, ENode* right);
 extern ENode* makediadicnode(ENode* left, ENode* right, UInt8 ty);
 extern ENode* CExpr_BinaryFloatExpression(ENode* expr);
-#if MWCCPS2_B52
 extern ENode* CExpr_UnaryFloatExpression(ENode* expr);
 extern ENode* CExpr_NewENode(ENodeType ty);
+#if MWCC_CORE == MWCC_CORE_B52
 extern ENode* CExpr_CopyENode(ENode* expr);
+#endif
 extern ENode* nullnode(void);
-#else
-extern ENode* CExpr_UnaryFloatExpression(ENode* expr);
-extern ENode* CExpr_NewENode(ENodeType ty);
-extern ENode* nullnode(void);
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 // 3.0.1 (0x52A990): a copy of an expression node (2.4.7 copied inline)
 extern ENode* CExpr_CopyENode(ENode* expr);
@@ -255,7 +254,7 @@ extern ENode* CExpr_CopyENode(ENode* expr);
 #endif
 extern ENode* CExpr_NewETEMPNode(Type* type, Boolean assign_id);
 extern ENode* CExpr_NewTemplDepENode(TemplDepSubType t);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern ENode* forceintegral(ENode* expr);
 extern Boolean CExpr_AllBitsSet(ENode* expr);
 extern void CExpr_SearchExprTree(ENode* expr, CExprSearchCB callback, SInt32 count, ...);

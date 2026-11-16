@@ -1,10 +1,11 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_TEMPLATES_H
 #define COMPILER_TEMPLATES_H
 
 #include "compiler/common.h"
 #include "compiler/types.h"
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -26,7 +27,7 @@ struct PackedDeclInfo {
     UInt32 qual;
     NameSpace* nspace;
     HashNameNode* name;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     TemplArg* expltargs;
     SInt16 storageclass;
     UInt8 section;
@@ -58,7 +59,7 @@ struct TemplateMember {
     CPrepFileInfo* srcfile;
     SInt32 startoffset;
     SInt32 endoffset;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPS2
     void* unk30; // b210 allocates 0x34 bytes (CTemplClass_DefineMember)
 #endif
@@ -118,7 +119,7 @@ struct DefAction {
     int xC;
     TypeEnum* enumtype;
 };
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 
 struct TypeDeduce {
     TemplClass* tmclass;
@@ -171,7 +172,7 @@ struct TemplStack {
     union {
         Object* func;
         TypeClass* theclass;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } u;
     Boolean is_func;
     Boolean is_poi;
@@ -372,7 +373,7 @@ struct TemplFuncInstance {
 
 typedef enum TemplateActionType {
     TAT_NESTEDCLASS,
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     TAT_ENUMTYPE,
     TAT_FRIEND,
     TAT_ENUMERATOR,
@@ -387,7 +388,7 @@ typedef enum TemplateActionType {
     TAT_OBJECTINIT,
     TAT_USINGDECL,
     TAT_OBJECTDEF,
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
     // 3.0.1 has no enumerator action (its template enums are handled in
     // another way, not ported yet); ours is kept past the 3.0.1 values
@@ -422,7 +423,7 @@ struct TemplateAction {
             TypeTemplDep* type;
             AccessType access;
         } usingdecl;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         ObjBase* refobj;
     } u;
     TemplateActionType type;
@@ -439,7 +440,7 @@ struct TemplateAction {
 
 struct TemplateScopeState {
     NameSpace* scope;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     NameSpace* linkedNamespace;
 };
 #pragma pack(pop)

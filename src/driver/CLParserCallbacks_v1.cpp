@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/CLParserCallbacks_v1.h"
 #include "driver/CLAccessPaths.h"
 #include "driver/CLDropinCallbacks_V10.h"
@@ -388,7 +389,7 @@ static CWParserCallbacks parser_cb = {
 CWParserContext::CWParserContext()
     : CWPluginPrivateContext(CWDROPINPARSERTYPE, sizeof(CWParserContext)) {
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 CWParserContext::CWParserContext()
     : CWPluginPrivateContext(CWDROPINPARSERTYPE, sizeof(CWParserContext)) {
 #else

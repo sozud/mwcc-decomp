@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include "psp/BE.h"
 #include "compiler/CError.h"
@@ -40,18 +41,21 @@ extern char data_00625ECC; // register class being colored (Coloring.c)
 Boolean func_004B8980(Object* obj) {
     VarInfo* vi;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (COPTS_X.mips_option43 &&
         obj != NULL &&
         (vi = obj->u.data.info) != NULL &&
         obj->datatype == DDATA) {
+        if (vi->reg != 0 ||
+            VI_B210_CLASS(vi) == 5 ||
+            (VI_B210_2F(vi) != 0 && VI_B210_CLASS(vi) == 0)) {
 #else
     if (copts.mips_option43 &&
         obj != NULL &&
         (vi = obj->u.data.info) != NULL &&
         obj->datatype == DDATA) {
-#endif
         if (vi->reg != 0 || vi->unk24[2] == 5 || (vi->unk24[3] != 0 && vi->unk24[2] == 0)) {
+#endif
             return TRUE;
         }
     }

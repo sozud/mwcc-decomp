@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // mwccpsp 3.0.1 Intrinsics.c (MIPS): the builtin functions. 2.4.7's file is
 // PowerPC and stays out of the build. The registration list was generated
 // from the original (0x45B910) by the session's genintr.py; the argument
@@ -20,7 +21,7 @@
 
 extern Type* CABI_GetSizeTType(void);
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #pragma pack(push, 2)
 #endif
 typedef struct OpcodeDef {
@@ -29,7 +30,7 @@ typedef struct OpcodeDef {
     char* format;
     UInt8 nargs;
     UInt8 size;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     UInt8 pad0E[2];
 #endif
     UInt32 unk10;
@@ -41,7 +42,7 @@ typedef struct OpcodeDef {
     SInt32 unk28;
     UInt16 unk2C;
 } OpcodeDef;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #pragma pack(pop)
 #endif
 
@@ -81,7 +82,7 @@ static void Intrinsics_SetupOpcodeBuiltins(void) {
     SInt32 id;
     Type* args[6];
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (op = 0; op <= OPC(0x3E5); op++) {
 #else
     for (op = 0; op <= 0x3E5; op++) {
@@ -134,7 +135,7 @@ static void Intrinsics_SetupOpcodeBuiltins(void) {
             }
         }
         if (nargs == 0) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             intrinsics_objects[data_006115F8[op].intrinsicid] = CParser_NewRTFunc(
                 TYPE(&stunsignedlong), GetHashNameNodeExport(data_006115F8[op].intrinsic), 0, 0
             );
@@ -144,7 +145,7 @@ static void Intrinsics_SetupOpcodeBuiltins(void) {
             );
 #endif
         } else if (nargs == 1) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             intrinsics_objects[data_006115F8[op].intrinsicid] = CParser_NewRTFunc(
                 TYPE(&stunsignedlong),
                 GetHashNameNodeExport(data_006115F8[op].intrinsic),
@@ -163,7 +164,7 @@ static void Intrinsics_SetupOpcodeBuiltins(void) {
 #endif
         } else if (nargs == 2) {
             intrinsics_objects[data_006115F8[op].intrinsicid] = CParser_NewRTFunc(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 TYPE(&stunsignedlong),
                 GetHashNameNodeExport(data_006115F8[op].intrinsic),
                 0,
@@ -181,7 +182,7 @@ static void Intrinsics_SetupOpcodeBuiltins(void) {
             );
         } else if (nargs == 3) {
             intrinsics_objects[data_006115F8[op].intrinsicid] = CParser_NewRTFunc(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 TYPE(&stunsignedlong),
                 GetHashNameNodeExport(data_006115F8[op].intrinsic),
                 0,
@@ -201,7 +202,7 @@ static void Intrinsics_SetupOpcodeBuiltins(void) {
             );
         } else if (nargs == 4) {
             intrinsics_objects[data_006115F8[op].intrinsicid] = CParser_NewRTFunc(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 TYPE(&stunsignedlong),
                 GetHashNameNodeExport(data_006115F8[op].intrinsic),
                 0,
@@ -361,7 +362,7 @@ static void Intrinsics_SetupOpcodeBuiltins(void) {
 #if MWCCPS2
 // mwccps2's builtins (the R5900 MMI and VU0 intrinsics through helpers);
 // generated from the original (0x466400)
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 static void Intrinsics_DefInt128_6(
     int id, char* name, Type* a1, Type* a2, Type* a3, Type* a4, Type* a5, Type* a6
 );
@@ -399,7 +400,7 @@ void func_0045B910(void) {
         intrinsics_objects[i] = NULL;
     }
     Intrinsics_SetupOpcodeBuiltins();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     intrinsics_objects[1] =
         CParser_NewRTFunc(TYPE(&stvoid), GetHashNameNodeExport("__asm_start"), 0, 0);
 #else
@@ -409,7 +410,7 @@ void func_0045B910(void) {
     intrinsics_objects[1]->u.func.u.intrinsicid = 1;
     TYPE_FUNC(intrinsics_objects[1]->type)->flags |= FUNC_INTRINSIC;
     CScope_AddGlobalObject(intrinsics_objects[1]);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     intrinsics_objects[2] =
         CParser_NewRTFunc(TYPE(&stvoid), GetHashNameNodeExport("__asm_start_reord"), 0, 0);
 #else
@@ -419,7 +420,7 @@ void func_0045B910(void) {
     intrinsics_objects[2]->u.func.u.intrinsicid = 2;
     TYPE_FUNC(intrinsics_objects[2]->type)->flags |= FUNC_INTRINSIC;
     CScope_AddGlobalObject(intrinsics_objects[2]);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     intrinsics_objects[3] =
         CParser_NewRTFunc(TYPE(&stvoid), GetHashNameNodeExport("__asm_end"), 0, 0);
 #else
@@ -429,7 +430,7 @@ void func_0045B910(void) {
     intrinsics_objects[3]->u.func.u.intrinsicid = 3;
     TYPE_FUNC(intrinsics_objects[3]->type)->flags |= FUNC_INTRINSIC;
     CScope_AddGlobalObject(intrinsics_objects[3]);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     intrinsics_objects[4] = CParser_NewRTFunc(
         TYPE(&stvoid),
         GetHashNameNodeExport("__evaluate"),
@@ -452,7 +453,7 @@ void func_0045B910(void) {
     TYPE_FUNC(intrinsics_objects[4]->type)->flags |= FUNC_INTRINSIC;
     CScope_AddGlobalObject(intrinsics_objects[4]);
     if (copts.mips_long64) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         intrinsics_objects[5] = CParser_NewRTFunc(
             TYPE(&stvoid), GetHashNameNodeExport("__builtin_initialize"), 0, 1, TYPE(&void_ptr)
         );
@@ -466,7 +467,7 @@ void func_0045B910(void) {
         CScope_AddGlobalObject(intrinsics_objects[5]);
         Intrinsics_DefUnary(6, "__builtin_args_info", TYPE(&stsignedint));
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     intrinsics_objects[0] = CParser_NewRTFunc(
         TYPE(&void_ptr), GetHashNameNodeExport("__alloca"), 0, 1, TYPE(&stunsignedlong)
     );
@@ -865,7 +866,7 @@ void func_0045B910(void) {
     Intrinsics_DefBinary(8, "__strcpy", TYPE(&stchar));
     Intrinsics_DefBinary(16, "__sqrt", TYPE(&stfloat));
     Intrinsics_DefBinary(17, "__rsqrt", TYPE(&stfloat));
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     intrinsics_objects[9] = CParser_NewRTFunc(
         CDecl_NewPointerType(TYPE(&stvoid)),
         GetHashNameNodeExport("__memcpy"),
@@ -889,7 +890,7 @@ void func_0045B910(void) {
     intrinsics_objects[9]->u.func.u.intrinsicid = 9;
     TYPE_FUNC(intrinsics_objects[9]->type)->flags |= FUNC_INTRINSIC;
     CScope_AddGlobalObject(intrinsics_objects[9]);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     intrinsics_objects[18] = CParser_NewRTFunc(
         TYPE(&void_ptr),
         GetHashNameNodeExport("__clear"),
@@ -898,25 +899,29 @@ void func_0045B910(void) {
         TYPE(&char_ptr),
         CABI_GetSizeTType()
     );
-#else
-    intrinsics_objects[18] = CParser_NewRTFunc(
-        TYPE(&void_ptr),
-        GetHashNameNodeExport("__clear"),
-        0,
-        2,
-        TYPE(&char_ptr),
-        CABI_GetSizeTType()
-    );
-#endif
     intrinsics_objects[18]->u.func.u.intrinsicid = 18;
     TYPE_FUNC(intrinsics_objects[18]->type)->flags |= FUNC_INTRINSIC;
     CScope_AddGlobalObject(intrinsics_objects[18]);
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+    intrinsics_objects[18] = CParser_NewRTFunc(
+        TYPE(&void_ptr),
+        GetHashNameNodeExport("__clear"),
+        0,
+        2,
+        TYPE(&char_ptr),
+        CABI_GetSizeTType()
+    );
+    intrinsics_objects[18]->u.func.u.intrinsicid = 18;
+    TYPE_FUNC(intrinsics_objects[18]->type)->flags |= FUNC_INTRINSIC;
+    CScope_AddGlobalObject(intrinsics_objects[18]);
+#endif
 
     copts.cplusplus = savecpp;
 }
 
 // 0x4679D0: an intrinsic returning stint128 with 6 arguments
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 static void Intrinsics_DefInt128_6(
     int id, char* name, Type* a1, Type* a2, Type* a3, Type* a4, Type* a5, Type* a6
 ) {
@@ -937,7 +942,7 @@ static void Intrinsics_DefInt128_6(
 }
 
 // 0x467A40: an intrinsic returning stint128 with 5 arguments
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 static void Intrinsics_DefInt128_5(
     int id, char* name, Type* a1, Type* a2, Type* a3, Type* a4, Type* a5
 ) {
@@ -956,7 +961,7 @@ static void Intrinsics_DefInt128_5(
 }
 
 // 0x467AB0: an intrinsic returning stfloat with 5 arguments
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 static void Intrinsics_DefFloat_5(
     int id, char* name, Type* a1, Type* a2, Type* a3, Type* a4, Type* a5
 ) {
@@ -976,7 +981,7 @@ static void Intrinsics_DefFloat_5(
 
 // 0x467B20: an intrinsic returning stint128 with 4 arguments
 static void Intrinsics_DefInt128_4(int id, char* name, Type* a1, Type* a2, Type* a3, Type* a4) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     intrinsics_objects[id] =
         CParser_NewRTFunc(TYPE(&stint128), GetHashNameNodeExport(name), 0, 4, a1, a2, a3, a4);
 #else
@@ -990,7 +995,7 @@ static void Intrinsics_DefInt128_4(int id, char* name, Type* a1, Type* a2, Type*
 
 // 0x467B80: an intrinsic returning stfloat with 3 arguments
 static void Intrinsics_DefFloat_3(int id, char* name, Type* a1, Type* a2, Type* a3) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     intrinsics_objects[id] =
         CParser_NewRTFunc(TYPE(&stfloat), GetHashNameNodeExport(name), 0, 3, a1, a2, a3);
 #else
@@ -1004,7 +1009,7 @@ static void Intrinsics_DefFloat_3(int id, char* name, Type* a1, Type* a2, Type* 
 
 // 0x467BE0: an intrinsic returning stint128 with 3 arguments
 static void Intrinsics_DefInt128_3(int id, char* name, Type* a1, Type* a2, Type* a3) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     intrinsics_objects[id] =
         CParser_NewRTFunc(TYPE(&stint128), GetHashNameNodeExport(name), 0, 3, a1, a2, a3);
 #else
@@ -1018,7 +1023,7 @@ static void Intrinsics_DefInt128_3(int id, char* name, Type* a1, Type* a2, Type*
 
 // 0x467C40: void f(type, type)
 static void Intrinsics_DefVoid2(int id, char* name, Type* type) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     intrinsics_objects[id] =
         CParser_NewRTFunc(TYPE(&stvoid), GetHashNameNodeExport(name), 0, 2, type, type);
 #else
@@ -1404,14 +1409,14 @@ Boolean func_00458560(Boolean is_precompiler) {
     char* name;
 
     if (is_precompiler) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         for (op = 0; op < OPC(0x3E5); op++) {
 #else
         for (op = 0; op < 0x3E5; op++) {
 #endif
             name = data_006115F8[op].intrinsic;
             if (name != NULL) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 intrinsics_objects[data_006115F8[op].intrinsicid]->name =
                     GetHashNameNodeExport(name);
 #else
@@ -1683,7 +1688,7 @@ static void Intrinsics_GenUnary(int op, ENodeList* args, VOperand* out, Type* ty
 // are generated by tools/mwccps2/tools/mwccpsp/gen_intrinsics_cg_ps2.py
 // (tools/mwccps2/notes/intrinsics_codegen.md).
 extern TypeIntegral ps2_int64_5E5EE8; // 0x5E5EE8: an 8-byte integral type (0x11), __sel's operand
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern void ps2_vu0op_463B20(
     ENode* call, SInt32 op, VOperand* out
 ); // 0x463B20, a VU0 op (not decompiled)
@@ -1947,7 +1952,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 
     // b210: the MMI (0x26..0x75) and VU0 (0x85..0xB1) intrinsics need
     // #pragma (copts+0x47) on
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!COPTS_X.mips_option43) {
 #else
     if (!copts.mips_option43) {
@@ -2024,7 +2029,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 break;
             }
             if (v.kind != 0) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 func_004A64C0(
                     &v,
                     call->data.funccall.funcref->data.objref->u.func.u.intrinsicid == 0xA
@@ -2034,7 +2039,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                     call->data.funccall.funcref->data.objref->u.func.u.intrinsicid == 0xA
 #endif
                         ? TYPE(&stsignedint)
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         : TYPE(&stsignedlong),
                     1
                 );
@@ -2047,13 +2052,13 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             out->kind = 0;
             if (copts.conditional_move) {
                 t = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xD4), t, v.reg, 0);
 #else
                 emitpcode(0xD4, t, v.reg, 0);
 #endif
                 out->reg = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xB8), out->reg, v.reg);
                 emitpcode(OPC(0x111), out->reg, v.reg, t);
 #else
@@ -2066,7 +2071,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 out->reg = data_00625A98[0]++;
                 emitpcode(data_00625E48, out->reg, v.reg);
                 func_00479540(0x1C, &v, label);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xB8), out->reg, v.reg);
 #else
                 emitpcode(0xB8, out->reg, v.reg);
@@ -2081,7 +2086,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             }
             if (copts.fp_library) {
                 out->reg = data_00625A98[1]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xEB), out->reg, v.reg);
 #else
                 emitpcode(0xEB, out->reg, v.reg);
@@ -2089,13 +2094,13 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 out->kind = 1;
             } else {
                 sop = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xD2), sop, v.reg, 1);
 #else
                 emitpcode(0xD2, sop, v.reg, 1);
 #endif
                 out->reg = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xDA), out->reg, sop, 1);
 #else
                 emitpcode(0xDA, out->reg, sop, 1);
@@ -2110,7 +2115,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             }
             if (copts.fp_library & 2) {
                 out->reg = data_00625A98[1]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xEA), out->reg, v.reg);
 #else
                 emitpcode(0xEA, out->reg, v.reg);
@@ -2119,13 +2124,13 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             } else {
                 // b210: the double is one 64-bit GPR; clear its sign bit
                 sop = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0x84), sop, v.reg, 1);
 #else
                 emitpcode(0x84, sop, v.reg, 1);
 #endif
                 out->reg = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0x8A), out->reg, sop, 1);
 #else
                 emitpcode(0x8A, out->reg, sop, 1);
@@ -2219,7 +2224,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             if (v2.kind != 0) {
                 func_004A64C0(&v2, TYPE(&stsignedlong), 1);
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             op =
                 call->data.funccall.funcref->data.objref->u.func.u.intrinsicid == 0xE ? 0xB6 : 0xB7;
 #else
@@ -2228,7 +2233,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #endif
             emitpcode(op, v.reg, v2.reg);
             out->reg = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0xA8), out->reg);
 #else
             emitpcode(0xA8, out->reg);
@@ -2295,12 +2300,16 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
         case 0x12: // __clear(ptr, size): store zero bytes
             INTR_EVAL(args->node, v);
             INTR_EVAL(args->next->node, v2);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
             // b52 (0x4D269E) tests the size's constant field whatever its kind;
             // for a size in a register that field is leftover stack, which in
             // every case seen was neither 0 nor 1, so a variable size gets the
             // loop. Only a constant size is tested here.
 #define CLEAR_SIZE_IS(v2, f) ((v2).kind == 3 && f(&(v2).imm))
+#else
+#define CLEAR_SIZE_IS(v2, f) f(&(v2).imm)
+#endif
             if (CLEAR_SIZE_IS(v2, CInt64_IsZero)) {
 #else
             if (CInt64_IsZero(&v2.imm)) {
@@ -2308,7 +2317,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 break;
             }
             zero = func_004C3BA0(0, 0);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (CLEAR_SIZE_IS(v2, CInt64_IsOne)) {
 #else
             if (CInt64_IsOne(&v2.imm)) {
@@ -2347,7 +2356,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 break;
             }
             out->reg = data_00625A98[1]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x101), out->reg, v.reg);
 #else
             emitpcode(0x101, out->reg, v.reg);
@@ -2368,7 +2377,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 break;
             }
             out->reg = data_00625A98[1]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x125), out->reg, v.reg, v2.reg);
 #else
             emitpcode(0x125, out->reg, v.reg, v2.reg);
@@ -2381,7 +2390,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x206), r, mv.reg);
 #else
             emitpcode(0x206, r, mv.reg);
@@ -2394,7 +2403,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x207), r, mv.reg);
 #else
             emitpcode(0x207, r, mv.reg);
@@ -2411,7 +2420,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x208), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x208, r, mv.reg, mv2.reg);
@@ -2428,7 +2437,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x209), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x209, r, mv.reg, mv2.reg);
@@ -2445,7 +2454,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x20b), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x20b, r, mv.reg, mv2.reg);
@@ -2462,7 +2471,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x20c), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x20c, r, mv.reg, mv2.reg);
@@ -2479,7 +2488,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x20d), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x20d, r, mv.reg, mv2.reg);
@@ -2496,7 +2505,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x20e), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x20e, r, mv.reg, mv2.reg);
@@ -2513,7 +2522,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x20f), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x20f, r, mv.reg, mv2.reg);
@@ -2530,7 +2539,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x210), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x210, r, mv.reg, mv2.reg);
@@ -2547,7 +2556,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x20a), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x20a, r, mv.reg, mv2.reg);
@@ -2564,7 +2573,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x211), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x211, r, mv.reg, mv2.reg);
@@ -2581,7 +2590,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x212), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x212, r, mv.reg, mv2.reg);
@@ -2598,7 +2607,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x213), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x213, r, mv.reg, mv2.reg);
@@ -2615,7 +2624,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x214), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x214, r, mv.reg, mv2.reg);
@@ -2632,7 +2641,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x215), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x215, r, mv.reg, mv2.reg);
@@ -2649,7 +2658,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x216), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x216, r, mv.reg, mv2.reg);
@@ -2666,7 +2675,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x217), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x217, r, mv.reg, mv2.reg);
@@ -2683,7 +2692,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x218), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x218, r, mv.reg, mv2.reg);
@@ -2696,7 +2705,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x219), r, mv.reg);
 #else
             emitpcode(0x219, r, mv.reg);
@@ -2713,7 +2722,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x21a), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x21a, r, mv.reg, mv2.reg);
@@ -2730,7 +2739,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x21b), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x21b, r, mv.reg, mv2.reg);
@@ -2746,7 +2755,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             if (mv2.kind != 0) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x21c), mv.reg, mv2.reg);
 #else
             emitpcode(0x21c, mv.reg, mv2.reg);
@@ -2761,7 +2770,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             if (mv2.kind != 0) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x21d), mv.reg, mv2.reg);
 #else
             emitpcode(0x21d, mv.reg, mv2.reg);
@@ -2776,7 +2785,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             if (mv2.kind != 0) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x21e), mv.reg, mv2.reg);
 #else
             emitpcode(0x21e, mv.reg, mv2.reg);
@@ -2792,7 +2801,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x22c), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x22c, r, mv.reg, mv2.reg);
@@ -2809,7 +2818,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x22d), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x22d, r, mv.reg, mv2.reg);
@@ -2826,7 +2835,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x231), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x231, r, mv.reg, mv2.reg);
@@ -2843,7 +2852,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x232), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x232, r, mv.reg, mv2.reg);
@@ -2860,7 +2869,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x233), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x233, r, mv.reg, mv2.reg);
@@ -2877,7 +2886,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x23f), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x23f, r, mv.reg, mv2.reg);
@@ -2894,7 +2903,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x240), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x240, r, mv.reg, mv2.reg);
@@ -2911,7 +2920,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x244), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x244, r, mv.reg, mv2.reg);
@@ -2928,7 +2937,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x245), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x245, r, mv.reg, mv2.reg);
@@ -2945,7 +2954,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x246), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x246, r, mv.reg, mv2.reg);
@@ -2958,7 +2967,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x21f), r, mv.reg);
 #else
             emitpcode(0x21f, r, mv.reg);
@@ -2971,7 +2980,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x220), r, mv.reg);
 #else
             emitpcode(0x220, r, mv.reg);
@@ -2984,7 +2993,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x221), r, mv.reg);
 #else
             emitpcode(0x221, r, mv.reg);
@@ -2997,7 +3006,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x223), r, mv.reg);
 #else
             emitpcode(0x223, r, mv.reg);
@@ -3010,7 +3019,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x225), r, mv.reg);
 #else
             emitpcode(0x225, r, mv.reg);
@@ -3027,7 +3036,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x226), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x226, r, mv.reg, mv2.reg);
@@ -3044,7 +3053,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x227), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x227, r, mv.reg, mv2.reg);
@@ -3061,7 +3070,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x228), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x228, r, mv.reg, mv2.reg);
@@ -3078,7 +3087,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x229), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x229, r, mv.reg, mv2.reg);
@@ -3095,7 +3104,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x22a), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x22a, r, mv.reg, mv2.reg);
@@ -3112,7 +3121,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x22b), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x22b, r, mv.reg, mv2.reg);
@@ -3129,7 +3138,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x22e), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x22e, r, mv.reg, mv2.reg);
@@ -3146,7 +3155,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x22f), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x22f, r, mv.reg, mv2.reg);
@@ -3159,7 +3168,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x230), r, mv.reg);
 #else
             emitpcode(0x230, r, mv.reg);
@@ -3176,7 +3185,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x234), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x234, r, mv.reg, mv2.reg);
@@ -3193,7 +3202,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x235), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x235, r, mv.reg, mv2.reg);
@@ -3210,7 +3219,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x23d), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x23d, r, mv.reg, mv2.reg);
@@ -3227,7 +3236,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x23e), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x23e, r, mv.reg, mv2.reg);
@@ -3244,7 +3253,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x247), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x247, r, mv.reg, mv2.reg);
@@ -3261,7 +3270,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x248), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x248, r, mv.reg, mv2.reg);
@@ -3274,7 +3283,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x249), r, mv.reg);
 #else
             emitpcode(0x249, r, mv.reg);
@@ -3291,7 +3300,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x24a), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x24a, r, mv.reg, mv2.reg);
@@ -3308,7 +3317,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x24b), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x24b, r, mv.reg, mv2.reg);
@@ -3325,7 +3334,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x24c), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x24c, r, mv.reg, mv2.reg);
@@ -3338,7 +3347,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x24d), r, mv.reg);
 #else
             emitpcode(0x24d, r, mv.reg);
@@ -3351,7 +3360,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x24e), r, mv.reg);
 #else
             emitpcode(0x24e, r, mv.reg);
@@ -3364,7 +3373,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x24f), r, mv.reg, args->next->node->data.intval.lo);
 #else
             emitpcode(0x24f, r, mv.reg, args->next->node->data.intval.lo);
@@ -3381,7 +3390,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x250), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x250, r, mv.reg, mv2.reg);
@@ -3394,7 +3403,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x251), r, mv.reg, args->next->node->data.intval.lo);
 #else
             emitpcode(0x251, r, mv.reg, args->next->node->data.intval.lo);
@@ -3407,7 +3416,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x252), r, mv.reg, args->next->node->data.intval.lo);
 #else
             emitpcode(0x252, r, mv.reg, args->next->node->data.intval.lo);
@@ -3424,7 +3433,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x253), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x253, r, mv.reg, mv2.reg);
@@ -3437,7 +3446,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x254), r, mv.reg, args->next->node->data.intval.lo);
 #else
             emitpcode(0x254, r, mv.reg, args->next->node->data.intval.lo);
@@ -3450,7 +3459,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x255), r, mv.reg, args->next->node->data.intval.lo);
 #else
             emitpcode(0x255, r, mv.reg, args->next->node->data.intval.lo);
@@ -3467,7 +3476,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x256), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x256, r, mv.reg, mv2.reg);
@@ -3480,7 +3489,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x257), r, mv.reg, args->next->node->data.intval.lo);
 #else
             emitpcode(0x257, r, mv.reg, args->next->node->data.intval.lo);
@@ -3497,7 +3506,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x258), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x258, r, mv.reg, mv2.reg);
@@ -3514,7 +3523,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x259), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x259, r, mv.reg, mv2.reg);
@@ -3531,7 +3540,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x25a), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x25a, r, mv.reg, mv2.reg);
@@ -3548,7 +3557,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x25b), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x25b, r, mv.reg, mv2.reg);
@@ -3565,7 +3574,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x25c), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x25c, r, mv.reg, mv2.reg);
@@ -3582,7 +3591,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x25d), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x25d, r, mv.reg, mv2.reg);
@@ -3599,7 +3608,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x25e), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x25e, r, mv.reg, mv2.reg);
@@ -3616,7 +3625,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x25f), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x25f, r, mv.reg, mv2.reg);
@@ -3633,7 +3642,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x260), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x260, r, mv.reg, mv2.reg);
@@ -3650,7 +3659,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x261), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x261, r, mv.reg, mv2.reg);
@@ -3662,7 +3671,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             if (mv.kind != 0) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x200), mv.reg, args->next->node->data.intval.lo);
 #else
             emitpcode(0x200, mv.reg, args->next->node->data.intval.lo);
@@ -3673,7 +3682,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             if (mv.kind != 0) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x201), mv.reg, args->next->node->data.intval.lo);
 #else
             emitpcode(0x201, mv.reg, args->next->node->data.intval.lo);
@@ -3684,7 +3693,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             if (mv.kind != 0) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x1ff), mv.reg);
 #else
             emitpcode(0x1ff, mv.reg);
@@ -3692,7 +3701,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             break;
         case 0x79:
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x1fc), r);
 #else
             emitpcode(0x1fc, r);
@@ -3709,7 +3718,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&mv2, TYPE(&stint128), 0);
             }
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x262), r, mv.reg, mv2.reg);
 #else
             emitpcode(0x262, r, mv.reg, mv2.reg);
@@ -3718,7 +3727,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             break;
         case 0x7B:
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x236), r);
 #else
             emitpcode(0x236, r);
@@ -3727,7 +3736,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             break;
         case 0x7C:
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x237), r);
 #else
             emitpcode(0x237, r);
@@ -3736,7 +3745,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             break;
         case 0x7D:
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x238), r);
 #else
             emitpcode(0x238, r);
@@ -3745,7 +3754,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             break;
         case 0x7E:
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x239), r);
 #else
             emitpcode(0x239, r);
@@ -3754,7 +3763,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             break;
         case 0x7F:
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x23a), r);
 #else
             emitpcode(0x23a, r);
@@ -3763,7 +3772,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             break;
         case 0x80:
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x23b), r);
 #else
             emitpcode(0x23b, r);
@@ -3772,7 +3781,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             break;
         case 0x81:
             r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x23c), r);
 #else
             emitpcode(0x23c, r);
@@ -3784,7 +3793,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             if (mv.kind != 0) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x241), mv.reg);
 #else
             emitpcode(0x241, mv.reg);
@@ -3795,7 +3804,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             if (mv.kind != 0) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x242), mv.reg);
 #else
             emitpcode(0x242, mv.reg);
@@ -3806,7 +3815,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             if (mv.kind != 0) {
                 func_004A64C0(&mv, TYPE(&stint128), 0);
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x243), mv.reg);
 #else
             emitpcode(0x243, mv.reg);
@@ -3942,7 +3951,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             ps2_vu0op_463B20(call, 0x291, out);
             break;
         case 0xB0:
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x2ce));
 #else
             emitpcode(0x2ce);
@@ -3956,7 +3965,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             }
             if (v3.kind != 5 && v3.kind != 6) {
                 t = data_00625A98[5]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0x266), v3.reg, t);
 #else
                 emitpcode(0x266, v3.reg, t);
@@ -3966,13 +3975,13 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             }
             n = (UInt8)args->next->node->data.intval.lo;
             u = data_00625A98[5]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x2AF), n, u, t);
 #else
             emitpcode(0x2AF, n, u, t);
 #endif
             k = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x264), k, u);
 #else
             emitpcode(0x264, k, u);
@@ -3993,13 +4002,13 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 case 6:
                 case 7:
                     r2_ = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(OPC(0x220), r2_, k);
 #else
                     emitpcode(0x220, r2_, k);
 #endif
                     r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(OPC(0x223), r, r2_);
 #else
                     emitpcode(0x223, r, r2_);
@@ -4008,7 +4017,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 case 2:
                 case 3:
                     r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(OPC(0x223), r, k);
 #else
                     emitpcode(0x223, r, k);
@@ -4016,19 +4025,19 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                     break;
                 case 1:
                     r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(OPC(0x21B), r, k, k);
 #else
                     emitpcode(0x21B, r, k, k);
 #endif
                     r2_ = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(OPC(0x220), r2_, r);
 #else
                     emitpcode(0x220, r2_, r);
 #endif
                     r = data_00625A98[0]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(OPC(0x223), r, r2_);
 #else
                     emitpcode(0x223, r, r2_);
@@ -4038,7 +4047,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                     CError_FATAL(3900);
             }
             t = data_00625A98[1]++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0xAD), r, t);
 #else
             emitpcode(0xAD, r, t);

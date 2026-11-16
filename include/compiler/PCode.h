@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_PCODE_H
 #define COMPILER_PCODE_H
 
@@ -8,7 +9,7 @@
 extern "C" {
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #pragma pack(push, 2)
 #endif
 #if !MWCCPSP_NATIVE
@@ -162,7 +163,7 @@ struct PCodeLabel {
     short resolved;
     UInt16 index;
 };
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #pragma pack(pop)
 #endif
 #if !MWCCPSP_NATIVE

@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/IroTransform.h"
 #include "compiler/IroDump.h"
 #if MWCCPSP
@@ -20,6 +21,11 @@
 #include "compiler/CPrep.h"
 #include "compiler/enode.h"
 #include "compiler/types.h"
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+#include "compiler/objects.h"
+#endif
+#endif
 #include <string.h>
 
 ENodeType ExprType;
@@ -215,7 +221,9 @@ void IRO_InitializeAssignmentOpArray(void) {
     AssignmentOp[EDEFINE] = MAXEXPR;
     AssignmentOp[EREUSE] = MAXEXPR;
     AssignmentOp[EASSBLK] = MAXEXPR;
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     AssignmentOp[EVECTOR128CONST] = MAXEXPR;
+#endif
     AssignmentOp[ECONDASS] = MAXEXPR;
 }
 #endif
@@ -394,7 +402,9 @@ void IRO_InitializeComplementaryOpArray(void) {
     ComplementaryOp[EDEFINE] = MAXEXPR;
     ComplementaryOp[EREUSE] = MAXEXPR;
     ComplementaryOp[EASSBLK] = MAXEXPR;
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     ComplementaryOp[EVECTOR128CONST] = MAXEXPR;
+#endif
     ComplementaryOp[ECONDASS] = MAXEXPR;
 }
 #endif
@@ -573,7 +583,9 @@ void IRO_InitializeComplementaryOpLogicalArray(void) {
     ComplementaryOpLogical[EDEFINE] = MAXEXPR;
     ComplementaryOpLogical[EREUSE] = MAXEXPR;
     ComplementaryOpLogical[EASSBLK] = MAXEXPR;
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     ComplementaryOpLogical[EVECTOR128CONST] = MAXEXPR;
+#endif
     ComplementaryOpLogical[ECONDASS] = MAXEXPR;
 }
 #endif
@@ -640,7 +652,7 @@ static void DoTransformations(IROLinear* nd) {
     switch (nd->nodetype) {
         case EASS:
             right = nd->u.diadic.right;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (right->type != IROLinearOp2Arg ||
                 AssignmentOp[right->nodetype] >= IRO_MAXEXPR ||
 #else
@@ -653,7 +665,7 @@ static void DoTransformations(IROLinear* nd) {
             left = nd->u.diadic.left;
             // 3.0.1 (0x574DED): any target but a bitfield variable
             if (!(IRO_IsVariable(left) && (left->flags & IROLF_BitfieldIndirect)) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 !IRO_HasSideEffect(left) &&
                 IRO_ExprsSame(left, right->u.diadic.left)) {
 #else
@@ -668,7 +680,7 @@ static void DoTransformations(IROLinear* nd) {
                 left->flags |= IROLF_Used;
                 left->u.monadic->flags |= IROLF_Used;
             } else if (!(IRO_IsVariable(left) && (left->flags & IROLF_BitfieldIndirect)) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                        !IRO_HasSideEffect(left) &&
                        IRO_ExprsSame(left, right->u.diadic.right) &&
 #else
@@ -696,7 +708,7 @@ static void DoTransformations(IROLinear* nd) {
 
         case EDIV:
         case EDIVASS:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (!IsIntType301(nd->rtype) ||
                 !func_00555B60(nd->u.diadic.right, &value) ||
                 value <= 0) {
@@ -710,7 +722,7 @@ static void DoTransformations(IROLinear* nd) {
             if (is_unsigned(nd->rtype)) {
                 nd->nodetype = (nd->nodetype == EDIV) ? ESHR : ESHRASS;
                 CInt64_SetLong(&nd->u.diadic.right->u.node->data.intval, value);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             } else if (!is_unsigned(nd->rtype) &&
                        nd->u.diadic.left->nodetype == ETYPCON &&
 #else
@@ -789,7 +801,7 @@ static void DoTransformations(IROLinear* nd) {
 
         case EMODULO:
         case EMODASS:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (IsIntType301(nd->rtype) &&
                 is_unsigned(nd->rtype) &&
                 func_00555B60(nd->u.diadic.right, &value) &&
@@ -807,7 +819,7 @@ static void DoTransformations(IROLinear* nd) {
             break;
 
         case EEQU:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if ((nd2 = IRO_LocateFather(nd)) &&
                 nd2->nodetype == ETYPCON &&
                 IsIntType301(nd2->rtype) &&
@@ -882,6 +894,7 @@ static void DoTransformations(IROLinear* nd) {
                     if (is_unsigned(nd->rtype)) {
                         nd->nodetype = ESHR;
                         CInt64_SetLong(&nd->u.diadic.right->u.node->data.intval, value);
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                     } else if (!is_unsigned(nd->rtype) &&
                                TYPE_INTEGRAL(nd->rtype)->integral != IT_BOOL &&
                                nd->u.diadic.left->nodetype == ETYPCON &&
@@ -902,13 +915,18 @@ static void DoTransformations(IROLinear* nd) {
                             IRO_LocateFather_Cut_And_Paste_Without_Nopping(nd, copy);
                             copy->u.monadic = nd;
                             nd->flags |= IROLF_Reffed;
+#endif
                         }
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                         nd->rtype = IRO_UnsignedType(nd->rtype);
                         nd->u.diadic.right->rtype = nd->u.diadic.right->u.node->rtype =
                             IRO_UnsignedType(nd->u.diadic.right->rtype);
                         nd->u.diadic.left->rtype = IRO_UnsignedType(nd->u.diadic.left->rtype);
+#endif
                     }
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                 }
+#endif
                 break;
 
             case EMODULO:
@@ -1007,7 +1025,7 @@ static inline void ReplaceExprWithChild301(IROLinear* nd, IROLinear* kept, IROLi
         kept->nodeflags = nd->nodeflags;
     } else {
         IRO_LocateFather_Cut_And_Paste_Without_Nopping(
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             nd, IRO_MakeTypeConversion(kept, nd->rtype, NULL)
         );
 #else
@@ -1326,7 +1344,7 @@ static void DoTransformations11(IROLinear* nd) {
                 case ESHRASS:
                     CInt64_SetLong(&val, operandBits);
                     compare = FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (is_unsigned(type) &&
                         CInt64_GreaterEqualU(right->u.node->data.intval, val)) {
 #else
@@ -2235,7 +2253,7 @@ static void DoTransformations22(IROLinear* nd) {
                 ndtmp = NULL;
                 if (left->type == IROLinearOp1Arg && func_00555190(left->u.monadic, right)) {
                     ndtmp = left;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 } else if (right->type == IROLinearOp1Arg &&
                            func_00555190(left, right->u.monadic)) {
 #else
@@ -2648,13 +2666,13 @@ done:
 
 #if !MWCCPS2 || MWCCPS2_BUILD >= 210 // b145 does not look through casts
             // 3.0.1: look through casts that keep every value
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
         while (left->type == IROLinearOp1Arg && left->nodetype == ETYPCON && func_0055A3F0(left)) {
             left = left->u.monadic;
         }
 #endif
 #endif
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 
 #endif
         switch (nd->nodetype) {
@@ -2669,7 +2687,7 @@ done:
                     IRO_IsIntConstant(right) &&
                     IRO_IsIntConstant(left->u.diadic.right) &&
                     (right->nodeflags & ~0x200) == (left->u.diadic.right->nodeflags & ~0x200) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     CInt64_Equal(
                         right->u.node->data.intval, left->u.diadic.right->u.node->data.intval
                     )) {
@@ -3114,7 +3132,7 @@ static void DoTransformations24(IROLinear* expr) {
                         changed = 1;
                     }
                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 case EMUL:
                     if (nd->nodetype == EADD || nd->nodetype == ESUB) {
                         PickCommonsubAtLeftLeft301(nd);
@@ -3183,7 +3201,7 @@ static void DoTransformations24(IROLinear* expr) {
                         changed = 1;
                     }
                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 case EMUL:
                     if (nd->nodetype == EADD || nd->nodetype == ESUB) {
                         PickCommonsubAtRightLeft301(nd);
@@ -3266,7 +3284,7 @@ static void DoTransformations24(IROLinear* expr) {
                             break;
                     }
                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 case EMUL:
                     if (nd->nodetype == EADD || nd->nodetype == ESUB) {
                         PickCommonsubAtLeftRight301(nd);
@@ -3338,8 +3356,8 @@ static void DoTransformations24(IROLinear* expr) {
                             break;
                     }
                 case EADD:
-#if MWCCPS2_B52
-                    if (left->nodetype == ESHL || (MWCCPS2_B52 && left->nodetype == EMUL)) {
+#if MWCC_CORE == MWCC_CORE_B52
+                    if (left->nodetype == ESHL || (left->nodetype == EMUL)) {
 #else
                     if (left->nodetype == ESHL) {
 #endif
@@ -4071,7 +4089,7 @@ static void RemoveRedundantMonadicOp(IROLinear* nd) {
         switch (nd->nodetype) {
             case ELOGNOT:
                 if ((grandfather = IRO_LocateFather(father))) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if ((type = grandfather->rtype) &&
                         type->type == TYPEINT &&
 #else
@@ -4079,7 +4097,7 @@ static void RemoveRedundantMonadicOp(IROLinear* nd) {
                         type->type == TYPEINT &&
 #endif
                         TYPE_INTEGRAL(type)->integral == IT_BOOL &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         (type = nd->u.monadic->rtype) &&
                         type->type == TYPEINT &&
 #else
@@ -4161,7 +4179,7 @@ remove:
                     }
                 }
 #if !MWCCPS2 || MWCCPS2_BUILD >= 210 // b145 drops no other cast of a cast
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
                 else if (func_0055A3F0(father) && func_0055A3F0(nd)) {
                     nd->type = IROLinearNop;
                     father->u.monadic = nd->u.monadic;
@@ -4342,7 +4360,7 @@ extern IROLinear* IRO_MakeTypeConversion(IROLinear* linear, Type* type, IROList*
 
 // an integer + or -
 static inline Boolean IsIntAddSub(IROLinear* nd) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     return nd->type == IROLinearOp2Arg &&
         (nd->nodetype == EADD || nd->nodetype == ESUB) &&
         nd->rtype->type == TYPEINT &&
@@ -4357,7 +4375,7 @@ static inline Boolean IsIntAddSub(IROLinear* nd) {
 
 // an integer *
 static inline Boolean IsIntMul(IROLinear* nd) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     return nd->type == IROLinearOp2Arg &&
         nd->nodetype == EMUL &&
         nd->rtype->type == TYPEINT &&
@@ -4470,7 +4488,7 @@ void IRO_DoTransformations301(IROLinear* first) {
                 break;
         }
     }
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     for (nd = first; nd; nd = nd->next) {
         if (nd->flags & IROLF_Reffed) {
             continue;
@@ -4498,7 +4516,7 @@ static inline int IsBoolType(Type* type) {
 // of one
 Boolean func_005547E0(IROLinear* nd) {
     if ((nd->type == IROLinearOp1Arg || nd->type == IROLinearOp2Arg) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         (ComplementaryOpLogical[nd->nodetype] != IRO_MAXEXPR ||
          nd->nodetype == ELOGNOT ||
          nd->nodetype == ELAND ||
@@ -4585,7 +4603,7 @@ IROLinear* func_00554640(IROLinear* nd, Boolean toBool) {
     IROLinear* result;
     IROLinear* inner;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (nd->type == IROLinearOp1Arg &&
         nd->nodetype == ELOGNOT &&
 #else
@@ -4599,7 +4617,7 @@ IROLinear* func_00554640(IROLinear* nd, Boolean toBool) {
     } else {
         for (inner = nd; inner->type == IROLinearOp1Arg && inner->nodetype == ETYPCON;
              inner = inner->u.monadic) {}
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (func_005547E0(nd) &&
             inner->type == IROLinearOp2Arg &&
             (inner->nodetype == ENOTEQU ||
@@ -4643,7 +4661,7 @@ void func_0056F6C0(IROLinear* nd) {
     IROLinear* neg;
 
     IRO_UnqualifiedType(nd->rtype);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!nd ||
         nd->type != IROLinearOp3Arg ||
         nd->nodetype != ECOND ||
@@ -4663,19 +4681,19 @@ void func_0056F6C0(IROLinear* nd) {
           (IRO_IsConstantZero(a) && IRO_IsConstantNegativeOne(b)))) {
         return;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // b52 (0x5224D0): made boolean first, then negated for c ? 0 : 1 (so
     // !x ? 0 : 1 is x itself)
     value = func_005544D0(cond, 1);
 #endif
     if (IRO_IsConstantZero(a)) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         value = func_00554640(value, 1);
 #else
         cond = func_00554640(cond, 1);
 #endif
     }
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     value = func_005544D0(cond, 1);
 #endif
     if (!IRO_TypesEqual(value->rtype, nd->rtype)) {
@@ -4715,7 +4733,7 @@ static Boolean ReconcileAssignments_IsTypcon(IROLinear* nd) {
 
 // a !!x linear
 static Boolean ReconcileAssignments_IsNotNot(IROLinear* nd) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     return nd->type == IROLinearOp1Arg &&
         nd->nodetype == ELOGNOT &&
         nd->u.monadic->type == IROLinearOp1Arg &&
@@ -4730,7 +4748,7 @@ static Boolean ReconcileAssignments_IsNotNot(IROLinear* nd) {
 
 // inlined in 0x5505C0: a copy of model made a monadic nodetype of list's tail
 // with the unqualified rtype, appended to list
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 static void ReconcileAssignments_Wrap(
     IROLinear* model, ENodeType nodetype, Type* rtype, IROList* list
 ) {
@@ -4762,7 +4780,7 @@ static Boolean ReconcileAssignments(IROLinear* nd1, IROLinear* nd2, IROList* lis
     int argCount;
     int i;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (ReconcileAssignments_IsTypcon(nd2) &&
         !ReconcileAssignments_IsTypcon(nd1) &&
         !ReconcileAssignments_IsNotNot(nd1) &&
@@ -4776,7 +4794,7 @@ static Boolean ReconcileAssignments(IROLinear* nd1, IROLinear* nd2, IROList* lis
         return TRUE;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (ReconcileAssignments_IsNotNot(nd2) &&
         !ReconcileAssignments_IsTypcon(nd1) &&
         !ReconcileAssignments_IsNotNot(nd1) &&
@@ -4790,7 +4808,7 @@ static Boolean ReconcileAssignments(IROLinear* nd1, IROLinear* nd2, IROList* lis
         return TRUE;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (ReconcileAssignments_IsTypcon(nd1) &&
         !ReconcileAssignments_IsTypcon(nd2) &&
         !ReconcileAssignments_IsNotNot(nd2) &&
@@ -4811,7 +4829,7 @@ static Boolean ReconcileAssignments(IROLinear* nd1, IROLinear* nd2, IROList* lis
         return TRUE;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (ReconcileAssignments_IsNotNot(nd1) &&
         !ReconcileAssignments_IsTypcon(nd2) &&
         !ReconcileAssignments_IsNotNot(nd2) &&
@@ -4827,7 +4845,7 @@ static Boolean ReconcileAssignments(IROLinear* nd1, IROLinear* nd2, IROList* lis
         return TRUE;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (ReconcileAssignments_IsTypcon(nd1) &&
         ReconcileAssignments_IsNotNot(nd2) &&
 #else
@@ -4835,7 +4853,7 @@ static Boolean ReconcileAssignments(IROLinear* nd1, IROLinear* nd2, IROList* lis
         ReconcileAssignments_IsNotNot(nd2) &&
 #endif
         ReconcileAssignments(nd1->u.monadic, nd2->u.monadic->u.monadic, list)) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         CError_ASSERT(
             4645, !(IS_TYPE_INT(nd1->rtype) && TYPE_INTEGRAL(nd1->rtype)->integral == IT_BOOL)
         );
@@ -4848,7 +4866,7 @@ static Boolean ReconcileAssignments(IROLinear* nd1, IROLinear* nd2, IROList* lis
         return TRUE;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (ReconcileAssignments_IsNotNot(nd1) &&
         ReconcileAssignments_IsTypcon(nd2) &&
 #else
@@ -4874,7 +4892,7 @@ static Boolean ReconcileAssignments(IROLinear* nd1, IROLinear* nd2, IROList* lis
     switch (nd1->type) {
         case IROLinearOperand:
             if (nd1->u.node->type == nd2->u.node->type) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (!(nd1->u.node->type == EOBJREF &&
                       nd1->u.node->data.objref != nd2->u.node->data.objref)) {
 #else
@@ -4904,7 +4922,7 @@ static Boolean ReconcileAssignments(IROLinear* nd1, IROLinear* nd2, IROList* lis
             }
 
             if (!result && !IRO_HasSideEffect(nd1) && !IRO_HasSideEffect(nd2)) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (nd1->nodetype == EMUL ||
                     nd1->nodetype == EADD ||
                     nd1->nodetype == EAND ||
@@ -4948,7 +4966,7 @@ static Boolean ReconcileAssignments(IROLinear* nd1, IROLinear* nd2, IROList* lis
                 result = TRUE;
                 copy->u.funccall.args = IRO_Alloc(sizeof(IROLinear*) * argCount);
                 for (i = argCount - 1; i >= 0; i--) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (!ReconcileAssignments(
                             nd1->u.funccall.args[i], nd2->u.funccall.args[i], list
                         )) {
@@ -4964,7 +4982,7 @@ static Boolean ReconcileAssignments(IROLinear* nd1, IROLinear* nd2, IROList* lis
                 }
 
                 if (result) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (ReconcileAssignments(
                             nd1->u.funccall.callee, nd2->u.funccall.callee, list
                         )) {
@@ -5053,7 +5071,7 @@ static Boolean TransformMonadicSelfAssignmentToDiadicSelfAssignment(IROLinear* n
         varExpr = incExpr = NULL;
         newtype = MAXEXPR;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (nd->type == IROLinearOp1Arg &&
             (t == EPOSTINC || t == EPOSTDEC || t == EPREINC || t == EPREDEC) &&
 #else
@@ -5063,7 +5081,7 @@ static Boolean TransformMonadicSelfAssignmentToDiadicSelfAssignment(IROLinear* n
             (!(nd->flags & IROLF_Reffed) || t == EPREINC || t == EPREDEC)) {
             Type* type = nd->rtype;
             varExpr = nd->u.monadic;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if ((type->type == TYPEINT && TYPE_INTEGRAL(type)->integral < 17) ||
                 type->type == TYPEENUM) {
 #else
@@ -5071,7 +5089,7 @@ static Boolean TransformMonadicSelfAssignmentToDiadicSelfAssignment(IROLinear* n
                 type->type == TYPEENUM) {
 #endif
                 incExpr = IRO_NewIntConst(cint64_one, func_0055A620(type));
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             } else if (type->type == TYPEMEMBERPOINTER ||
                        type->type == TYPEPOINTER ||
                        type->type == TYPEARRAY) {
@@ -5123,7 +5141,7 @@ static Boolean TransformMonadicSelfAssignmentToDiadicSelfAssignment(IROLinear* n
             }
         }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (varExpr &&
             incExpr &&
             newtype != MAXEXPR &&
@@ -5421,7 +5439,7 @@ static Boolean TransformMonadicSelfAssignmentToDiadicSelfAssignment(IROLinear* n
 #if MWCCPS2
 // b210 keeps this family in IroUtil.c (0x5621D0..)
 #elif MWCCPSP
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 extern IROLinear* IRO_MakeTypeConversion(
     IROLinear* linear, Type* type, IROList* list
 ); // IroTypeConv.c
@@ -5448,7 +5466,7 @@ Boolean IRO_TransformSelfAssignmentToAssignment(IROLinear* nd) {
     IROList list2;
 
     nodetype = nd->nodetype;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (IRO_IsAssignment(nd) &&
         IRO_IsModifyOp[nodetype] &&
         nd->type == IROLinearOp1Arg &&
@@ -5461,7 +5479,7 @@ Boolean IRO_TransformSelfAssignmentToAssignment(IROLinear* nd) {
         nodetype = nd->nodetype;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (IRO_IsAssignment(nd) &&
         IRO_IsModifyOp[nodetype] &&
         nd->type == IROLinearOp2Arg &&
@@ -5475,7 +5493,7 @@ Boolean IRO_TransformSelfAssignmentToAssignment(IROLinear* nd) {
         left = nd->u.diadic.left;
         right = nd->u.diadic.right;
         negate = FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (nonAssOp == ESUB &&
             right->type == IROLinearOperand &&
             right->rtype->type == TYPEINT &&
@@ -5494,7 +5512,7 @@ Boolean IRO_TransformSelfAssignmentToAssignment(IROLinear* nd) {
             negate = TRUE;
             nonAssOp = EADD;
         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (left &&
             right &&
             nonAssOp != MAXEXPR &&
@@ -5520,7 +5538,7 @@ Boolean IRO_TransformSelfAssignmentToAssignment(IROLinear* nd) {
             }
             dupLeft = IRO_DuplicateExpr(left, &list1);
             if (left->rtype != dupRight->rtype && !IRO_TypesEqual(left->rtype, dupRight->rtype)) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 dupLeft =
                     IRO_MakeTypeConversion(dupLeft, IRO_UnqualifiedType(dupRight->rtype), &list1);
 #else
@@ -5546,7 +5564,7 @@ Boolean IRO_TransformSelfAssignmentToAssignment(IROLinear* nd) {
 
             IRO_InitList(&list2);
             last = FrontendTransformSelfAssignmentToAssignment(nd);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (last &&
                 last->type == IROLinearOp2Arg &&
 #else
@@ -6125,6 +6143,119 @@ ENODE_CASE_DIADIC_ALL:
     }
 }
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+// b69 0x4C96F0: a post-increment or post-decrement of a plain non-volatile
+// variable inside an expression statement becomes a statement of its own,
+// inserted after this one; the expression keeps a read of the variable (for
+// `x++;` alone a dead read, later nopped). Not below ||, &&, ?:, comma or a
+// null check, whose operands are conditional or ordered.
+#if MWCC_CORE != MWCC_CORE_B52
+static void LiftPostIncrements(Statement* stmt, ENode** pexpr) {
+    ENode* expr;
+    ENode* ind;
+    ENode* copy;
+    Statement* newstmt;
+
+    expr = *pexpr;
+    switch (expr->type) {
+        case EPOSTINC:
+        case EPOSTDEC:
+        case EPREINC:
+        case EPREDEC:
+        case EINDIRECT:
+        case EMONMIN:
+        case EBINNOT:
+        case ELOGNOT:
+        case EFORCELOAD:
+        case ETYPCON:
+        case EBITFIELD:
+            if (expr->type != EFORCELOAD) {
+                LiftPostIncrements(stmt, &expr->data.monadic);
+            }
+            expr = *pexpr;
+            if (expr->type == EPOSTINC || expr->type == EPOSTDEC) {
+                ind = expr->data.monadic;
+                if (ind->type == EINDIRECT &&
+                    ind->rtype &&
+                    !CParser_IsVolatile(ind->rtype, ENODE_QUALS(ind)) &&
+                    ind->data.monadic->type == EOBJREF &&
+                    !is_volatile_object(ind->data.monadic->data.objref)) {
+                    newstmt = lalloc(sizeof(Statement));
+                    memset(newstmt, 0, sizeof(Statement));
+                    newstmt->type = ST_EXPRESSION;
+                    newstmt->expr = *pexpr;
+                    newstmt->dobjstack = stmt->dobjstack;
+                    newstmt->sourceoffset = stmt->sourceoffset;
+                    newstmt->sourcefilepath = stmt->sourcefilepath;
+                    newstmt->value = stmt->value;
+                    newstmt->flags = stmt->flags;
+                    newstmt->next = stmt->next;
+                    stmt->next = newstmt;
+
+                    copy = IRO_NewENode(EINDIRECT);
+                    *copy = *ind;
+                    copy->data.monadic = IRO_NewENode(EOBJREF);
+                    *copy->data.monadic = *ind->data.monadic;
+                    *pexpr = copy;
+                }
+            }
+            break;
+        case EMUL:
+        case EMULV:
+        case EDIV:
+        case EMODULO:
+        case EADDV:
+        case ESUBV:
+        case EADD:
+        case ESUB:
+        case ESHL:
+        case ESHR:
+        case ELESS:
+        case EGREATER:
+        case ELESSEQU:
+        case EGREATEREQU:
+        case EEQU:
+        case ENOTEQU:
+        case EAND:
+        case EXOR:
+        case EOR:
+        case ELAND:
+        case ELOR:
+        case EASS:
+        case EMULASS:
+        case EDIVASS:
+        case EMODASS:
+        case EADDASS:
+        case ESUBASS:
+        case ESHLASS:
+        case ESHRASS:
+        case EANDASS:
+        case EXORASS:
+        case EORASS:
+        case ECOMMA:
+        case EPMODULO:
+        case EROTL:
+        case EROTR:
+        case EBCLR:
+        case EBTST:
+        case EBSET:
+            if (expr->type == ECOND ||
+                expr->type == ECOMMA ||
+                expr->type == ELOR ||
+                expr->type == ELAND ||
+                expr->type == ENULLCHECK) {
+                break;
+            }
+            LiftPostIncrements(stmt, &expr->data.diadic.left);
+            LiftPostIncrements(stmt, &(*pexpr)->data.diadic.right);
+            break;
+        default:
+            break;
+    }
+}
+
+#endif
+#endif
 #if !MWCCPSP // 3.0.1's (opt_movepostops, ...) is in src/psp/optimizer/IroTransformTree301.c
 void IRO_TransformTree(Statement* statements) {
     Statement* stmt;
@@ -6139,6 +6270,11 @@ void IRO_TransformTree(Statement* statements) {
             case ST_IFNGOTO:
             case ST_RETURN:
                 if (stmt->expr) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+                    if (stmt->type == ST_EXPRESSION) {
+                        LiftPostIncrements(stmt, &stmt->expr);
+                    }
+#endif
                     stmt->expr = TransformExprTree(stmt->expr);
                     TransformExprTree2(stmt->expr);
                     TransformExprTree1(stmt->expr);
@@ -6150,16 +6286,479 @@ void IRO_TransformTree(Statement* statements) {
     }
 
     IRO_CheckForUserBreak();
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+}
+
+// b69 (0x4C98D0..0x4CA202, after IRO_TransformTree's unit code; asserts
+// "IroTransform.c" 5177 and 5249): a pass over the delinearized statements
+// that IRO_Optimizer runs at every optimization level. An integer
+// expression whose value is only used at a narrower width (assignment
+// right-hand sides, returned values) is retyped to that width, signedness
+// kept per node: `u16 x = x + 1` becomes (u16)((short)x + (short)1), so the
+// back end sign-extends (-O0) or loads with lh (-O1 and up). 2.4.7 and 3.0.1
+// have no such pass. Names are ours.
+
+// 0x4C5FC0
+static int NarrowSizeIndex(Type* type) {
+    switch (type->size) {
+        case 1:
+            return 0;
+        case 2:
+            return 1;
+        case 4:
+            return 2;
+        case 8:
+            return 3;
+        default:
+            return -1;
+    }
+}
+
+// 0x4C9950
+static Boolean NarrowIsBitfield(ENode* expr) {
+    if (expr->type == EINDIRECT) {
+        expr = expr->data.monadic;
+    }
+    return expr->type == EBITFIELD;
+}
+
+// 0x4C98D0: give expr the size of type, keeping expr's signedness
+static void NarrowSetType(ENode* expr, Type* type) {
+    Boolean exprSigned;
+    Boolean typeSigned;
+
+    exprSigned = FALSE;
+    if (!is_unsigned(expr->rtype)) {
+        exprSigned = TRUE;
+    }
+    typeSigned = FALSE;
+    if (!is_unsigned(type)) {
+        typeSigned = TRUE;
+    }
+
+    if (exprSigned == typeSigned) {
+        expr->rtype = type;
+    } else if (exprSigned) {
+        expr->rtype = IRO_SignedType(type);
+    } else {
+        expr->rtype = IRO_UnsignedType(type);
+    }
+}
+
+#define NARROW_INTEGRAL(t) ((t)->type == TYPEENUM || (t)->type == TYPEINT)
+
+// 0x4C9970: can expr be computed at type's width? With doit, retype it.
+static Boolean NarrowExpr(Type* type, ENode* expr, Boolean doit) {
+    Boolean result;
+    int size;
+    int exprSize;
+    ENode* left;
+    ENode* right;
+    UInt8 leftKind;
+    CInt64 mask;
+    CInt64 value;
+    CInt64 sign;
+
+    result = FALSE;
+    size = NarrowSizeIndex(type);
+    exprSize = NarrowSizeIndex(expr->rtype);
+
+    switch (expr->type) {
+        case EMUL:
+        case EADD:
+        case ESUB:
+        case ESHL:
+        case EAND:
+        case EXOR:
+        case EOR:
+            left = expr->data.diadic.left;
+            right = expr->data.diadic.right;
+            leftKind = left->rtype->type;
+            if (leftKind == TYPEENUM || leftKind == TYPEINT) {
+                if (NARROW_INTEGRAL(right->rtype)) {
+                    if (exprSize < size) {
+                        type = expr->rtype;
+                        size = exprSize;
+                    }
+                    if (leftKind == type->type &&
+                        right->rtype->type == type->type &&
+                        NarrowExpr(type, left, FALSE) &&
+                        NarrowExpr(type, right, FALSE)) {
+                        result = TRUE;
+                        if (doit) {
+                            NarrowExpr(type, left, doit);
+                            NarrowExpr(type, right, doit);
+                            NarrowSetType(expr, type);
+                        }
+                    }
+                }
+            }
+            break;
+
+        case EMONMIN:
+        case EBINNOT:
+            left = expr->data.monadic;
+            leftKind = left->rtype->type;
+            if (leftKind == TYPEENUM || leftKind == TYPEINT) {
+                if (exprSize < size) {
+                    type = expr->rtype;
+                }
+                if (type->type == leftKind) {
+                    result = NarrowExpr(type, left, doit);
+                    if (result && doit) {
+                        NarrowSetType(expr, expr->data.monadic->rtype);
+                    }
+                }
+            }
+            break;
+
+        case ETYPCON:
+            left = expr->data.monadic;
+            leftKind = left->rtype->type;
+            if (type->type == leftKind) {
+                if (leftKind == TYPEENUM || leftKind == TYPEINT) {
+                    result = TRUE;
+                    if (doit && exprSize >= size) {
+                        NarrowExpr(type, left, doit);
+                        NarrowSetType(expr, type);
+                    }
+                } else {
+                    result = exprSize <= size;
+                }
+            }
+            break;
+
+        case EINDIRECT:
+            if (exprSize == size || (exprSize > size && !NarrowIsBitfield(expr))) {
+                result = TRUE;
+                if (doit) {
+                    NarrowSetType(expr, type);
+                }
+            }
+            break;
+
+        case EOBJREF:
+            result = TRUE;
+            if (doit) {
+                NarrowSetType(expr, type);
+            }
+            break;
+
+        case EINTCONST:
+            result = TRUE;
+            if (doit) {
+                NarrowSetType(expr, type);
+                // b69 computes the truncated (and sign-extended) constant
+                // into locals and drops it; the node's value is unchanged
+                switch (size) {
+                    case 0:
+                        CInt64_SetLong(&mask, 0xFF);
+                        value = CInt64_And(expr->data.intval, mask);
+                        if (!is_unsigned(expr->rtype)) {
+                            CInt64_SetLong(&mask, 0x80);
+                            sign = CInt64_And(mask, expr->data.intval);
+                            if (!CInt64_IsZero(&sign)) {
+                                CInt64_SetLong(&mask, 0xFFFFFF00);
+                                value = CInt64_Or(expr->data.intval, mask);
+                            }
+                        }
+                        break;
+                    case 1:
+                        CInt64_SetLong(&mask, 0xFFFF);
+                        value = CInt64_And(expr->data.intval, mask);
+                        if (!is_unsigned(expr->rtype)) {
+                            CInt64_SetLong(&mask, 0x8000);
+                            sign = CInt64_And(mask, expr->data.intval);
+                            if (!CInt64_IsZero(&sign)) {
+                                CInt64_SetLong(&mask, 0xFFFF0000);
+                                value = CInt64_Or(expr->data.intval, mask);
+                            }
+                        }
+                        break;
+                }
+                (void)value;
+            }
+            break;
+
+        default:
+            break;
+    }
+
+    return result;
+}
+
+static void NarrowWalk(ENode* expr);
+
+// 0x4C9DA0: assignment to a bitfield: only the operands are walked
+static void NarrowWalkBitfieldAssign(ENode* expr) {
+    ENode* inner;
+
+    inner = expr->data.diadic.left->data.monadic;
+    NarrowSizeIndex(expr->rtype);
+    if (expr->type != EPREINC &&
+        expr->type != EPOSTINC &&
+        expr->type != EPREDEC &&
+        expr->type != EPOSTDEC) {
+        NarrowWalk(expr->data.diadic.right);
+    }
+    NarrowWalk(inner->data.monadic);
+}
+
+// b69 sets these types (by size) where the size index is already known to
+// be invalid, so the switch never matches
+static int NarrowFixSize(ENode* expr, int size) {
+    if (size < 0) {
+        switch (expr->rtype->size) {
+            case 1:
+                size = 0;
+                NarrowSetType(expr, TYPE(&stsignedchar));
+                break;
+            case 2:
+                size = 1;
+                NarrowSetType(expr, TYPE(&stsignedshort));
+                break;
+            case 4:
+                size = 2;
+                NarrowSetType(expr, TYPE(&stsignedint));
+                break;
+            case 8:
+                size = 3;
+                NarrowSetType(expr, TYPE(&stsignedlonglong));
+                break;
+        }
+    }
+    return size;
+}
+
+// right is computed for a destination of left's type
+static void NarrowOperand(int size, ENode* left, ENode* right) {
+    UInt8 leftKind;
+    UInt8 rightKind;
+
+    if (size >= 0 && size <= 2) {
+        leftKind = left->rtype->type;
+        if (leftKind == TYPEENUM || leftKind == TYPEINT) {
+            rightKind = right->rtype->type;
+            if ((rightKind == TYPEENUM || rightKind == TYPEINT) && leftKind == rightKind) {
+                NarrowExpr(left->rtype, right, TRUE);
+            }
+        }
+    }
+}
+
+// 0x4C9DF0
+static void NarrowWalk(ENode* expr) {
+    int size;
+    ENode* left;
+    ENode* right;
+    ENodeList* list;
+
+    size = NarrowSizeIndex(expr->rtype);
+    switch (expr->type) {
+        case EPOSTINC:
+        case EPOSTDEC:
+        case EPREINC:
+        case EPREDEC:
+        case EINDIRECT:
+        case EMONMIN:
+        case EBINNOT:
+        case ELOGNOT:
+        case EFORCELOAD:
+        case ETYPCON:
+        case EBITFIELD:
+            if (IRO_IsAssignOp[expr->type] && NarrowIsBitfield(expr->data.monadic)) {
+                NarrowWalkBitfieldAssign(expr);
+            } else {
+                NarrowWalk(expr->data.monadic);
+            }
+            break;
+
+        case EMUL:
+        case EMULV:
+        case EDIV:
+        case EMODULO:
+        case EADDV:
+        case ESUBV:
+        case EADD:
+        case ESUB:
+        case ESHL:
+        case ESHR:
+        case ELESS:
+        case EGREATER:
+        case ELESSEQU:
+        case EGREATEREQU:
+        case EEQU:
+        case ENOTEQU:
+        case EAND:
+        case EXOR:
+        case EOR:
+        case ELAND:
+        case ELOR:
+        case EASS:
+        case EMULASS:
+        case EDIVASS:
+        case EMODASS:
+        case EADDASS:
+        case ESUBASS:
+        case ESHLASS:
+        case ESHRASS:
+        case EANDASS:
+        case EXORASS:
+        case EORASS:
+        case ECOMMA:
+        case EPMODULO:
+        case EROTL:
+        case EROTR:
+        case EBCLR:
+        case EBTST:
+        case EBSET:
+            left = expr->data.diadic.left;
+            right = expr->data.diadic.right;
+            if (IRO_IsAssignOp[expr->type] && NarrowIsBitfield(left)) {
+                NarrowWalkBitfieldAssign(expr);
+                break;
+            }
+            // EROTL (0x2B) is in b69's list though it is no assignment
+            if (IRO_IsAssignOp[expr->type] &&
+                (expr->type == EASS ||
+                 expr->type == EMULASS ||
+                 expr->type == EADDASS ||
+                 expr->type == ESUBASS ||
+                 expr->type == ESHLASS ||
+                 expr->type == EANDASS ||
+                 expr->type == EXORASS ||
+                 expr->type == EORASS ||
+                 expr->type == EROTL) &&
+                NARROW_INTEGRAL(expr->rtype)) {
+                size = NarrowFixSize(expr, size);
+                NarrowOperand(size, left, right);
+                NarrowWalk(left);
+                NarrowWalk(right);
+            } else {
+                NarrowWalk(left);
+                NarrowWalk(right);
+            }
+            break;
+
+        case EINTCONST:
+        case EFLOATCONST:
+        case ESTRINGCONST:
+        case EOBJREF:
+        case EPRECOMP:
+        case ELABEL:
+            break;
+
+        case ECOND:
+            NarrowWalk(expr->data.cond.cond);
+            NarrowWalk(expr->data.cond.expr1);
+            NarrowWalk(expr->data.cond.expr2);
+            break;
+
+        case EFUNCCALL:
+        case EFUNCCALLP:
+            for (list = expr->data.funccall.args; list; list = list->next) {
+                NarrowWalk(list->node);
+            }
+            NarrowWalk(expr->data.funccall.funcref);
+            break;
+
+        case ENULLCHECK:
+            NarrowWalk(expr->data.nullcheck.nullcheckexpr);
+            NarrowWalk(expr->data.nullcheck.condexpr);
+            break;
+
+        case ECONDASS:
+            if (NarrowIsBitfield(expr->data.cond.expr1)) {
+                NarrowWalk(expr->data.cond.cond);
+                NarrowWalk(expr->data.cond.expr1);
+                NarrowWalk(expr->data.cond.expr2);
+            } else if (NARROW_INTEGRAL(expr->rtype)) {
+                left = expr->data.cond.expr1;
+                right = expr->data.cond.expr2;
+                size = NarrowFixSize(expr, size);
+                NarrowOperand(size, left, right);
+                NarrowWalk(expr->data.cond.cond);
+                NarrowWalk(left);
+                NarrowWalk(right);
+            } else {
+                NarrowWalk(expr->data.cond.cond);
+                NarrowWalk(expr->data.cond.expr1);
+                NarrowWalk(expr->data.cond.expr2);
+            }
+            break;
+
+        default:
+            CError_FATAL(5177);
+    }
+}
+
+// 0x4CA140
+void IRO_NarrowExpressions(Statement* statements) {
+    TypeFunc* tfunc;
+    Statement* stmt;
+    Statement* next;
+    ENode* expr;
+
+    if (FunctionName) {
+        tfunc = TYPE_FUNC(FunctionName->type);
+    }
+
+    for (stmt = statements; stmt; stmt = next) {
+        next = stmt->next;
+        switch (stmt->type) {
+            case ST_NOP:
+            case ST_LABEL:
+            case ST_GOTO:
+            case ST_EXIT:
+            case ST_ENTRY:
+            case ST_ASM:
+                break;
+            case ST_RETURN:
+                if (!stmt->expr) {
+                    break;
+                }
+                if (CMach_GetFunctionResultClass(tfunc) && stmt->expr->type == EINTCONST) {
+                    break;
+                }
+                expr = stmt->expr;
+                if (NARROW_INTEGRAL(expr->rtype)) {
+                    int size = NarrowSizeIndex(expr->rtype);
+                    if (size >= 0 && size <= 2) {
+                        NarrowExpr(expr->rtype, expr, TRUE);
+                    }
+                    NarrowWalk(stmt->expr);
+                } else {
+                    NarrowWalk(expr);
+                }
+                break;
+            case ST_EXPRESSION:
+            case ST_SWITCH:
+            case ST_IFGOTO:
+            case ST_IFNGOTO:
+            case ST_BEGINCATCH:
+            case ST_ENDCATCH:
+            case ST_ENDCATCHDTOR:
+                NarrowWalk(stmt->expr);
+                break;
+            default:
+                CError_FATAL(5249);
+        }
+    }
+#endif
 }
 #endif
 #if MWCCPSP
+#if MWCC_CORE != MWCC_CORE_B52
 
 #endif
+#endif
 #if MWCCPSP
+#if MWCC_CORE != MWCC_CORE_B52
 // 0x56F320: under data_00625EBA, every two-operand node is checked for a
 // division by a constant zero (0x56F350; config/PSP_3_0_1/symbols.txt misnames it
 // IRO_TransformSelfAssignmentToAssignment, which is 0x54FD60). Despite its
 // name the pass transforms nothing.
+#endif
 extern Boolean data_00625EBA;
 extern Boolean data_00625EC5; // skip float operations
 
@@ -6168,7 +6767,7 @@ static void CheckDivisionByZero301(IROLinear* nd) {
     IROLinear* left = nd->u.diadic.left;
     IROLinear* right = nd->u.diadic.right;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (data_00625EC5 &&
         (nd->rtype->type == TYPEFLOAT ||
          left->rtype->type == TYPEFLOAT ||

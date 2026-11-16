@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/CLFileOps.h"
 #include "driver/CLAccessPaths.h"
 #include "driver/CLBrowser.h"
@@ -946,7 +947,7 @@ static int CompileEntry(File* file, Boolean* compiled) {
 #if MWCCPS2
     OS_ASSERT(1169, file->compiler);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     OS_ASSERT(1010, file->compiler);
 #else
     OS_ASSERT(835, file->compiler);
@@ -1030,7 +1031,7 @@ static void DumpFileAndPathInfo(void) {
 #if MWCCPSP
             OS_ASSERT(1358, path != NULL);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             OS_ASSERT(1199, path != NULL);
 #else
             OS_ASSERT(1024, path != NULL);
@@ -1053,7 +1054,7 @@ static void DumpFileAndPathInfo(void) {
 #if MWCCPSP
                     OS_ASSERT(1373, sub);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     OS_ASSERT(1214, sub);
 #else
                     OS_ASSERT(1039, sub);
@@ -1078,7 +1079,7 @@ static void DumpFileAndPathInfo(void) {
 #if MWCCPSP
         OS_ASSERT(1388, path != NULL);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         OS_ASSERT(1229, path != NULL);
 #else
         OS_ASSERT(1054, path != NULL);
@@ -1101,7 +1102,7 @@ static void DumpFileAndPathInfo(void) {
 #if MWCCPSP
                 OS_ASSERT(1403, sub);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 OS_ASSERT(1244, sub);
 #else
                 OS_ASSERT(1069, sub);

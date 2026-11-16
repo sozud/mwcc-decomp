@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/IroEmptyLoop.h"
 #include "compiler/IroDump.h"
 #include "compiler/IroFlowgraph.h"
@@ -352,6 +353,11 @@ static int CanRemoveRedundantLoop(IROLoop* loop) {
 }
 
 static int CanRemoveRedundantLoop1(IROLoop* loop) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+    Type* b69_dead;
+#endif
+#endif
     if ((loop->flags & LP_WHILE_LOOP) && (loop->flags & LP_RECURSIVE_LOOP)) {
         if (loop->flags & LP_LOOP_HAS_ASM) {
             IRO_Dump("CanRemoveRedundantLoop1:No due to LP_LOOP_HAS_ASM \n");
@@ -397,6 +403,11 @@ static int CanRemoveRedundantLoop1(IROLoop* loop) {
 
         if (loop->induction->nd->type == IROLinearOp1Arg &&
             loop->induction->nd->nodetype == EPREDEC) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+            b69_dead = loop->induction->nd->rtype;
+#endif
+#endif
             if (is_unsigned(loop->induction->nd->rtype)) {
                 return TRUE;
             }

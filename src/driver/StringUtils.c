@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/StringUtils.h"
 #include "compiler/win32.h"
 #include "driver/Memory.h"
@@ -58,7 +59,7 @@ void __stdcall p2cstrcpy(char* dst, ConstStringPtr src) {
     dst[src[0]] = 0;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (2)
 #endif
@@ -99,7 +100,7 @@ char* mvprintf(char* mybuf, unsigned int len, const char* format, va_list va) {
 
     return buf;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif

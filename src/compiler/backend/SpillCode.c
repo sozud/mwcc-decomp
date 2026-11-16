@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/SpillCode.h"
 #include "compiler/CError.h"
 #include "compiler/CMachine.h"
@@ -397,7 +398,7 @@ static void spillinstruction(PCodeBlock* block, PCode* instr) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (1660)
 #endif
@@ -436,7 +437,7 @@ static void spillcopy(PCodeBlock* block, PCode* instr) {
 
     deletepcode(instr);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif

@@ -8,6 +8,7 @@ on:
     tags:
       - 'mwccps2-*'
       - '!mwccps2-b52-*' # 3.0 build 52: mwccps2-b52-release.yml
+      - '!mwccps2-b69-*' # build 69: mwccps2-b69-release.yml
   workflow_dispatch:
 
 jobs:

@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_CTEMPLATETOOLS_H
 #define COMPILER_CTEMPLATETOOLS_H
 
@@ -7,7 +8,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 
 extern short ctempl_instdepth;
 
@@ -68,7 +69,7 @@ extern Type* CTemplTool_DeduceTypeCopy(TypeDeduce* deduce, Type* type, UInt32* r
 extern Type* CTemplTool_ResolveMemberSelfRefs(TemplClass* templ, Type* type, UInt32* resultQual);
 extern Boolean CTemplTool_IsSameTemplateType(Type* a, Type* b);
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 extern TemplClass* CTemplTool_GetTemplClass(TypeClass* tclass);
 extern TemplClassInst* CTemplTool_GetTemplClassInst(TypeClass* tclass);

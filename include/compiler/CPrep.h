@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_CPREP_H
 #define COMPILER_CPREP_H
 
@@ -6,14 +7,14 @@
 #include "driver/CWPlugins.h"
 #include "driver/DropInCompilerLinker.h"
 #include "driver/Files.h"
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 #include "driver/COSToolsCLT.h"
 #endif
 #endif
 #include <stddef.h>
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -70,7 +71,7 @@ struct CompilerLinkerParamBlk {
     char* idetargetname;
 };
 struct Macro {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     struct Macro* next;
     struct HashNameNode* name;
     char* text;
@@ -98,7 +99,7 @@ struct TokenStack {
     char* pos;
     char* macrostart;
     struct Macro* macro;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Boolean macrocheck;
 };
 struct CPrepFileInfo {
@@ -132,7 +133,7 @@ struct CPrepFileInfo {
     Boolean unkfield123;
     Boolean unkfield124;
     Boolean unkfield125;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Boolean isSystemInclude;
 };
 #pragma pack(pop)
@@ -155,7 +156,7 @@ extern SInt32 lines;
 extern UInt8 spaceskip;
 extern struct Macro** macrohashtable;
 extern UInt8 cprep_nomem_exit;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern UInt8 cprep_nostring;
 extern UInt8 cprep_eoltokens;
 extern TokenStack tokenstack[128];

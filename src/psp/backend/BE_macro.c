@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include "psp/BE.h"
 #include "compiler/CInt64.h"
@@ -11,7 +12,7 @@
 #if MWCCPS2
 // b210 (0x49AFC0, 0x49B060): 64-bit registers, so zext/sext shift by
 // 64 - bits with dsll/dsll32 and dsrl(32)/dsra(32); no seb/seh on the R5900.
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // b210 (0x49AFC0, 0x49B060): 64-bit registers, so zext/sext shift by
 // 64 - bits with dsll/dsll32 and dsrl(32)/dsra(32); no seb/seh on the R5900.
 BE_NOINLINE void func_0048F6D0(MPCode* pc) {
@@ -36,7 +37,7 @@ __declspec(noinline) void func_0048F6D0(MPCode* pc) {
         shift = 64 - bits;
         if (shift >= 32) {
             pc->op = 0x85; // dsll32, then dsrl32
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             p = makepcode(OPC(0x8B), pc->args[0].reg, pc->args[0].reg, shift - 32);
 #else
             p = makepcode(0x8B, pc->args[0].reg, pc->args[0].reg, shift - 32);
@@ -44,7 +45,7 @@ __declspec(noinline) void func_0048F6D0(MPCode* pc) {
             shift += -32;
         } else {
             pc->op = 0x84; // dsll, then dsrl
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             p = makepcode(OPC(0x8A), pc->args[0].reg, pc->args[0].reg, shift);
 #else
             p = makepcode(0x8A, pc->args[0].reg, pc->args[0].reg, shift);
@@ -55,7 +56,7 @@ __declspec(noinline) void func_0048F6D0(MPCode* pc) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 BE_NOINLINE void func_0048F750(MPCode* pc) {
 #else
 __declspec(noinline) void func_0048F750(MPCode* pc) {
@@ -65,7 +66,7 @@ __declspec(noinline) void func_0048F750(MPCode* pc) {
 
     if (shift >= 32) {
         pc->op = 0x85; // dsll32, then dsra32
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         p = makepcode(OPC(0x88), pc->args[0].reg, pc->args[0].reg, shift - 32);
 #else
         p = makepcode(0x88, pc->args[0].reg, pc->args[0].reg, shift - 32);
@@ -73,7 +74,7 @@ __declspec(noinline) void func_0048F750(MPCode* pc) {
         pc->args[2].value = shift - 32;
     } else {
         pc->op = 0x84; // dsll, then dsra
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         p = makepcode(OPC(0x87), pc->args[0].reg, pc->args[0].reg, shift);
 #else
         p = makepcode(0x87, pc->args[0].reg, pc->args[0].reg, shift);
@@ -133,7 +134,7 @@ extern SInt32 data_0062421C; // stack alignment
 extern SInt32 data_00624FCC; // locals start
 extern SInt32 data_0062597C; // frame size
 extern SInt32 data_005F0BDC;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern struct Alias* make_alias(Object* obj, SInt32 offset, SInt32 size);
 #endif
 extern void func_0048F7C0(int start, MPCode* at, SInt32* x); // save/restore (interrupt)
@@ -158,7 +159,7 @@ void func_0048ED20(MPCode* pc) {
     SInt32 n;
 
     if (data_00625EAE) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         move = makepcode(OPC(0xAA), 29, 30); // move $sp, $fp
 #else
         move = makepcode(0xAA, 29, 30); // move $sp, $fp
@@ -188,7 +189,7 @@ void func_0048ED20(MPCode* pc) {
         func_0048B5D0(&p, 0);
     }
     if (copts.interrupt) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         p = makepcode(OPC(0x8F)); // eret
 #else
         p = makepcode(0x8F); // eret
@@ -196,7 +197,7 @@ void func_0048ED20(MPCode* pc) {
         p->flags |= 0x80000;
         insertpcodebefore(pc, p);
     } else if (!data_00625EA4) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         p = makepcode(OPC(0x3B), 31); // jr $ra
 #else
         p = makepcode(0x3B, 31); // jr $ra
@@ -514,7 +515,7 @@ static void split_unaligned2(MPCode** ppc, Boolean flag, UInt16 first, UInt16 se
 
 // lui + %lo pair through $at for a memory operand; pc becomes the %lo half.
 static MPCode* at_hi(MPCode* pc, SInt32 value) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     MPCode* p = makepcode(OPC(0x90), 1, HI16(value));
 #else
     MPCode* p = makepcode(0x90, 1, HI16(value));
@@ -560,7 +561,7 @@ void func_0048B5D0(MPCode** ppc, Boolean flag) {
 #if MWCCPS2 && MWCCPS2_BUILD < 210
             // b145: func_0048EE70 inline, without recording the frame (.end does)
             if (data_0062597C + data_00624FCC) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 CInt64_SetLong(
                     &size,
                     -(((data_00624FCC + (data_0062421C - 1)) & ~(data_0062421C - 1)) +
@@ -574,7 +575,7 @@ void func_0048B5D0(MPCode** ppc, Boolean flag) {
                 );
 #endif
                 p = makepcode(MACRO_OP(0x01), 29, 29, size); // addiu $sp, $sp, -size
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                 p->flags |= 0x100;
 #endif
                 insertpcodebefore(pc, p);
@@ -586,7 +587,7 @@ void func_0048B5D0(MPCode** ppc, Boolean flag) {
                 func_0048EF70(1, pc);
             }
             if (data_00625EAE) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 insertpcodebefore(pc, makepcode(OPC(0xAA), 30, 29)); // move $fp, $sp
 #else
                 insertpcodebefore(pc, makepcode(0xAA, 30, 29)); // move $fp, $sp
@@ -604,7 +605,7 @@ void func_0048B5D0(MPCode** ppc, Boolean flag) {
             deletepcode(pc);
             break;
         case MACRO_OP(0x98): // .restoreGP
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             p = makepcode(OPC(0x9D), 28, 0, data_00624D70, 29);
 #else
             p = makepcode(0x9D, 28, 0, data_00624D70, 29);
@@ -618,7 +619,7 @@ void func_0048B5D0(MPCode** ppc, Boolean flag) {
             value = 64 - pc->args[2].value;
             if (value >= 32) {
                 pc->op = 0x85; // dsll32, then dsra32
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 p = makepcode(OPC(0x88), pc->args[0].reg, pc->args[0].reg, value - 32);
 #else
                 p = makepcode(0x88, pc->args[0].reg, pc->args[0].reg, value - 32);
@@ -626,7 +627,7 @@ void func_0048B5D0(MPCode** ppc, Boolean flag) {
                 value += -32;
             } else {
                 pc->op = 0x84; // dsll, then dsra
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 p = makepcode(OPC(0x87), pc->args[0].reg, pc->args[0].reg, value);
 #else
                 p = makepcode(0x87, pc->args[0].reg, pc->args[0].reg, value);
@@ -657,7 +658,7 @@ void func_0048B5D0(MPCode** ppc, Boolean flag) {
                 pc->op = 0xD7;
             } else if (pc->args[1].reg != 0) {
                 pc->op = 0xE4;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 insertpcodeafter(pc, makepcode(OPC(0xD7), pc->args[0].reg, 0, pc->args[0].reg));
 #else
                 insertpcodeafter(pc, makepcode(0xD7, pc->args[0].reg, 0, pc->args[0].reg));
@@ -673,7 +674,7 @@ void func_0048B5D0(MPCode** ppc, Boolean flag) {
             pc->op = MACRO_OP(0x97);
             func_0048B5D0(SELF, flag);
 seq_tail:
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             insertpcodeafter(pc, makepcode(OPC(0xD6), pc->args[0].reg, pc->args[0].reg, 1));
 #else
             insertpcodeafter(pc, makepcode(0xD6, pc->args[0].reg, pc->args[0].reg, 1));
@@ -681,7 +682,7 @@ seq_tail:
             break;
         case MACRO_OP(0x45): // la of a label
 la_label:
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             p = makepcode(OPC(0x90), pc->args[0].reg, 0);
 #else
             p = makepcode(0x90, pc->args[0].reg, 0);
@@ -738,7 +739,7 @@ la_label:
                 insertpcodebefore(pc, p);
                 deletepcode(pc);
             } else if (addr.basereg == 23) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 p = makepcode(OPC(0x90), reg, HI16(value));
 #else
                 p = makepcode(0x90, reg, HI16(value));
@@ -767,7 +768,7 @@ la_label:
                     p->alias = pc->alias;
                     goto replace_with_p;
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 p = makepcode(OPC(0x90), reg, HI16(value));
 #else
                 p = makepcode(0x90, reg, HI16(value));
@@ -811,7 +812,7 @@ la_label:
             lo = LI_LO(pc->args[1]);
             reg = pc->args[0].reg;
             if (copts.mips_isa >= 3 &&
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 ((hi != 0 && hi != -1) ||
                  (hi == -1 && !(lo & 0x80000000)) ||
                  (hi == 0 && (lo & 0x80000000)))) {
@@ -827,7 +828,7 @@ la_label:
                 if (flag) {
                     CError_Internal(MACRO_FILE, FLAG_LINE);
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 insertpcodebefore(pc, makepcode(OPC(0xBF), reg, 0, (UInt16)(hi >> 16)));
                 insertpcodebefore(pc, makepcode(OPC(0x84), pc->args[0].reg, pc->args[0].reg, 16));
 #else
@@ -835,7 +836,7 @@ la_label:
                 insertpcodebefore(pc, makepcode(0x84, pc->args[0].reg, pc->args[0].reg, 16));
 #endif
                 if ((UInt16)hi) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     insertpcodebefore(
                         pc, makepcode(OPC(0xBF), pc->args[0].reg, pc->args[0].reg, (UInt16)hi)
                     );
@@ -845,14 +846,14 @@ la_label:
                     );
 #endif
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 insertpcodebefore(pc, makepcode(OPC(0x84), pc->args[0].reg, pc->args[0].reg, 16));
 #else
                 insertpcodebefore(pc, makepcode(0x84, pc->args[0].reg, pc->args[0].reg, 16));
 #endif
                 lo = LI_LO(pc->args[1]);
                 if ((lo >> 16) & 0xFFFF) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     insertpcodebefore(
                         pc,
                         makepcode(OPC(0xBF), pc->args[0].reg, pc->args[0].reg, (lo >> 16) & 0xFFFF)
@@ -863,13 +864,13 @@ la_label:
                     );
 #endif
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 insertpcodebefore(pc, makepcode(OPC(0x84), pc->args[0].reg, pc->args[0].reg, 16));
 #else
                 insertpcodebefore(pc, makepcode(0x84, pc->args[0].reg, pc->args[0].reg, 16));
 #endif
                 if ((UInt16)lo) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     insertpcodebefore(
                         pc, makepcode(OPC(0xBF), pc->args[0].reg, pc->args[0].reg, (UInt16)lo)
                     );
@@ -887,7 +888,7 @@ la_label:
                 if (flag) {
                     CError_Internal(MACRO_FILE, FLAG_LINE);
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 p = makepcode(OPC(0x90), 1, HI16(lo));
 #else
                 p = makepcode(0x90, 1, HI16(lo));
@@ -923,7 +924,7 @@ la_label:
                 if (flag) {
                     CError_Internal(MACRO_FILE, FLAG_LINE);
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 insertpcodebefore(pc, makepcode(OPC(0x90), 1, (UInt16)(lo >> 16)));
                 insertpcodebefore(pc, makepcode(OPC(0xBF), pc->args[0].reg, 1, lo & 0xFFFF));
 #else
@@ -945,7 +946,7 @@ replace_with_p:
             insertpcodebefore(pc, p);
             deletepcode(pc);
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x31):
         case MACRO_OP(0x33):
         case MACRO_OP(0x35):
@@ -993,7 +994,7 @@ replace_with_p:
             insertpcodebefore(pc, q);
             deletepcode(pc);
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x42):
         case MACRO_OP(0x43):
         case MACRO_OP(0x95):
@@ -1008,7 +1009,7 @@ replace_with_p:
             IMM(pc->args[2]) = CInt64_Neg(IMM(pc->args[2]));
             func_0048B5D0(SELF, flag);
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x48):
         case MACRO_OP(0x6C): // l.d, s.d
 #else
@@ -1041,7 +1042,7 @@ replace_with_p:
             func_0048B5D0(&p, flag);
             func_0048B5D0(SELF, flag);
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x8E):
         case MACRO_OP(0x90): // sle with an immediate: slt with imm + 1
 #else
@@ -1052,7 +1053,7 @@ replace_with_p:
             IMM(pc->args[2]) = CInt64_Add(IMM(pc->args[2]), cint64_one);
             func_0048B5D0(SELF, flag);
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x00):
         case MACRO_OP(0x01):
         case MACRO_OP(0x2F):
@@ -1069,7 +1070,7 @@ replace_with_p:
                 pc->op = real;
                 break;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (!pc->unk38 &&
                 CInt64_Greater(IMM(pc->args[2]), cint64_zero) &&
 #else
@@ -1088,7 +1089,7 @@ replace_with_p:
                 insertpcodeafter(pc, p);
                 break;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (!pc->unk38 &&
                 CInt64_Less(IMM(pc->args[2]), cint64_zero) &&
 #else
@@ -1108,7 +1109,7 @@ replace_with_p:
                 break;
             }
             goto li_at_arg2;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x91):
         case MACRO_OP(0x92): // slt with an immediate
 #else
@@ -1135,7 +1136,7 @@ li_at_arg2:
             pc->alias = NULL;
             func_0048B5D0(&p, flag);
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x55):
         case MACRO_OP(0x77): // lw, sw
 #else
@@ -1158,7 +1159,7 @@ li_at_arg2:
                 split_unaligned2(SELF, flag, MACRO_OP(0x7D), MACRO_OP(0x7E), 3);
             }
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x4A):
         case MACRO_OP(0x6F): // ld, sd
 #else
@@ -1181,7 +1182,7 @@ li_at_arg2:
                 split_unaligned2(SELF, flag, MACRO_OP(0x73), MACRO_OP(0x74), 7);
             }
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x2D):
         case MACRO_OP(0x2E):
         case MACRO_OP(0x49):
@@ -1282,7 +1283,7 @@ memory:
                     pc->relobj = (Object*)MOP_OBJ(pc->args[1]);
                     break;
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 p = makepcode(OPC(0x90), 1, HI16(pc->args[1].value));
 #else
                 p = makepcode(0x90, 1, HI16(pc->args[1].value));
@@ -1305,13 +1306,13 @@ memory:
             if (addr.basereg == data_00625E3E && pc->args[2].reg != 28) {
                 value = pc->args[1].value;
                 if (value > 0x7FFF || value < -0x8000) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     p = makepcode(OPC(0x90), 1, HI16(value));
 #else
                     p = makepcode(0x90, 1, HI16(value));
 #endif
                     insertpcodebefore(pc, p);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     insertpcodebefore(
                         pc, makepcode(4, p->args[0].reg, pc->args[2].reg, p->args[0].reg)
                     );
@@ -1328,7 +1329,7 @@ memory:
                 break;
             }
             if (addr.basereg == 23) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 p = makepcode(OPC(0x90), 1, HI16(pc->args[1].value));
 #else
                 p = makepcode(0x90, 1, HI16(pc->args[1].value));
@@ -1351,14 +1352,14 @@ memory:
             if (addr.basereg == -1) {
                 value = pc->args[1].value;
                 if (value > 0x7FFF || value < -0x8000) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     p = makepcode(OPC(0x90), 1, HI16(value));
 #else
                     p = makepcode(0x90, 1, HI16(value));
 #endif
                     insertpcodebefore(pc, p);
                     if (pc->args[2].reg) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         insertpcodebefore(
                             pc, makepcode(4, p->args[0].reg, pc->args[2].reg, p->args[0].reg)
                         );
@@ -1381,7 +1382,7 @@ memory:
                 pc->relobj = (Object*)MOP_OBJ(pc->args[1]);
                 break;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             p = makepcode(OPC(0x90), 1, HI16(pc->args[1].value));
 #else
             p = makepcode(0x90, 1, HI16(pc->args[1].value));
@@ -1389,7 +1390,7 @@ memory:
             p->unk38 = 5;
             p->flags &= ~0x4000;
             p->relobj = (Object*)MOP_OBJ(pc->args[1]);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             // b69 (0x4AACD0): both halves alias the whole object (the access
             // loses its part alias, so the scheduler orders it against any
             // access to the object)
@@ -1402,7 +1403,7 @@ memory:
             pc->args[1].value &= 0xFFFF;
             pc->unk38 = 6;
             pc->relobj = (Object*)MOP_OBJ(pc->args[1]);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             pc->alias = make_alias((Object*)MOP_OBJ(pc->args[1]), 0, 0);
 #endif
             p->pair = pc;
@@ -1428,7 +1429,7 @@ memory:
             func_0048B5D0(&p, flag);
             break;
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x02):
         case MACRO_OP(0x69):
         case MACRO_OP(0x97): // and/or/xor with an immediate
@@ -1450,7 +1451,7 @@ memory:
             pc->args[2].flags = 1;
             func_0048B5D0(&p, flag);
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x8A):
         case MACRO_OP(0x8C): // sgt with an immediate
 #else
@@ -1467,7 +1468,7 @@ memory:
             pc->args[1] = AT_USE();
             func_0048B5D0(&p, flag);
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x85):
         case MACRO_OP(0x87):
         case MACRO_OP(0x89):
@@ -1487,7 +1488,7 @@ memory:
                 func_0048B5D0(SELF, flag);
             }
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x0D):
         case MACRO_OP(0x0E):
         case MACRO_OP(0x11):
@@ -1513,7 +1514,7 @@ memory:
             pc->args[1] = tmp;
             func_0048B5D0(SELF, flag);
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x8D):
         case MACRO_OP(0x8F): // sle with registers: swap, then xori 1
 #else
@@ -1525,7 +1526,7 @@ memory:
             tmp = pc->args[1];
             pc->args[1] = pc->args[2];
             pc->args[2] = tmp;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             insertpcodeafter(pc, makepcode(OPC(0xE5), pc->args[0].reg, pc->args[0].reg, 1));
 #else
             insertpcodeafter(pc, makepcode(0xE5, pc->args[0].reg, pc->args[0].reg, 1));
@@ -1534,7 +1535,7 @@ memory:
                 func_0048B5D0(SELF, flag);
             }
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x86):
         case MACRO_OP(0x88): // sge with an immediate: slt, then xori 1
 #else
@@ -1543,7 +1544,7 @@ memory:
 #endif
             real = REAL(op);
             pc->op = real;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             insertpcodeafter(pc, makepcode(OPC(0xE5), pc->args[0].reg, pc->args[0].reg, 1));
 #else
             insertpcodeafter(pc, makepcode(0xE5, pc->args[0].reg, pc->args[0].reg, 1));
@@ -1552,7 +1553,7 @@ memory:
                 func_0048B5D0(SELF, flag);
             }
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x05):
         case MACRO_OP(0x06):
         case MACRO_OP(0x09):
@@ -1596,7 +1597,7 @@ memory:
                 goto compare_zero;
             }
             goto compare_plus_one;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x0F):
         case MACRO_OP(0x10):
         case MACRO_OP(0x13):
@@ -1650,7 +1651,7 @@ compare_plus_one:
                 pc->op = 0x25;
                 goto compare_zero;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x0B):
         case MACRO_OP(0x0C):
         case MACRO_OP(0x23):
@@ -1682,7 +1683,7 @@ compare_zero:
             pc->args[1] = pc->args[2];
             pc->argcount--;
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x32):
         case MACRO_OP(0x34):
         case MACRO_OP(0x37):
@@ -1724,7 +1725,7 @@ compare_zero:
             deletepcode(pc);
             func_0048B5D0(&q, flag);
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x03):
         case MACRO_OP(0x04):
         case MACRO_OP(0x25):
@@ -1757,14 +1758,14 @@ compare_zero:
                 pc->op = 0xF8;
                 break;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             insertpcodebefore(pc, makepcode(OPC(0xF9), pc->args[0].reg + 1, pc->args[1].reg + 1));
 #else
             insertpcodebefore(pc, makepcode(0xF9, pc->args[0].reg + 1, pc->args[1].reg + 1));
 #endif
             pc->op = 0xF9;
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x27):
         case MACRO_OP(0x28):
         case MACRO_OP(0x29):
@@ -1796,7 +1797,7 @@ compare_zero:
             pc->alias = NULL;
             func_0048B5D0(&p, flag);
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x3C):
         case MACRO_OP(0x3E):
         case MACRO_OP(0x47):

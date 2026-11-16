@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/CCompiler.h"
 #include "compiler/IrOptimizer.h"
 #include "compiler/CodeGen.h"
@@ -22,7 +23,7 @@ static PFrontEndC pFrontEnd;
 static Boolean using_license_manager;
 Boolean crippled;
 SInt32 license_cookie;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 CompilerLinkerParamBlk cparams;
 
 __declspec(dllimport) int __stdcall GetSystemDefaultLangID(void);
@@ -153,19 +154,19 @@ static void initialize_compiler_options(CompilerLinkerParamBlk* params) {
     CWSecretGetNamedPreferences(cparams.context, "C/C++ Compiler", &prefsdata);
     pFrontEnd = *((PFrontEndC*)*prefsdata);
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     // b69 0x420100: no Objective-C, and no little-endian reset
 #else
     copts.littleendian = FALSE;
 #endif
     copts.cplusplus = TRUE;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     copts.objective_c = pFrontEnd.objective_c;
 #endif
     get_extension(params->sourcefile.name, extension);
     if (!strcmp(extension, ".c") || !strcmp(extension, ".h") || !strcmp(extension, ".pch")) {
         copts.cplusplus = pFrontEnd.cplusplus;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     } else if (!strcmp(extension, ".m")) {
         copts.cplusplus = pFrontEnd.cplusplus;
         copts.objective_c = TRUE;
@@ -201,7 +202,7 @@ static void initialize_compiler_options(CompilerLinkerParamBlk* params) {
     copts.wchar_type = pFrontEnd.wchar_type;
     copts.ecplusplus = pFrontEnd.ecplusplus;
     copts.defer_codegen = pFrontEnd.defer_codegen;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     copts.inlinemaxsize = 256;
     copts.inlinemaxtotalsize = 10000;
 #else
@@ -225,7 +226,7 @@ static void initialize_compiler_options(CompilerLinkerParamBlk* params) {
     copts.warn_notinlined = pWarningC.warn_notinlined;
     copts.warn_structclass = pWarningC.warn_structclass;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     CWSecretGetNamedPreferences(cparams.context, "PS2 Global Optimizer", &prefsdata);
 #else
     CWSecretGetNamedPreferences(cparams.context, "EPPC Global Optimizer", &prefsdata);
@@ -243,7 +244,7 @@ static void initialize_compiler_options(CompilerLinkerParamBlk* params) {
     copts.headtype = 'MMCH';
     copts.texttype = 'TEXT';
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 
 // b69 0x43A310..0x43A3E5 (placed outside this unit): the PS2 license, "3"
 // on a Japanese system, else "1" and then "3"; crippled is left alone
@@ -339,7 +340,7 @@ CWPLUGIN_ENTRY(MWC_main)(CWPluginContext context) {
             break;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     result = CWDonePluginRequest(context, result);
     return result;
 #else

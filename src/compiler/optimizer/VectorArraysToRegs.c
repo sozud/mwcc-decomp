@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/VectorArraysToRegs.h"
 #include "compiler/BitVectors.h"
 #include "compiler/CError.h"
@@ -561,7 +562,7 @@ int vectorarraystoregs(void) {
     freeoheap();
     return converted_arrays;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 
 // IRO's is_unsigned wrapper (compiler/IroUtil.h). Its unit is unknown
 // (0x480DB0 sits among unlabelled optimizer functions); its code (ecx, no

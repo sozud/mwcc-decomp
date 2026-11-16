@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_INLINEASM_H
 #define COMPILER_INLINEASM_H
 
@@ -171,7 +172,7 @@ struct IAEffects {
     UInt8 unmodeledControlFlow;
     UInt8 branchWithLink;
     UInt8 noFallthrough;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     // b69's CodeGen_GetAsmEffects (0x4C0B00) clears and sets a seventh flag
     // at +6 (3.0.1's reachBarrier: the instruction is volatile, or follows a
     // branch); numoperands is at +8, numlabels +0xC, operands +0x10, labels +0xF0
