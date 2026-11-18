@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/MsDos.h"
 #include "compiler/win32.h"
 #include "driver/oslib.h"
@@ -1227,7 +1228,7 @@ void __stdcall OS_MacToTime(UInt32 secs, OSTime* sectm) {
     SystemTimeToFileTime(&st, (FILETIME*)sectm);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (88)
 #endif
@@ -1242,7 +1243,7 @@ SInt16 __stdcall OS_RefToMac(int ref) {
 #endif
     return ref + 1;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif

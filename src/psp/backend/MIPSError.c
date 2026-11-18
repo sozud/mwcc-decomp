@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // mwccpsp 3.0.1 MIPSError.c (0x4C5940): the MIPS back end's diagnostics, as
 // 2.4.7's PPCError.c
 #include "compiler/common.h"
@@ -13,7 +14,7 @@ static void MIPSError_GetErrorString(char* str, short code) {
     COS_GetString(str, 10001, code + 500);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 static void MIPSError_VAErrorMessage(
     int code, va_list list, Boolean isTerminal, Boolean isWarning
 ) {

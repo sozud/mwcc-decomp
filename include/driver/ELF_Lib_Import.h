@@ -1,6 +1,7 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_ELF_LIB_IMPORT_H
 #define DRIVER_ELF_LIB_IMPORT_H
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 
 #endif

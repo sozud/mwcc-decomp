@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include "compiler/CError.h"
 #include "compiler/CParser.h"
@@ -53,7 +54,7 @@ restart:
                     align = type->size;
                     break;
                 default:
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     CError_Internal("CMachine.c", 707); // b69's line
 #else
                     CError_Internal("CMachine.c", CError_B145_LINE(957));
@@ -82,7 +83,7 @@ restart:
         case TYPETEMPLATE:
             return 1;
         default:
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             CError_Internal("CMachine.c", 741); // b69's line
 #else
             CError_Internal("CMachine.c", CError_B145_LINE(997));
@@ -167,7 +168,7 @@ restart:
 #endif
 
 // The alignment an __attribute__((aligned)) qualifier asks for, or 0.
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-234)
 #endif
@@ -224,7 +225,7 @@ int func_00466720(UInt32 qual) {
     }
     return align;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -260,7 +261,7 @@ SInt16 func_00464E20(Object* obj) {
 }
 
 void CMach_Configure(void) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     stwchar.size = COPTS_WCHAR.ushort_wchar_t ? stunsignedshort.size : stsignedint.size;
 #else
     stwchar.size = copts.ushort_wchar_t ? stunsignedshort.size : stsignedint.size;
@@ -272,13 +273,13 @@ void CMach_Configure(void) {
     data_00624FD4 = 0;
 }
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 static SInt32 cmach_structstart;
 static SInt16 cmach_curbfsize;
 static SInt32 cmach_structoffset;
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // 0x54D648, the short at 0x54D64C and 0x54D64E): one 2-byte-packed record
 #pragma pack(push, 2)
 static struct {
@@ -367,7 +368,7 @@ void CMach_StructLayoutInitOffset(SInt32 offset) {
 // of its declared type's size; a zero-width field aligns to it. Returns the
 // byte offset of the field's storage unit; tbitfield->offset gets the bit
 // offset within it.
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-247)
 #endif
@@ -461,7 +462,7 @@ SInt32 CMach_StructLayoutBitfield(TypeBitfield* tbitfield, UInt32 qual) {
     tbitfield->offset = off;
     return cmach_structstart + unit;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -480,7 +481,7 @@ Boolean Type_RequiresMemoryReturn(Type* type) {
         return TRUE;
     }
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (type &&
         (IS_TYPE_ARRAY(type) ||
          IS_TYPE_STRUCT(type) ||
@@ -577,11 +578,13 @@ SInt16 CMach_GetClassAlign(TypeClass* tclass) {
 
 // 2.4.7's, plus the 3.0.1 64-bit conversions and 16-byte check; division
 // by zero is an error here.
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-247)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (13)
+#endif
 #endif
 CInt64 CMach_CalcIntDiadic(Type* type, CInt64 left, short op, CInt64 right) {
     if (is_unsigned(type)) {
@@ -800,19 +803,23 @@ CInt64 CMach_CalcIntDiadic(Type* type, CInt64 left, short op, CInt64 right) {
 
     return left;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
 // 3.0.1 converts 8-byte values as well (0x465AF0)
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-247)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (13)
+#endif
 #endif
 CInt64 CMach_CalcIntMonadic(Type* type, short op, CInt64 val) {
     if (is_unsigned(type)) {
@@ -911,9 +918,11 @@ CInt64 CMach_CalcIntMonadic(Type* type, short op, CInt64 val) {
 
     return val;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -969,7 +978,7 @@ CInt64 CMach_CalcIntConvertFromFloat(Type* type, Float fval) {
 
 extern void func_00455A20(void* mem, void* src, int len);
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-234)
 #endif
@@ -1005,18 +1014,20 @@ void CMach_InitIntMem(Type* type, CInt64 val, void* mem) {
             CError_FATAL(709);
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
 // 3.0.1 inlines this into CalcFloatDiadic/Monadic, which link before it
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // 3.0.1 inlines this into CalcFloatDiadic/Monadic, which link before it
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-247)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (13)
+#endif
 #endif
 Float CMach_CalcFloatConvert(Type* type, Float fval) {
     switch (type->size) {
@@ -1031,9 +1042,11 @@ Float CMach_CalcFloatConvert(Type* type, Float fval) {
     }
     return fval;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -1084,11 +1097,13 @@ Float CMach_CalcFloatMonadic(Type* type, short op, Float fval) {
     return CMach_CalcFloatConvert(type, fval);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-247)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (13)
+#endif
 #endif
 Boolean CMach_CalcFloatDiadicBool(Type* type, Float left, short op, Float right) {
     switch (op) {
@@ -1109,9 +1124,11 @@ Boolean CMach_CalcFloatDiadicBool(Type* type, Float left, short op, Float right)
             return FALSE;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -1142,7 +1159,7 @@ Float CMach_CalcFloatConvertFromInt(Type* type, CInt64 val) {
     return result;
 }
 
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 Boolean CMach_FloatIsZero(Float fval) {
     return fval.data.value == 0.0;
 }
@@ -1152,7 +1169,7 @@ Boolean CMach_FloatIsOne(Float fval) {
     return fval.data.value == 1.0;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 Boolean CMach_FloatIsZero(Float fval) {
     return fval.data.value == 0.0;
 }
@@ -1164,7 +1181,7 @@ Boolean CMach_FloatIsNegOne(Float fval) {
     return data_005CCB50 == fval.data.value;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-234)
 #endif
@@ -1187,7 +1204,7 @@ void CMach_InitFloatMem(Type* type, Float val, void* mem) {
     }
     CError_FATAL(888);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -1206,7 +1223,7 @@ extern char volatileasm; // 0x625E8E (inline asm)
 // b210 saves all of copts (0x14C bytes); restoring keeps the current
 // oldprefixname and cursegmentname (pointers)
 void CMach_GetBackEndOptions(struct CInlineBackendOptions* options) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     options->interrupt = copts.interrupt;
     options->debuglisting = copts.debuglisting;
     options->dumpir = copts.dumpir;
@@ -1258,13 +1275,13 @@ void CMach_GetBackEndOptions(struct CInlineBackendOptions* options) {
 #endif
 }
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 void CMach_SetBackEndOptions(struct CInlineBackendOptions* options) {
     StringPtr oldprefixname;
     struct HashNameNode* cursegmentname;
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     void CMach_SetBackEndOptions(struct CInlineBackendOptions * options) {
         copts.interrupt = options->interrupt;
         copts.debuglisting = options->debuglisting;
@@ -1356,7 +1373,7 @@ void CMach_SetBackEndOptions(struct CInlineBackendOptions* options) {
     extern TypeIntegral ps2_int128_5E5EF4; // 0x5E5EF4: {TYPEINT, 16, 0x12}
     Type* CMach_GetCustomType(short token, short size, short signedness) {
         if (token == TK_CUSTOM_TYPE_114) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             // b69 0x458FC0: stint128 (0x536128), the type atomtype gives
             return TYPE(&stint128);
 #else
@@ -1449,7 +1466,7 @@ void CMach_SetBackEndOptions(struct CInlineBackendOptions* options) {
             t = NULL;
         }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (t &&
             t->type == TYPEFLOAT &&
 #else
@@ -1467,7 +1484,7 @@ void CMach_SetBackEndOptions(struct CInlineBackendOptions* options) {
     // 0x464C90: aggregates larger than a word are passed by address
     Boolean CMach_PassResultInHiddenArg(Type * type) {
 #if MWCCPS2
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (copts.mips_long64 &&
             type &&
             (type->type == TYPEARRAY ||

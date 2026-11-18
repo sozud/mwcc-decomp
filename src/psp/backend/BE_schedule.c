@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include "psp/BE.h"
 #include "compiler/InlineAsmMIPS.h"
@@ -49,7 +50,7 @@ void func_004B8240(MPCodeBlock* block) {
     if (!last || !(last->flags & 0x20000000)) {
         return;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if ((last->op == OPC(0x39) ||
          last->op == OPC(0x38A) ||
          last->op == OPC(0x38B) ||
@@ -106,7 +107,7 @@ static Boolean changed;
 static void func_004B7AE0(MPCodeBlock* block);
 static int func_004B7D10(MPCodeBlock* block);
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #define IS_JUMP(pc) ((pc)->op == OPC(0x39) || (pc)->op == OPC(0x38A) || (pc)->op == OPC(0x38B))
 #else
 #define IS_JUMP(pc) ((pc)->op == 0x39 || (pc)->op == 0x38A || (pc)->op == 0x38B)
@@ -235,7 +236,7 @@ static int func_004B7D10(MPCodeBlock* block) {
     if (IS_JUMP(last)) {
         return 1;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (last->op == OPC(0x3B) && last->args[0].reg == 31) {
 #else
     if (last->op == 0x3B && last->args[0].reg == 31) {
@@ -252,7 +253,7 @@ static int func_004B7D10(MPCodeBlock* block) {
 static MPCode* foldablejump(MPCode* pc, Boolean remove) {
     MPCode* next;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (pc->op == OPC(0x39) && pc->args[0].value2 == 0) {
 #else
     if (pc->op == 0x39 && pc->args[0].value2 == 0) {
@@ -262,7 +263,7 @@ static MPCode* foldablejump(MPCode* pc, Boolean remove) {
         }
         return pc;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (pc->op == OPC(0xBA) &&
         (pc->flags & 0x40000000) &&
         (next = pc->next) &&
@@ -289,14 +290,14 @@ static MPCode* foldablejump(MPCode* pc, Boolean remove) {
 // copied otherwise; conditional branches become branch-likely), else a nop.
 #if MWCCPS2
 #include "compiler/CError.h"
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #include "compiler/BitVectors.h"
 #endif
 
 // b210 (0x4C3C50): the same delay-slot filler; the folded jump test is
 // inline, and on the way out a short loop (the branch back to its own
 // block, at most 7 instructions) is padded under #pragma padloop
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 
 // 0x4B1220: may pc be moved up into a delay slot on the fall-through path?
 static Boolean b69_movable(MPCode* pc) {
@@ -401,7 +402,7 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
     MPCode* br;
     MPCode* pc;
     MPCode* first;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     MPCode* fallfirst;
 #else
     MPCode* next;
@@ -409,12 +410,12 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
 #endif
     MPCodeBlock* target = NULL;
     MPCodeBlock* follow;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     MPCodeBlock* fall;
     MPBlockLink* succ;
 #endif
     MPBlockLink* pred;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     int i;
 #endif
 
@@ -428,7 +429,7 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
     if (!(br->flags & 0x20000000)) {
         return;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if ((IS_UNCOND_JUMP(br->op) || (br->flags & 0x10000000)) &&
         br->unk38 == 0 &&
         !(br->flags & 0x800000)) {
@@ -438,7 +439,7 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
         !(br->flags & 0x800000)) {
 #endif
         target = LABEL_BLOCK(func_0048FAE0(br));
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         follow = nextnonempty(block);
 #else
         for (follow = block->next; follow; follow = follow->next) {
@@ -454,7 +455,7 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
     }
     if ((pc = func_004B88B0(block))) {
         insertpcodebefore(br, pc);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         return;
 #else
         goto done;
@@ -475,7 +476,7 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
             insertpcodebefore(br, first);
             first->flags |= 0x40000000;
         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (first->unk38 == 5) {
 #else
             if (first->unk38 == 5 || first->unk38 == 6) {
@@ -492,7 +493,7 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
         func_004C34A0();
         return;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!(br->flags & 0x10000000)) {
 #else
     if (!(br->flags & 0x10000000) || copts.no_branch_likely || (br->flags & 0x800000)) {
@@ -500,7 +501,7 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
         goto nop;
     }
     target = LABEL_BLOCK(func_0048FAE0(br));
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     succ = block->successors;
     fall = succ->block;
     if (fall->number == target->number && succ->next) {
@@ -511,14 +512,14 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
         goto nop;
 #endif
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     fallfirst = fall->first;
     first = target->first;
     if (first && !(first->flags & 0x48000106) && !b69_writeslive(first, block)) {
 #endif
         pred = target->predecessors;
         if (pred && !pred->nextpred) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             goto move;
 #else
         br->op++;
@@ -531,7 +532,7 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
             goto done;
 #endif
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         for (; pred; pred = pred->nextpred) {
             if (pred->from->number != block->number && pred->from->number != fall->number) {
                 goto copy;
@@ -550,12 +551,12 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
             jump = NULL;
 #endif
             }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             if (!jump) {
                 goto done;
 #endif
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (fall->predecessors &&
                 !fall->predecessors->nextpred &&
                 b69_independent(first, fall)) {
@@ -567,7 +568,7 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
             goto done;
 #endif
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 copy:
             if (first->unk38 == 5) {
 #else
@@ -582,14 +583,14 @@ if (first->unk38 == 5 || first->unk38 == 6) {
             pc = copypcode(first);
             insertpcodebefore(br, pc);
             pc->flags |= 0x40000000;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             br->flags |= 0x4000000;
 #else
 br->op++;
 br->flags |= 0x4800000;
 #endif
             first->flags |= 0x8000000;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             freeoheap();
             func_004C34A0();
             return;
@@ -599,7 +600,7 @@ if (!jump) {
     goto done;
 #endif
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (fallfirst &&
             !(fallfirst->flags & 0x48000106) &&
             fall->predecessors &&
@@ -619,7 +620,7 @@ if (jump->op == 0x39 && jump->args[0].value2 == 0) {
     jump = NULL;
 #endif
         }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         if (!jump) {
             goto done;
         }
@@ -641,16 +642,27 @@ nop:
         pc = makepcode(func_004903F0());
         pc->flags |= 0x40000000;
         insertpcodebefore(br, pc);
-#if !MWCCPS2_B52
-done:
-#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (copts.padloop &&
             target &&
             br->block->number == target->number &&
             target->pcodecount <= 7) {
+#else
+        if (copts.padloop &&
+            target &&
+            br->block->number == target->number &&
+            target->pcodecount == 2) {
+#endif
+#else
+done : if (copts.padloop &&
+           target &&
+           br->block->number == target->number &&
+           target->pcodecount <= 7) {
+#endif
             ps2_padloop_4C2960(block);
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         return;
 
 move:
@@ -829,7 +841,7 @@ nop:
         }
         n = (data_006115F8[user->op].flags & 8) ? 2 : user->argcount;
         for (i = 0; i < n; i++, arg++) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (arg->kind == 0 &&
                 arg->rclass == rclass &&
                 reg == (arg->reg & ((arg->rclass == 1) ? ~1 : ~0)) &&
@@ -902,6 +914,13 @@ nop:
             } else if (data_006115F8[pc->op].flags2 & 0x4000) {
 #if MWCCPS2
                 // b210 tests the hazard but never pads it
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+                if (feeds(pc, next) && copts.mips_isa < 4) {
+                    nops++;
+                }
+#endif
+#endif
 #else
             if (feeds(pc, next) && copts.mips_isa < 4) {
                 nops++;
@@ -915,7 +934,7 @@ nop:
             } else if (data_006115F8[pc->op].flags2 & 0x20000) {
                 // b210: an instruction two ahead (or the delay slot) of kind
                 // 0x10000 needs a nop after the next one (or after this one)
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 // b69: the next one of that kind needs two after this one
                 if (data_006115F8[next->op].flags2 & 0x10000) {
                     nops += 2;
@@ -927,7 +946,7 @@ nop:
                     nops++;
                 }
             } else if (data_006115F8[pc->op].flags2 & 0x80000) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if (data_006115F8[next->op].flags2 & 0x40000) {
                     nops += 2;
                 } else
@@ -943,7 +962,7 @@ nop:
                     nops++;
                 }
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if ((copts.mips_flags02 & 0x2000) &&
                 (UInt16)(pc->op - OPC(0xB4)) <= 1 &&
                 (UInt16)(next->op - OPC(0xB4)) <= 3 &&
@@ -974,8 +993,17 @@ nop:
         if (!pc) {
             return;
         }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if ((!copts.no_load_delay_nops && (pc->flags & 2)) ||
             (data_006115F8[pc->op].flags2 & 0x5000)) {
+#else
+    // b69 pads a closing load whatever no_load_delay_nops says
+    if ((pc->flags & 2) || (data_006115F8[pc->op].flags2 & 0x5000)) {
+#endif
+#else
+    if ((!copts.no_load_delay_nops && (pc->flags & 2)) || (data_006115F8[pc->op].flags2 & 0x5000)) {
+#endif
             insertpcodeafter(pc, makepcode(func_004903F0()));
         }
         if (delay) {

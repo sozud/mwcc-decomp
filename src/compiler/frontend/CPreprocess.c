@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CPreprocess.h"
 #include "compiler/CError.h"
 #include "compiler/CMachine.h"
@@ -678,7 +679,7 @@ void CPrep_Preprocess(void) {
                             AppendGListData(&pplist, "__restrict", 10);
                         }
                         break;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                     case TK_UU_VEC2X32FLOAT_UU:
                         AppendGListData(&pplist, "__vec2x32float__", 16);
                         break;

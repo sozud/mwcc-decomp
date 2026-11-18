@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include "psp/BE.h"
 #include "compiler/CError.h"
@@ -150,7 +151,7 @@ ArgInfo* func_004A8C00(ENode* skip, ENodeList* args, FuncArg* argtypes) {
                     fpr++;
                 }
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (type->type == TYPEINT ||
                    type->type == TYPEENUM ||
                    type->type == TYPEPOINTER ||
@@ -291,7 +292,7 @@ ArgInfo* func_004A9100(ENode* skip, ENodeList* args, FuncArg* argtypes) {
                     fpr++;
                 }
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (type->type == TYPEINT ||
                    type->type == TYPEENUM ||
                    type->type == TYPEPOINTER ||
@@ -440,6 +441,11 @@ extern SInt32 data_0060E038[7][BE_MAX_CLASS_REGS]; // ... and their numbers
 extern UsedRegs3* data_006241D8; // registers the function uses
 extern Statement* data_00625070; // current_statement
 extern struct Alias* worst_case_func;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+// b69 (0x4A3F39): a direct call's alias is the callee's own, make_alias(func, 0, 0)
+extern struct Alias* make_alias(Object* object, SInt32 offset, SInt32 size);
+#define CALL_ALIAS(func) make_alias((func), 0, 0)
+#endif
 extern Object* rt_MIPS16_prtglue16;
 extern Object* rt_MIPS16_prtglue32;
 extern MPCode* func_00480420(int op, SInt16 nargs);
@@ -561,7 +567,11 @@ void func_004A8310(Object* func, int reg, UInt32* masks) {
         MOP_SETOBJ(pc->args[0], func);
         pc->unk38 = 10;
         pc->relobj = func;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+        pc->alias = CALL_ALIAS(func);
+#else
         pc->alias = worst_case_func;
+#endif
     } else if (reg) {
         pc->args[0] = func_004C3E70(0x1F, 0, 2);
         pc->args[1] = func_004C3E70(reg, 0, 1);
@@ -571,7 +581,11 @@ void func_004A8310(Object* func, int reg, UInt32* masks) {
         MOP_SETOBJ(pc->args[0], func);
         pc->args[1] = func_004C3E70(0x1F, 0, 2);
         pc->unk38 = 4;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+        pc->alias = CALL_ALIAS(func);
+#else
         pc->alias = worst_case_func;
+#endif
         pc->relobj = func;
     }
     appendpcode(data_006246B4, pc);
@@ -585,7 +599,7 @@ void func_004A8310(Object* func, int reg, UInt32* masks) {
 
 extern SInt16 data_00625E4C; // store word
 extern void (*data_005D0140[])(ENode* expr, void* target, VOperand* out);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern MPCode* func_004808E0(
     SInt16 op, SInt16 reg, SInt16 base, Object* obj, SInt32 offset
 ); // store a GPR
@@ -609,7 +623,7 @@ void func_004A8840(ArgInfo* info) {
     ENode* expr = info->expr;
     VOperand dst;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 
     if (type->type == TYPEINT ||
         type->type == TYPEENUM ||
@@ -633,7 +647,7 @@ void func_004A8840(ArgInfo* info) {
 #endif
             if (copts.littleendian) {
                 func_004808E0(data_00625E4C, info->opnd.reg, 29, NULL, info->offset);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 func_004808E0(
                     data_00625E4C, info->opnd.regHi, 29, NULL, info->offset + data_00624788
                 );
@@ -644,7 +658,7 @@ void func_004A8840(ArgInfo* info) {
 #endif
             } else {
                 func_004808E0(data_00625E4C, info->opnd.regHi, 29, NULL, info->offset);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 func_004808E0(
                     data_00625E4C, info->opnd.reg, 29, NULL, info->offset + data_00624788
                 );
@@ -667,7 +681,7 @@ void func_004A8840(ArgInfo* info) {
         if (type->type == TYPEFLOAT && IS_SOFTFLOAT(type)) {
             if (IS_SINGLE(type) && !(info->flags & ArgInfoFlag_FloatStack)) {
 #if MWCCPS2 // b210: big-endian puts a single in the slot's second word
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 func_004808E0(
                     MACRO_OP(0x77),
                     info->opnd.reg,
@@ -693,7 +707,7 @@ void func_004A8840(ArgInfo* info) {
 #endif
             } else if (copts.littleendian) {
                 func_004808E0(MACRO_OP(0x77), info->opnd.reg, 29, NULL, info->offset);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 func_004808E0(
                     MACRO_OP(0x77), info->opnd.regHi, 29, NULL, info->offset + data_00624788
                 );
@@ -704,7 +718,7 @@ void func_004A8840(ArgInfo* info) {
 #endif
             } else {
                 func_004808E0(MACRO_OP(0x77), info->opnd.regHi, 29, NULL, info->offset);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 func_004808E0(
                     MACRO_OP(0x77), info->opnd.reg, 29, NULL, info->offset + data_00624788
                 );
@@ -716,7 +730,7 @@ void func_004A8840(ArgInfo* info) {
             }
         } else if (IS_SINGLE(type) && !(info->flags & ArgInfoFlag_FloatStack)) {
 #if MWCCPS2
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             func_004807C0(
                 MACRO_OP(0x79),
                 info->opnd.reg,
@@ -737,7 +751,7 @@ void func_004A8840(ArgInfo* info) {
             func_004807C0(MACRO_OP(0x79), info->opnd.reg, 29, NULL, info->offset);
 #endif
         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             func_004807C0(
                 (copts.mips_isa >= 2 && (copts.fp_library & 2)) ? MACRO_OP(0x70) : MACRO_OP(0x6C),
                 info->opnd.reg,
@@ -763,7 +777,7 @@ void func_004A8840(ArgInfo* info) {
         dst.offset = info->offset;
         if (!info->unk34) {
             if (ENODE_IS(info->expr, EINDIRECT)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 data_005D0140[info->expr->data.monadic->type](
                     info->expr->data.monadic, NULL, &info->opnd
                 );
@@ -787,7 +801,7 @@ extern SInt32 data_00625010; // word size - 1
 extern SInt32 data_0062504C; // log2 of the word size
 extern void func_00480B40(SInt16 op, SInt16 reg, SInt16 base, Object* obj, SInt32 offset); // load
 extern void func_00480230(SInt16 align, void* unk);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern VOperand func_0047FAA0(
     UInt16 op, int fpr, Boolean pair
 ); // the result registers after a call
@@ -872,7 +886,7 @@ void func_004A7400(ENode* expr, VOperand* out) {
         }
     }
     if (copts.mips_long64) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         list =
             func_004A9100(thisexpr, expr->data.funccall.args, expr->data.funccall.functype->args);
 #else
@@ -880,7 +894,7 @@ void func_004A7400(ENode* expr, VOperand* out) {
             func_004A9100(thisexpr, expr->data.funccall.args, expr->data.funccall.functype->args);
 #endif
     } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         list =
             func_004A8C00(thisexpr, expr->data.funccall.args, expr->data.funccall.functype->args);
 #else
@@ -935,7 +949,7 @@ void func_004A7400(ENode* expr, VOperand* out) {
                 masks[0] |= BIT32(r);
             }
         } else if (kind == ArgInfoFlag_GPR &&
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                    (type->type == TYPECLASS ||
                     type->type == TYPESTRUCT ||
 #else
@@ -965,7 +979,7 @@ void func_004A7400(ENode* expr, VOperand* out) {
                     op = MACRO_OP(0x50);
                 }
                 for (i = 0; i < words; i++) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     func_00480B40(
                         op,
                         info->gpr + i,
@@ -973,6 +987,9 @@ void func_004A7400(ENode* expr, VOperand* out) {
                         (Object*)info->opnd.object,
                         data_00624788 * i + info->opnd.offset
                     );
+#if MWCC_CORE == MWCC_CORE_B52
+                    func_00480230(CMach_GetTypeAlign(type), (void*)info->opnd.object);
+#endif
 #else
                     func_00480B40(
                         op,
@@ -981,8 +998,8 @@ void func_004A7400(ENode* expr, VOperand* out) {
                         (Object*)info->opnd.object,
                         data_00624788 * i + info->opnd.offset
                     );
-#endif
                     func_00480230(CMach_GetTypeAlign(type), (void*)info->opnd.object);
+#endif
                     masks[0] |= BIT32((info->gpr + i));
                 }
             }
@@ -996,7 +1013,7 @@ void func_004A7400(ENode* expr, VOperand* out) {
             switch (info->opnd.kind) {
                 case 0:
 #if MWCCPS2 // b210: a long long is in one 64-bit register
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(
                         type->size > 8 ? data_00625E74 : data_00625E48, info->gpr, info->opnd.reg
                     );
@@ -1023,7 +1040,7 @@ void func_004A7400(ENode* expr, VOperand* out) {
                         }
                         masks[0] |= 3 << info->gpr;
                     } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         emitpcode(
                             type->size > 8 ? data_00625E74 : data_00625E48,
                             info->gpr,
@@ -1054,7 +1071,7 @@ void func_004A7400(ENode* expr, VOperand* out) {
                 case 1:
                     t = info->expr->rtype;
                     if (IS_SINGLE(t)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         emitpcode(OPC(0xA5), info->gpr, info->opnd.reg);
 #else
                         emitpcode(0xA5, info->gpr, info->opnd.reg);
@@ -1063,28 +1080,28 @@ void func_004A7400(ENode* expr, VOperand* out) {
                         masks[0] |= BIT32(info->gpr);
                     } else {
                         if (copts.littleendian) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             emitpcode(OPC(0xA5), info->gpr, info->opnd.reg);
 #else
                             emitpcode(0xA5, info->gpr, info->opnd.reg);
 #endif
                             data_006246B4->last->args[1].flags |= 0x8000;
                             setpcodeflags(0x100);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             emitpcode(OPC(0xA5), info->gpr + 1, info->opnd.reg);
 #else
                             emitpcode(0xA5, info->gpr + 1, info->opnd.reg);
 #endif
                             data_006246B4->last->args[1].flags |= 0xC000;
                         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             emitpcode(OPC(0xA5), info->gpr + 1, info->opnd.reg);
 #else
                             emitpcode(0xA5, info->gpr + 1, info->opnd.reg);
 #endif
                             data_006246B4->last->args[1].flags |= 0x8000;
                             setpcodeflags(0x100);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             emitpcode(OPC(0xA5), info->gpr, info->opnd.reg);
 #else
                             emitpcode(0xA5, info->gpr, info->opnd.reg);
@@ -1165,7 +1182,7 @@ void func_004A7400(ENode* expr, VOperand* out) {
 #else
             if (copts.function_align16) {
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 *out = func_0047FAA0(
                     rettype->size > 8 ? data_00625E74 : data_00625E48, 0, RESULT_PAIR(rettype)
                 );
@@ -1175,7 +1192,7 @@ void func_004A7400(ENode* expr, VOperand* out) {
                 );
 #endif
             } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 *out = func_0047FAA0(data_00625E48, 0, RESULT_PAIR(rettype));
 #else
                 *out = func_0047FAA0(data_00625E48, 0, RESULT_PAIR(rettype));

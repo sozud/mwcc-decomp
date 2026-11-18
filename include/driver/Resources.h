@@ -1,8 +1,9 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_RESOURCES_H
 #define DRIVER_RESOURCES_H
 
 #include "compiler/common.h"
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #include "driver/oslib.h"
 
 #ifdef __cplusplus

@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/ParserHelpers-cc.h"
 #include "driver/CWPlugins.h"
 #include "driver/oslib.h"
@@ -8,7 +9,7 @@
 #include "driver/Targets.h"
 #include <stdio.h>
 #include <string.h>
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #include "driver/option_system.h"
 #endif
 #if MWCCPSP
@@ -104,7 +105,7 @@ int Opt_AddPrefixFile(const char* opt, void* handle, const char* filename, int f
     return TRUE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // b52 (0x4105D5, 0x4105EE), 3.0.1's (tools/mwccpsp): an option that sets a
 // pragma variable, and its reverse (b52's option lists point at them)
 int Opt_PragmaOnOff(const char* opt, void* var, const char* arg, int flags) {
@@ -194,7 +195,7 @@ int SetupPragmas(const Pragma* pragmas) {
     }
 
     return TRUE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 }
 
 // b52 (0x410723), 3.0.1's: -pragma "name" or "no-name" becomes

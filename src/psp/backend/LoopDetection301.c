@@ -161,13 +161,8 @@ static void computepressure(void) {
     for (block = data_00624FD0; block; block = block->next) {
         func_004C3460(block);
         for (rclass = 0; rclass < 7; rclass++) {
-#if MWCCPS2_B52
             data_00624E04[rclass].count =
                 bitvectorcount(data_0062541C[rclass].current, data_0062541C[rclass].n);
-#else
-            data_00624E04[rclass].count =
-                bitvectorcount(data_0062541C[rclass].current, data_0062541C[rclass].n);
-#endif
         }
         for (rclass = 0; rclass < 7; rclass++) {
             data_00624E04[rclass].perblock[block->number] = data_00624E04[rclass].count;
@@ -175,13 +170,8 @@ static void computepressure(void) {
         for (pc = block->last; pc; pc = pc->prev) {
             stepback(pc);
             for (rclass = 0; rclass < 7; rclass++) {
-#if MWCCPS2_B52
                 if ((UInt32)data_00624E04[rclass].perblock[block->number] <
                     (UInt32)data_00624E04[rclass].count) {
-#else
-                if ((UInt32)data_00624E04[rclass].perblock[block->number] <
-                    (UInt32)data_00624E04[rclass].count) {
-#endif
                     data_00624E04[rclass].perblock[block->number] = data_00624E04[rclass].count;
                 }
             }
@@ -458,11 +448,7 @@ static void addblockleaves(Loop301* loop) {
             CLRBIT(vec, bl->block->number);
         }
     }
-#if MWCCPS2_B52
     for (tail = &loop->children; *tail; tail = &(*tail)->next) {}
-#else
-    for (tail = &loop->children; *tail; tail = &(*tail)->next) {}
-#endif
     for (bl = loop->blocks; bl; bl = bl->next) {
         if (GETBIT(vec, bl->block->number)) {
             leaf = newloop(LOOP301_BLOCK);

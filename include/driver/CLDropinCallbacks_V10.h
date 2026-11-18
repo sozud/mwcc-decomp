@@ -1,9 +1,10 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_CLDROPINCALLBACKS_V10_H
 #define DRIVER_CLDROPINCALLBACKS_V10_H
 
 #include "compiler/common.h"
 #include "driver/cmdline.h"
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #include "driver/CWPlugins.h"
 #include "driver/Files.h"
 

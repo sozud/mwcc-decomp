@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // mwccpsp 3.0.1: BE_LoopInvariants (0x4B3090..0x4B35D0), the MIPS back
 // end's loop-invariant code motion over LoopDetection301.c's loop tree.
 // An instruction moves to its loop's preheader when every register it reads
@@ -26,7 +27,7 @@ SInt32* data_005F3D70[7]; // uses in the loop, per class and register
 
 // 0x4B34F0: counts the loop's definitions and uses of every register.
 #if MWCCPS2
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 BE_NOINLINE // b210 calls it (0x4BE1F0)
 #else
 __declspec(noinline) // b210 calls it (0x4BE1F0)
@@ -79,7 +80,7 @@ static int canmove(MPCode* pc, Loop301* loop) {
             if (data_005F3D8C[op->rclass][op->reg] > 1) {
                 return 0;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if ((data_0062541C[op->rclass].blocks[loop->preheader->number].liveout[op->reg >> 5] >>
                  (op->reg & 31)) &
                 1) {
@@ -106,7 +107,7 @@ static int canmove(MPCode* pc, Loop301* loop) {
 
 // 0x4B32C0: moves pc to the end of the preheader (before its branch).
 #if MWCCPS2
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 BE_NOINLINE // b210 calls it (0x4BDFC0)
 #else
 __declspec(noinline) // b210 calls it (0x4BDFC0)
@@ -164,14 +165,36 @@ static void moveinvariants(Loop301* loop) {
         return;
     }
     hascall = 0;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+    // b69 (0x4ABF60): also leaves alone a loop of more than 200 instructions
+    // (those without pcode flag 0x10 counted)
+    n = 0;
+#endif
+#endif
     for (bl = loop->blocks; bl; bl = bl->next) {
         for (pc = bl->block->first; pc; pc = pc->next) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+            if (!(pc->flags & 0x10)) {
+                n++;
+            }
+#endif
+#endif
             if (pc->flags & 8) {
                 hascall = 1;
             }
         }
     }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (hascall) {
+#else
+    if (hascall || n > 200) {
+#endif
+#else
+    if (hascall) {
+#endif
         return;
     }
     countregs(loop);
@@ -182,7 +205,7 @@ static void moveinvariants(Loop301* loop) {
                 next = pc->next;
                 invariant = 1;
                 FOR_ARGS(n, op, pc) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     if (op->kind == 0 &&
                         (op->flags & 1) &&
                         data_005F3D8C[op->rclass][op->reg] > 0) {

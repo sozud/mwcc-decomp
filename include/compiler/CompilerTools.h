@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_COMPILERTOOLS_H
 #define COMPILER_COMPILERTOOLS_H
 
@@ -7,7 +8,7 @@
 #include "compiler/win32.h"
 
 struct FSSpec;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 struct CWFileSpec;
 #endif
@@ -44,7 +45,7 @@ extern void (*GListErrorProc)(void);
 extern short InitGList(GList* gl, SInt32 size);
 extern void FreeGList(GList* gl);
 extern void LockGList(GList* gl);
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 extern void UnlockGList(GList* gl);
 #endif
@@ -92,7 +93,7 @@ extern char* ScanDec(char* string, UInt32* result, Boolean* overflow);
 extern short hash(char* str);
 extern void memclrw(void* ptr, SInt32 size);
 extern void CToLowercase(char* src, char* dst);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern short getbit(SInt32 mask);
 extern UInt16 CTool_EndianConvertWord16(UInt16 theword);
 extern UInt32 CTool_EndianConvertWord32(UInt32 theword);
@@ -113,7 +114,7 @@ static inline UInt32 CTool_EndianReadWord32(void* ptr) {
     return *(UInt32*)ptr;
 }
 extern void CTool_EndianConvertWord64(CInt64 ci, char* result);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern UInt16 CTool_EndianConvertInPlaceWord16Ptr(UInt16* x);
 extern UInt32 CTool_EndianConvertInPlaceWord32Ptr(UInt32* x);
 extern HashNameNode* CTool_GetPathName(const struct FSSpec* fss, SInt32* moddateptr);

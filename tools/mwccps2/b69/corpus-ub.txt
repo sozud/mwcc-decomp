@@ -1,0 +1,85 @@
+# b69 corpus cases whose expected output depends on memory b69 never
+# initialised, so the native (which takes b69's usual value) cannot match them
+# deterministically. One per line: case, kind, b69 addresses, evidence.
+#
+# arena-residue (all 55): primary_expression lallocs an ENode for an int
+# constant (0x469310) or a float constant (0x469350) and writes type, +1,
+# flags, rtype and data but not cost/hascall (+4/+5), so hascall is whatever
+# an earlier allocation left in lalloc's arena (e.g. 0xFF). expandIR returns
+# early for a float constant lui can build (and promote() turns an int
+# constant into a float one in place), IRO's BuildExpr copies the node whole
+# (rep movs at 0x4C33DF, byte-exact in the hybrid), and call_function tests
+# the byte (0x4A4063, cmp [esi+5],0): an argument with it set is evaluated in
+# the first loop, before the others, which changes the virtual register order
+# and so scheduling/allocation (e.g. 63313a6749fd: 90.0f is materialised
+# before 250.0f). The native sets hascall = 0 (CExpr.c TK_INTCONST /
+# TK_FLOATCONST). Proof: b69's bytes, read with gdb at 0x46931A and 0x46935A
+# (after each lalloc, [ebx+5]) under wibo, replayed by a native built with
+# the research tree's NATIVE_CFLAGS=-DMWCCPS2_B69_HCSEQ (MWCCPS2_HCSEQ float, MWCCPS2_HCSEQI int)
+# make every case below byte-identical; the same binary without the replay
+# gives the baseline native's object. Evidence column: nonzero/total residue
+# bytes b69 read (F float, I int) and which replay alone suffices.
+#
+# stack-uninit (23 of them, as well): the memory-operand temporary in
+# func_004C3C60 (b69 0x4981C0: kind 4 writes +0 and +2..+9, never the class
+# byte +1, then copies all 0x16 bytes into the pcode at 0x49824F) is read by
+# func_004901D0 (0x49A930, args[1].rclass). The native leaves the same
+# temporary uninitialised (VReg.c zeroes it for b52 only): with the hascall
+# replay, -ftrivial-auto-var-init=zero matches and =pattern differs, and
+# zeroing op/imm in func_004C3C60/func_004C3D50/func_004C3D90 makes =pattern
+# match again.
+06a3635c908d arena-residue 0x469310,0x469350,0x4A4063 hascall residue F10/55 I46/229, needs both replays; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+0e7b1d1432d0 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F78/305 I395/1707, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+110edd614f59 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F9/106 I38/350, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+1279702a2d86 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F2/3 I243/1696, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+137f505f7080 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F7/92 I43/291, needs both replays; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+1419d6e2d123 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F370/1591 I1564/8932, needs both replays; zero/pattern locals differ (0x4981C0 class byte)
+16d167c1b1ae arena-residue 0x469310,0x469350,0x4A4063 hascall residue F11/30 I47/220, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+1acb854236d2 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F2/21 I44/280, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+1dd3c272f3e6 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F10/247 I83/1544, needs both replays; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+22b4564885c6 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F12/26 I139/747, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+2531b81b0c74 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F8/66 I112/516, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+2a5c76daa827 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F17/68 I877/3523, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+3424f9b03f43 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F10/69 I19/201, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+36861f9fecd9 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F16/96 I81/613, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+4378f5cea84f arena-residue 0x469310,0x469350,0x4A4063 hascall residue F1/42 I68/468, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+4533d37495dc arena-residue 0x469310,0x469350,0x4A4063 hascall residue F1/2 I23/461, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+4f1ec69df645 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F4/25 I42/187, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+518157017ac1 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F26/106 I83/523, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+577e55e98290 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F1/4 I101/568, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+62a33f0c1dbd arena-residue 0x469310,0x469350,0x4A4063 hascall residue F84/309 I356/1862, needs both replays; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+63313a6749fd arena-residue 0x469310,0x469350,0x4A4063 hascall residue F19/98 I230/1191, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+646c2d93c343 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F66/254 I230/1254, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+65d018290ea4 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F93/362 I425/1798, needs both replays; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+74592af4f459 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F15/66 I68/469, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+75f58d5a2563 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F2/20 I42/233, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+863dfcdca7e4 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F401/1547 I1889/7165, needs both replays; zero/pattern locals differ (0x4981C0 class byte)
+8788e8398581 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F183/712 I2913/11207, needs both replays; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+881d2ad97caa arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F34/100 I203/908, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+8bd97e901318 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F140/714 I506/2492, needs both replays; zero/pattern locals differ (0x4981C0 class byte)
+8ecb66823cd5 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F13/102 I126/766, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+9643928c6a3a arena-residue 0x469310,0x469350,0x4A4063 hascall residue F6/47 I251/1237, int replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+972743662725 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F53/303 I237/1308, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+97db78026541 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F11/111 I171/953, int replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+998bcdd0e559 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F7/45 I79/701, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+9cff7ee317ec arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F24/184 I556/2517, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+a34fdac7c587 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F97/416 I441/1883, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+a3ac2ecc7e4e arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F124/688 I509/2399, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+a4d47bc32279 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F1/1 I73/761, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+a582008098ba arena-residue 0x469310,0x469350,0x4A4063 hascall residue F23/145 I129/670, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+a5e4c721f778 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F173/681 I375/2021, needs both replays; zero/pattern locals differ (0x4981C0 class byte)
+b8021893135a arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F27/87 I105/753, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+b8c5abc49e31 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F20/100 I203/995, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+bb9510f98997 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F16/73 I243/1198, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+c4242ef831e7 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F14/118 I49/718, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+cc1f2ac982c4 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F162/688 I554/2238, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+ccdc2a8d0ae1 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F146/578 I535/2631, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+d62cd6e0a9bf arena-residue 0x469310,0x469350,0x4A4063 hascall residue F51/261 I83/616, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+d82cd6445fcc arena-residue 0x469310,0x469350,0x4A4063 hascall residue F32/129 I175/793, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+e63fa4357171 arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F17/417 I152/1605, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+e9d22248ad89 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F20/83 I101/448, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+ea769b77280e arena-residue+stack-uninit 0x469310,0x469350,0x4A4063,0x4981C0,0x49A930 hascall residue F9/35 I53/269, float replay alone fixes it; zero/pattern locals differ (0x4981C0 class byte)
+eb7c3a68075e arena-residue 0x469310,0x469350,0x4A4063 hascall residue F18/464 I87/3199, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+ee3732fa85da arena-residue 0x469310,0x469350,0x4A4063 hascall residue F14/110 I37/300, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+fcc65a2a1d60 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F9/40 I76/446, int replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)
+ff41d2265d81 arena-residue 0x469310,0x469350,0x4A4063 hascall residue F102/495 I270/1316, float replay alone fixes it; zero/pattern locals, heap scribble, arena fill change nothing (native forces 0)

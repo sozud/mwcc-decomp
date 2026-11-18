@@ -1,51 +1,68 @@
-#if MWCCPS2_B52
-// b52 (3.0 build 52): tools/mwccpsp's 3.0.1 header with its MWCCPSP layouts,
-// packed to 2 bytes like the rest of the b69 tree (IRO_NewStatement: 0x1E bytes,
-// IROLinear's rtype at +0x10). Only MWCCPS2_B69_BUILD=52 searches include/b52.
+#include "compiler/mwcc_core.h"
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #ifndef COMPILER_IROFLOWGRAPH_H
 #define COMPILER_IROFLOWGRAPH_H
 
 #include "compiler/common.h"
 #include "compiler/CError.h"
 #include "compiler/CompilerTools.h"
+#if MWCC_CORE == MWCC_CORE_B52
 #pragma pack(push, 2)
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #pragma pack(push, 2)
-// b52: packed to 2 bytes. 3.0.1: 0x44 bytes, natural alignment (StartNode 0x577BC0 and
-// IRO_FreeFlowGraphNode 0x576A70); the loop depth moved up, 2.4.7's unused
-// word is gone, and a node holding an asm optimization barrier is marked.
 struct IRONode {
-    UInt16 index; // +0
-    UInt16 numsucc; // +2
-    UInt16* succ; // +4
-    UInt16 numpred; // +8
-    UInt16* pred; // +0xC
+    UInt16 index;
+    UInt16 numsucc;
+    UInt16* succ;
+    UInt16 numpred;
+    UInt16* pred;
+#if MWCC_CORE == MWCC_CORE_B52
     UInt16 loopdepth; // +0x10
-    IROLinear* first; // +0x14
-    IROLinear* last; // +0x18
-    BitVector* in; // +0x1C
-    BitVector* out; // +0x20
-    BitVector* gen; // +0x24
-    BitVector* kill; // +0x28
-    BitVector* copyOut; // +0x2C
-    BitVector* dom; // +0x30
-    IRONode* nextnode; // +0x34
+#endif
+    IROLinear* first;
+    IROLinear* last;
+    BitVector* in;
+    BitVector* out;
+    BitVector* gen;
+    BitVector* kill;
+#if MWCC_CORE != MWCC_CORE_B52
+    UInt32 unused;
+#endif
+    BitVector* copyOut;
+    BitVector* dom;
+    IRONode* nextnode;
+#if MWCC_CORE == MWCC_CORE_B52
     struct ObjectSet* addressed; // +0x38
-    Boolean reachable; // +0x3C
-    Boolean mustreach; // +0x3E
+#endif
+    Boolean reachable;
+#if MWCC_CORE != MWCC_CORE_B52
+    Boolean visited;
+#endif
+    Boolean mustreach;
+#if MWCC_CORE == MWCC_CORE_B52
     Boolean unk3F; // new in 3.0.1
-    Boolean referenced; // +0x40 (IRO_ComputeSuccPred)
-    Boolean marked; // +0x41
-    Boolean mustreach1; // +0x42
+#endif
+    Boolean referenced;
+#if MWCC_CORE != MWCC_CORE_B52
+    UInt16 loopdepth;
+#endif
+    Boolean marked;
+#if MWCC_CORE != MWCC_CORE_B52
+    struct ObjectSet* addressed;
+#endif
+    Boolean mustreach1;
+#if MWCC_CORE == MWCC_CORE_B52
     Boolean hasAsmBarrier; // +0x43 (IRO_FindAsmBarriers 0x576550)
     // b52: marked is at +0x3C (SomePredecessorHasBeenVisited), one byte below
     // the packed 3.0.1 order; which of reachable/visited/mustreach moves is
     // unverified (visited or mustreach score the same)
     Boolean visited;
+#endif
 };
 
 typedef struct IRONodes {
@@ -66,7 +83,9 @@ extern BitVector* IRO_FuncKills;
 extern BitVector* IRO_ExprKills;
 
 extern void IRO_BuildFlowgraph(IROLinear* linear);
+#if MWCC_CORE == MWCC_CORE_B52
 extern void IRO_RebuildNodeTable(void);
+#endif
 extern void IRO_ComputeDom(void);
 extern void IRO_ComputeSuccPred(void);
 extern IRONode* IRO_NewFlowGraphNode(void);
@@ -101,7 +120,11 @@ HEADER_INLINE void IRO_FNodeWorkStack_Add(IRONodes* nodes, UInt16 index) {
         nodes->indices[(nodes->base + nodes->num) % IRO_NumNodes] = index;
         nodes->num++;
     } else {
+#if MWCC_CORE == MWCC_CORE_B52
         CError_Internal("IroFlowgraph.h", 127); // 3.0.1's header
+#else
+        CError_FATAL(93);
+#endif
     }
 }
 
@@ -109,7 +132,9 @@ HEADER_INLINE void IRO_FNodeWorkStack_Add(IRONodes* nodes, UInt16 index) {
 }
 #endif
 
+#if MWCC_CORE == MWCC_CORE_B52
 #pragma pack(pop)
+#endif
 #endif
 #else
 #ifndef COMPILER_IROFLOWGRAPH_H

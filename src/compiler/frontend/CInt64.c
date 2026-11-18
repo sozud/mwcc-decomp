@@ -1,4 +1,5 @@
-#if MWCCPS2_B52
+#include "compiler/mwcc_core.h"
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef MWCCPSP
 #undef MWCCPS2
 #define MWCCPSP 1
@@ -39,12 +40,12 @@ const CInt64 cint64_min = {0x80000000, 0};
 
 #if MWCCPS2
 void CInt64_Init(void) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     int i;
 
 #endif
     cint64_one.lo = 1;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (i = 0; i < 4; i++) {
         ((UInt32*)&cint64_negone)[i] = 0xFFFFFFFF;
         ((UInt32*)&cint64_max)[i] = 0xFFFFFFFF;
@@ -221,12 +222,12 @@ void CInt64_DivMod(const CInt64* lhs, const CInt64* rhs, CInt64* pDiv, CInt64* p
     CInt64 out;
     CInt64 negrhs;
     int counter;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     int i;
     int j;
 #endif
     int k;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     int j;
     int i;
 #else
@@ -237,7 +238,7 @@ void CInt64_DivMod(const CInt64* lhs, const CInt64* rhs, CInt64* pDiv, CInt64* p
         return;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (counter = 0; counter < CINT64_WORDS - 1; counter++) {
         if (W(*lhs, counter) || W(*rhs, counter)) {
 #else
@@ -247,7 +248,7 @@ void CInt64_DivMod(const CInt64* lhs, const CInt64* rhs, CInt64* pDiv, CInt64* p
             break;
         }
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (counter >= CINT64_WORDS - 1) {
 #else
     if (i >= CINT64_WORDS - 1) {
@@ -264,7 +265,7 @@ void CInt64_DivMod(const CInt64* lhs, const CInt64* rhs, CInt64* pDiv, CInt64* p
     work = cint64_zero;
     left = *lhs;
     out = cint64_zero;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     negrhs = CInt64_Neg(*rhs);
     for (counter = 0; counter < CINT64_WORDS * 32; counter++) {
 #else
@@ -296,20 +297,20 @@ void CInt64_DivMod(const CInt64* lhs, const CInt64* rhs, CInt64* pDiv, CInt64* p
             }
         }
         W(out, CINT64_WORDS - 1) <<= 1;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (ucompare(&work, (CInt64*)rhs) >= 0) {
 #else
         if (ucompare_values(&work, rhs) >= 0) {
 #endif
             W(out, CINT64_WORDS - 1) |= 1;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             CInt64_AddWords(&work, &negrhs, 0);
 #else
             carry = 0;
             ADD_WORDS(work, negrhs, carry);
 #endif
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     }
 #else
     } while (++counter < CINT64_WORDS * 32);
@@ -761,7 +762,7 @@ CInt64 CInt64_Or(CInt64 lhs, CInt64 rhs) {
 #if MWCCPS2
 // mwccps2 b210: 128-bit values; a conversion fills every word above the
 // converted width (one sign value, stored from word 0 down)
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 void CInt64_ConvertInt64(CInt64* i) {
     UInt32 v = (i->mid[1] & 0x80000000) ? 0xFFFFFFFF : 0;
     int k;
@@ -781,7 +782,7 @@ void CInt64_ConvertInt64(CInt64* i) {
     } while (0)
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (k = 0; k < 2; k++) {
         W(*i, k) = v;
 #else
@@ -789,7 +790,7 @@ void CInt64_ConvertInt32(CInt64* i) {
     CINT64_EXT3(i, (i->lo & 0x80000000) ? 0xFFFFFFFF : 0);
 #endif
     }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 
     void CInt64_ConvertUInt32(CInt64 * i) {
         i->hi = 0;
@@ -799,7 +800,7 @@ void CInt64_ConvertInt32(CInt64* i) {
     }
 
     void CInt64_ConvertUInt64(CInt64 * i) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         UInt32* w = (UInt32*)i;
         int k;
 
@@ -810,11 +811,11 @@ void CInt64_ConvertInt32(CInt64* i) {
     i->mid[0] = 0;
 #endif
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     }
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     void CInt64_ConvertInt32(CInt64 * i) {
         UInt32 v = (i->lo & 0x80000000) ? 0xFFFFFFFF : 0;
         int k;
@@ -826,11 +827,11 @@ void CInt64_ConvertInt64(CInt64* i) {
     CINT64_EXT2(i, (i->mid[1] & 0x80000000) ? 0xFFFFFFFF : 0);
 #endif
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     }
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     void CInt64_ConvertUInt32(CInt64 * i) {
         UInt32* w = (UInt32*)i;
         int k;
@@ -843,7 +844,7 @@ void CInt64_ConvertInt64(CInt64* i) {
 #endif
     void CInt64_ConvertInt16(CInt64 * i) {
         i->lo = (SInt16)i->lo;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         CInt64_ConvertInt32(i);
 #else
     CINT64_EXT3(i, (i->lo & 0x80000000) ? 0xFFFFFFFF : 0);
@@ -852,7 +853,7 @@ void CInt64_ConvertInt64(CInt64* i) {
 
     void CInt64_ConvertUInt16(CInt64 * i) {
         i->lo = (UInt16)i->lo;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         CInt64_ConvertUInt32(i);
 #else
     i->hi = 0;
@@ -863,7 +864,7 @@ void CInt64_ConvertInt64(CInt64* i) {
 
     void CInt64_ConvertInt8(CInt64 * i) {
         i->lo = (SInt8)i->lo;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         CInt64_ConvertInt32(i);
 #else
     CINT64_EXT3(i, (i->lo & 0x80000000) ? 0xFFFFFFFF : 0);
@@ -872,7 +873,7 @@ void CInt64_ConvertInt64(CInt64* i) {
 
     void CInt64_ConvertUInt8(CInt64 * i) {
         i->lo = (UInt8)i->lo;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         CInt64_ConvertUInt32(i);
 #else
     i->hi = 0;
@@ -963,7 +964,7 @@ void CInt64_ConvertUInt8(CInt64* i) {
         }
 
         *pResult = cint64_zero;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         for (bits = 127, mask = 0x80000000, word = 0; bits >= 0; bits--) {
 #else
     word = 0;
@@ -1482,7 +1483,7 @@ char* CInt64_ScanHexString(CInt64* pResult, char* str, Boolean* pFail) {
 
 #if MWCCPS2
         if (!iszero(&value)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             CInt64_SetLong(&divisor, 10); // b69 calls SetLong (0x4BC6E0)
 #else
         CInt64_SetULong(&divisor, 10);
@@ -1491,7 +1492,7 @@ char* CInt64_ScanHexString(CInt64* pResult, char* str, Boolean* pFail) {
             bufp = buf;
             for (;;) {
                 rem = CInt64_ModU(value, divisor);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 *(bufp++) = CInt64_GetULong(&rem) + '0';
 #else
             *(bufp++) = rem.lo + '0';

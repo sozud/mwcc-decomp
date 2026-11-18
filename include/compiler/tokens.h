@@ -1,4 +1,5 @@
-#if MWCCPS2_B52
+#include "compiler/mwcc_core.h"
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #ifndef COMPILER_TOKENS_H
 #define COMPILER_TOKENS_H
 
@@ -8,9 +9,12 @@
 extern "C" {
 #endif
 
-// b52's tokens are 3.0.1's (mwccpsp's tokens.h): __3dcall/__ssecall/__sse2call
-// after __fastcall put 296.. three above b69's (GetPrec's switch), and
-// GCC's <? and >? follow :: (tless, 0x480E20: <= 364, <<= 355, << 366, <? 375)
+// b69 (2.4.5) has no __vector token: TryIsDeclaration's type-keyword group
+// spans 8 custom types (0x113..0x11A, 275..282) and b69's keyword
+// tokenizer (0x47A360..0x47B4A0) returns class 274, typeof 283, bool 284,
+// wchar_t 285, typename 288, const 289, volatile 290, pascal 291, explicit
+// 297, mutable 298, asm 309, case 310, restrict 388; so 284..305 are one
+// lower than 2.4.7's and b69 has four tokens (305..308) 2.4.7 lacks.
 #define TK_EOF 0
 #define TK_EOL -7
 #define TK_ILLEGAL -6
@@ -44,14 +48,20 @@ extern "C" {
 #define TK_CLASS 274
 #define TK_CUSTOM_TYPE_113 275
 #define TK_CUSTOM_TYPE_114 276
-#define TK_UU_VEC2X32FLOAT_UU 277
+#define TK_UU_VEC2X32FLOAT_UU 277 // a custom type slot (0x115) in b69, no keyword
+#if MWCC_CORE == MWCC_CORE_B52
 #define TK_UU_FIXED_8X8_UU 277
+#endif
 #define TK_CUSTOM_TYPE_116 278
 #define TK_CUSTOM_TYPE_117 279
 #define TK_CUSTOM_TYPE_118 280
 #define TK_CUSTOM_TYPE_119 281
 #define TK_CUSTOM_TYPE_11A 282
+#if MWCC_CORE == MWCC_CORE_B52
 #define TK_UU_VECTOR 0x7FFF // not a token in 3.0.1
+#else
+#define TK_UU_VECTOR 0x7FF1 // not in b69 (no __vector)
+#endif
 #define TK_UU_TYPEOF_UU 283
 #define TK_BOOL 284
 #define TK_WCHAR_T 285
@@ -65,10 +75,13 @@ extern "C" {
 #define TK_UU_STDCALL 293
 #define TK_UU_CDECL 294
 #define TK_UU_FASTCALL 295
+#if MWCC_CORE == MWCC_CORE_B52
 #define TK_UU_3DCALL 296
 #define TK_UU_SSECALL 297
 #define TK_UU_SSE2CALL 298
+#endif
 #define TK_UU_FLOATCALL 295
+#if MWCC_CORE == MWCC_CORE_B52
 #define TK_UU_FAR 299
 #define TK_EXPLICIT 300
 #define TK_MUTABLE 301
@@ -162,6 +175,99 @@ extern "C" {
 #define TK_RESTRICT 393
 #define TK_UU_ATTRIBUTE_UU 394
 #define TK_UU_UUIDOF 395
+#else
+#define TK_UU_FAR 296
+#define TK_EXPLICIT 297
+#define TK_MUTABLE 298
+#define TK_ONEWAY 299
+#define TK_IN 300
+#define TK_INOUT 301
+#define TK_OUT 302
+#define TK_BYCOPY 303
+#define TK_BYREF 304
+#define TK_ASM 309
+#define TK_CASE 310
+#define TK_DEFAULT 311
+#define TK_IF 312
+#define TK_ELSE 313
+#define TK_SWITCH 314
+#define TK_WHILE 315
+#define TK_DO 316
+#define TK_FOR 317
+#define TK_GOTO 318
+#define TK_CONTINUE 319
+#define TK_BREAK 320
+#define TK_RETURN 321
+#define TK_SIZEOF 322
+#define TK_CATCH 323
+#define TK_DELETE 324
+#define TK_FRIEND 325
+#define TK_NEW 326
+#define TK_OPERATOR 327
+#define TK_PRIVATE 328
+#define TK_PROTECTED 329
+#define TK_PUBLIC 330
+#define TK_TEMPLATE 331
+#define TK_THIS 332
+#define TK_THROW 333
+#define TK_TRY 334
+#define TK_VIRTUAL 335
+#define TK_INHERITED 336
+#define TK_CONST_CAST 337
+#define TK_DYNAMIC_CAST 338
+#define TK_NAMESPACE 339
+#define TK_REINTERPRET_CAST 340
+#define TK_STATIC_CAST 341
+#define TK_USING 342
+#define TK_TRUE 343
+#define TK_FALSE 344
+#define TK_TYPEID 345
+#define TK_EXPORT 346
+#define TK_MULT_ASSIGN 347
+#define TK_DIV_ASSIGN 348
+#define TK_MOD_ASSIGN 349
+#define TK_ADD_ASSIGN 350
+#define TK_SUB_ASSIGN 351
+#define TK_SHL_ASSIGN 352
+#define TK_SHR_ASSIGN 353
+#define TK_AND_ASSIGN 354
+#define TK_XOR_ASSIGN 355
+#define TK_OR_ASSIGN 356
+#define TK_LOGICAL_OR 357
+#define TK_LOGICAL_AND 358
+#define TK_LOGICAL_EQ 359
+#define TK_LOGICAL_NE 360
+#define TK_LESS_EQUAL 361
+#define TK_GREATER_EQUAL 362
+#define TK_SHL 363
+#define TK_SHR 364
+#define TK_INCREMENT 365
+#define TK_DECREMENT 366
+#define TK_ARROW 367
+#define TK_ELLIPSIS 368
+#define TK_DOT_STAR 369
+#define TK_ARROW_STAR 370
+#define TK_COLON_COLON 371
+#define TK_AT_INTERFACE 372
+#define TK_AT_IMPLEMENTATION 373
+#define TK_AT_PROTOCOL 374
+#define TK_AT_END 375
+#define TK_AT_PRIVATE 376
+#define TK_AT_PROTECTED 377
+#define TK_AT_PUBLIC 378
+#define TK_AT_CLASS 379
+#define TK_AT_SELECTOR 380
+#define TK_AT_ENCODE 381
+#define TK_AT_DEFS 382
+#define TK_SELF 383
+#define TK_SUPER 384
+#define TK_NEW_ARRAY 385
+#define TK_DELETE_ARRAY 386
+#define TK_UU_ALIGNOF_UU 387
+#define TK_RESTRICT 388
+#define TK_UU_ATTRIBUTE_UU 389
+#define TK_UU_UUIDOF 390
+#endif
 
 #pragma pack(push, 2)
 struct FileOffsetInfo {

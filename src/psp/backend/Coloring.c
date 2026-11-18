@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include "psp/BE.h"
 #include "compiler/CFunc.h"
@@ -160,7 +161,7 @@ extern void func_004AFFB0(SInt32 a, SInt32 b, SInt32 c, SInt32 d);
 void BE_ColorRegisters(SInt32 arg) {
     RegClass301 rclass;
     SInt32 failed;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     {
         MPCodeBlock* b;
         MPCode* p;
@@ -231,7 +232,7 @@ void BE_ColorRegisters(SInt32 arg) {
         data_00625A98[rclass] = data_00624744[rclass];
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (copts.debuglisting &&
         (data_00609810 > 0 || data_00609818 > 0 || data_00609814 > 0 || data_0060981C > 0)) {
 #else
@@ -309,6 +310,18 @@ SInt32 BE_AssignColors(IGNode* node) {
             node->flags |= 1;
             ok = 0;
         }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+        BE_TRACE(
+            (stderr,
+             "color2: class %d node %d color %d cost %d degree %d flags %x\n",
+             (int)data_00625ECC,
+             (int)node->index,
+             (int)node->color,
+             (int)node->cost,
+             (int)node->degree,
+             (unsigned)node->flags)
+        );
+#endif
         node = node->next;
     }
     return ok;
@@ -545,7 +558,7 @@ void func_004B3800(void) {
             k = pc->argcount;
             op = pc->args;
             while (k--) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if (op->kind == 0 &&
                     op->rclass == data_00625ECC &&
                     (op->flags & 2) &&
@@ -572,6 +585,25 @@ void func_004B3800(void) {
     }
     for (i = 0; i < n; i++) {
         node = &data_0062520C[i];
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+        if (node->def) {
+            BE_TRACE(
+                (stderr,
+                 "def: class %d node %d op %x flags %x unk38 %x n %d k1 %d/%d/%d k2 %d remat %d\n",
+                 (int)data_00625ECC,
+                 (int)i,
+                 node->def->op,
+                 (unsigned)node->def->flags,
+                 (unsigned)node->def->unk38,
+                 node->def->argcount,
+                 node->def->args[1].kind,
+                 node->def->args[1].rclass,
+                 node->def->args[1].reg,
+                 node->def->args[2].kind,
+                 func_004901D0(node->def))
+            );
+        }
+#endif
         if (node->def && !func_004901D0(node->def)) {
             node->def = NULL;
         }
@@ -742,7 +774,7 @@ void func_004B3EE0(void) {
                     for (j = 0; j < count; j++) {
 #if MWCCPS2
                         if (!(pc->flags & 0x10) ||
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             (COLOR_VU0OP(pc->op) ? &pc->args[2] : &pc->args[1])->reg !=
                                 (SInt32)dense[j]) {
 #else
@@ -782,7 +814,7 @@ void func_004B3EE0(void) {
                 }
             }
             if (pc->flags & 8) { // call: argument registers
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 for (i = func_00461F50() + 2 - func_004B8990(), op = &pc->args[i];
                      i < (UInt32)pc->argcount;
                      i++, op++) {
@@ -911,7 +943,7 @@ SInt32 func_004B3B80(void) {
             if (!(pc->flags & 0x10)) {
                 continue;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             vu = pc->op > OPC(0x21E) && pc->op <= OPC(0x2E7);
 #else
             vu = pc->op > 0x21E && pc->op <= 0x2E7;
@@ -956,7 +988,7 @@ SInt32 func_004B3B80(void) {
     for (block = data_00624FD0; block; block = block->next) {
         for (pc = block->first; pc; pc = pc->next) {
             for (k = pc->argcount, op = pc->args; k--; op++) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if (op->kind == 0 &&
                     op->rclass == data_00625ECC &&
                     op->reg != data_005F3DA8[op->reg]) {
@@ -1076,7 +1108,7 @@ static void frame_operands(MPCode* pc, Object* obj, SInt32 off) {
     pc->args[1].kind = 4;
     MOP_SETOBJ(pc->args[1], obj);
     pc->args[1].value = OBJECT_FRAMEOFFSET(obj) + off;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     pc->alias =
         func_004817A0((Object*)MOP_OBJ(pc->args[1]), pc->args[1].value, func_0048FBE0(pc->op));
 #else
@@ -1107,7 +1139,7 @@ MPCode* func_004B8A00(SInt16 reg, IGNode* node) {
     pc->args[0].rclass = data_00625ECC;
     pc->args[0].reg = reg;
     pc->args[0].flags = 1;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     if (pc->op == MACRO_OP(0x7F)) {
         pc->args[0].flags |= 0x2000;
     }
@@ -1134,7 +1166,7 @@ MPCode* func_004B8B00(SInt16 reg, IGNode* node) {
     pc->args[0].rclass = data_00625ECC;
     pc->args[0].reg = reg;
     pc->args[0].flags = 2;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (pc->op ==
         (UInt16)((copts.mips_isa >= 2 && (copts.fp_library & 2)) ? MACRO_OP(0x4B)
                                                                  : MACRO_OP(0x48))) {
@@ -1144,7 +1176,7 @@ MPCode* func_004B8B00(SInt16 reg, IGNode* node) {
     }
 #endif
 #if MWCCPS2
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         if (pc->op ==
             (UInt16)((copts.mips_isa >= 2 && (copts.fp_library & 2)) ? MACRO_OP(0x4B)
                                                                      : MACRO_OP(0x48))) {
@@ -1196,7 +1228,7 @@ Type* func_004B89D0(IGNode* node);
 #if MWCCPS2
         // b210 (0x55E0A0): a VU0 instruction (0x21F..0x2E7) has its operands
         // one slot later
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         int vu = pc->op > OPC(0x21E) && pc->op <= OPC(0x2E7);
 #else
     int vu = pc->op > 0x21E && pc->op <= 0x2E7;

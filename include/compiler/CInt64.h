@@ -1,6 +1,7 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_CINT64_H
 #define COMPILER_CINT64_H
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 
 #include "compiler/common.h"
 
@@ -118,7 +119,7 @@ extern CInt64 CInt64_Xor(CInt64 lhs, CInt64 rhs);
 extern CInt64 CInt64_Or(CInt64 lhs, CInt64 rhs);
 extern void CInt64_ConvertInt32(CInt64* i);
 extern void CInt64_ConvertUInt32(CInt64* i);
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 extern void CInt64_ConvertUInt64(CInt64* i);
 extern void CInt64_ConvertInt64(CInt64* i);

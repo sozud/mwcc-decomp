@@ -1,6 +1,7 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_COSTOOLSCLT_H
 #define DRIVER_COSTOOLSCLT_H
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 
 #include "compiler/common.h"
 #include "driver/Files.h"

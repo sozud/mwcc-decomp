@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include "compiler/CParser.h"
 #include "compiler/CMachine.h"
@@ -164,7 +165,7 @@ int func_004A4580(VOperand* size) {
     SInt32 n;
 
     if (size->kind == 3) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         func_00480740(
             MACRO_OP(0x96),
             29,
@@ -185,7 +186,7 @@ int func_004A4580(VOperand* size) {
         }
         v = func_00479D70(3, size, data_0062421C - 1);
         v = func_0047E650(&v, ~(data_0062421C - 1));
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         emitpcode(OPC(0xDD), 29, 29, v.reg);
 #else
         emitpcode(0xDD, 29, 29, v.reg);

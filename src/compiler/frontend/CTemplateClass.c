@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CTemplateClass.h"
 #if MWCCPSP
 #include "compiler/CExpr.h" // pointer_generation returns a pointer
@@ -132,7 +133,7 @@ void CTemplClass_RegisterFriend(TemplClass* tmclass, DeclInfo* di) {
     CTemplClass_AppendTemplateAction(tmclass, action);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-28)
 #endif
@@ -159,7 +160,7 @@ void CTemplClass_RegisterBaseClass(
 
     CTemplClass_InsertTemplateAction(tmclass, action);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -359,7 +360,7 @@ static TemplClassInst* CTemplClass_NewInstance(
 }
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-3)
 #endif
@@ -401,7 +402,7 @@ TemplClassInst* CTemplClass_GetInstance(TemplClass* tmclass, TemplArg* inst_args
 
     return CTemplClass_NewInstance(tmclass, inst_args, oargs);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -690,14 +691,14 @@ static Boolean CTemplClass_TypeParamCompare(TemplArg* arg, Type* type, UInt32 qu
     return is_typesame(type, arg->data.typeparam.type) && arg->data.typeparam.qual == qual;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-11)
 #endif
 static TemplArg* CTemplClass_PartialTemplateArgMatch(
     TemplPartialSpec* pspec, TemplArg* args, Boolean buildArgs
 ) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     int b69_dead;
 #endif
     TemplArg* argA;
@@ -712,7 +713,7 @@ static TemplArg* CTemplClass_PartialTemplateArgMatch(
 
     argA = pspec->args;
     argB = args;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     b69_dead = i = 0;
 #else
     i = 0;
@@ -813,19 +814,19 @@ static TemplArg* CTemplClass_PartialTemplateArgMatch(
 
         argA = argA->next;
         argB = argB->next;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead = i++;
 #else
         i++;
 #endif
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-11)
 #endif
@@ -943,7 +944,7 @@ static Boolean CTemplClass_PartialClassIsAtLeastAsSpecialized(
         argB = argB->next;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -1325,7 +1326,7 @@ static void CTemplClass_CopyEnum(TypeDeduce* deduce, TemplateAction* action) {
 #endif
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-11)
 #endif
@@ -1416,7 +1417,7 @@ static void CTemplClass_CompleteEnumType(
 
     CDecl_ComputeUnderlyingEnumType(destenum);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -1448,11 +1449,13 @@ static void CTemplClass_CopyObjMemberVarPath(TypeDeduce* deduce, ObjMemberVarPat
 #endif
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-11)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (39)
+#endif
 #endif
 static void CTemplClass_CopyIVars(TypeDeduce* deduce, TemplClassInst* inst, TemplClass* templ) {
     ObjMemberVar* src;
@@ -1510,18 +1513,22 @@ static void CTemplClass_CopyIVars(TypeDeduce* deduce, TemplClassInst* inst, Temp
         src = src->next;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-11)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (63)
+#endif
 #endif
 static void CTemplClass_CopyObjType(TypeDeduce* deduce, ObjType* src, HashNameNode* name) {
 #if MWCCPS2
@@ -1582,9 +1589,11 @@ static void CTemplClass_CopyObjType(TypeDeduce* deduce, ObjType* src, HashNameNo
 #endif
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -1603,7 +1612,7 @@ static void CTemplClass_CopyObjTypeTag(TypeDeduce* deduce, ObjTypeTag* src, Hash
 #endif
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-11)
 #endif
@@ -1696,12 +1705,12 @@ static void CTemplClass_CopyMemberTemplate(TypeDeduce* deduce, Object* src) {
 #define CError_PS2_SHIFT 0
 #endif
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-11)
 #endif
@@ -1895,12 +1904,12 @@ static void CTemplClass_CopyObject(TypeDeduce* deduce, Object* src) {
     CScope_AddObject(deduce->inst->theclass.nspace, dest->object.name, OBJ_BASE(dest));
 #endif
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (68)
 #endif
@@ -2030,7 +2039,7 @@ static void CTemplClass_CompleteObject(
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -2050,7 +2059,7 @@ static void CTemplClass_CompleteObjectInit(
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-11)
 #endif
@@ -2086,16 +2095,18 @@ static void CTemplClass_CopyNameSpace(TypeDeduce* deduce, TemplClassInst* inst, 
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-11)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (79)
+#endif
 #endif
 static void CTemplClass_CopyUsingDecl(TypeDeduce* deduce, TypeTemplDep* type, AccessType access) {
     TypeClass* tclass;
@@ -2118,14 +2129,16 @@ static void CTemplClass_CopyUsingDecl(TypeDeduce* deduce, TypeTemplDep* type, Ac
     CScope_AddClassUsingDeclaration(TYPE_CLASS(deduce->inst), tclass, type->u.qual.name, access);
 #endif
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-11)
 #endif
@@ -2210,7 +2223,7 @@ static void CTemplClass_CopyFriend(TypeDeduce* deduce, TemplateFriend* tfriend) 
 #endif
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -2284,7 +2297,7 @@ Boolean CTempl_InstantiateTemplateClass(TypeClass* tclass) {
 
     CError_ASSERT(2056, !templ->theclass.sominfo);
 #if !MWCCPSP
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     CError_ASSERT(2058, !B69_OBJCINFO(&templ->theclass));
 #else
     CError_ASSERT(2058, !templ->theclass.objcinfo);
@@ -2329,7 +2342,7 @@ Boolean CTempl_InstantiateTemplateClass(TypeClass* tclass) {
     CTemplClass_CopyNameSpace(&deduce, inst, templ);
 
 #if !MWCCPSP
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     CError_ASSERT(2116, !templ->theclass.friends);
 #endif
 #endif

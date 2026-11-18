@@ -1,0 +1,34 @@
+BE_OptimizeBlocks func_004B7A50 b145 004C3A80
+ObjGen_CodeCleanup func_004622D0 b145 0046D6D0 (b69 0048AF20 unplaced)
+ObjGen_DeclareData ObjGen_EmitData b145 0046DC60 (b69 0048A640 unplaced)
+data_005CB170 void_ptr b145 005E4200
+data_00610C38 cint64_min b145 00625BA8
+data_00610C40 cint64_max b145 00625BB8
+data_00625358 worst_case_ptr b145 006367B8
+data_00625548 symdeclend b145 006369B0
+data_006258B8 functionbodyoffset b145 00636D00
+data_006258DC Xecth_func b145 00636D40
+func_0040E5A0 Plugin_MatchesType b145 0040E5A0
+func_00415F00 CWGetNamedPreferences manual
+func_004161D0 CWFreeMemHandle manual
+func_00416250 CWLockMemHandle manual
+func_004162B0 CWUnlockMemHandle manual
+func_00446C10 freeoheap b69 004334A0
+func_00458340 CInt64_Add b145 004592D0
+func_004584C0 CInt64_SetLong b145 004594D0
+func_00462860 ObjGen_EmitData b145 0046DC60
+func_00463B40 ObjGen_InitSections b145 0046EF70
+func_00464EE0 Type_RequiresMemoryReturn b145 00470270
+func_0046F9B0 deleteunreachableblocks b145 0047C560
+func_0046FEC0 initpcode b145 0047C9F0
+func_004817A0 make_alias b145 00490500
+func_0049F6E0 CMangler_GetLinkName b145 004AAAA0
+func_004A16F0 COpt_Optimizer b145 004ACAB0
+func_004B11D0 BE_RemoveCommonSubexpressions b145 004BB6B0
+func_00504D90 CInit_RewriteString b145 005133D0
+func_0050CCC0 CExpr_ParseAsmExpr manual
+ps2_bitnum_49D250 func_00491840 b145 0049CD20
+ps2_const128_48E3D0 func_0047F9F0 b145 0048E1F0
+ps2_cgswitch data_0060B920 same b145 00622570
+ps2_pipeop3_63732A data_00625E4A same b145 006372D2
+ps2_tofpr64_487210 func_00479F70 same b145 00487030

@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/LicenseImports.h"
 
 #ifdef __MWERKS__
@@ -47,7 +48,7 @@ int lp_checkout(
     return 0;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 void lp_checkin(LP_HANDLE* handle) {}
 #else
 void lp_checkin(LP_HANDLE* handle) {}

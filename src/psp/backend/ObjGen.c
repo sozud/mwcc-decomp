@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include "compiler/CParser.h"
 #include "psp/ELFgen.h"
@@ -46,6 +47,11 @@ extern ObjSymCache* data_005EAF98[0x800]; // ELF symbol per link name, by hashva
 
 extern void func_004A16E0(void);
 extern void func_00439E20(void);
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+extern void IRO_Setup(void);
+#endif
+#endif
 extern void func_00461EE0(void);
 extern void func_00463B40(void);
 extern void func_00531A60(void);
@@ -107,7 +113,7 @@ extern void func_00531C10(Object* obj, Boolean global, ELFSymbol* sym, SInt32 si
 #define INSTR_OFFSET(i) (*(SInt32*)&((MPCode*)(i))->offset) // +0x1C
 #define INSTR_OP28(i) (*(SInt16*)&((MPCode*)(i))->op) // +0x28
 #define INSTR_OP44(i) (*(SInt16*)&((MPCode*)(i))->args[0].reg) // +0x44
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 SInt32 ObjGen_DefineSection(
     char* name, char* elfname, char* bssname, char* addressing, char* access
 );
@@ -139,7 +145,17 @@ void ObjGen_Setup(void) {
         data_00625388 |= 0x20000000;
     }
     func_004A16E0();
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     func_00439E20();
+#else
+    // b69 0x489EC0: GC's optimizer has no hooks; its IRO_Setup (0x43AC90)
+    // takes the place of the 3.0.1 front end's hook setup
+    IRO_Setup();
+#endif
+#else
+    func_00439E20();
+#endif
     data_006241D4 = 0;
     data_006245BC = 0;
     data_00624724 = 0;
@@ -167,10 +183,17 @@ void ObjGen_Setup(void) {
 #else
     ELF_Init(8, flags | 0x970000, copts.littleendian ? 1 : 2); // EM_MIPS
 #endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     ELF_AddString(ELF_NewSection(".comment", SHT_PROGBITS, 0), "MW MIPS C Compiler (3.0.0)");
-#if MWCCPS2_B52
+#else
+    ELF_AddString(
+        ELF_NewSection(".comment", SHT_PROGBITS, 0), "MW MIPS C Compiler (2.4.1.01)"
+    ); // b69's string
+#endif
     if (COPTS_X.mips_option132 == 1) {
 #else
+    ELF_AddString(ELF_NewSection(".comment", SHT_PROGBITS, 0), "MW MIPS C Compiler (3.0.0)");
     if (copts.mips_option132 == 1) {
 #endif
         func_00531A60();
@@ -194,7 +217,7 @@ ELFSymbol* ObjGen_GetELFSymbol(Object* obj) {
     data_005EAF98[name->hashval] = entry;
     entry->name = name;
     if (obj->datatype == DDATA) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         entry->sym = ELF_NewUndefinedSymbol(
             name->name, 0, 1, 1, obj->type->size, 0
         ); // STB_GLOBAL, STT_OBJECT
@@ -241,7 +264,7 @@ void ObjGen_Finish(void) {
         obj = pf->object;
         type = obj->type;
         value = OBJECT_VALUE_PTR(obj);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (TYPE_INTEGRAL(type)->integral == IT_FLOAT ||
             (type->type == TYPEFLOAT && type->size == 4)) {
 #else
@@ -257,7 +280,7 @@ void ObjGen_Finish(void) {
         }
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (COPTS_X.mips_option132 == 1) {
 #else
     if (copts.mips_option132 == 1) {
@@ -267,7 +290,7 @@ void ObjGen_Finish(void) {
     if (InitGList(&data_005EAF88, 0x8000)) {
         CError_NoMem();
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (getenv("MWCCPSP_TRACE")) {
         fprintf(
             stderr,
@@ -285,7 +308,7 @@ void ObjGen_Finish(void) {
     }
 #endif
     func_005303A0(&data_005EAF88);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (getenv("MWCCPSP_TRACE")) {
         void** rec = (void**)data_005EAF88.data;
         fprintf(
@@ -306,7 +329,7 @@ void ObjGen_Finish(void) {
     cparamblkptr->object.objectdata = COS_DetachHandle((Handle*)&data_005EAF88);
 #endif
     data_005EAF88.data = NULL;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     func_005302D0(
         &cparamblkptr->object.codesize,
         &cparamblkptr->object.idatasize,
@@ -369,7 +392,7 @@ SInt32 ObjGen_GetObjectSection(Object* obj) {
     return sec;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-19)
 #endif
@@ -391,7 +414,7 @@ void ObjGen_GetObjectAddress(Object* obj, ObjAddress* addr) {
 #else
         char* rv = *(char**)((char*)obj + 0x3C);
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (rv &&
             (*(SInt16*)PS2_VARINFO_AT(rv, 0x32) ||
              *PS2_VARINFO_AT(rv, 0x2E) == 5 ||
@@ -455,7 +478,7 @@ void ObjGen_GetObjectAddress(Object* obj, ObjAddress* addr) {
             break;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -490,7 +513,7 @@ void ObjGen_InitSections(void) {
         data_00624764 = ObjGen_DefineSection("data", ".data", ".bss", "far_absolute", "RW");
         data_006241DC = ObjGen_DefineSection("vtables", ".vtables", NULL, "far_absolute", "R");
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     data_00625880 =
         ObjGen_DefineSection("scratchpad", ".spad_data", ".spad_bss", "far_absolute", "RW");
 #else
@@ -503,7 +526,7 @@ void ObjGen_InitSections(void) {
 #endif
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 SInt32 ObjGen_DefineSection(
     char* name, char* elfname, char* bssname, char* addressing, char* access
 ) {
@@ -642,7 +665,7 @@ void ObjGen_GenerateMWCats(Object* obj, SInt32 codesize) {
     count = 0;
     for (node = data_00624FD0; node; node = node->next) {
         instr = CODENODE_INSTR(node);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (instr &&
             (INSTR_FLAGS(instr) & 0x80000) &&
             !(INSTR_OP28(instr) == 0x3B && INSTR_OP44(instr) == 0x1F)) {
@@ -684,7 +707,7 @@ void ObjGen_GenerateMWCats(Object* obj, SInt32 codesize) {
     if (count) {
         for (node = data_00624FD0; node; node = node->next) {
             instr = CODENODE_INSTR(node);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (instr &&
                 (INSTR_FLAGS(instr) & 0x80000) &&
                 !(INSTR_OP28(instr) == 0x3B && INSTR_OP44(instr) == 0x1F)) {
@@ -706,7 +729,7 @@ void ObjGen_GenerateMWCats(Object* obj, SInt32 codesize) {
 
     name = galloc(strlen(linkname) + 10);
     sprintf(name, ".mwcats_%s", linkname);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     ELF_AddReloc(
         2, ELF_NewSymbol(name, section->index, 0, 3, size, buf, 4), addroffset, funcsym, 0
     ); // R_MIPS_32
@@ -811,7 +834,7 @@ void ObjGen_EmitData(Object* obj, void* data, ObjDataReloc* relocs, SInt32 size)
     }
 
     if (obj->datatype == DLOCAL || !strchr(func_0049F6E0(obj)->name, '$')) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (COPTS_X.mips_option132 == 1) {
 #else
         if (copts.mips_option132 == 1) {
@@ -987,7 +1010,7 @@ void ObjGen_EmitCode(Object* obj, void* code, SInt32 size, ObjCodeReloc* relocs)
         }
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (COPTS_X.mips_option132 == 1) {
 #else
     if (copts.mips_option132 == 1) {
@@ -1177,7 +1200,7 @@ int func_004642D0(HashNameNode* attr, Type* type, DeclInfo* declinfo) {
         } else if (!strcmp(name, "SI") || !strcmp(name, "__SI__")) {
             stype = TYPE(&stsignedint);
             utype = TYPE(&stunsignedint);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (!strcmp(name, "DI") ||
                    !strcmp(name, "__DI__") ||
                    !strcmp(name, "V2SI") ||
@@ -1190,7 +1213,7 @@ int func_004642D0(HashNameNode* attr, Type* type, DeclInfo* declinfo) {
 #endif
             stype = TYPE(&stsignedlonglong);
             utype = TYPE(&stunsignedlonglong);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (!strcmp(name, "TI") ||
                    !strcmp(name, "__TI__") ||
                    !strcmp(name, "V4SF") ||
@@ -1259,7 +1282,7 @@ int func_004642D0(HashNameNode* attr, Type* type, DeclInfo* declinfo) {
         declinfo->exportflags |= 0x10;
         return 1;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!strcmp(attr->name, "import") ||
         !strcmp(attr->name, "__import__") ||
         !strcmp(attr->name, "dllimport") ||
@@ -1273,7 +1296,7 @@ int func_004642D0(HashNameNode* attr, Type* type, DeclInfo* declinfo) {
         declinfo->exportflags |= 0x20;
         return 1;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!strcmp(attr->name, "export") ||
         !strcmp(attr->name, "__export__") ||
         !strcmp(attr->name, "dllexport") ||
@@ -1390,7 +1413,7 @@ void func_004624F0(Object* func, SInt32 codesize, void* data, SInt32 datasize, O
     }
     rec[0] = 0;
     rec[1] = codesize;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     rec[2] =
         (copts.mips_option08 || copts.mips_option07) ? ObjGen_ExceptionTableKind(data_00624FDC) : 0;
 #else
@@ -1415,7 +1438,7 @@ void ObjGen_SetupSym(void) {}
 
 // 0x462F00: constant data: as other data, but the object file is marked as
 // having some (data_00625E9B)
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 void ObjGen_DeclareReadOnlyData(
     Object* object, const void* data, OLinkList* list, unsigned int size
 ) {

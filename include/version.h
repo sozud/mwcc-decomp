@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef VERSION_H
 #define VERSION_H
 
@@ -11,7 +12,7 @@
 #define VERSION VERSION_GC_2_6
 #endif
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 /* PS2 compiler builds (mwccps2 3.0.1 bNNN). MWCCPS2 marks any PS2 build;
    code that differs between PS2 builds tests MWCCPS2_BUILD, e.g.

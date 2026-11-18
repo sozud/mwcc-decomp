@@ -1,9 +1,10 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_SOM_H
 #define COMPILER_SOM_H
 
 #include "compiler/common.h"
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,7 +41,7 @@ struct SOMInfo {
     UInt32 majorversion;
     UInt32 minorversion;
     UInt8 oidl_callstyle;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 };
 
 #pragma pack(pop)

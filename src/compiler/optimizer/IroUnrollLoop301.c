@@ -592,19 +592,11 @@ void func_0055D090(IRONaturalLoop* loop, CInt64 factor) {
     count = func_0055E6D0(&list, loop, adjust);
     IRO_Paste(list.head, list.tail, pre->last);
     countHead = list.head;
-    father = IRO_LocateFather(count);
-    if (IsAssignOfConstant(father, count)) {
-        count = father->u.diadic.right;
-    }
 
     // the unrolled loop's final value
     IRO_InitList(&list);
     finalValue = func_0055E500(count, factor, leftover, &list, loop);
     IRO_Paste(list.head, list.tail, pre->last);
-    father = IRO_LocateFather(finalValue);
-    if (IsAssignOfConstant(father, finalValue)) {
-        finalValue = father->u.diadic.right;
-    }
 
     // skip the unrolled body when the count is too small
     IRO_InitList(&list);

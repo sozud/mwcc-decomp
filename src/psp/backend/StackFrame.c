@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,7 +57,7 @@ void func_0048F630(MPCode* pc) {
         return;
     }
     for (i = 0; i < pc->argcount; i++) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (getenv("MWCCPSP_TRACE")) {
             fprintf(
                 stderr,
@@ -74,7 +75,7 @@ void func_0048F630(MPCode* pc) {
             if (data_00625E3E == pc->args[i].reg) {
                 data_005F0BFC = 1;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (pc->args[i].kind == 4 &&
                    pc->args[i].value2 &&
                    ((Object*)MOP_OBJ(pc->args[i]))->datatype == DLOCAL) {
@@ -100,7 +101,7 @@ void func_0048F260(Object* func) {
     MPCode* pc;
     CInt64 delta;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (getenv("MWCCPSP_TRACE")) {
         fprintf(
             stderr,
@@ -177,7 +178,7 @@ void func_0048F260(Object* func) {
         if ((data_006241D8->intregs & 0xC0FF0000) || (data_006241D8->fpregs & 0xFFF00000)) {
             data_005F0BFC = 1;
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     }
     if (getenv("MWCCPSP_TRACE")) {
         fprintf(stderr, "frame: total %d needed %d\n", data_0062597C, data_005F0BFC);

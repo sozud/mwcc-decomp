@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // mwccpsp 3.0.1 SchedMachine.c (0x4B48A0..0x4B5210, the name from its
 // statics): the scheduler's machine model for the PSP's Allegrex. Five
 // functional units, each busy for its instruction's latency; the unit is
@@ -31,7 +32,7 @@ typedef struct MachineInfo {
 // mwccps2 b210 replaces this unit's model with MIPSSimulation.c (the R5900:
 // two-issue, six units, two two-slot pipelines); see the end of the file.
 // Its data (0x61B720..0x61B808):
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // ones and the pipes (0x4C2960..0x4C3220, width 2); Pro 6 lays statics out
 // in reverse declaration order.
 #else
@@ -46,7 +47,7 @@ static SInt32 busycount[6]; // 0x61B784
 static MPCode* busy[6]; // 0x61B79C
 #endif
 static SInt32 clock; // 0x61B804
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 static MPCode* busy5[5]; // 0x59D178
 static SInt32 busycount5[5]; // 0x59D164
 static MPCode* lastinstr5[5]; // 0x59D150
@@ -78,7 +79,7 @@ static SInt32 clock; // 0x603EA4
 // in another order with their own returns (the block layout follows them)
 static int func_004B4EC0(MPCode* instr) {
     switch (instr->op) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x7C):
         case OPC(0x7D):
 #else
@@ -92,7 +93,7 @@ static int func_004B4EC0(MPCode* instr) {
         case MACRO_OP(0x6A):
         case MACRO_OP(0x6B):
             return 36;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xB6):
         case OPC(0xB7):
 #else
@@ -112,7 +113,7 @@ static int func_004B4EC0(MPCode* instr) {
         case MACRO_OP(0x67):
         case MACRO_OP(0x68):
             return 3;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x7A):
         case OPC(0x7B):
 #else
@@ -126,7 +127,7 @@ static int func_004B4EC0(MPCode* instr) {
         case MACRO_OP(0x40):
         case MACRO_OP(0x41):
             return 68;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x80):
         case OPC(0x81):
 #else
@@ -140,7 +141,7 @@ static int func_004B4EC0(MPCode* instr) {
         case MACRO_OP(0x3E):
         case MACRO_OP(0x3F):
             return 6;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x44):
         case OPC(0x45):
         case OPC(0x46):
@@ -208,7 +209,7 @@ static int func_004B4EC0(MPCode* instr) {
         case 0x63:
 #endif
             return 2;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xEC):
         case OPC(0xED):
         case OPC(0x102):
@@ -220,19 +221,19 @@ static int func_004B4EC0(MPCode* instr) {
         case 0x103:
 #endif
             return 4;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x6C):
 #else
         case 0x6C:
 #endif
             return 6;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x6D):
 #else
         case 0x6D:
 #endif
             return 2;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x6E):
         case OPC(0x6F):
         case OPC(0x70):
@@ -242,13 +243,13 @@ static int func_004B4EC0(MPCode* instr) {
         case 0x70:
 #endif
             return 6;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x71):
 #else
         case 0x71:
 #endif
             return 3;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x72):
         case OPC(0x73):
         case OPC(0x74):
@@ -260,31 +261,31 @@ static int func_004B4EC0(MPCode* instr) {
         case 0x75:
 #endif
             return 6;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xF2):
 #else
         case 0xF2:
 #endif
             return 59;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xF3):
 #else
         case 0xF3:
 #endif
             return 31;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xB4):
 #else
         case 0xB4:
 #endif
             return 6;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xB5):
 #else
         case 0xB5:
 #endif
             return 5;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xEE):
         case OPC(0xEF):
         case OPC(0xF0):
@@ -320,19 +321,19 @@ static int func_004B4EC0(MPCode* instr) {
         case 0x107:
 #endif
             return 6;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x100):
 #else
         case 0x100:
 #endif
             return 59;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x101):
 #else
         case 0x101:
 #endif
             return 31;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x112):
         case OPC(0x113):
         case OPC(0x114):
@@ -356,7 +357,7 @@ static int func_004B4EC0(MPCode* instr) {
         case 0x11B:
 #endif
             return 2;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x10F):
         case OPC(0x11D):
         case OPC(0x11F):
@@ -368,7 +369,7 @@ static int func_004B4EC0(MPCode* instr) {
         case 0x121:
 #endif
             return 9;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x10E):
         case OPC(0x11C):
         case OPC(0x11E):
@@ -380,31 +381,31 @@ static int func_004B4EC0(MPCode* instr) {
         case 0x120:
 #endif
             return 10;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x123):
 #else
         case 0x123:
 #endif
             return 31;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x122):
 #else
         case 0x122:
 #endif
             return 59;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x125):
 #else
         case 0x125:
 #endif
             return 61;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x124):
 #else
         case 0x124:
 #endif
             return 121;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x174):
         case OPC(0x175):
         case OPC(0x176):
@@ -416,7 +417,7 @@ static int func_004B4EC0(MPCode* instr) {
         case MACRO_OP(0x60):
         case MACRO_OP(0x61):
             return 3;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x17C):
         case OPC(0x17D):
         case OPC(0x17E):
@@ -432,7 +433,7 @@ static int func_004B4EC0(MPCode* instr) {
         case 0x181:
 #endif
             return 3;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x184):
         case OPC(0x185):
 #else
@@ -440,7 +441,7 @@ static int func_004B4EC0(MPCode* instr) {
         case 0x185:
 #endif
             return 34;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x182):
         case OPC(0x183):
 #else
@@ -625,7 +626,7 @@ static int ps2_oplatency(MPCode* instr) {
 
     op = instr->op;
     switch (op) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x7C):
         case OPC(0x7D):
         case OPC(0x1D3):
@@ -644,7 +645,7 @@ static int ps2_oplatency(MPCode* instr) {
         case MACRO_OP(0x6A):
         case MACRO_OP(0x6B):
             return 37;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xB6):
         case OPC(0xB7):
         case OPC(0x1D5):
@@ -670,7 +671,7 @@ static int ps2_oplatency(MPCode* instr) {
         case MACRO_OP(0x67):
         case MACRO_OP(0x68):
             return 4;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x22C):
         case OPC(0x22D):
         case OPC(0x231):
@@ -694,7 +695,7 @@ static int ps2_oplatency(MPCode* instr) {
         case 0x246:
 #endif
             return 4;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x21C):
         case OPC(0x21D):
         case OPC(0x21E):
@@ -704,7 +705,7 @@ static int ps2_oplatency(MPCode* instr) {
         case 0x21E:
 #endif
             return 37;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x10):
         case OPC(0x11):
         case OPC(0x12):
@@ -717,13 +718,13 @@ static int ps2_oplatency(MPCode* instr) {
 #endif
             return 2;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (op > OPC(0x21E) && op <= OPC(0x2E7)) {
 #else
     if (op > 0x21E && op <= 0x2E7) {
 #endif
         switch (op) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x27C):
             case OPC(0x2D8):
 #else
@@ -732,7 +733,7 @@ static int ps2_oplatency(MPCode* instr) {
 #endif
                 r = 7;
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x281):
             case OPC(0x282):
             case OPC(0x283):
@@ -751,14 +752,14 @@ static int ps2_oplatency(MPCode* instr) {
 #endif
                 r = 1;
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x2D4):
 #else
             case 0x2D4:
 #endif
                 r = 13;
                 break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x2E7):
 #else
             case 0x2E7:
@@ -778,14 +779,14 @@ static int ps2_oplatency(MPCode* instr) {
 // 0x4B51B0: latency
 int func_004B51B0(MPCode* instr) {
     if (instr->flags & 2) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         return 6;
 #else
         return 3;
 #endif
     }
     switch (instr->op) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x7F):
         case OPC(0xA5):
         case OPC(0xAD):
@@ -800,7 +801,7 @@ int func_004B51B0(MPCode* instr) {
         case MACRO_OP(0x5F):
 #endif
         case MACRO_OP(0x64):
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             return 2;
         case OPC(0xA8):
         case OPC(0xA9):
@@ -1129,7 +1130,7 @@ void func_004B4A90(void) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #define UNIT5(pc) (((pc)->flags & 2) ? 1 : (data_006115F8[(pc)->op].unk28 & 0xFFF))
 #endif
 #else
@@ -1197,7 +1198,7 @@ void func_004B4A90(void) {
 #endif
 
 // 0x4B48A0: dependence; marks a (0x2000000) when it must not go in b's delay slot
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 void ps2_initialize5(void) {
     int i;
 
@@ -1286,7 +1287,7 @@ void func_004B48A0(MPCode* a, MPCode* b) {
                     a->flags |= 0x2000000;
                     return;
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if (op == OPC(0x3B) && b->args[0].reg == o->reg && (o->flags & 2)) {
 #else
                 if (op == 0x3B && b->args[0].reg == o->reg && (o->flags & 2)) {
@@ -1294,7 +1295,7 @@ void func_004B48A0(MPCode* a, MPCode* b) {
                     a->flags |= 0x2000000;
                     return;
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if (op == OPC(0x3D) && b->args[1].reg == o->reg && (o->flags & 2)) {
 #else
                 if (op == 0x3D && b->args[1].reg == o->reg && (o->flags & 2)) {
@@ -1307,7 +1308,7 @@ void func_004B48A0(MPCode* a, MPCode* b) {
         return;
     }
 #if MWCCPS2
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (op != OPC(0x3A)) {
         if (op != OPC(0x39)) {
 #else
@@ -1352,7 +1353,7 @@ void func_004B48A0(MPCode* a, MPCode* b) {
 #define SCHED_ISSUE_WIDTH 1
 #endif
 MachineInfo data_005D082C = {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SCHED_ISSUE_WIDTH,
     0,
     func_004B51B0,
@@ -1373,7 +1374,7 @@ MachineInfo data_005D082C = {
 #endif
 };
 MachineInfo data_005D084C = {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SCHED_ISSUE_WIDTH,
     0,
     func_004B51B0,

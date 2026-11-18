@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_CLDEPENDENCIES_H
 #define DRIVER_CLDEPENDENCIES_H
 
@@ -32,7 +33,7 @@ struct Incls {
     char* buffer;
     struct Paths* allPaths;
 };
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern SInt16* CLT_filesp;
 extern struct CPrepFileInfo** CLT_filestack;
 

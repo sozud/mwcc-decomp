@@ -1,10 +1,11 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_CDECL_H
 #define COMPILER_CDECL_H
 
 #include "compiler/common.h"
 #include "compiler/types.h"
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,19 +40,21 @@ struct ClassLayout {
     UInt16 firstVirtualSlot;
     Boolean has_vtable;
 };
-#if MWCCPS2_B52
 
 struct DeclInfo {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Type* thetype;
     UInt32 qual;
+#if MWCC_CORE == MWCC_CORE_B52
     // b52 has 3.0.1's head (CDecl_UnpackDeclInfo 0x44A090: nspace +0x0C, name
     // +0x14, expltargs +0x34, storageclass +0x4C, has_expltargs +0x5E; sizeof 0x78)
     UInt32 qualseen;
+#endif
     NameSpace* nspace;
+#if MWCC_CORE == MWCC_CORE_B52
     void* unk10;
+#endif
 #else
-
-struct DeclInfo {
     Type* thetype;
     UInt32 qual;
 #if MWCCPSP
@@ -72,19 +75,18 @@ struct DeclInfo {
     TemplClass* pendingClass;
     TemplArg* expltargs;
     TemplParam* templateParameters;
-#if MWCCPS2_B52
     struct TemplateScopeState* templateScope;
     TemplateFunction* templateFunction;
+#if MWCC_CORE == MWCC_CORE_B52
     void* unk44list; // 3.0.1's
-#else
-    struct TemplateScopeState* templateScope;
-    TemplateFunction* templateFunction;
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
     void* unk44list; // 3.0.1: a list CDecl_TypedefDeclarator hands to func_00500E90
 #endif
 #endif
     UInt8 requireTemplateClassMember;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt16 operator_token;
     SInt16 storageclass;
     UInt8 section;
@@ -111,7 +113,6 @@ struct DeclInfo {
     Boolean is_extern_c;
     Boolean isNewTypeId;
     Boolean allowZeroLengthArray;
-#if MWCCPS2_B52
     Boolean allowTemplateArguments;
     Boolean has_expltargs;
     Boolean hasTypename;
@@ -119,19 +120,14 @@ struct DeclInfo {
     Boolean isTypeID;
     Boolean allowTemplateName;
     Boolean isTemplateName;
+#if MWCC_CORE == MWCC_CORE_B52
     // b52's six more bytes before file (sizeof 0x78); 3.0.1 has unk64,
     // defines_tag, 2 bytes, unk68 here. Placement unverified
     Boolean unk64;
     Boolean defines_tag;
     SInt32 unk68;
-#else
-    Boolean allowTemplateArguments;
-    Boolean has_expltargs;
-    Boolean hasTypename;
-    Boolean isConversionOperator;
-    Boolean isTypeID;
-    Boolean allowTemplateName;
-    Boolean isTemplateName;
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
     // 3.0.1: file at +0x6C, firstDeclaration at +0x78, sizeof 0x7C
     // (CDecl_FunctionDeclarator, CParser_ParseObject)
@@ -145,7 +141,7 @@ struct DeclInfo {
     CPrepFileInfo* file2;
     SInt32 sourceoffset;
     Boolean firstDeclaration;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     UInt8 interruptflags;
     ObjRegInfo reginfo;
 #if MWCCPS2
@@ -164,7 +160,7 @@ struct BigDeclInfo {
     DeclInfo declinfo2;
     Boolean unused;
     Boolean valid;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPS2
     UInt8 ps2_pad[2]; // mwccps2 b210: sizeof 0x104 (scanstructdeclarationlist clears 0x104)
 #endif
@@ -196,7 +192,7 @@ extern void makememberpointertype(DeclInfo* declinfo, TypeClass* tclass, UInt32 
 extern void scandeclarator(DeclInfo* declinfo);
 extern void conversion_type_name(DeclInfo* declinfo);
 extern Object* CDecl_GetFunctionObject(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     DeclInfo* declinfo, NameSpace* nspace, Boolean* firstDecl, Boolean matchTemplate
 );
 extern void CDecl_TypedefDeclarator(DeclInfo* declinfo);
@@ -219,14 +215,17 @@ extern void CDecl_ScanStructDeclarator(BigDeclInfo* bde);
 extern void scanstruct(DeclInfo* declinfo, short structtype);
 extern TypeMemberFunc* CDecl_MakeTypeMemberFunc(
     TypeFunc* tfunc, TypeClass* tclass, Boolean isStatic
-#if MWCCPS2_B52
 );
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern void CDecl_PackDeclInfo(PackedDeclInfo* packed, DeclInfo* declinfo);
 extern void CDecl_UnpackDeclInfo(DeclInfo* declinfo, PackedDeclInfo* packed);
+#if MWCC_CORE == MWCC_CORE_B52
 #define CDecl_AddFriend CClass_AddFriend // b52 keeps friends in CClass.c, like 3.0.1
 extern void CClass_AddFriend(TypeClass* tclass, Object* friendfunc, TypeClass* friendclass);
 #else
-);
+extern void CDecl_AddFriend(TypeClass* tclass, Object* friendfunc, TypeClass* friendclass);
+#endif
+#else
 extern void CDecl_PackDeclInfo(PackedDeclInfo* packed, DeclInfo* declinfo);
 extern void CDecl_UnpackDeclInfo(DeclInfo* declinfo, PackedDeclInfo* packed);
 #if MWCCPSP

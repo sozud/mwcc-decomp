@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CException.h"
 #include "compiler/CABI.h"
 #include "compiler/CClass.h"
@@ -23,7 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // 2.4.5 builds offset and size constants as int where 2.4.7 uses long: b69's
 // CABI_MakeThisExpr, CClass_AccessMember, CExcept_CatchExpressionInit ... reference
 // stunsignedint (0x5360D8, integral 8) and CABI_GetPtrDiffTType stsignedint
@@ -158,14 +159,14 @@ void CExcept_CheckStackRefs(ExceptionAction* actions) {
 }
 
 void CExcept_CompareSpecifications(ExceptSpecList* a, ExceptSpecList* b) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     ExceptSpecList* b69_dead;
 #endif
     ExceptSpecList* aa;
     ExceptSpecList* bb;
 
     aa = a;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     b69_dead = bb = b;
 #else
     bb = b;
@@ -185,7 +186,7 @@ void CExcept_CompareSpecifications(ExceptSpecList* a, ExceptSpecList* b) {
         }
 
         aa = aa->next;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead = bb = bb->next;
 #else
         bb = bb->next;
@@ -343,7 +344,7 @@ int CExcept_IsSubList(ExceptionAction* a, ExceptionAction* b) {
     return diff;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (33)
 #endif
@@ -402,7 +403,7 @@ Boolean CExcept_ActionNeedsDestruction(ExceptionAction* action) {
 
     return FALSE;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -435,7 +436,7 @@ ENode* CExcept_RegisterDestructorObject(
 #if MWCCPSP
         expr = makediadicnode(expr, intconstnode(TYPE(&stunsignedint), offset), EADD);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         expr = makediadicnode(expr, intconstnode(TYPE(&stunsignedint), offset), EADD);
 #else
         expr = makediadicnode(expr, intconstnode(TYPE(&stunsignedlong), offset), EADD);
@@ -485,7 +486,7 @@ void CExcept_RegisterDeleteObject(Statement* stmt, Object* pointerobject, Object
     cexcept_hasdobjects = TRUE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (55)
 #endif
@@ -576,7 +577,7 @@ nextStmt:
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -597,7 +598,7 @@ void CExcept_Magic(void) {
     cexcept_magic = TRUE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (57)
 #endif
@@ -613,7 +614,7 @@ static Object* CExcept_FindLocalObject(char* name) {
     CError_FATAL(580);
     return NULL;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -634,7 +635,7 @@ void CExcept_ArrayInit(void) {
     cexcept_dobjstack = action;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (57)
 #endif
@@ -672,7 +673,7 @@ void CExcept_RegisterMember(
     CExcept_PatchConstructorAction(stmt, action);
     stmt->flags |= StmtFlag_EndsConstruction;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
@@ -701,7 +702,7 @@ void CExcept_RegisterMemberArray(
     stmt->flags |= StmtFlag_EndsConstruction;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (57)
 #endif
@@ -715,7 +716,7 @@ static Statement* CExcept_DestroyLocal(
 #if MWCCPSP
         expr = makediadicnode(expr, intconstnode(TYPE_UNSIGNED_OFFSET, offset), EADD);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         expr = makediadicnode(expr, intconstnode(TYPE(&ST_OFFS_U), offset), EADD);
 #else
         expr = makediadicnode(expr, intconstnode(TYPE(&stunsignedlong), offset), EADD);
@@ -739,7 +740,7 @@ static Statement* CExcept_DestroyLocal(
     stmt->dobjstack = ea->prev;
     return stmt;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -768,7 +769,7 @@ static Statement* CExcept_DestroyLocalArray(
 
     newStmt = CFunc_InsertStatement(ST_EXPRESSION, stmt);
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (dtor) {
         dtorExpr = create_objectrefnode(CABI_GetDestructorObject(dtor, CABIDestroyComplete));
     } else {
@@ -797,7 +798,7 @@ static Statement* CExcept_DestroyLocalArray(
 }
 
 static Statement* CExcept_EndCatch(ExceptionAction* ea, Statement* stmt) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Statement* newstmt;
 
     newstmt = CFunc_InsertStatement(ST_ENDCATCHDTOR, stmt);
@@ -809,13 +810,13 @@ static Statement* CExcept_EndCatch(ExceptionAction* ea, Statement* stmt) {
     stmt->dobjstack = ea->prev;
 #endif
     if (!ea->data.active_catch_block.call_dtor) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         newstmt->type = ST_ENDCATCH;
 #else
         stmt->type = ST_ENDCATCH;
 #endif
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     return newstmt;
 #else
     return stmt;
@@ -905,7 +906,7 @@ static void CExcept_MangleNameSpaceName(NameSpace* nspace) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (103)
 #endif
@@ -942,7 +943,7 @@ static void CExcept_MangleClassName(TypeClass* tclass) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -1096,7 +1097,7 @@ static ENode* CExcept_GetTypeID(Type* type, UInt32 qual, Boolean isThrow) {
     return expr;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (103)
 #endif
@@ -1105,7 +1106,7 @@ static Object* CExcept_TypeID(Type* type, UInt32 qual) {
     CError_ASSERT(1086, expr->type == ESTRINGCONST);
     return CInit_DeclareString(expr->data.string.data, expr->data.string.size, FALSE, FALSE);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
@@ -1537,7 +1538,7 @@ static ENode* CExcept_CatchExpressionInit(DeclInfo* di, CatchBlock* catchBlock) 
 #if MWCCPSP
         intconstnode(TYPE_UNSIGNED_OFFSET, 12),
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         intconstnode(TYPE(&ST_OFFS_U), 12),
 #else
         intconstnode(TYPE(&stunsignedlong), 12),
@@ -1737,7 +1738,7 @@ static Object* CExcept_GetETEMPObject(ENode* expr) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (480)
 #endif
@@ -1780,13 +1781,13 @@ static ENode* CExcept_TempTrans_ETEMP(ENode* expr) {
     expr->data.objref = object;
     return expr;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
 static ENode* CExcept_TransNewException(ENode* expr, Boolean isCond) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     ExceptionAction* ea;
 #else
     Object* tempObj;
@@ -1794,7 +1795,7 @@ static ENode* CExcept_TransNewException(ENode* expr, Boolean isCond) {
     CLabel* label;
     Boolean isArray;
     Statement* stmt;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Object* tempObj;
 #else
     ExceptionAction* ea;
@@ -2128,7 +2129,7 @@ static ENode* CExcept_TempTransFuncCall(ENode* expr, Boolean isCond) {
 #if MWCCPSP
             expr = CEXPR_COPYENODE(stmt->expr);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             expr = CExpr_CopyENode(stmt->expr);
 #else
             expr = lalloc(sizeof(ENode));
@@ -2230,7 +2231,7 @@ static ENode* CExcept_TempTransExprCond(ENode* expr) {
         case ECOMMA:
         case EROTL:
         case EROTR:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         case EMIN:
         case EMAX:
 #endif
@@ -2261,7 +2262,7 @@ static ENode* CExcept_TempTransExprCond(ENode* expr) {
         case ELABEL:
         case EINSTRUCTION:
 #if !MWCCPSP // not a 3.0.1 node kind
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         case EVECTOR128CONST:
 #endif
 #endif
@@ -2334,7 +2335,7 @@ static ENode* CExcept_TempTransExpr(ENode* expr) {
         case EORASS:
         case EROTL:
         case EROTR:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         case EMIN:
         case EMAX:
 #endif
@@ -2383,7 +2384,7 @@ static ENode* CExcept_TempTransExpr(ENode* expr) {
 #endif
         case EINSTRUCTION:
 #if !MWCCPSP // not a 3.0.1 node kind
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         case EVECTOR128CONST:
 #endif
 #endif
@@ -2399,7 +2400,7 @@ static ENode* CExcept_TempTransExpr(ENode* expr) {
 }
 
 static Statement* CExcept_DtorTransform(Statement* stmt) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Statement* b69_dead;
 #endif
     DtorTemp* dtorTemp;
@@ -2407,7 +2408,7 @@ static Statement* CExcept_DtorTransform(Statement* stmt) {
     CLabel* lastLabel;
 
     dtorTemp = cexcept_dtortemps;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     b69_dead = curStmt = stmt;
 #else
     curStmt = stmt;
@@ -2451,7 +2452,7 @@ static Statement* CExcept_DtorTransform(Statement* stmt) {
     return curStmt;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (527)
 #endif
@@ -2549,7 +2550,7 @@ static void CExcept_TempTransform(Statement* stmt, Boolean discardValue, Boolean
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -2601,7 +2602,7 @@ static void CExcept_SetupCatchTypeIDs(Statement* stmt) {
 }
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (3073)
 #endif
@@ -2738,14 +2739,14 @@ static void CExcept_CleanupExceptionActions(Statement* stmt) {
         cexcept_prevstmt = iter;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 #endif
 
 static void CExcept_InsertSpecificationActions(Statement* stmt, ExceptSpecList* exspecs) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     ExceptSpecList* b69_dead;
 #endif
     Statement* iter;
@@ -2806,7 +2807,7 @@ static void CExcept_InsertSpecificationActions(Statement* stmt, ExceptSpecList* 
     }
 
     i = 0;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     b69_dead = spec_iter = exspecs;
 #else
     spec_iter = exspecs;
@@ -2822,7 +2823,7 @@ static void CExcept_InsertSpecificationActions(Statement* stmt, ExceptSpecList* 
     ea_spec->data.specification.unexp_info_object = catch_info_object;
 
     i = 0;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (b69_dead = spec_iter = exspecs; spec_iter; spec_iter = spec_iter->next) {
 #else
     for (spec_iter = exspecs; spec_iter; spec_iter = spec_iter->next) {
@@ -2873,11 +2874,13 @@ static void CExcept_HasFuncCallCallBack(ENode* expr) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-11)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (617)
+#endif
 #endif
 static Boolean CExcept_CanThrowCheck(Object* func, Statement* stmt) {
     cexcept_canthrow = FALSE;
@@ -2901,7 +2904,7 @@ static Boolean CExcept_CanThrowCheck(Object* func, Statement* stmt) {
             case ST_ENDCATCH:
             case ST_ENDCATCHDTOR:
 #if !MWCCPSP // 3.0.1: a computed goto is an internal error here
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case ST_GOTOEXPR:
 #endif
 #endif
@@ -2932,18 +2935,22 @@ static Boolean CExcept_CanThrowCheck(Object* func, Statement* stmt) {
         return TRUE;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-11)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (617)
+#endif
 #endif
 void CExcept_ExceptionTansform(Statement* stmt) {
     cexcept_uniqueobjs = NULL;
@@ -2960,9 +2967,11 @@ void CExcept_ExceptionTansform(Statement* stmt) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif

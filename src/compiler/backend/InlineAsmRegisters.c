@@ -1,8 +1,9 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/InlineAsmRegisters.h"
 #include "compiler/CompilerTools.h"
 #include <string.h>
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // b69: InlineAsm_InitializeRegisters 0x50ABA0 (64 buckets at 0x56A018),
 // InsertRegister 0x50ABC0 (0x14-byte records: name, class and number as
 // words, the object), LookupRegister 0x50AC10 (returns &name); the MIPS
@@ -12,7 +13,7 @@
 #endif
 typedef struct HashedRegister {
     struct HashedRegister* next;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     char* name;
     SInt32 rclass;
     SInt32 num;
@@ -21,7 +22,7 @@ typedef struct HashedRegister {
     IARegister reg;
 #endif
 } HashedRegister;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #pragma pack(pop)
 #endif
 
@@ -35,7 +36,7 @@ void InlineAsm_InitializeRegisters(void) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 void InlineAsm_InsertRegister(char* name, short rclass, short num, Object* object) {
 #else
 void InlineAsm_InsertRegister(char* name, RegClass rclass, short num, Object* object) {
@@ -45,7 +46,7 @@ void InlineAsm_InsertRegister(char* name, RegClass rclass, short num, Object* ob
 
     ptr = hashedregisters + (CHash(name) & 63);
     hr = lalloc(sizeof(HashedRegister));
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     hr->name = name;
     hr->rclass = rclass;
     hr->num = num;
@@ -57,7 +58,7 @@ void InlineAsm_InsertRegister(char* name, RegClass rclass, short num, Object* ob
     hr->reg.object = object;
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     hr->next = *ptr, *ptr = hr; // -inline off keeps the comma's value
 #else
     hr->next = *ptr;
@@ -65,20 +66,20 @@ void InlineAsm_InsertRegister(char* name, RegClass rclass, short num, Object* ob
 #endif
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 void* InlineAsm_LookupRegister(char* name) {
 #else
 IARegister* InlineAsm_LookupRegister(char* name) {
 #endif
     HashedRegister* scan;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     char** reg;
 #else
     IARegister* reg;
 #endif
 
     for (scan = hashedregisters[CHash(name) & 63]; scan; scan = scan->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         reg = &scan->name;
         if (!strcmp(*reg, name)) {
 #else

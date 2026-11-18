@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/IroCSE.h"
 #include "compiler/IroDump.h"
 #if MWCCPSP
@@ -460,7 +461,7 @@ void func_00569AC0(BitVector* bv, IROLinear* nd) {
     SInt32 size;
     BitVector** table;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (0) {
 #else
     if (nd->type == IROLinearOp1Arg && nd->nodetype == EINDIRECT && (nd->flags & IROLF_Assigned)) {
@@ -543,7 +544,7 @@ static void GetDependsOfIndirect(IROLinear* nd) {
             }
             if (!result) {
                 for (scan = resultList; scan; scan = scan->nextList) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     for (scannd = scan->list.head; scannd != scan->list.tail->next;
                          scannd = scannd->next) {
 #else
@@ -641,7 +642,7 @@ static void GetDependsOfFunctionCall(IROLinear* nd) {
                     break;
                 }
                 foundObjRef = FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 for (scannd = scan->list.head; scannd != scan->list.tail->next;
                      scannd = scannd->next) {
 #else
@@ -679,7 +680,7 @@ static void GetDependsOfFunctionCall(IROLinear* nd) {
             }
             if (!result) {
                 for (scan = resultList; scan; scan = scan->nextList) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     for (scannd = scan->list.head; scannd != scan->list.tail->next;
                          scannd = scannd->next) {
 #else
@@ -922,7 +923,7 @@ CSE_NOINLINE Boolean func_004C47F0(IROLinear* linear) {
 static void IRO_AddExpression(IROLinear* linear, IRONode* node, Boolean unused) {
     IROExpr* expr;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if ((linear->flags & IROLF_Reffed) &&
         IRO_Hook0 &&
         ((Boolean (*)(IROLinear*))IRO_Hook0)(linear) &&
@@ -955,7 +956,7 @@ static void IRO_AddExpression(IROLinear* linear, IRONode* node, Boolean unused) 
 }
 
 extern Boolean data_00625ECA; // IroLinearForm.c
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 extern Boolean func_00555190(
     IROLinear* a, IROLinear* b
 ); // IroSimplifyIfThenElse.c: same semantically
@@ -1016,7 +1017,7 @@ void func_00575BB0(IROLinear* linear) {
     Boolean unknown = FALSE;
     Boolean found;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (target &&
         target->type == IROLinearOp1Arg &&
         target->nodetype == EINDIRECT &&
@@ -1044,7 +1045,7 @@ void func_00575BB0(IROLinear* linear) {
                     break;
                 }
                 found = FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 for (scannd = scan->list.head; scannd != scan->list.tail->next;
                      scannd = scannd->next) {
 #else
@@ -1063,7 +1064,7 @@ void func_00575BB0(IROLinear* linear) {
             }
             if (!unknown) {
                 for (scan = resultList; scan; scan = scan->nextList) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     for (scannd = scan->list.head; scannd != scan->list.tail->next;
                          scannd = scannd->next) {
 #else
@@ -1345,7 +1346,7 @@ CSE_NOINLINE void func_0058E790(void) {
 
 // 3.0.1 keeps a CSE state byte where range propagation kept its range
 // (IROLinear +0x28): 0 none, 1 recomputed, 2 first computation
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #define CSE_STATE(nd) (*(UInt8*)&(nd)->range)
 #else
 #define CSE_STATE(nd) (*(UInt8*)&(nd)->range)
@@ -1436,7 +1437,7 @@ static inline IROExprUse* AppendUses(IROExprUse* list, IROExprUse* more) {
     IROExprUse* tail;
 
     if (list) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         for (tail = list; tail->next; tail = tail->next) {}
 #else
         for (tail = list; tail->next; tail = tail->next) {}
@@ -1519,7 +1520,7 @@ CSE_NOINLINE void func_0058E240(void) {
 
     for (node = IRO_FirstNode; node; node = node->nextnode) {
         for (nd = node->first; nd; nd = nd->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if ((expr = nd->expr) &&
                 CSE_STATE(nd) == 2 &&
                 Bv_IsBitSet(expr->x18, node->in) &&
@@ -1619,7 +1620,7 @@ CSE_NOINLINE void func_0058DFE0(void) {
         for (nd = node->first;; nd = nd->next) {
 #else
         for (nd = node->first; nd; nd = nd->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             // debugging aid: MWCCPS2_CSETRACE=1 lists each expression's class,
             // temporary and first use (as a gdb trace of b52's 0x532866 does)
             if (nd->expr) {
@@ -1699,7 +1700,7 @@ CSE_NOINLINE void func_0058EA00(void) {
                 found = FALSE;
                 for (i = 0; i < data_00608CA8; i++) {
                     if (data_00608CA4[i] &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         func_00555190(
                             nd->expr->linear, ((IROExpr*)data_00608CA4[i]->element)->linear
                         )) {
@@ -1755,7 +1756,7 @@ void func_0058EB60(void) {
     Bv_AllocVector(&seen, IRO_NumVars + 1);
     for (nd = IRO_FirstLinear; nd; nd = nd->next) {
         nd->expr = NULL;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if ((nd->flags & IROLF_Reffed) &&
             nd->type >= IROLinearOperand &&
             nd->type <= IROLinearFunccall &&

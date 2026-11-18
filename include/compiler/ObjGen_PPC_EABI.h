@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_OBJGEN_PPC_EABI_H
 #define COMPILER_OBJGEN_PPC_EABI_H
 
@@ -163,7 +164,7 @@ extern void ObjGen_Finish(void);
 extern void ObjGen_Cleanup(void);
 extern void ObjGen_CodeCleanup(void);
 extern void ObjGen_SetupSym(void);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern void ObjGen_SymFunc(Object* func);
 extern void ObjGen_SegmentName(HashNameNode* name);
 extern void ObjGen_SrcBreakName(HashNameNode* name, SInt32 fileModDate, Boolean unused);

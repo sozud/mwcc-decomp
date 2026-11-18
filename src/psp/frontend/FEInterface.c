@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // FEInterface.c (by the unit's asserts): the PSP target's optimizer switches
 // on top of the level's defaults (0x439EA0)
 #include "compiler/common.h"
@@ -6,7 +7,7 @@
 
 extern void IRO_UpdateOptimizerOptions(void);
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // b52 0x43B980: the GC front end calls it as CodeGen_UpdateOptimizerOptions
 // (MWC_main 0x41FD69/0x41FD73); after IRO_UpdateOptimizerOptions (0x4D53C0)
 // it sets copts+0x0E4 (the tree's logopts, 3.0.1's unknownEE) at level 3,
@@ -16,13 +17,13 @@ extern void IRO_UpdateOptimizerOptions(void);
 #endif
 void func_00439EA0(void) {
     IRO_UpdateOptimizerOptions();
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     copts.logopts = copts.optimizationlevel >= 3;
 #else
     copts.opt_decomposeaggregates = copts.optimizationlevel >= 3;
 #endif
 #if MWCCPS2 && MWCCPS2_BUILD < 210
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     // b145 also sets copts+0x0EE (unnamed) at level 3 and leaves opt_repositioncode
     copts.unknownEE[0] = copts.optimizationlevel >= 3;
 #endif
@@ -37,7 +38,7 @@ void func_00439EA0(void) {
 
 // The optimizer's hook table for this target (0x439E20). Hook 1 and 10 are
 // the optimizer's own defaults.
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // b52's source-only link: the inline assembler keeps b69's opcode numbers
 // (InlineAsmMIPS_ours.c), so asm effects read b69_asm_opcodes; the quadword
 // class tests are psp/b69/FEInterface.c's (FEInterface_ours.c, also linked)
@@ -49,7 +50,7 @@ void func_00439EA0(void) {
 #include "compiler/CompilerTools.h"
 #include "compiler/InlineAsmMIPS.h"
 #include "compiler/objects.h"
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 extern Boolean ps2_IsQuadwordClass(Type* type); // FEInterface_ours.c's (a Boolean: no implicit int)
 #endif
 #include "compiler/RegisterInfo.h"
@@ -84,7 +85,7 @@ Boolean func_004C5A00(Object* obj) {
 #if MWCCPS2
 // b210-only (0x4D2120): a class that only wraps one 128-bit integer, directly
 // or through a single base class
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 Boolean ps2_IsQuadwordClass(Type* type) {
     TypeClass* tclass;
     ObjMemberVar* ivar;
@@ -146,7 +147,7 @@ Boolean ps2_IsQuadwordClassPointer(Type* type) {
 }
 #endif
 #endif
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 
 // a variable that fits a register (an operand the optimizer can follow)
 #endif
@@ -166,7 +167,7 @@ Boolean ps2_IsQuadwordClassPointer(Type* type) {
 #endif
 
 // effects->operands[n] for obj
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 static void asm_operand(
     IROAsmEffects* effects, UInt8 type, Object* obj, SInt32 offset, SInt32 size
 ) {
@@ -209,7 +210,7 @@ static void func_00439F30(Statement* stmt, IROAsmEffects* effects) {
 
     if (instr->flags & 4) {
         effects->reachBarrier = 1;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         // b52 (0x43B52A): such an instruction (a volatile asm) is also an
         // optimization barrier, so IRO_Linearize sets DisableDueToAsm
         effects->optimizationBarrier = 1;
@@ -233,7 +234,7 @@ static void func_00439F30(Statement* stmt, IROAsmEffects* effects) {
         effects->reachBarrier = 1;
         data_00625FCF = 0;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (instr->opcode == 0x39 ||
         instr->opcode == 0x38A ||
         instr->opcode == 0x38B ||
@@ -253,7 +254,7 @@ static void func_00439F30(Statement* stmt, IROAsmEffects* effects) {
     for (i = 0, op = instr->ops; i < instr->nops; i++, op++) {
         switch (op->type) {
             case 0:
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
                 if (def->flags & 2) {
                     effects->flag2 = 1;
                 } else if (def->flags & 4) {
@@ -272,7 +273,7 @@ static void func_00439F30(Statement* stmt, IROAsmEffects* effects) {
 #else
                     if (REGISTER_TYPE(type)) {
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         last = effects->numoperands ? &effects->operands[effects->numoperands - 1]
                                                     : NULL;
 #else
@@ -282,7 +283,7 @@ static void func_00439F30(Statement* stmt, IROAsmEffects* effects) {
                         if (last && last->object == obj && (last->type == 1 || last->type == 4)) {
                             last->type = 4;
                         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                             asm_operand(
                                 effects, 0, op->u.reg.object, 0, op->u.reg.object->type->size
                             );
@@ -304,7 +305,7 @@ static void func_00439F30(Statement* stmt, IROAsmEffects* effects) {
 #else
                     if (REGISTER_TYPE(type) || type->type == TYPEPOINTER) {
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         last = effects->numoperands ? &effects->operands[effects->numoperands - 1]
                                                     : NULL;
 #else
@@ -327,7 +328,7 @@ static void func_00439F30(Statement* stmt, IROAsmEffects* effects) {
                     break;
                 }
                 if (def->flags & 2) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     asm_operand(
                         effects, 0, op->u.obj.obj, op->u.obj.offset, func_0048FBE0(instr->opcode)
                     );
@@ -338,7 +339,7 @@ static void func_00439F30(Statement* stmt, IROAsmEffects* effects) {
 #endif
                 }
                 if (def->flags & 4) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     asm_operand(
                         effects, 1, op->u.obj.obj, op->u.obj.offset, func_0048FBE0(instr->opcode)
                     );
@@ -379,7 +380,7 @@ static void func_0043A3C0(Statement* stmt, Object* obj, ENode* expr) {
     MAsmOperand* op;
     SInt32 i;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // b52 (0x43B400) asks only for an object reference of the same kind
     if (expr->type != EOBJREF) {
 #else
@@ -388,7 +389,7 @@ static void func_0043A3C0(Statement* stmt, Object* obj, ENode* expr) {
         return;
     }
     repl = expr->data.objref;
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     if (func_004C5A00(repl) || !Registers_GetVarInfo(repl)) {
         return;
     }
@@ -406,7 +407,7 @@ static void func_0043A3C0(Statement* stmt, Object* obj, ENode* expr) {
                     break;
                 }
                 type = repl->type;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (type->type == TYPEINT ||
                     type->type == TYPEENUM ||
                     type->type == TYPEPOINTER ||
@@ -503,7 +504,7 @@ static inline IROLinear* NarrowedValue(IROLinear* right) {
 
     if (right->type == IROLinearOp1Arg && right->nodetype == ETYPCON) {
         inner = right->u.monadic;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (right->rtype->type == inner->rtype->type &&
             right->rtype->type == TYPEINT &&
             TYPE_INTEGRAL(right->rtype)->integral < IT_17 &&
@@ -521,7 +522,7 @@ static inline IROLinear* NarrowedValue(IROLinear* right) {
 }
 
 static inline Boolean IsInvariantIndirect(IROLinear* nd) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     return nd->type == IROLinearOp1Arg &&
         nd->nodetype == EINDIRECT &&
         (nd->u.monadic->flags & IROLF_LoopInvariant);
@@ -534,7 +535,7 @@ static inline Boolean IsInvariantIndirect(IROLinear* nd) {
 
 static inline Boolean IsReductionOp(IROLinear* nd) {
     return nd->type == IROLinearOp2Arg &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         (nd->nodetype == EADD ||
          nd->nodetype == ESUB ||
          nd->nodetype == EMUL ||
@@ -573,7 +574,7 @@ Boolean func_004C43C0(IROLinear* nd) {
         if (operand->type == IROLinearOp1Arg && operand->nodetype == ETYPCON) {
             operand = operand->u.monadic;
         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         return IsInvariantIndirect(operand) &&
             IRO_ExprsSame(left, operand) &&
             IsReductionOp(right->u.diadic.right);
@@ -604,7 +605,7 @@ Boolean func_004C3EC0(IROLinear* nd) {
 
     switch (nd->type) {
         case IROLinearOperand:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (nd->u.node &&
                 nd->u.node->type == EOBJREF &&
                 IRO_Hook12 &&
@@ -634,7 +635,7 @@ Boolean func_004C3EC0(IROLinear* nd) {
             if (op == EINDIRECT && !(nd->flags & IROLF_Assigned)) {
                 if (nd->flags & IROLF_Ind) {
                     x = nd->u.monadic;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (x->type == IROLinearOperand &&
                         x->u.node->type == EOBJREF &&
 #else
@@ -651,7 +652,7 @@ Boolean func_004C3EC0(IROLinear* nd) {
                 }
                 return !func_005575F0(nd->u.monadic->u.node->data.objref);
             }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (op == ETYPCON &&
                 nd->rtype->type == TYPEINT &&
                 TYPE_INTEGRAL(nd->rtype)->integral < IT_17 &&
@@ -665,7 +666,7 @@ Boolean func_004C3EC0(IROLinear* nd) {
             }
             return FALSE;
         case IROLinearOp2Arg:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if ((nd->nodetype == EADD || nd->nodetype == ESUB) &&
                 func_00555C60(nd->u.diadic.right)) {
 #else
@@ -710,7 +711,7 @@ static Boolean FE_Hook0(IROLinear* linear) {
     if (!func_004C3EC0(linear)) {
         return FALSE;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!COPTS_X.cse_vector_type) {
 #else
     if (!copts.cse_vector_type) {
@@ -744,26 +745,26 @@ static Boolean FE_Hook0(IROLinear* linear) {
     }
     switch ((signed char)vi->unk24[2]) {
         case 0:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             return COPTS_X.cse_hard_reg_gpr;
 #else
             return copts.cse_hard_reg_gpr;
 #endif
         case 1:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             return COPTS_X.cse_hard_reg_fpr;
 #else
             return copts.cse_hard_reg_fpr;
 #endif
         case 5:
         case 6:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             return COPTS_X.cse_hard_reg_vu0;
 #else
             return copts.cse_hard_reg_vu0;
 #endif
         default:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             return COPTS_X.cse_hard_reg_special != 0;
 #else
             return copts.cse_hard_reg_special != 0;
@@ -795,7 +796,7 @@ static Boolean FE_Hook3(void) {
     return FALSE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 extern Boolean IRO_IsSubableExpression(IROLinear* nd);
 
 #endif
@@ -806,7 +807,7 @@ void func_00439E20(void) {
     hooks.hook14 = (IROHook)FE_Hook14;
     hooks.hook3 = (IROHook)FE_Hook3;
     hooks.hook12 = (IROHook)FE_Hook12;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // b52 0x43B9B0: hook0 is the optimizer's IRO_IsSubableExpression (0x4D58C0),
     // hook10 IroLoop.c's IsAssignmentReductionCandidate (0x4D5D60, static
     // there: 3.0.1's copy here), hook11 0x43ACA0 (CError_FATAL in CodeGen.c)

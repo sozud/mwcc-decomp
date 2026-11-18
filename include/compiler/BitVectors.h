@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_BITVECTORS_H
 #define COMPILER_BITVECTORS_H
 
@@ -37,7 +38,7 @@ extern void bitvectorinitialize_range(
 );
 extern CompressedBitVector* bitvector_compress(UInt32* vec, int bitCount);
 extern CompressedBitVector* bitvector_empty_compressed(void);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern void init_compressed_bitvectors(int bitCount);
 
 #define bitvectorgetbit(_bit, _vec) ((1 << ((_bit) & 31)) & (_vec)[(_bit) >> 5])

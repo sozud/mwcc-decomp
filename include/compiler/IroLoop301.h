@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_IROLOOP301_H
 #define COMPILER_IROLOOP301_H
 
@@ -8,7 +9,7 @@
 #include "compiler/IroUtil.h"
 #include "compiler/IroVars.h"
 #include "compiler/IroCSE.h"
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #pragma pack(push, 2)
 #endif
 
@@ -93,7 +94,7 @@ extern IROLoopInd301* func_00588C90(IRONaturalLoop* loop, VarRecord* var);
 extern CInt64 func_00583FD0(IROLoopInd301* ind, Type* type);
 extern void func_00587540(IRONaturalLoop* loop);
 extern Boolean func_0058A4F0(IRONaturalLoop* loop);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 extern void func_0058A430(
     IRONaturalLoop* loop, IRONode* header, IRONode* pred, IROLinear** at, Boolean* made
 );
@@ -103,7 +104,7 @@ extern void func_0058A430(
 );
 #endif
 extern void func_00589F20(IRONaturalLoop* loop, IRONode** exitNode, IROLinear** at);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 extern Boolean func_0058A030(
     IRONaturalLoop* loop, IROLinear** pre, IRONode* exitNode, IRONode** newPre, void* unused
 );
@@ -125,7 +126,7 @@ extern IROLinear* func_00588900(IRONaturalLoop* loop);
 extern void func_00588AE0(IRONaturalLoop* loop, IROLoopInd301* ind);
 extern Boolean func_00584020(IRONaturalLoop* loop, IROLoopInd301* ind, Boolean withConds);
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #pragma pack(pop)
 #endif
 #endif

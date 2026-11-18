@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_INLINEASMREGISTERS_H
 #define COMPILER_INLINEASMREGISTERS_H
 
@@ -9,7 +10,7 @@ extern "C" {
 #endif
 
 extern void InlineAsm_InitializeRegisters(void);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // b69 (0x50ABA0..0x50AC60, the MIPS assembler's register names): the class is
 // a short
 extern void InlineAsm_InsertRegister(char* name, short rclass, short num, Object* object);

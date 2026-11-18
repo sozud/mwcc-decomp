@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // mwccpsp 3.0.1 Scheduler.c (0x4B5210..0x4B63A0): list scheduling of each
 // basic block, as in 2.4.7, with three 3.0.1 additions: an instruction class
 // (DGNode.kind) that breaks ties instead of the opcode rank, extra
@@ -10,13 +11,13 @@
 #include "compiler/CError.h"
 #include "compiler/CompilerTools.h"
 #include "psp/BE.h"
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #include <stdio.h>
 #include <stdlib.h>
 #include "compiler/InlineAsmMIPS.h"
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #pragma pack(push, 2)
 typedef struct DumpAlias {
     void* next;
@@ -80,7 +81,7 @@ extern void func_004C34A0(void);
 extern void gather_alias_info(void);
 extern Boolean may_alias(MPCode* a, MPCode* b);
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // b52 (0x59D190..0x59D24E): MI between refcount and criticalpath, packed to 2
 // bytes (Pro 6 lays statics out with the packing in force at the end of the file)
 #else
@@ -100,14 +101,14 @@ static DGNodeList* side_effects;
 static DGNodeList* volatile_refs;
 static DGNode* defaultsuccessor;
 static UInt16 criticalpath;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 static MachineInfo* MI;
 #else
 static SInt32* refcount[7]; // uses left of each register in the block
 static SInt32 avail[7]; // registers available per class
 #endif
 static SInt32 live[7]; // registers live per class
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 static SInt32 avail[7]; // registers available per class
 static SInt32* refcount[7]; // uses left of each register in the block (b52 0x59D190: func_004B60F0)
 #endif
@@ -129,7 +130,7 @@ static void scheduleblock(MPCodeBlock* block);
 void func_004B5210(void) {
     MPCodeBlock* block;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (getenv("MWCCPS2_SCHEDDUMP")) {
         fprintf(stderr, "SCHED\n");
     }
@@ -137,7 +138,7 @@ void func_004B5210(void) {
     gather_alias_info();
     func_004C34A0();
     for (block = data_00624FD0; block; block = block->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         // b69 (0x4AE360) skips only blocks flagged 2 or 8
         if (block->pcodecount >= 2 && !(block->flags2E & 2) && !(block->flags2E & 8)) {
 #else
@@ -163,7 +164,7 @@ static void scheduleblock(MPCodeBlock* block) {
     MPCode* instr;
 
     MI->initialize();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     {
         static int opdumped;
         if (!opdumped && getenv("MWCCPS2_OPDUMP")) {
@@ -219,11 +220,11 @@ static void scheduleblock(MPCodeBlock* block) {
     for (n = head; n; n = n->next) {
         n->latest = criticalpath - n->height;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (getenv("MWCCPS2_SCHEDDUMP")) {
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         // hybrid's at b69 0x4AE2A0)
         int cnt = 0;
         int k;
@@ -363,7 +364,7 @@ static DGNode* selectinstruction(DGNode* nodes, UInt16 counter) {
         // the instruction that frees the most registers
         best = func_004B5F30(node->instr);
         for (candidate = node->next; candidate; candidate = candidate->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (candidate->predCount == 0 &&
                 candidate->earliest <= counter &&
                 MI->can_issue(candidate->instr) &&
@@ -381,7 +382,7 @@ static DGNode* selectinstruction(DGNode* nodes, UInt16 counter) {
     }
 
     for (candidate = node->next; candidate; candidate = candidate->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (candidate->predCount == 0 &&
             candidate->earliest <= counter &&
             MI->can_issue(candidate->instr) &&
@@ -455,7 +456,7 @@ static inline void serializelist(DGNode* node, DGNodeList* list) {
 }
 
 static void serialize_store(DGNode* node);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 static void serializeregister(
     int special, DGNode* node, DGNodeList** defs, DGNodeList** uses, int isWrite
 );
@@ -478,7 +479,7 @@ static void findsuccessors(DGNode* node) {
             case 0:
                 if (op->flags & 2) {
                     serializeregister(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         0,
                         node,
                         &register_defs[op->rclass][op->reg],
@@ -494,7 +495,7 @@ static void findsuccessors(DGNode* node) {
                 }
                 break;
             case 1:
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 serializeregister(
                     1, node, &special_defs[op->reg], &special_uses[op->reg], op->flags & 2
                 );
@@ -520,7 +521,7 @@ static void findsuccessors(DGNode* node) {
             case 0:
                 if (op->flags & 1) {
                     serializeregister(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         0,
                         node,
                         &register_defs[op->rclass][op->reg],
@@ -536,7 +537,7 @@ static void findsuccessors(DGNode* node) {
                 }
                 break;
             case 1:
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 serializeregister(
                     1, node, &special_defs[op->reg], &special_uses[op->reg], op->flags & 2
                 );
@@ -621,7 +622,7 @@ static void serialize_store(DGNode* node) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 static void serializeregister(
     int special, DGNode* node, DGNodeList** defs, DGNodeList** uses, int isWrite
 ) {
@@ -755,7 +756,7 @@ static int func_004B5F30(MPCode* instr) {
     }
     count = instr->argcount;
     for (op = instr->args, n = count; n--; op++) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (op->kind == 0 &&
             (op->flags & 1) &&
             !DEDICATED(op->rclass, op->reg) &&
@@ -775,7 +776,7 @@ static int func_004B5F30(MPCode* instr) {
         }
     }
     for (op = instr->args, n = count; n--; op++) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (op->kind == 0 &&
             (op->flags & 2) &&
             !DEDICATED(op->rclass, op->reg) &&
@@ -808,7 +809,7 @@ static void func_004B60F0(MPCode* instr) {
     int n;
 
     for (op = instr->args, n = instr->argcount; n--; op++) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (op->kind == 0 &&
             (op->flags & 1) &&
             !DEDICATED(op->rclass, op->reg) &&
@@ -822,7 +823,7 @@ static void func_004B60F0(MPCode* instr) {
         }
     }
     for (op = instr->args, n = instr->argcount; n--; op++) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (op->kind == 0 &&
             (op->flags & 2) &&
             !DEDICATED(op->rclass, op->reg) &&
@@ -851,7 +852,7 @@ static void func_004B61E0(MPCodeBlock* block) {
         avail[rclass] = func_00462160(rclass);
         live[rclass] = 0;
         for (i = 0; i < data_00625A98[rclass]; i++) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (BITSET(data_0062541C[rclass].blocks[block->number].livein, i) &&
                 !DEDICATED(rclass, i)) {
 #else
@@ -865,7 +866,7 @@ static void func_004B61E0(MPCodeBlock* block) {
     for (rclass = 0; rclass < 7; rclass++) {
         refcount[rclass] = oalloc(sizeof(SInt32) * data_00625A98[rclass]);
         for (i = 0; i < data_00625A98[rclass]; i++) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             refcount[rclass][i] =
                 BITSET(data_0062541C[rclass].blocks[block->number].liveout, i) ? 1 : 0;
 #else
@@ -882,7 +883,7 @@ static void func_004B61E0(MPCodeBlock* block) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 
 #pragma pack(2) // see the statics above
 #endif

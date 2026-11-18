@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #if MWCCPS2
 #include "compiler/common.h"
 #include "psp/BE.h"
@@ -33,13 +34,13 @@ static int pipeof(MOperand* op) {
 
     def = (MPCode*)MOP_OBJ(*op);
     switch (def->op) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xBA):
 #else
         case 0xBA:
 #endif
             return -1;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x7C):
         case OPC(0x7D):
         case OPC(0xA8):
@@ -71,7 +72,7 @@ static int pipeof(MOperand* op) {
         case 0x469:
 #endif
             return 0;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x1D3):
         case OPC(0x1D4):
         case OPC(0x1D7):
@@ -113,56 +114,56 @@ static void topipe1(MPCode* pc) {
     MOperand* op;
 
     switch (pc->op) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x1DB):
 #else
         case 0x1DB:
 #endif
             pc->op = 0x202;
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x1DC):
 #else
         case 0x1DC:
 #endif
             pc->op = 0x203;
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x1D5):
 #else
         case 0x1D5:
 #endif
             pc->op = 0x1D7;
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x1D6):
 #else
         case 0x1D6:
 #endif
             pc->op = 0x1D8;
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xA8):
 #else
         case 0xA8:
 #endif
             pc->op = 0x1FA;
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xA9):
 #else
         case 0xA9:
 #endif
             pc->op = 0x1FB;
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xB2):
 #else
         case 0xB2:
 #endif
             pc->op = 0x1FD;
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xB3):
 #else
         case 0xB3:
@@ -177,7 +178,7 @@ static void topipe1(MPCode* pc) {
             pc->op = 0x440;
             break;
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x7C):
 #else
         case 0x7C:
@@ -186,7 +187,7 @@ static void topipe1(MPCode* pc) {
             pc->op = 0x1D3;
             break;
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x43F):
             pc->op = 0x440;
             break;
@@ -206,7 +207,7 @@ static void topipe1(MPCode* pc) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // b69 (0x4A6A30): the pipeline of a register operand's value: its defining
 // instruction's, or the first known one among that instruction's inputs
 static int pipeof69(MOperand* op) {
@@ -248,7 +249,7 @@ static int pipeof69(MOperand* op) {
 static void pipeline1block(MPCodeBlock* block) {
     MPCode* pc;
     MPCode* next;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     MOperand* o;
 #else
     int n0;
@@ -258,7 +259,7 @@ static void pipeline1block(MPCodeBlock* block) {
 #endif
     int a;
     int b;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     int i;
     UInt8 skip;
 #else
@@ -266,7 +267,7 @@ static void pipeline1block(MPCodeBlock* block) {
     Boolean skip; // also the scan's keep-going flag
 #endif
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     n0 = 0;
     n1 = 0;
     nhilo = 0;
@@ -274,7 +275,7 @@ static void pipeline1block(MPCodeBlock* block) {
 #endif
     skip = 0xFF;
     for (pc = block->first; pc; pc = pc->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (pc->op != ps2_pipeop1_637322 &&
             pc->op != ps2_pipeop2_6371D0 &&
             pc->op != ps2_pipeop3_63732A) {
@@ -302,7 +303,7 @@ static void pipeline1block(MPCodeBlock* block) {
 #if MWCCPS2_BUILD >= 210
             case 0x440:
 #endif
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                 n1++;
                 break;
             case 0xA8:
@@ -340,7 +341,7 @@ static void pipeline1block(MPCodeBlock* block) {
             skip = 0;
             continue;
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         a = pipeof69(&pc->args[1]);
         b = pipeof69(&pc->args[2]);
         if (a == -1 && b == -1) {
@@ -349,13 +350,13 @@ static void pipeline1block(MPCodeBlock* block) {
         b = pipeof(&pc->args[2]);
 #endif
 #if MWCCPS2_BUILD < 210
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             // b145: an operand from pipeline 1 moves only this instruction
             if (a != -1 || b != -1) {
                 if (a == 1 || b == 1) {
 #endif
                     topipe1(pc);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     for (next = pc->next; next; next = next->next) {
                         if (next->op == OPC(0xA8) && (MPCode*)MOP_OBJ(next->args[1]) == pc) {
                             next->op = 0x1FA;
@@ -366,14 +367,14 @@ static void pipeline1block(MPCodeBlock* block) {
             skip = 1;
 #endif
                                 }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                             }
                             else if (!skip) {
 #endif
 #else
         if ((a == -1 && b == -1) || a == 1 || b == 1) {
 #endif
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                                 skip = 1;
                                 topipe1(pc);
                                 for (next = pc->next; next && skip; next = next->next) {
@@ -385,20 +386,20 @@ static void pipeline1block(MPCodeBlock* block) {
 #endif
                                             }
                                             break;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                                         case 0xA9:
                                             if ((MPCode*)MOP_OBJ(next->args[1]) == pc) {
                                                 op = 0x1FB;
 #endif
                                             }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                                             break;
                                         case 0x1D5:
                                             if ((MPCode*)MOP_OBJ(next->args[3]) == pc) {
                                                 op = 0x1D7;
 #endif
                                             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                             for (next = pc->next; next; next = next->next) {
                                                 if (next->op == OPC(0xA9) &&
                                                     (MPCode*)MOP_OBJ(next->args[1]) == pc) {
@@ -434,12 +435,12 @@ case 0x43F:
                                                             o->reg = 1;
                                                         }
                                                     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                                     break;
 #endif
                                                 }
                                             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                             skip = 1;
                                     }
                                     else if (a == 1 || b == 1) {

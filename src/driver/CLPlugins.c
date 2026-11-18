@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/CLPlugins.h"
 #include "compiler/win32.h"
 #include "driver/CLErrors.h"
@@ -149,7 +150,7 @@ static const char* Plugin_GetDisplayName(Plugin* pl) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (-1)
 #endif
@@ -171,12 +172,12 @@ const char* Plugin_GetDropInName(Plugin* pl) {
         return "(no name found)";
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (-1)
 #endif
@@ -199,7 +200,7 @@ const VersionInfo* Plugin_GetVersionInfo(Plugin* pl) {
         return &fakeversion;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif
@@ -260,7 +261,7 @@ DropInFlags* Plugin_GetDropInFlags(Plugin* pl) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (-1)
 #endif
@@ -280,12 +281,12 @@ OSType Plugin_GetPluginType(Plugin* pl) {
         return 'NONE';
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (-1)
 #endif
@@ -311,12 +312,12 @@ const CWTargetList* Plugin_CL_GetTargetList(Plugin* pl) {
         return &faketl;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (-1)
 #endif
@@ -340,12 +341,12 @@ const CWPanelList* Plugin_GetPanelList(Plugin* pl) {
         return &fakepnl;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (-1)
 #endif
@@ -371,12 +372,12 @@ const CWExtMapList* Plugin_CL_GetExtMapList(Plugin* pl) {
         return &fakeel;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (-1)
 #endif
@@ -399,12 +400,12 @@ const OSFileTypeMappingList* Plugin_GetFileTypeMappingList(Plugin* pl) {
         return NULL;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (-1)
 #endif
@@ -432,7 +433,7 @@ const CWObjectFlags* Plugin_CL_GetObjectFlags(Plugin* pl) {
         return &fake;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif
@@ -512,7 +513,7 @@ Boolean Plugin_MatchesType(Plugin* pl, OSType type, OSType lang, Boolean exact) 
     return FALSE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (-1)
 #endif
@@ -536,12 +537,12 @@ Boolean Plugin_Pr_MatchesPlugin(Plugin* pl, CLPluginInfo* pluginfo, OSType cpu, 
         return FALSE;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (-1)
 #endif
@@ -565,7 +566,7 @@ Boolean Plugin_Pr_MatchesPanels(Plugin* pl, int numPanels, const char** panelNam
         return FALSE;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif
@@ -718,7 +719,7 @@ static Boolean SupportedPlugin(Plugin* pl, const char** reason) {
             (cof->flags & 0x3FFFFFFF) ||
             (cof->flags & 0xC0000000) == 0xC0000000) {
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (cof->version < 2 ||
             cof->flags & 0x3FFFFFFF ||
             (cof->flags & 0xC0000000) == 0xC0000000) {
@@ -1274,7 +1275,7 @@ Plugin* Plugins_GetParserForPlugin(
     return pick;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT (22)
 #endif
@@ -1306,7 +1307,7 @@ int Plugins_GetPluginList(Plugin* list, int* numPlugins, CLPluginInfo** pluginIn
         OS_ASSERT(1295, df != NULL);
         OS_ASSERT(1296, vi != NULL);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         OS_ASSERT(1273, df != NULL);
         OS_ASSERT(1274, vi != NULL);
 #else
@@ -1325,7 +1326,7 @@ int Plugins_GetPluginList(Plugin* list, int* numPlugins, CLPluginInfo** pluginIn
 
     return TRUE;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef OS_B52_SHIFT
 #define OS_B52_SHIFT 0
 #endif

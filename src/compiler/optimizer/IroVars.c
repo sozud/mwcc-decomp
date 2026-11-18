@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/IroVars.h"
 #include "compiler/IroDump.h"
 #if MWCCPSP
@@ -25,7 +26,7 @@
 #include "compiler/types.h"
 #if MWCCPSP
 #include "compiler/CMachine.h"
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #include "compiler/CScope.h"
 #include <string.h>
 #if !defined(EAT_UNK18)
@@ -287,7 +288,9 @@ void IRO_InitializeIRO_IsModifyOpArray(void) {
     IRO_IsModifyOp[EDEFINE] = FALSE;
     IRO_IsModifyOp[EREUSE] = FALSE;
     IRO_IsModifyOp[EASSBLK] = FALSE;
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     IRO_IsModifyOp[EVECTOR128CONST] = FALSE;
+#endif
     IRO_IsModifyOp[ECONDASS] = TRUE;
 }
 #endif
@@ -466,7 +469,9 @@ void IRO_InitializeIRO_IsAssignOpArray(void) {
     IRO_IsAssignOp[EDEFINE] = FALSE;
     IRO_IsAssignOp[EREUSE] = FALSE;
     IRO_IsAssignOp[EASSBLK] = FALSE;
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     IRO_IsAssignOp[EVECTOR128CONST] = FALSE;
+#endif
     IRO_IsAssignOp[ECONDASS] = TRUE;
 }
 #endif
@@ -521,7 +526,7 @@ VarRecord* IRO_FindVar(Object* object, Boolean create, Boolean allowRegister) {
     if (var && (IRO_CheckVar(IRO_VarCheckList, var), !allowRegister)) {
 #endif
         var->noregister = TRUE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (IRO_IsLocalObject(object) &&
             object->u.var.info &&
             object->u.var.info->noregister == 0) {
@@ -572,10 +577,15 @@ VarRecord* IRO_FindVar(Object* object, Boolean create, Boolean allowRegister) {
 
     if (var && !allowRegister) {
         var->noregister = TRUE;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+        if (object->datatype == DLOCAL && (vi = object->u.var.info) && vi->noregister == 0) {
+            vi->noregister = 2;
+#else
         if (object->datatype == DLOCAL &&
             object->u.var.info &&
             object->u.var.info->noregister == 0) {
             object->u.var.info->noregister = 2;
+#endif
         }
     }
 
@@ -683,7 +693,7 @@ static inline void FindVarEH(Object* object, Boolean lookupOnly, Boolean allowRe
     }
     if (var && !allowRegister) {
         var->noregister = TRUE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (IRO_IsLocalObject(object) &&
             object->u.var.info &&
             object->u.var.info->noregister == 0) {
@@ -807,7 +817,7 @@ static inline VarRecord* FindVar(Object* object, Boolean allowRegister) {
 
     if (var && !allowRegister) {
         var->noregister = TRUE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (IRO_IsLocalObject(object) &&
             object->u.var.info &&
             object->u.var.info->noregister == 0) {
@@ -944,7 +954,7 @@ void IRO_UpdateVars(void) {
                 }
                 if (var && !notaddr) {
                     var->noregister = TRUE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (IRO_IsLocalObject(obj) &&
                         obj->u.var.info &&
                         obj->u.var.info->noregister == 0) {
@@ -971,7 +981,7 @@ void IRO_UpdateVars(void) {
                 }
                 if (var && !notaddr) {
                     var->noregister = TRUE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (IRO_IsLocalObject(obj) &&
                         obj->u.var.info &&
                         obj->u.var.info->noregister == 0) {
@@ -1426,7 +1436,7 @@ extern void* CABI_GetSizeTType(void);
 // 0x569B40: what nd may change: the buffer argument of __clear(void*,
 // size_t), only the errno variable for a library function that sets nothing
 // else, else the variables a store of its size (or any write) may reach
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #define MWCCPS2_B52_ON 1
 #endif
 void func_00569B40(BitVector* bv, IROLinear* nd) {
@@ -1438,7 +1448,7 @@ void func_00569B40(BitVector* bv, IROLinear* nd) {
     SInt32 size;
     BitVector** table;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!MWCCPS2_B52_ON &&
         nd->type == IROLinearFunccall &&
         (callee = nd->u.funccall.callee)->type == IROLinearOperand &&
@@ -1486,7 +1496,7 @@ void func_00569B40(BitVector* bv, IROLinear* nd) {
         Bv_SetBit(var->index, bv);
         return;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (nd->type == IROLinearFunccall &&
         (callee = nd->u.funccall.callee)->type == IROLinearOperand &&
         callee->u.node->type == EOBJREF &&
@@ -1513,7 +1523,7 @@ void func_00569B40(BitVector* bv, IROLinear* nd) {
         table = IRO_SizeKills;
     } else {
         size = 0;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         table = IRO_SizeKills;
 #else
         table = &IRO_KillWritable;
@@ -1584,7 +1594,7 @@ static void GetKillsByIndirectAssignment(IROLinear* linear) {
 
     inner = linear->u.monadic;
     result = FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (inner &&
         inner->type == IROLinearOp1Arg &&
         inner->nodetype == EINDIRECT &&
@@ -1912,7 +1922,7 @@ void IRO_CheckInit(void) {
         for (nd = IRO_FirstLinear; nd; nd = nd->next) {
             if (nd->type == IROLinearBeginCatch && nd->stmt) {
                 for (act = nd->stmt->dobjstack; act; act = act->prev) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (act->type == EAT_CATCHBLOCK &&
                         act->data.catch_block.catch_object &&
 #else
@@ -2153,6 +2163,12 @@ void IRO_RewriteBitFieldTemps(void) {
 #endif
 #endif
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT (-1)
+#endif
+#endif
 #if MWCCPSP
 #if MWCCPS2 || !MWCCPSP // 3.0.1 (PSP): src/psp/optimizer/IroScalarization301.c
 #if MWCCPS2
@@ -3300,7 +3316,7 @@ static void CountRefToObject(Object* object, int depth) {
     object->u.var.info->used = TRUE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-515)
 #endif
@@ -3319,7 +3335,7 @@ void IRO_CountARef(IROLinear* node, int depth) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -3367,7 +3383,7 @@ void IRO_CountUsage(void) {
                     IRO_CountARef(node, fnode->loopdepth);
                 } else if (IS_LINEAR_MONADIC(node, EINDIRECT)) {
                     IRO_CountDoubleInd(node->u.monadic, fnode->loopdepth);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 } else if (node->type == IROLinearAsm &&
                            IRO_GetAsmEffectsHook &&
                            node->u.asm_stmt) {
@@ -3410,7 +3426,7 @@ extern BitVector* IRO_KillAll;
 extern BitVector* IRO_KillWritable;
 
 static Boolean MayBeWritten(Object* obj) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // b52 (0x51EF30) has no read-only test: a const object is killed too
     return TRUE;
 #endif
@@ -3463,7 +3479,7 @@ void IRO_ComputeKillSets(void) {
             if (MayBeWritten(obj)) {
                 NeedVector(&IRO_KillWritable);
                 Bv_SetBit(var->index, IRO_KillWritable);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 // b52 (0x51F155): the size table it reads (0x5A2810) has every
                 // addressed or global variable; the global/static subset goes
                 // to a second table (0x5A180C) nothing here reads
@@ -3476,7 +3492,7 @@ void IRO_ComputeKillSets(void) {
                         obj->sclass != TK_STATIC;
 #endif
                     if (!isGlobal &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         (!(obj->datatype == DDATA || obj->datatype == DABSOLUTE) ||
                          obj->sclass != TK_STATIC ||
                          0 /* 3.0.1 u.data.islocalstatic: b52 has none (as b69; unverified) */)) {
@@ -3626,6 +3642,10 @@ static Boolean FunctionCallMightUseOrKillAnyAddressedVar(IROLinear* funccall) {
 
     return result;
 }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT 0
+#endif
 
 static Boolean IndirectMightUseOrKillAnyAddressedVar(IROLinear* indirect) {
     IROListNode* next;
@@ -3693,6 +3713,10 @@ static Boolean IndirectMightUseOrKillAnyAddressedVar(IROLinear* indirect) {
     return result;
 }
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT (-1)
+#endif
 void IRO_ScalarizeClassDataMembers(void) {
     IROLinear* nd;
     Object* obj;
@@ -3830,7 +3854,15 @@ void IRO_ScalarizeClassDataMembers(void) {
 
     IRO_CheckForUserBreak();
 }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT 0
+#endif
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT (-1)
+#endif
 static int CheckAddress(IROLinear* nd, Boolean* resultFlag) {
     IROLinear* inner;
     Object* obj;
@@ -3891,6 +3923,10 @@ static int CheckAddress(IROLinear* nd, Boolean* resultFlag) {
 
     return FALSE;
 }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT 0
+#endif
 
 static int CheckAddressConsistency(IROLinear* nd, VarRecord* var, SInt32 addend, Type* type) {
     IndirectRecord* rp;

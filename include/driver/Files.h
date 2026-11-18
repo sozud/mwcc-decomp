@@ -1,10 +1,10 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_FILES_H
 #define DRIVER_FILES_H
 
 #include "compiler/common.h"
 #include "driver/oslib.h"
 
-#if MWCCPS2_B52
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -14,24 +14,20 @@ extern "C" {
 typedef struct FSSpec {
     SInt16 vRefNum;
     SInt32 parID;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // b52's specs are 3.0.1's OSSpec size (0x204): it copies them with rep
     // movsd ecx=0x81 (15 places, none of FSSpec's 0x46), and
     // CWPluginPrivateContext.shellSignature is at +0x418 = 0x10 + 2 * 0x204
     // (ValidateContext). A 510-byte name keeps FSSpec's fields; the real
     // b52 driver probably uses OSSpec itself, as 3.0.1's shell does
     UInt8 name[510];
+#else
+    UInt8 name[64];
+#endif
 } FSSpec;
 typedef struct FSSpec CWFileSpec;
 #else
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#pragma pack(push, 2)
-
-typedef struct FSSpec {
-    SInt16 vRefNum;
-    SInt32 parID;
     UInt8 name[64];
 } FSSpec;
 #if MWCCPSP && MWCCPSP_DRIVER && !MWCCPSP_DRIVER_PLUGIN && !MWCCPSP_MAC_FILESPEC

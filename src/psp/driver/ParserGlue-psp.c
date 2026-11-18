@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // mwccpsp 3.0.1: the PSP command-line parser tool (0x406A90..0x406E50),
 // mweppc's ParserGlue-eabi-ppc-cc.c for the PSP. 3.0.1 has two option sets:
 // the Metrowerks one and "GCC compatible options", picked by a first
@@ -34,7 +35,7 @@ extern ParserTool parser_mw; // 0x5BDA04
 extern ParserTool parser_gcc; // 0x5BDA8C
 extern ParserTool parser_dispatch; // 0x5BDB04
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern int func_0040E5A0(void); // the GCC compatible tool's PreParse
 extern int func_0040E640(void); // its MidParse
 extern int func_0040E750(void); // its PostParse
@@ -52,14 +53,14 @@ extern int func_004148F0(const char* a, const char* b); // a case-insensitive co
 
 #if MWCCPSP_NATIVE
 // the native build's option tables (src/native/parser_tables.c) point at it
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern Boolean useDefaultIncludes; // 0x510E3C
 extern int gcc_compat; // 0x57AB64
 #else
 Boolean useDefaultIncludes = TRUE;
 #endif
 // the panels those tables define, at their 3.0.1 sizes
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 typedef char check_pCmdLine[sizeof(PCmdLine) == 28 ? 1 : -1];
 typedef char check_pCmdLineLinker[sizeof(PCmdLineLinker) == 6 ? 1 : -1];
 typedef char check_pFrontEndC[sizeof(PFrontEndC) == 320 ? 1 : -1];
@@ -69,7 +70,7 @@ typedef char check_pGlobalOptimizer[sizeof(PGlobalOptimizer) == 12 ? 1 : -1];
 #else
 static Boolean useDefaultIncludes = TRUE; // 0x5B0C2C
 #endif
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 static int gcc_compat; // 0x624B5C
 #endif
 
@@ -87,7 +88,7 @@ TOOL_CALLBACK int PreParse(void) {
         setLinkerOutputFilename = FALSE;
         linkerOutputFilename[0] = 0;
         definesHandle = NULL;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (!GccPreParse()) {
 #else
     } else if (!func_00412800()) {
@@ -102,7 +103,7 @@ TOOL_CALLBACK int MidParse(void) {
     const char* env;
 
     if (gcc_compat) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (!GccMidParse()) {
 #else
         if (!func_004128B0()) {
@@ -128,7 +129,7 @@ TOOL_CALLBACK int MidParse(void) {
     return TRUE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #define PREFIXNAME oldprefixname // GC's PFrontEndC (b69 0x510B41: pFrontEndC + 9)
 
 #endif
@@ -140,7 +141,7 @@ TOOL_CALLBACK int PostParse(void) {
     static const char* name = "(command-line defines)";
 
     if (gcc_compat) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (!GccPostParse()) {
 #else
         if (!func_004129E0()) {
@@ -163,13 +164,13 @@ TOOL_CALLBACK int PostParse(void) {
                 ShowTextHandle(name, definesHandle);
             }
             AddVirtualFile(name, &definesHandle);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             c2pstrcpy((StringPtr)pFrontEndC.PREFIXNAME, name);
 #else
             c2pstrcpy((StringPtr)pFrontEndC.prefixname, name);
 #endif
         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             pFrontEndC.PREFIXNAME[0] = 0;
 #else
             pFrontEndC.prefixname[0] = 0;
@@ -207,7 +208,7 @@ TOOL_CALLBACK int Dispatch_PreParse(void) {
         Arg_AddToToolArgs(&linkargs, ATK_ARG, "--gcc-compat");
     } else {
         env = getenv("MWCL_GCC_COMPAT");
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (env && CaseCompare(env, "off") && CaseCompare(env, "no")) {
 #else
         if (env && func_004148F0(env, "off") && func_004148F0(env, "no")) {
@@ -243,7 +244,7 @@ int RegisterStaticParserToolInfo(void) {
 }
 
 #if MWCCPS2
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 // b210 0x5C9C44: the target pragmas the command line can set
 extern UInt8 data_00625B1A;
 extern UInt8 data_00625B1B;

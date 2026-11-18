@@ -1,8 +1,9 @@
+#include "compiler/mwcc_core.h"
 #ifndef PSP_BE_H
 #define PSP_BE_H
 
 #include "compiler/common.h"
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #include "psp/OpcodesB52.h"
 #endif
 #include <stddef.h>
@@ -28,7 +29,7 @@ typedef enum RegClass301 {
 
 // 1 << n as x86 computes it (the count taken mod 32; register masks shift by
 // VFPU register numbers up to 127)
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #include <stdio.h>
 #include <stdlib.h>
 #define BE_TRACE(args) \
@@ -163,20 +164,35 @@ typedef struct MPCode {
     struct MPCode* prev; // +0x04
     struct MPCodeBlock* block; // +0x08
     UInt32 flags; // +0x0C; 0x4000000: target is one instruction further;
+#if MWCC_CORE == MWCC_CORE_B52
     // 0x100000: alignment directive; 0x40000000: emit last in block
     SInt32 useID; // +0x10: the first of its uses (UseDefChains)
     SInt32 defID; // +0x14: the first of its definitions
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+    // 0x100000: alignment directive; 0x40000000: emit last in block
+    SInt32 useID; // +0x10: the first of its uses (UseDefChains)
+    SInt32 defID; // +0x14: the first of its definitions
+#endif
     struct Alias* alias; // +0x18: memory operand's alias
     SInt32 offset; // +0x1C: byte offset in the function
     SInt32 unk20; // +0x20: copied from the neighbour on insertion
     SInt32 unk24; // +0x24: likewise
     UInt16 op; // +0x28
     SInt16 argcount; // +0x2A
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     UInt8 unk2C[4];
-#endif
     UInt32 word; // +0x30: the encoded instruction
+#endif
+#if MWCC_CORE != MWCC_CORE_B52
     struct Object* relobj; // +0x34: object a relocation refers to
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+    UInt32 word; // +0x28
+#if MWCC_CORE == MWCC_CORE_B52
+    struct Object* relobj; // +0x34: object a relocation refers to
+#endif
+#endif
     SInt32 unk38; // +0x38: relocation kind (1, 5 hi, 6 lo, 7/8 $gp, ...)
     struct MPCode* pair; // +0x3C: the lui of a hi/lo pair
     MOperand args[1]; // +0x40

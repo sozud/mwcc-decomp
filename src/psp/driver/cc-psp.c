@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // mwccpsp 3.0.1: the static compiler and linker plugins (0x4102B0..0x4104B0),
 // mweppc's cc-eabi-ppc.c with the PSP values (data at 0x5BFF9C..0x5C03F0)
 #include "driver/CCompiler.h"
@@ -14,7 +15,7 @@ static CWPLUGIN_ENTRY(CWPlugin_GetDropInFlags)(const DropInFlags** flags, SInt32
         DROPINCOMPILERLINKERAPIVERSION_8,
         kGeneratescode | kCanpreprocess | kCanprecompile,
         Lang_C_CPP,
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         12
 #else
         13
@@ -148,7 +149,7 @@ static CWPLUGIN_ENTRY(Linker_GetDropInFlags)(const DropInFlags** flags, SInt32* 
         DROPINCOMPILERLINKERAPIVERSION_8,
         1,
         '****',
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         12
 #else
         13
@@ -181,7 +182,7 @@ static CWPLUGIN_ENTRY(Linker_GetDisplayName)(const char** displayName) {
 static CWPLUGIN_ENTRY(Linker_GetPanelList)(const CWPanelList** panelList) {
 #if MWCCPS2
     // b210 0x5D9350
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     static const char* lsPanelNames[3] = {
         "PS2 MIPS CodeGen", "MIPS Bare Linker Panel", "MIPS Bare Project"
     };
@@ -252,7 +253,7 @@ int RegisterStaticCompilerPlugin(void) {
         RegisterStaticCompilerLinkerPlugin(&lk_cb, &lk_cl_cb);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #include "cc-ps2-b69.r" // re/gen_cc_b69.py
 #else
 #include "cc-psp.r"

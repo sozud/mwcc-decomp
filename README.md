@@ -1,173 +1,43 @@
-# Metrowerks CodeWarrior
+# Native Metrowerks compilers for PSP and PS2
 
-A decompilation of the Metrowerks CodeWarrior toolchain. Currently supported versions:
+Decompiled Metrowerks CodeWarrior C/C++ compilers for PlayStation Portable and PlayStation 2, built as native 64-bit
+programs (x86-64 or arm64, macOS or Linux) that produce the same object files as the originals. Decompilation projects
+can use them instead of running the Windows executables under wibo or Wine.
 
-| Compiler       | Version    | Internal version | Exact functions | Linked functions    | Linked bytes | Notes                         |
-| -------------- | ---------- | ---------------- | --------------- | ------------------- | ------------ | ----------------------------- |
-| GameCube 2.0   | `GC_2_0`   | 2.4.7 build 92   | 4016 / 4065     | 2850 / 4068 (70.1%) | 54.3%        |                               |
-| GameCube 2.0p2 | `GC_2_0p2` | 2.4.7 build 92   | 4019 / 4068     | 2853 / 4071 (70.1%) | 54.3%        | GameCube 2.0 patched for BFBB |
-| GameCube 2.5   | `GC_2_5`   | 2.4.7 build 105  | 4026 / 4076     | 2860 / 4079 (70.1%) | 54.3%        |                               |
-| GameCube 2.6   | `GC_2_6`   | 2.4.7 build 107  | 4027 / 4077     | 2860 / 4080 (70.1%) | 54.4%        |                               |
-| GameCube 2.7   | `GC_2_7`   | 2.4.7 build 108  | 4033 / 4084     | 2848 / 4087 (69.7%) | 54.2%        |                               |
+| Compiler | Version | Used by | Release tag | Exact |
+| -------- | ------- | ------- | ----------- | ----- |
+| `mwccpsp` | PSP 3.0.1 build 219 | [Castlevania: Symphony of the Night](https://github.com/Xeeynamo/sotn-decomp) | `mwccpsp-*` | ![mwccpsp](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sozud/mwcc-info/main/mwccpsp.json) |
+| `mwccps2` | PS2 3.0.1 build 210 | Persona 4 | `mwccps2-*` | ![mwccps2 b210](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sozud/mwcc-info/main/mwccps2.json) |
+| `mwccps2` b52 | PS2 3.0 build 52 | [Monster Hunter](https://github.com/itsbigcforme67/mh1-xbox) | `mwccps2-b52-*` | ![mwccps2 b52](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sozud/mwcc-info/main/mwccps2-b52.json) |
+| `mwccps2` b69 | PS2 build 69 (version string 3.0.3) | Silent Hill 3 | `mwccps2-b69-*` | ![mwccps2 b69](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sozud/mwcc-info/main/mwccps2-b69.json) |
 
-- **Exact:** the compiled function has identical assembly to the original binary.
-- **Linked:** the functions whose translation unit links identically to the original executable.
+Each release has `<compiler>-native64-<os>-<arch>.tar.gz` for linux-amd64, darwin-amd64 and darwin-arm64.
 
-- Every function that isn't currently exact has been proven equivalent (see: `tools/prove.py`), compiles from source
-  alone, and has been checked against a number of decompilations to make sure it produces identical assembly to the
-  original binary.
-- Currently only the C/C++ compiler has been decompiled (`mwcceppc.exe`). See [future work](#future-work) for more
-  information.
-- 2.0p2 is not an official binary; it models the observed side effects of compiling the [*Battle for Bikini
-  Bottom*](https://github.com/bfbbdecomp/bfbb) decompilation against GameCube 2.0 since it seems to have been compiled
-  with a unique patched compiler. See [below](#battle-for-bikini-bottom-20p2) for more information.
+"Exact" is the share of the original executable's function bytes that our source reproduces byte for byte (from
+[sozud/mwcc-info](https://github.com/sozud/mwcc-info)). The natives match the originals' output on everything their
+corpora reach well beyond that: functions that aren't byte-exact are still written to behave identically, which the
+corpora below check.
 
-## Getting started
+## How they are built
 
-### Dependencies
+All four come from one set of sources (`src/`, `include/`), a fork of [doldecomp/mweppc](https://github.com/doldecomp/mweppc),
+the decompilation of CodeWarrior for GameCube. A build picks its version with defines:
 
-- Linux (x86-64, or arm64 for the clang build alone), macOS or Windows.
-- Python 3.11 or newer, with [uv](https://docs.astral.sh/uv/) installed.
-- The [ninja](https://ninja-build.org) build system.
-- [LLVM](https://llvm.org) 16 or newer: `clang`, `lld-link`, `ld.lld`, `llvm-rc` and `llvm-dlltool` (Debian and Ubuntu:
-  `clang`, `lld` and `llvm`).
+- `MWCCPSP`: the PSP compiler's changes to the shared front end and optimizer; its MIPS back end, driver and the
+  optimizer passes 3.0.1 rewrote are in `src/psp/`.
+- `MWCCPS2` (with `MWCCPSP`): PS2 3.0.1 build 210 (a 128-bit `CInt64`, its options, the R5900 opcode table and
+  instruction set, assert line numbers); `MWCCPS2_BUILD` names the build.
+- `MWCC_CORE` (`include/compiler/mwcc_core.h`): the older PS2 builds 69 and 52, ordered by their code (b69, then b52,
+  then 3.0.1). Their differences are guarded by position: `#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52` for what
+  both have, `MWCC_CORE < MWCC_CORE_B52` for b69 only, `MWCC_CORE == MWCC_CORE_B52` for b52 only. `-DMWCCPS2_B69=1`
+  or `-DMWCCPS2_B52=1` selects the position; for every other build `MWCC_CORE` is 0.
 
-Everything else (the original compilers, library code used straight from CodeWarrior discs, and various tooling) are
-downloaded automatically and verified against a pinned SHA-256.
+The native build compiles the units with clang (`-fwrapv -fno-strict-aliasing -fsigned-char -fshort-enums`, LP64
+paths under `MWCCPSP_NATIVE`), and takes what the sources don't define (parser tables, strings, data tables) from the
+original executable at build time, using the symbol files' addresses. What no test reaches may still be missing: the
+program stops with "not implemented" at the first function without source.
 
-### Building
-
-```sh
-uv sync
-source .venv/bin/activate
-python configure.py
-ninja
-```
-
-By default, this builds every supported compiler with clang under `build/VERSION/clang/mwcceppc.exe`, as well as
-`compile_commands.json` for LSP support. This should be a drop-in replacement to the original compiler and can be used
-the same as before. It also has support for UTF-8 -> Shift-JIS support by setting `MWCC_SJIS=1` in your environment,
-superceding the need for [sjiswrap](https://github.com/encounter/sjiswrap).
-
-On x86 Linux it also builds `build/VERSION/native/mwcceppc` (`ninja native`), a static 32-bit Linux program that runs
-without [wibo](https://github.com/decompals/wibo) and supports `MWCC_SJIS=1` the same way.
-
-`configure.py --version GC_2_6` configures only the specified versions to be built using clang.
-
-`configure.py --mwcc` sets up the original matching workflow instead, and `ninja` then builds every supported compiler
-and verifies it matches the original binary. It builds `build/VERSION/source-only/mwcceppc.exe` from just the source
-code, which may be equivalent but may be non-matching.
-
-`configure.py --matching` (implies `--mwcc`) builds `build/VERSION/mwcceppc.exe` using a combination of matched/linked
-TUs and original objects; 1:1 to the original compiler. It also builds `mwcceppc-dwarf.exe` which has DWARF 4 metadata
-embedded, plus `mwcceppc-debug.exe` + `mwcceppc-debug.pdb` which contains debug information, either of which can be used
-in IDA Pro, Ghidra, or Binary Ninja.
-
-### Tooling
-
-Every tool in `tools/` runs with the venv's `python` and explains itself with `--help`.
-
-- `status.py VERSION --todo`: the units nearest to linking, and what blocks each.
-- `fn.py`: a function's original code, its diff against the compiled code, and alternative definitions tried in
-  parallel.
-- `unit.py`, `headers.py`, `includes.py`: move functions, declarations and includes to where they belong.
-- `rename.py`: rename anything everywhere: code, configuration and symbols.
-- `evidence.py`: what each function is called, from the original's asserts and the Wii compilers' symbols.
-- `verify.py` and `regressions.py`: check every version, and what stopped matching since your saved baseline.
-- `layout.py`, `relink.py`: lay out the original's symbols, and see which sources link into it.
-- `prove.py`: prove an inexact function equivalent to the original's.
-- `equivalence.py`: compile a decompilation project's sources with two compilers and compare the objects.
-- `clang_check.py`, `truefalse.py`, `update_assert_lines.py`: source checks and fix-ups.
-- `bindings.py`, `validate.py`, `compilers.py`, `crosscheck.py`, `port_version.py`, `gen_options.py`: the configuration,
-  and how the original was built.
-
-## Accuracy
-
-### The clang build
-
-The majority of the source code matches the original compiler, which defines what bugs exist when compiling code. All
-support needed to build equivalent objects with a modern clang compiler has been wrapped inside the `#else` version of
-`#ifdef __MWERKS__`. Some of the quirks that had to be accounted for (includes compiler flags) include:
-
-- **Floating point.** The original computes on the x87 at 64-bit precision; `include/x87.h` emulates it in integer
-  arithmetic, so results never depend on the host.
-- **Undefined behaviour.** Signed and pointer arithmetic wrap, aliasing and null checks are not assumed, and locals read
-  before being set read as zero.
-- **The original's own memory.** Where the original's output depends on its addresses, on data past the end of its
-  tables or on stale stack contents (the bugs below), the clang build reproduces the original's values.
-
-### Known bugs
-
-These are some of the known bugs of the original Metrowerks compilers (clang reproduces these as best it can):
-
-- **Code generation**
-  - A `bool` conversion is dropped when a pointer's target type sits at an address ending in `00` (`short double*` in
-    2.5 to 2.7).
-  - A load through a pointer to const is reused across stores through other pointers, and in 2.5 and later hoisted out
-    of loops: `while (*p > 0) { (*q)--; }` never ends when `p == q`.
-  - Peephole's `L_S` decides whether to delete a store from two stack words it never set.
-  - The 7450, 601 and 821 scheduling models read past the end of their tables.
-  - A float literal with a decimal exponent past about ±384 reads past MSL's table: `1e401` is 0.
-  - A source file name of 64 or 65 characters overruns its buffer, and can change the code.
-- **Hangs and crashes**
-  - `#pragma scheduling 821` with two FP-unit instructions, `mflr` among them, never finishes.
-  - Very long `-o` or `precompile_target` names, and `struct ::E` inside a class template, crash the compiler.
-- **Not reproducible**, because they vary with the host:
-  - two padding bytes in some C++ exception tables (decomp-toolkit's `extab_padding` sets them);
-  - a stack address in a local class's mangled name;
-  - heap addresses, which the `bool` conversion above depends on: the clang `.exe` gets its host's (Windows, wine or
-    wibo), the Linux build has its own;
-  - the bytes of precompiled headers;
-  - the x87's starting precision on Windows (53 bits, against 64 under wibo and in the clang build).
-- **Where the clang build differs:** it keeps going where the original crashes, and does not follow a `#pragma
-  scheduling` that switches models within one file.
-
-### Battle for Bikini Bottom (2.0p2)
-
-*Battle for Bikini Bottom*'s retail code was built with a 2.0 that no release matches. Its decompilations have used
-binary patches of 2.0 (`2.0p1`, and bfbb-vibe's `2.0p1g`). 2.0p2 is the same idea done using the decompiled source code:
-2.0 with rules of its own, each one measured on BFBB's code. Functions matching retail:
-
-| Compiler  | bfbb (of 7673) | bfbb-vibe (of 7673) | *Ratatouille*'s shared code (of 321) |
-| --------- | -------------- | ------------------- | ------------------------------------ |
-| 2.0p1     | 5474           | 6994                | 208                                  |
-| 2.0p1g    | 5724           | 7579                | 217                                  |
-| **2.0p2** | **5731**       | **7594**            | 217                                  |
-
-A GameCube prototype of [*Ratatouille*](https://github.com/seilc/rat) using the same engine was used as an independent
-check to deduce the required behavior by compiling it using BFBB's settings.
-
-Here is everything that got changed from 2.0, all aimed at globals addressed directly in small data (`sym@sda21`), which
-BFBB's developers seemingly required a custom patch to the compiler for to treat more conservatively:
-
-- floating-point literals are not const, and stores may change them;
-- a store to a small-data global may change any memory a pointer reaches;
-- the scheduler orders loads from small data like loads through a pointer;
-- a store to a global array's element forgets the small-data globals;
-- a load of a small-data global stays inside its loop;
-- two of 2.5's alias analysis changes.
-
-The "stays inside its loop" rule also covers const globals, and only one function needs that: `zParPTankSpawnSnow`,
-whose `snow_life` is declared `const` in the bfbb decompilation but sits in writable data in the retail game, and so is
-probably not `const` at all. With that fixed, the rule may not need to cover const globals; that is for BFBB decomp to
-figure out.
-
-To use 2.0p2 in a BFBB decompilation, put `build/GC_2_0p2/clang/mwcceppc.exe` in place of the project's 2.0p1
-compiler.
-
-Comparing against the retail game also shows a few places where bfbb's source differs from what the original must have
-been:
-
-- `x--; if (x == 0)` should be `if (--x == 0)` in `xSGShutdown` and ten other functions;
-- `snow_life` should not be `const`;
-- `NPAR_TubeSpiralMagic`'s colours should be `static const` locals.
-
-## PlayStation Portable 3.0.1 (`mwccpsp.exe`)
-
-The PSP compiler (3.0.1 build 219) shares most of its front end and optimizer with the GameCube compilers. Its changes
-live in the same sources under `#if MWCCPSP` (the GameCube builds read exactly the code they did before), and its MIPS
-back end, driver and the optimizer passes 3.0.1 rewrote are in `src/psp/`. It builds into a native 64-bit program with
-clang (x86-64 or arm64, macOS or Linux) that produces the same objects as the original:
+## mwccpsp (PSP 3.0.1 build 219)
 
 ```sh
 mkdir -p orig/PSP_3_0_1 && cp /path/to/mwccpsp.exe orig/PSP_3_0_1/
@@ -181,99 +51,86 @@ docker build -f tools/mwccpsp/Dockerfile -t mwccpsp .
 docker run --rm -v "$PWD/build:/out" mwccpsp
 ```
 
-The build copies the original's data tables from `mwccpsp.exe`, with `config/PSP_3_0_1/symbols*.txt` giving their
-addresses. `tools/mwccpsp/test.py` compiles the files in `tools/mwccpsp/tests/` with both compilers and compares the
-objects:
+The data tables' addresses are in `config/PSP_3_0_1/symbols*.txt`. Everything the Symphony of the Night PSP build
+reaches gives identical objects at every optimization level.
 
-```sh
-python3 tools/mwccpsp/test.py --cc build/PSP_3_0_1/mwccpsp --orig "wibo orig/PSP_3_0_1/mwccpsp.exe"
-```
-
-Pushing a tag named `mwccpsp-*` builds the compiler for Linux and macOS and attaches
-`mwccpsp-native64-<os>-<arch>.tar.gz` to a release (`.github/workflows/mwccpsp-release.yml`).
-
-Everything the [Castlevania: Symphony of the Night](https://github.com/Xeeynamo/sotn-decomp) PSP build reaches is
-decompiled and gives identical objects at every optimization level. Code it never reaches (much of C++, some
-diagnostics) is not all written yet: the program stops with "not implemented" at the first function without source.
-
-## PlayStation 2 3.0.1 (`mwccps2.exe`)
-
-The PS2 compiler (3.0.1 build 210, 2006-03-08, the one Persona 4 was built with) is nine builds older than the PSP one
-and shares most of its source, so it is built from the same files with `MWCCPS2` set as well as `MWCCPSP`: its
-differences (a 128-bit `CInt64`, its compiler options, the R5900 opcode table and instruction set, assert line numbers,
-...) are `#if MWCCPS2` blocks there, and `MWCCPS2_BUILD` (default 210) names the build. The native build takes the same
-tools with `--ps2`:
+## mwccps2 (PS2 3.0.1 build 210)
 
 ```sh
 python3 tools/mwccps2/get_orig.py      # orig/PS2_3_0_1/mwccps2.exe, from decomp.me's public image, checked by digest
 python3 tools/mwccpsp/native_build.py --ps2 -o build/PS2_3_0_1/mwccps2
 ```
 
-or in Docker:
-
-```sh
-docker build -f tools/mwccps2/Dockerfile -t mwccps2 .
-docker run --rm -v "$PWD/build:/out" mwccps2
-```
-
-`tools/mwccps2/native_ps2.py` regenerates the PS2 data tables in `src/native/ps2/` from `mwccps2.exe` before building;
-CI checks that they come out as committed. The sources name PSP addresses, so the PS2 build looks names up in
-`config/PS2_3_0_1/symbols.txt` (every name the sources use, at its b210 address) and moves the remaining PSP addresses
-through `config/PS2_3_0_1/addrmap.csv` (`tools/mwccps2/ps2_map.py`). Both are generated from the sotn-decomp tree,
-where the PS2 functions are matched against `mwccps2.exe` (see below).
-
-```sh
-python3 tools/mwccpsp/test.py --ps2 --cc build/PS2_3_0_1/mwccps2 --orig "wibo orig/PS2_3_0_1/mwccps2.exe"
-```
-
-Pushing a tag named `mwccps2-*` attaches `mwccps2-native64-<os>-<arch>.tar.gz` to a release
-(`.github/workflows/mwccps2-release.yml`).
+or `docker build -f tools/mwccps2/Dockerfile -t mwccps2 .`. `tools/mwccps2/native_ps2.py` regenerates the PS2 data
+tables in `src/native/ps2/` (CI checks they come out as committed); the sources name PSP addresses, so the build maps
+names through `config/PS2_3_0_1/symbols.txt` and `config/PS2_3_0_1/addrmap.csv` (`tools/mwccps2/ps2_map.py`).
 
 Every unit of the Persona 4 decompilation (1,008 C files, RenderWare at `-O4,p`) gives identical objects except
-`g_data.c`, which the original itself doesn't reproduce from its captured inputs. C++ the corpus never reaches stops
-with "not implemented" or an internal error.
+`g_data.c`, which the original itself doesn't reproduce from its captured inputs.
 
-## PlayStation 2 3.0 build 52 (`mwccps2.exe`, Monster Hunter)
-
-Build 52 (2003-07-22, the compiler Monster Hunter was built with) is older than both: its front end and much of its
-optimizer are the GameCube 2.x code this repository started from, its IRO optimizer is 3.0.1's with eight passes not
-there yet, and its MIPS back end is mwccps2's. It is built from the same sources with `-DMWCCPS2_B52=1`: where b52
-differs, the code is under `#if MWCCPS2_B52`, and with `MWCCPS2_B52` undefined every file is exactly what the other
-builds compile. `tools/mwccps2/b52/units.txt` lists its units with the defines each takes (no `MWCCPSP` for the
-GameCube-era units; `MWCCPSP MWCCPS2 MWCCPS2_BUILD=69` for the back end; `MWCCPSP` for the IRO optimizer). Units
-only b52 has are in `src/native/b52/` (native replacements) or excluded from the PSP build in
-`config/PSP_3_0_1/psp-exclude.txt`.
+## mwccps2 builds 69 and 52 (Silent Hill 3, Monster Hunter)
 
 ```sh
-python3 tools/mwccps2/b52/get_orig.py   # orig/PS2_3_0_b52/ and orig/PS2_3_0_1_b145/, from decomp.me's public images, checked by digest
+python3 tools/mwccps2/b69/get_orig.py   # orig/PS2_3_0_3_b69/, orig/PS2_3_0_1_b145/: decomp.me's images, checked by digest
+python3 tools/mwccps2/b69/native_b69.py -o build/PS2_3_0_3_b69/mwccps2
+python3 tools/mwccps2/b52/get_orig.py   # orig/PS2_3_0_b52/, orig/PS2_3_0_1_b145/
 python3 tools/mwccps2/b52/native_b52.py -o build/PS2_3_0_b52/mwccps2
 ```
 
-or in Docker:
+or `docker build -f tools/mwccps2/b69/Dockerfile -t mwccps2-b69 .` (or `b52`). Build 69 is the GameCube 2.x front end
+and optimizer with mwccps2's MIPS back end; build 52 is build 69's code plus 3.0.1's IRO optimizer (with eight passes
+not there yet), C99 designated initializers and GCC statement expressions. `tools/mwccps2/native_core.py` builds
+either from `tools/mwccps2/<build>/units.txt` (each unit with its defines: no `MWCCPSP` for the GameCube-era units,
+`MWCCPSP MWCCPS2 MWCCPS2_BUILD=69` for the back end, `MWCCPSP` for b52's IRO optimizer). Units only these builds have
+are in `src/native/b69/` or excluded from the PSP build in `config/PSP_3_0_1/psp-exclude.txt`. What the units leave
+undefined is resolved from each build's `glue/` and `symbols*.txt`: parser tables and strings from its own exe, the
+copied back end's data tables from b145.
+
+- b52: every unit of the Monster Hunter corpus (4,607 cases: the mh1-xbox decompilation's PS2 units for each
+  version, and the Persona 4 units replayed through b52) gives identical objects, and so does mh1-xbox's own build;
+  18,430 of 18,434 of those cases recompiled at `-O0` to `-O4,p` (the 4 left are `g_data.c`), and 3,836 of 3,838
+  cases recaptured with b52 from Silent Hill 3, Persona 4, Yu-Gi-Oh! Duelists of the Roses and Persona 3 FES.
+- b69: 1,029 of the 1,084 Persona 4 units compiled by b69 give identical objects. The other 55 depend on b69 reading
+  memory it never initialised (a constant node's `hascall` byte left over from earlier allocations, and an operand's
+  class byte on the stack), so no rebuild can reproduce them deterministically; `tools/mwccps2/b69/corpus-ub.txt`
+  lists them with the evidence (replaying the bytes b69 read makes all 55 match).
+- C++ is largely untested on both.
+
+## Testing
+
+`tools/mwccpsp/test.py` compiles the files in `tools/mwccpsp/tests/` with a native build and the original and
+compares the objects (`tests/known-failures-<psp|ps2>.txt` lists what isn't reproduced yet):
 
 ```sh
-docker build -f tools/mwccps2/b52/Dockerfile -t mwccps2-b52 .
-docker run --rm -v "$PWD/build:/out" mwccps2-b52
+python3 tools/mwccpsp/test.py --cc build/PSP_3_0_1/mwccpsp --orig "wibo orig/PSP_3_0_1/mwccpsp.exe"
+python3 tools/mwccpsp/test.py --ps2 --cc build/PS2_3_0_1/mwccps2 --orig "wibo orig/PS2_3_0_1/mwccps2.exe"
 ```
 
-What the units leave undefined is resolved from `tools/mwccps2/b52/glue/` and the b52 addresses in
-`tools/mwccps2/b52/symbols*.txt` (parser tables and strings from b52, the copied back end's data tables from b145).
-Pushing a tag named `mwccps2-b52-*` attaches `mwccps2-b52-native64-<os>-<arch>.tar.gz` to a release
-(`.github/workflows/mwccps2-b52-release.yml`).
+The "Exact" badges come from `tools/exact/exact.py`: it compiles each compiler's units for Windows x86 with the
+CodeWarrior version and flags the original was built with (CW 9.2 for b219 and b210; Pro 6, 5.3 and 5 for b69 and
+b52, under wibo), compares every function placed at an original address with the original's bytes (relocation slots
+masked, every relocation checked to point at the right target), and counts the bytes of the original's function table
+(`functions.csv`) that match. The units and flags are in each compiler's `exact_units.json`; the host compilers come
+from the `compilers` branch of [sozud/mwcc-info](https://github.com/sozud/mwcc-info/tree/compilers):
 
-Every unit of the Monster Hunter corpus (4,607 cases: the mh1-xbox decompilation's PS2 units for each version, and the
-Persona 4 units replayed through b52) gives identical objects. The same holds for 3,836 of 3,838 cases recaptured with
-b52 from Silent Hill 3, Persona 4, Yu-Gi-Oh! Duelists of the Roses and Persona 3 FES. Code no corpus reaches stops with
-"not implemented"; C++ is largely untested.
+```sh
+git clone -b compilers https://github.com/sozud/mwcc-info build/mwcc-compilers
+python3 tools/exact/exact.py --json-out build/exact/badges          # or: exact.py b69 mwccpsp ...
+```
 
-## Where the PSP and PS2 compilers come from
+On every push to `mwccpsp`, `.github/workflows/exact.yml` runs it and commits the badges (`mwccpsp.json`,
+`mwccps2.json`, `mwccps2-b52.json`, `mwccps2-b69.json`) to mwcc-info's main branch when they change.
 
-Both are developed in the [Castlevania: Symphony of the Night decompilation](https://github.com/Xeeynamo/sotn-decomp),
-which matches them function by function against the original executables (branches `mwccpsp-decomp` and
-`mwccps2-decomp`, under `tools/mwccpsp/` and `tools/mwccps2/`). That tree started from this repository at `919828d` and
-edits its sources in place. `tools/mwccpsp/sync_sotn.py` brings it over: every change to a file this repository already
-has goes behind `#if MWCCPSP` with the `919828d` lines in the `#else` (so the GameCube builds read exactly what they did),
-new files are copied, and the result is clang-formatted.
+Pushing a release tag (table above) builds that compiler for each platform in GitHub Actions and attaches the
+binaries to a release (`.github/workflows/<compiler>-release.yml`).
+
+## Where the code comes from
+
+The compilers are matched function by function against the original executables in the
+[Castlevania: Symphony of the Night decompilation](https://github.com/Xeeynamo/sotn-decomp) (branches
+`mwccpsp-decomp` and `mwccps2-decomp`, under `tools/mwccpsp/` and `tools/mwccps2/`), which started from mweppc at
+`919828d`. `tools/mwccpsp/sync_sotn.py` brings that tree over: changes to files mweppc has go behind `#if MWCCPSP`
+with the original lines in the `#else`, new files are copied, and the result is clang-formatted.
 
 | sotn-decomp `tools/mwccpsp/`                                        | here                                          |
 | ------------------------------------------------------------------- | --------------------------------------------- |
@@ -283,52 +140,31 @@ new files are copied, and the result is clang-formatted.
 | `re/gen_{cc_psp,native_data,native_strings,opcode_table,parser_psp}.py` | `tools/mwccpsp/`                          |
 | `../mwccps2/harness/native_ps2.py`                                  | `tools/mwccps2/native_ps2.py`                 |
 | `../mwccps2/re/addrmap.csv`                                         | `config/PS2_3_0_1/addrmap.csv`                |
-| the hybrid build's name map (`build_ps2.ps2_address_map`)           | `config/PS2_3_0_1/symbols.txt` (generated)    |
-
-Left out: the matching harness (hybrid builds, corpus capture, coverage), the trace instrumentation and
-`src/PROVENANCE.md`. `tools/mwccpsp/{units,test,difftest}.py`, the tests and the Dockerfiles are this repository's own.
 
 ```sh
 python3 tools/mwccpsp/sync_sotn.py ../sotn-decomp --rev <commit> [--ps2]
 ```
 
-| Commit here                    | sotn-decomp commit                               |
-| ------------------------------ | ------------------------------------------------ |
-| `606a465` (PSP snapshot)       | `4f5dba132` (`mwccpsp-decomp`); `sync_sotn.py` reproduces it exactly |
-| PSP refresh                    | `5da42df11` (`mwccpsp-decomp`, as merged into `mwccps2-decomp`) |
-| PS2 addition                   | `db94925b5` (`mwccps2-decomp`)                   |
-| PSP fix on top                 | not in sotn-decomp yet: `MIPS_Peephole.c`'s native `LIVE_BITS` only for PS2 |
-
-See [docs/mwccps2-regression.md](docs/mwccps2-regression.md) for how the PSP compiler was checked across both.
+Builds 69 and 52 come from the same tree's `tools/mwccps2/b69/` (one source tree for both, b52 adding to b69), merged
+here under the `MWCC_CORE` guards with each build's view checked against that tree's. See
+[docs/mwccps2-regression.md](docs/mwccps2-regression.md) for how the PSP compiler was checked across the PS2 work.
 
 ## Contributing
 
 - Format C with `clang-format -i`, and Python with `ruff format` and `ruff check` (the venv's pinned versions); CI
   checks both and builds every version with clang.
 - Braces on every `if`, `else`, `for`, `while` and `do` body; flags are `TRUE` and `FALSE`.
-- After editing a header, run `tools/verify.py`; MWCC's code can change with unrelated declarations.
-- Put clang-only code under `#ifdef __MWERKS__ ... #else ... #endif`.
-- Rerun `tools/prove.py` on any inexact function you change.
-
-## Future work
-
-In scope, with no promise of when:
-
-- the other GameCube compilers: 1.0 to 1.3.2 (decompiled separately, to be rewritten and merged) and the 3.0 alphas;
-- the Wii compilers, whose public symbols give real names from the start;
-- the linker and assembler;
-- CodeWarrior's other platforms, such as Nintendo DS and PlayStation 2.
+- Keep each change behind the guard of the builds it belongs to, and check the others still compile what they did:
+  the natives' code sections should not change for a build a change doesn't target.
 
 ## Credits
 
-- Ninji's decompilation of the CodeWarrior Pro 7 Mac OS X compiler (front end 2.4.5) was used as the basis for the
-  majority of the code here, including names and structure, reworked for what the 2.X compilers actually do.
-- [rayanht/mwcc](https://github.com/rayanht/mwcc) (GC 1.X) and
-  [henriquegemignani/mwcc](https://github.com/henriquegemignani/mwcc) (`build-1.3`) were used as a reference for what
-  earlier GameCube compilers were doing and shaped the overall repo.
-- [decomp.dev](https://decomp.dev)'s compiler archive, [wibo](https://github.com/decompals/wibo),
-  [objdiff](https://github.com/encounter/objdiff), [UnshieldSharp](https://github.com/mnadareski/UnshieldSharp) and the
-  Internet Archive's CodeWarrior collection.
+- [doldecomp/mweppc](https://github.com/doldecomp/mweppc), the CodeWarrior for GameCube decompilation this is a fork
+  of, and through it Ninji's decompilation of the CodeWarrior Pro 7 Mac OS X compiler,
+  [rayanht/mwcc](https://github.com/rayanht/mwcc) and
+  [henriquegemignani/mwcc](https://github.com/henriquegemignani/mwcc).
+- [decomp.me](https://decomp.me)'s compiler images (the originals the builds read their data from),
+  [wibo](https://github.com/decompals/wibo) and [objdiff](https://github.com/encounter/objdiff).
 
 ## License
 

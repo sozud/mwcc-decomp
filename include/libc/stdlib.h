@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef MWCC_HOST_PROBE_STDLIB_H
 #define MWCC_HOST_PROBE_STDLIB_H
 
@@ -19,7 +20,7 @@ div_t div(int numerator, int denominator);
 void qsort(
     void* table_base, size_t num_members, size_t member_size, _compare_function compare_members
 );
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 void* bsearch(
     const void* key,

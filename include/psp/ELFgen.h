@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef PSP_ELFGEN_H
 #define PSP_ELFGEN_H
 
@@ -86,7 +87,7 @@ enum {
 };
 
 extern Elf32_Ehdr elf_ehdr;
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 extern ELFSection** elf_sections;
 extern ELFSection* elf_symtab;
 extern ELFSection* elf_strtab;
@@ -98,7 +99,7 @@ extern void ELF_Init(UInt16 machine, UInt32 flags, SInt32 encoding);
 extern ELFSection* ELF_NewSection(char* name, SInt32 type, SInt32 flags);
 extern void ELF_SetRelSection(ELFSection* section, ELFSection* relsection);
 extern SInt32 ELF_AddString(ELFSection* section, char* str);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern ELFSymbol* ELF_NewUndefinedSymbol(
     char* name, UInt16 shndx, UInt8 bind, UInt8 type, UInt32 size, UInt32 value
 );

@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include "psp/BE.h"
 #include "compiler/CParser.h"
@@ -41,7 +42,7 @@ static void split_unaligned(MPCode* pc, UInt16 first, UInt16 second, SInt32 bump
 
 // lui reg, %hi(object+offset): the first half of a pair.
 static MPCode* make_hi(MPCode* pc) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     MPCode* lui = makepcode(OPC(0x90), NEWREG(), HA(pc->args[1].value));
 #else
     MPCode* lui = makepcode(0x90, NEWREG(), HA(pc->args[1].value));
@@ -133,7 +134,7 @@ void func_0048AF30(MPCode* pc) {
                 }
             }
             break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case MACRO_OP(0x2D):
         case MACRO_OP(0x2E):
         case MACRO_OP(0x49):
@@ -231,7 +232,7 @@ void func_0048AF30(MPCode* pc) {
             return;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     // b69 (0x4AB950) expands only the 128-bit constant and the misaligned
     // word/doubleword accesses here; symbolic addresses wait for the late
     // macro expansion (BE_macro.c), whose lui goes through $at
@@ -267,14 +268,14 @@ void func_0048AF30(MPCode* pc) {
         // frame or absolute offset: fine if it fits in 16 bits
         offset = pc->args[1].value;
         if (offset > 0x7FFF || offset < -0x8000) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             lui = makepcode(OPC(0x90), NEWREG(), HA(offset));
 #else
             lui = makepcode(0x90, NEWREG(), HA(offset));
 #endif
             insertpcodebefore(pc, lui);
             if (pc->args[2].reg) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 insertpcodebefore(
                     pc, makepcode(4, lui->args[0].reg, pc->args[2].reg, lui->args[0].reg)
                 );

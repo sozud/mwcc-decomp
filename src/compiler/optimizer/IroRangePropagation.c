@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/IroRangePropagation.h"
 #include "compiler/IroDump.h"
 #include "compiler/IroFlowgraph.h"
@@ -206,7 +207,7 @@ static void SetRangesForKillsByIndirectAssignment(IROLinear* nd) {
                          scannd = scannd->next) {
                         if (scannd->type == IROLinearOperand && scannd->u.node->type == EOBJREF) {
                             obj = scannd->u.node->data.objref;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                             CError_ASSERT(314, obj != NULL);
 #else
                             CError_ASSERT(302, obj != NULL);
@@ -229,7 +230,7 @@ static void SetRangesForKillsByIndirectAssignment(IROLinear* nd) {
 
             while (resultList) {
                 next = resultList->nextList;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 IRO_free2(resultList); // b52 (0x52CF10) calls the second copy
 #else
                 IRO_free(resultList);
@@ -249,7 +250,7 @@ static void SetRangesForKillsByIndirectAssignment(IROLinear* nd) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (24)
 #endif
@@ -363,7 +364,7 @@ static void InvalidateRangesForKillsByFunctionCall(IROLinear* nd) {
         ERinvalidAll();
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -828,6 +829,12 @@ static Boolean ERfoldExpr(IROLinear* nd) {
 }
 
 static Boolean ERfoldLinear(IROLinear* nd) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+    Boolean result = FALSE;
+
+#endif
+#endif
     nd->range = NULL;
 
     switch (nd->type) {
@@ -851,7 +858,15 @@ static Boolean ERfoldLinear(IROLinear* nd) {
             break;
     }
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     return FALSE;
+#else
+    return result;
+#endif
+#else
+    return FALSE;
+#endif
 }
 
 Boolean IRO_RangePropagateInFNode(void) {

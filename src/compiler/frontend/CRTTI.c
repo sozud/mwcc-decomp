@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CRTTI.h"
 #include "compiler/CClass.h"
 #include "compiler/CDecl.h"
@@ -320,7 +321,7 @@ static Object* CRTTI_ConstructTypeInfoObject(Type* type, UInt32 qual) {
     return object;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-10)
 #endif
@@ -386,7 +387,7 @@ static void CRTTI_ConstructVTableHeader(
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -545,7 +546,7 @@ static void CRTTI_ConstCastCheck(Type* type1, UInt32 qual1, Type* type2, UInt32 
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-4)
 #endif
@@ -591,7 +592,7 @@ static ENode* CRTTI_ParseCast(DeclInfo* di) {
     tk = lex();
     return expr;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -633,7 +634,7 @@ static inline Boolean CRTTI_IsSameType(Type* a, Type* b) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (965)
 #endif
@@ -750,7 +751,7 @@ static ENode* CRTTI_UniversalCast(ENode* expr, Type* type, UInt32 qual, UInt8 mo
 
     return do_typecast(expr, type, qual);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif

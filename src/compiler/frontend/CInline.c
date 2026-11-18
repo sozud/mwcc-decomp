@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CInline.h"
 #include "compiler/CABI.h"
 #include "compiler/CClass.h"
@@ -114,7 +115,7 @@ static CI_Var* loc_vars;
 static SInt32 loc_count;
 static CI_LocalObj* local_objs;
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // b52's .bss has no local_dobjects (its CInline_GetLocalObj is newer source);
 // a global keeps the rest of the unit's statics at b52's offsets
 Object** local_dobjects;
@@ -135,7 +136,7 @@ static short cinline_stmtlevelexprs;
 static Boolean cinline_unconditionalpart;
 static Boolean cinline_serialize_stmt;
 static CI_Export* cinline_exportlist;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 CI_Action* cinline_actionlist; // a global in b52 (0x5B5360), not in the unit's .bss
 #else
 static CI_Action* cinline_actionlist;
@@ -197,7 +198,7 @@ static ENode* CInline_FoldConst(ENode* expr) {
 #endif
         case EINSTRUCTION:
 #if !MWCCPSP // not a 3.0.1 node kind
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         case EVECTOR128CONST:
 #endif
 #endif
@@ -439,7 +440,7 @@ static ENode* CInline_FoldConst(ENode* expr) {
         case ECOMMA:
         case EROTL:
         case EROTR:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         case EMIN:
         case EMAX:
 #endif
@@ -885,7 +886,7 @@ SInt32 CInline_GetLocalID(Object* object) {
 }
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (32)
 #endif
@@ -1021,7 +1022,7 @@ static Boolean CInline_IsTrivialExpression(ENode* expr) {
 #if !MWCCPSP // not a 3.0.1 node kind
             case EOBJLIST:
 #endif
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case EVECTOR128CONST:
 #endif
                 return FALSE;
@@ -1105,7 +1106,7 @@ static Boolean CInline_IsTrivialExpression(ENode* expr) {
             case ELAND:
             case ELOR:
             case ECOMMA:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             case EMIN:
             case EMAX:
 #endif
@@ -1136,13 +1137,13 @@ static Boolean CInline_IsTrivialExpression(ENode* expr) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (33)
 #endif
@@ -1263,7 +1264,7 @@ Boolean CInline_ExpressionHasSideEffect(ENode* expr) {
             case ELOCOBJ:
             case ELABEL:
             case EOBJLIST:
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case EVECTOR128CONST:
 #endif
                 return FALSE;
@@ -1317,7 +1318,7 @@ Boolean CInline_ExpressionHasSideEffect(ENode* expr) {
             case ELAND:
             case ELOR:
             case ECOMMA:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             case EMIN:
             case EMAX:
 #endif
@@ -1364,7 +1365,7 @@ Boolean CInline_ExpressionHasSideEffect(ENode* expr) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -1412,7 +1413,7 @@ static SInt32 CInline_TranslateID(SInt32 id) {
     return trans->to;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (33)
 #endif
@@ -1433,7 +1434,7 @@ static short CInline_GetLabelStatementNumber(HashNameNode* name) {
 #endif
     return 0;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -2143,7 +2144,7 @@ static ENode* CInline_CopyNodes(ENode* node) {
 #endif
             case EINSTRUCTION:
 #if !MWCCPSP // not a 3.0.1 node kind
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case EVECTOR128CONST:
 #endif
 #endif
@@ -2195,7 +2196,7 @@ static ENode* CInline_CopyNodes(ENode* node) {
             case EXORASS:
             case EORASS:
             case ECOMMA:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             case EMIN:
             case EMAX:
 #endif
@@ -2835,7 +2836,7 @@ static void CInline_CheckUsage(ENode* expr, Boolean isModified) {
             case ELAND:
             case ELOR:
             case ECOMMA:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             case EMIN:
             case EMAX:
 #endif
@@ -2862,7 +2863,7 @@ static void CInline_CheckUsage(ENode* expr, Boolean isModified) {
 #if !MWCCPSP // not a 3.0.1 node kind
             case EOBJLIST:
 #endif
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case EVECTOR128CONST:
 #endif
                 return;
@@ -2940,7 +2941,7 @@ ENode* CInline_CopyExpression(ENode* expr, CInlineCopyMode mode) {
     return expr;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (474)
 #endif
@@ -2975,12 +2976,12 @@ static UInt8 CInline_GetObjectSFlags(Object* object) {
 
     return flags;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (470)
 #endif
@@ -3018,7 +3019,7 @@ static void CInline_SetObjectSFlags(Object* object, UInt8 sflags) {
 #endif
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -3033,7 +3034,7 @@ static Object* CInline_NewLocalObject(Type* type, short qual, UInt8 sflags, int 
     return object;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (466)
 #endif
@@ -3045,7 +3046,7 @@ static ENode* CInline_FuncArgConvert(ENode* expr) {
 #if MWCCPSP
             copy = CEXPR_COPYENODE(expr);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             copy = CExpr_CopyENode(expr);
 #else
             copy = lalloc(sizeof(ENode));
@@ -3061,12 +3062,12 @@ static ENode* CInline_FuncArgConvert(ENode* expr) {
 
     return NULL;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (466)
 #endif
@@ -3118,7 +3119,7 @@ static ENode* CInline_RefArgTransform(ENode* expr, Boolean convertArg) {
 
     return NULL;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -3240,15 +3241,21 @@ static ENode* CInline_SetupArgsExpression(Object* object, CI_FuncData* data, ENo
         is_oldstyle = TRUE;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     local_dobjects = lalloc(sizeof(Object*) * CI_FUNCDATA_NUMLOCALS(data));
 #else
     local_dobjects = lalloc(sizeof(Object*) * data->numlocals);
 #endif
     local_aobjects = lalloc(sizeof(AObject) * data->numarguments);
 
-#if !MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+    for (i = 0, var = CI_FUNCDATA_LOCALS(data); i < CI_FUNCDATA_NUMLOCALS(data); i++, var++) {
+#endif
+#else
     for (i = 0, var = data->locals; i < data->numlocals; i++, var++) {
+#endif
+#if MWCC_CORE != MWCC_CORE_B52
         if (var->used) {
             local_dobjects[i] = obj = CInline_NewLocalObject(var->type, var->qual, var->sflags, 0);
             if (!var->unmodified) {
@@ -3260,11 +3267,10 @@ static ENode* CInline_SetupArgsExpression(Object* object, CI_FuncData* data, ENo
     }
 #endif
 
-#if MWCCPS2_B52
-    // argument temporaries are made first (and numbered first)
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (i = 0, var = CI_FUNCDATA_ARGS(data), scan = list; i < data->numarguments; i++, var++) {
 #else
-    for (i = 0, var = data->arguments, scan = list; i < data->numarguments; i++, var++) {
+        for (i = 0, var = data->arguments, scan = list; i < data->numarguments; i++, var++) {
 #endif
         local_aobjects[i].evalExpr = NULL;
 
@@ -3286,7 +3292,7 @@ static ENode* CInline_SetupArgsExpression(Object* object, CI_FuncData* data, ENo
             local_aobjects[i].evalExpr = scan->node;
         } else {
             local_aobjects[i].object = CInline_NewLocalObject(var->type, var->qual, var->sflags, 0);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             local_aobjects[i].object->u.var.info->unk24[1] = var->b69_unk; // b52 0x46700F
 #endif
             local_aobjects[i].useExpr = NULL;
@@ -3297,7 +3303,7 @@ static ENode* CInline_SetupArgsExpression(Object* object, CI_FuncData* data, ENo
         }
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     for (i = 0, var = CI_FUNCDATA_LOCALS(data); i < CI_FUNCDATA_NUMLOCALS(data); i++, var++) {
         if (var->used) {
             local_dobjects[i] = obj = CInline_NewLocalObject(var->type, var->qual, var->sflags, 0);
@@ -3393,11 +3399,11 @@ static ENode* CInline_ReturnCheck(ENode* expr) {
 #if MWCCPSP
     copy = CEXPR_COPYENODE(expr);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     copy = CExpr_CopyENode(expr);
 #else
-    copy = lalloc(sizeof(ENode));
-    *copy = *expr;
+        copy = lalloc(sizeof(ENode));
+        *copy = *expr;
 #endif
 #endif
     copy->type = EFORCELOAD;
@@ -3407,7 +3413,7 @@ static ENode* CInline_ReturnCheck(ENode* expr) {
 }
 
 static ENode* CInline_ReturnMemResult(Object* object) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     ENode* result;
 #endif
     int index = CABI_GetStructResultArgumentIndex(TYPE_FUNC(object->type));
@@ -3419,19 +3425,19 @@ static ENode* CInline_ReturnMemResult(Object* object) {
     }
 #else
     if (local_aobjects[index].object == NULL) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         result = CInline_CopyExpressionSave(local_aobjects[index].useExpr);
 #else
-        return CInline_CopyExpressionSave(local_aobjects[index].useExpr);
+            return CInline_CopyExpressionSave(local_aobjects[index].useExpr);
 #endif
     } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         result = create_objectnode(local_aobjects[index].object);
 #else
-        return create_objectnode(local_aobjects[index].object);
+            return create_objectnode(local_aobjects[index].object);
 #endif
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     return result;
 #endif
 #endif
@@ -3541,11 +3547,11 @@ static ENode* CInline_InlineFunctionExpression(ENode* expr) {
 }
 
 static Boolean CInline_CanExpand(ENode* expr) {
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     TypeFunc* tfunc;
 #endif
     Object* object;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     TypeFunc* tfunc;
 #endif
 
@@ -3616,7 +3622,7 @@ static SInt32 CInline_EstimateSizeOfExpr(ENode* expr, SInt32 size, SInt32 level)
         case EPMODULO:
         case EROTL:
         case EROTR:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         case EMIN:
         case EMAX:
 #endif
@@ -3700,7 +3706,7 @@ static SInt32 CInline_EstimateSizeOfExpr(ENode* expr, SInt32 size, SInt32 level)
     return size;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (436)
 #endif
@@ -3726,7 +3732,7 @@ static SInt32 CInline_EstimateSizeOfFunc(CI_FuncData* funcdata, SInt32 size, SIn
             case ST_BEGINCATCH:
             case ST_ENDCATCH:
             case ST_ENDCATCHDTOR:
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case ST_GOTOEXPR:
 #endif
                 size = CInline_EstimateSizeOfExpr(stmt->u.expr, size, level);
@@ -3750,7 +3756,7 @@ static SInt32 CInline_EstimateSizeOfFunc(CI_FuncData* funcdata, SInt32 size, SIn
 
     return size;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -3979,7 +3985,7 @@ static SInt32 EstimateExpandedSizeOfFunction(Statement* stmt) {
             case ST_BEGINCATCH:
             case ST_ENDCATCH:
             case ST_ENDCATCHDTOR:
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case ST_GOTOEXPR:
 #endif
                 size++;
@@ -3988,10 +3994,10 @@ static SInt32 EstimateExpandedSizeOfFunction(Statement* stmt) {
             case ST_RETURN:
                 size++;
                 if (stmt->expr) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     size = EstimateExpandedSizeOfExpr(stmt->expr, level);
 #else
-                    size += EstimateExpandedSizeOfExpr(stmt->expr, level);
+                        size += EstimateExpandedSizeOfExpr(stmt->expr, level);
 #endif
                 }
                 break;
@@ -4043,7 +4049,7 @@ static Boolean CInline_InlineFunctionCheck(ENode* expr) {
                 level = copts.inlinelevel - cinline_level - 1;
             }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             // b69 (0x4633FD): a function declared inline is expanded at the last
             // level without a size estimate
             if ((object->qual & Q_INLINE) && !level) {
@@ -4086,7 +4092,7 @@ static Boolean CInline_InlineFunctionCheck(ENode* expr) {
     return FALSE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (490)
 #endif
@@ -4142,7 +4148,7 @@ static ENode* CInline_ExpandExpression(ENode* expr) {
         case EANDASS:
         case EXORASS:
         case EORASS:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         case EMIN:
         case EMAX:
 #endif
@@ -4241,7 +4247,7 @@ static ENode* CInline_ExpandExpression(ENode* expr) {
 #endif
         case EINSTRUCTION:
 #if !MWCCPSP // not a 3.0.1 node kind
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         case EVECTOR128CONST:
 #endif
 #endif
@@ -4257,7 +4263,7 @@ static ENode* CInline_ExpandExpression(ENode* expr) {
 
     return expr;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -4276,7 +4282,7 @@ static Statement* CInline_NewStatement(StatementType sttype) {
     return cinline_cur_serial_stmt = stmt;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (490)
 #endif
@@ -4320,7 +4326,7 @@ static ENode* CInline_LoadToTemp(ENode* expr, Object** objectptr) {
 
     return makediadicnode(create_objectnode(object), expr, EASS);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -4412,7 +4418,7 @@ static ENode* CInline_SerializeELAND(ENode* expr) {
     return create_objectnode(temp);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (490)
 #endif
@@ -4442,7 +4448,7 @@ static ENode* CInline_SerializeEPRECOMP(ENode* expr) {
         uidtemp = uidtemp->next;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -4596,7 +4602,7 @@ static ENode* CInline_SerializeExpr(ENode* expr) {
         case EANDASS:
         case EXORASS:
         case EORASS:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         case EMIN:
         case EMAX:
 #endif
@@ -4625,7 +4631,7 @@ static ENode* CInline_SerializeExpr(ENode* expr) {
 #endif
         case EINSTRUCTION:
 #if !MWCCPSP // not a 3.0.1 node kind
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         case EVECTOR128CONST:
 #endif
 #endif
@@ -4670,7 +4676,7 @@ static ENode* CInline_SerializeExpr(ENode* expr) {
 #if MWCCPSP
             CError_FATAL(3171);
 #else
-            CError_FATAL(2684);
+                CError_FATAL(2684);
 #endif
             return expr;
 #endif
@@ -4767,7 +4773,7 @@ static void CInline_UnpackSwitch(Statement* stmt, CI_Statement* packstmt, CLabel
     short i;
 
     info = lalloc(sizeof(SwitchInfo));
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     info->cases = NULL;
     info->x4 = NULL;
 #endif
@@ -4786,7 +4792,7 @@ static void CInline_UnpackSwitch(Statement* stmt, CI_Statement* packstmt, CLabel
 
         swcase->next = NULL;
         swcase->min = packstmt->u.switchdata->cases[i].min;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         swcase->max = packstmt->u.switchdata->cases[i].max;
 #endif
         CError_ASSERT(2740, swcase->label = labels[packstmt->u.switchdata->cases[i].labelID]);
@@ -4835,7 +4841,7 @@ Object* CInline_GetLocalObj(SInt32 id, Boolean inlineCopy) {
 #endif
 
 static ExceptionAction* CInline_UnpackActions(CI_Statement* packstmt, Boolean inlineCopy) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     ExceptionAction* b69_dead;
 #endif
     ExceptionAction* packexc;
@@ -4843,7 +4849,7 @@ static ExceptionAction* CInline_UnpackActions(CI_Statement* packstmt, Boolean in
     ExceptionAction* exc;
 
     packexc = packstmt->dobjstack;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     b69_dead = last = NULL;
 #else
     last = NULL;
@@ -5172,12 +5178,13 @@ static Statement* CInline_ExpandStatements(
             case ST_IFGOTO:
             case ST_IFNGOTO:
 #if MWCCPSP
-                stmt->expr = CI_FOLD(
+                stmt->expr =
+                    CI_FOLD(CInline_CopyExpression(packstmt->u.ifgoto.expr, CopyModeExpand));
 #else
                 stmt->expr = CInline_FoldConst(
-#endif
                     CInline_CopyExpression(packstmt->u.ifgoto.expr, CopyModeExpand)
                 );
+#endif
             case ST_GOTO:
                 link = lalloc(sizeof(CI_StmtLink));
                 link->next = stmtLinks;
@@ -5189,12 +5196,13 @@ static Statement* CInline_ExpandStatements(
 
             case ST_SWITCH:
 #if MWCCPSP
-                stmt->expr = CI_FOLD(
+                stmt->expr =
+                    CI_FOLD(CInline_CopyExpression(packstmt->u.switchdata->expr, CopyModeExpand));
 #else
                 stmt->expr = CInline_FoldConst(
-#endif
                     CInline_CopyExpression(packstmt->u.switchdata->expr, CopyModeExpand)
                 );
+#endif
             case ST_ASM:
                 link = lalloc(sizeof(CI_StmtLink));
                 link->next = stmtLinks;
@@ -5511,11 +5519,11 @@ static ENode* CInline_ForceReverseEvaluation(ENode* expr) {
 #if MWCCPSP
             copy = CEXPR_COPYENODE(inner);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             copy = CExpr_CopyENode(inner);
 #else
-            copy = lalloc(sizeof(ENode));
-            *copy = *inner;
+                copy = lalloc(sizeof(ENode));
+                *copy = *inner;
 #endif
 #endif
 
@@ -5608,7 +5616,7 @@ static void CInline_ExportCheck(ENode* expr) {
             case EPMODULO:
             case EROTL:
             case EROTR:
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             case EMIN:
             case EMAX:
 #endif
@@ -5629,7 +5637,7 @@ static void CInline_ExportCheck(ENode* expr) {
             case EPRECOMP:
             case EINSTRUCTION:
 #if !MWCCPSP // not a 3.0.1 node kind
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case EVECTOR128CONST:
 #endif
 #endif
@@ -5866,7 +5874,7 @@ static void CInline_Expand(Statement* stmt) {
                     case ST_SWITCH:
                     case ST_IFGOTO:
                     case ST_IFNGOTO:
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                     case ST_GOTOEXPR:
 #endif
                         scan = CInline_ExpandStatement(scan);
@@ -5928,7 +5936,7 @@ static void CInline_Expand(Statement* stmt) {
             case ST_SWITCH:
             case ST_IFGOTO:
             case ST_IFNGOTO:
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case ST_GOTOEXPR:
 #endif
                 CInline_ExportCheck(scan->expr);
@@ -5939,7 +5947,7 @@ static void CInline_Expand(Statement* stmt) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (466)
 #endif
@@ -5966,7 +5974,7 @@ SInt16 CInline_GetStatementNumber(Statement* first, Statement* stmt) {
 #endif
     return 0;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -6039,7 +6047,7 @@ static CI_Switch* CInline_PackSwitch(Statement* start, Statement* stmt) {
     for (swcase = info->cases, numcases = 0; swcase; swcase = swcase->next, numcases++) {
         packed->cases[numcases].labelID = CInline_GetStatementNumber(start, swcase->label->stmt);
         packed->cases[numcases].min = swcase->min;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         packed->cases[numcases].max = swcase->max;
 #endif
     }
@@ -6319,7 +6327,7 @@ void CInline_PackIFunctionData(CI_FuncData* funcdata, Statement* stmt, Object* o
         i++;
         list = list->next;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     funcdata->numarguments = i;
     for (list = locals; list; list = list->next) {
         if (list->object->datatype == DLOCAL) {
@@ -6329,7 +6337,7 @@ void CInline_PackIFunctionData(CI_FuncData* funcdata, Statement* stmt, Object* o
     funcdata->numvars = i;
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (i > 0) {
         loc_args = funcdata->vars = galloc(sizeof(CI_Var) * i);
         memclrw(funcdata->vars, sizeof(CI_Var) * i);
@@ -6337,11 +6345,11 @@ void CInline_PackIFunctionData(CI_FuncData* funcdata, Statement* stmt, Object* o
         var = funcdata->vars;
         for (list = arguments; list; list = list->next, var++) {
 #else
-    if ((funcdata->numarguments = i) > 0) {
-        loc_args = funcdata->arguments = galloc(sizeof(CI_Var) * i);
-        memclrw(funcdata->arguments, sizeof(CI_Var) * i);
+        if ((funcdata->numarguments = i) > 0) {
+            loc_args = funcdata->arguments = galloc(sizeof(CI_Var) * i);
+            memclrw(funcdata->arguments, sizeof(CI_Var) * i);
 
-        for (list = arguments, var = funcdata->arguments; list; list = list->next, var++) {
+            for (list = arguments, var = funcdata->arguments; list; list = list->next, var++) {
 #endif
             var->name = list->object->name;
             var->type = list->object->type;
@@ -6350,17 +6358,17 @@ void CInline_PackIFunctionData(CI_FuncData* funcdata, Statement* stmt, Object* o
             var->used = FALSE;
             var->unmodified = TRUE;
         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         for (list = locals; list; list = list->next) {
 #else
-    }
+        }
 
-    list = locals;
-    i = 0;
-    while (list) {
+        list = locals;
+        i = 0;
+        while (list) {
 #endif
             if (list->object->datatype == DLOCAL) {
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
                 i++;
             }
             list = list->next;
@@ -6379,7 +6387,7 @@ void CInline_PackIFunctionData(CI_FuncData* funcdata, Statement* stmt, Object* o
                     var->sflags = CInline_GetObjectSFlags(list->object);
                     var->used = FALSE;
                     var->unmodified = FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     // b52 (0x4698C0): the VU0 temporary flag goes with the local
                     var->b69_unk =
                         list->object->u.var.info ? list->object->u.var.info->unk24[1] : 0;
@@ -6475,7 +6483,7 @@ void CInline_UnpackIFunctionData(Object* object, CI_FuncData* funcdata, Statemen
 #if MWCCPSP
     for (i = 0, var = CI_FUNCDATA_ARGS(funcdata); i < funcdata->numarguments; i++, var++) {
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         for (i = 0, var = CI_FUNCDATA_ARGS(funcdata); i < funcdata->numarguments; i++, var++) {
 #else
     for (i = 0, var = funcdata->arguments; i < funcdata->numarguments; i++, var++) {
@@ -6505,7 +6513,7 @@ void CInline_UnpackIFunctionData(Object* object, CI_FuncData* funcdata, Statemen
 #endif
         CInline_SetObjectSFlags(obj, var->sflags);
         CFunc_SetupLocalVarInfo(obj);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         obj->u.var.info->unk24[1] = var->b69_unk;
 #endif
 
@@ -6519,7 +6527,7 @@ void CInline_UnpackIFunctionData(Object* object, CI_FuncData* funcdata, Statemen
     for (i = 0, var = CI_FUNCDATA_LOCALS(funcdata); i < CI_FUNCDATA_NUMLOCALS(funcdata);
          i++, var++) {
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         for (i = 0, var = CI_FUNCDATA_LOCALS(funcdata); i < CI_FUNCDATA_NUMLOCALS(funcdata);
              i++, var++) {
 #else
@@ -6550,7 +6558,7 @@ void CInline_UnpackIFunctionData(Object* object, CI_FuncData* funcdata, Statemen
 #endif
         CInline_SetObjectSFlags(obj, var->sflags);
         CFunc_SetupLocalVarInfo(obj);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         obj->u.var.info->unk24[1] = var->b69_unk;
 #endif
 
@@ -6808,7 +6816,7 @@ void CInline_AddMemberFunctionAction(
     TYPE_FUNC(object->type)->flags |= FUNC_TEMPLATE_ACTION;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (12)
 #endif
@@ -6834,7 +6842,7 @@ void CInline_AddTemplateFunctionAction(Object* object, void* func, void* inst) {
 
     TYPE_FUNC(object->type)->flags |= FUNC_TEMPLATE_ACTION;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -6872,7 +6880,7 @@ static void CInline_AddFRefList_Object(Object* object) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (530)
 #endif
@@ -6932,7 +6940,7 @@ static void CInline_AddFRefList_ExAction(ExceptionAction* exc) {
         exc = exc->prev;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -6957,7 +6965,7 @@ static void CInline_AddFRefList_Expr(ENode* expr) {
 #endif
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (531)
 #endif
@@ -6985,7 +6993,7 @@ static void CInline_AddFRefList_Statement(Statement* stmt) {
             case ST_IFGOTO:
             case ST_IFNGOTO:
 #if !MWCCPS2 // b210 treats a computed goto as unexpected here
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case ST_GOTOEXPR:
 #endif
 #endif
@@ -7002,7 +7010,7 @@ static void CInline_AddFRefList_Statement(Statement* stmt) {
         stmt = stmt->next;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -7023,7 +7031,7 @@ static void CInline_AddFRefList_InlineFunc(CI_FuncData* data) {
             case ST_ENDCATCH:
             case ST_ENDCATCHDTOR:
 #if !MWCCPS2
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case ST_GOTOEXPR:
 #endif
 #endif
@@ -7104,7 +7112,7 @@ static void CInline_AddFRefList_InlineFunc(CI_FuncData* data) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (532)
 #endif
@@ -7132,7 +7140,7 @@ static void CInline_GenerateTemplateInline(Object* object) {
         CError_FATAL(4499);
 #endif
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -7257,7 +7265,7 @@ static Boolean CInline_IsSmallFunction(Object* object, Statement* stmt) {
             if (stmt->type != ST_NOP && stmt->type != ST_LABEL) {
                 statementCount++;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (statementCount > 15) {
 #else
         if (statementCount > 30) {
@@ -7375,11 +7383,13 @@ void CInline_GenFunc(Statement* stmt, Object* object, UInt8 oldStyleParameters) 
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-1)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (648)
+#endif
 #endif
 static void CInline_GenerateDefaultFunc(Object* object) {
     TypeClass* tclass;
@@ -7420,15 +7430,17 @@ static void CInline_GenerateDefaultFunc(Object* object) {
         CError_FATAL(4806);
 #endif
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
 static TemplClassInst* CInline_FindNestedTemplInst(TypeClass* tclass) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     TypeClass* b69_dead;
 #endif
     NameSpace* nspace;
@@ -7443,7 +7455,7 @@ static TemplClassInst* CInline_FindNestedTemplInst(TypeClass* tclass) {
         }
 
         nspace = tclass->nspace->parent;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead = tclass = NULL;
 #else
             tclass = NULL;
@@ -7460,11 +7472,13 @@ static TemplClassInst* CInline_FindNestedTemplInst(TypeClass* tclass) {
     return NULL;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-1)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (648)
+#endif
 #endif
 #if MWCCPSP
 extern void func_0054C2F0(
@@ -7613,9 +7627,11 @@ static void CInline_GenerateInlineFunc(CI_Action* action) {
 
         CPrep_StreamRemove(&action->u.inlinefunc.stream, &streamState);
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -7643,11 +7659,13 @@ extern void func_0050B6E0(
 ); // member template instantiation (3.0.1)
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-1)
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (659)
+#endif
 #endif
 Boolean CInline_GenerateDeferredFuncs(void) {
     CI_Action* action;
@@ -7727,21 +7745,23 @@ Boolean CInline_GenerateDeferredFuncs(void) {
 
     return FALSE;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
 static InitExpr* CInline_InitTemplateData(InitExpr* init) {
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     Statement* stmt;
     CLabel* label;
 #endif
     Object* object;
     Object* data;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Statement* stmt;
     CLabel* label;
 #endif

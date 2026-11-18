@@ -1,4 +1,5 @@
-#if MWCCPS2_B52
+#include "compiler/mwcc_core.h"
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #ifndef COMPILER_CINLINE_H
 #define COMPILER_CINLINE_H
 
@@ -112,12 +113,26 @@ struct CI_Statement {
     } u;
 };
 
+#if MWCC_CORE == MWCC_CORE_B52
 // b52 has 3.0.1's one array, arguments then locals (statements at +0x0A:
 // CInline_AddFRefList_InlineFunc)
+#else
+#define CI_FUNCDATA_ARGS(fd) ((fd)->arguments)
+#define CI_FUNCDATA_LOCALS(fd) ((fd)->locals)
+#define CI_FUNCDATA_NUMLOCALS(fd) ((fd)->numlocals)
+#endif
 struct CI_FuncData {
+#if MWCC_CORE == MWCC_CORE_B52
     short numvars;
+#endif
     short numarguments;
+#if MWCC_CORE == MWCC_CORE_B52
     CI_Var* vars;
+#else
+    CI_Var* arguments;
+    short numlocals;
+    CI_Var* locals;
+#endif
     short numstatements;
     CI_Statement* statements;
     struct CInlineBackendOptions options;
@@ -128,9 +143,11 @@ struct CI_FuncData {
     SInt32 symdeclend;
     UInt8 can_inline;
 };
+#if MWCC_CORE == MWCC_CORE_B52
 #define CI_FUNCDATA_ARGS(fd) ((fd)->vars)
 #define CI_FUNCDATA_LOCALS(fd) ((fd)->vars + (fd)->numarguments)
 #define CI_FUNCDATA_NUMLOCALS(fd) ((fd)->numvars - (fd)->numarguments)
+#endif
 
 typedef enum CI_ActionType {
     CI_ActionInlineFunc = 0,

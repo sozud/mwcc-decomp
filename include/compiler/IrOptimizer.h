@@ -1,12 +1,11 @@
-#if MWCCPS2_B52
-// b52 (3.0 build 52): tools/mwccpsp's 3.0.1 header with its MWCCPSP layouts,
-// packed to 2 bytes like the rest of the b69 tree (IRO_NewStatement: 0x1E bytes,
-// IROLinear's rtype at +0x10). Only MWCCPS2_B69_BUILD=52 searches include/b52.
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_IROPTIMIZER_H
 #define COMPILER_IROPTIMIZER_H
 
 #include "compiler/common.h"
+#if MWCC_CORE == MWCC_CORE_B52
 #pragma pack(push, 2)
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,8 +14,10 @@ extern "C" {
 extern Boolean DoLinearize;
 extern Boolean VectorPhaseCalledFromUnroll;
 extern Boolean IRO_Log;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 
 extern Statement* IRO_Optimizer(Object* func, Statement* statements);
+#if MWCC_CORE == MWCC_CORE_B52
 // 3.0.1: the back end hands IRO_Setup a table of 21 hooks (copied into
 // separate globals, see IrOptimizer.c). Only some are identified.
 typedef struct IROAsmOperand {
@@ -72,27 +73,10 @@ extern IROAsmEffects IRO_EmptyAsmEffects;
 extern void (*IRO_GetLogFileNameHook)(char* buf, int size);
 extern void IRO_Setup(IROHooks* hooks);
 extern void IRO_Cleanup(void);
-extern void CodeGen_UpdateOptimizerOptions(void);
-
-#ifdef __cplusplus
-}
-#endif
-
-#pragma pack(pop)
+#else
+extern void IRO_Setup(void);
 #endif
 #else
-#ifndef COMPILER_IROPTIMIZER_H
-#define COMPILER_IROPTIMIZER_H
-
-#include "compiler/common.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern Boolean DoLinearize;
-extern Boolean VectorPhaseCalledFromUnroll;
-extern Boolean IRO_Log;
 
 extern Statement* IRO_Optimizer(Object* func, Statement* statements);
 #if MWCCPSP
@@ -156,11 +140,14 @@ extern void IRO_Setup(void);
 #if MWCCPSP
 extern void IRO_Cleanup(void);
 #endif
+#endif
 extern void CodeGen_UpdateOptimizerOptions(void);
 
 #ifdef __cplusplus
 }
 #endif
 
+#if MWCC_CORE == MWCC_CORE_B52
+#pragma pack(pop)
 #endif
 #endif

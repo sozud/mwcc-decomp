@@ -1,4 +1,5 @@
-#if MWCCPS2_B52
+#include "compiler/mwcc_core.h"
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #ifndef COMPILER_SWITCH_H
 #define COMPILER_SWITCH_H
 
@@ -19,12 +20,11 @@ struct SwitchCase {
     CInt64 max;
 };
 
-// b52: 0x10 bytes (switch statement 0x479AB2, CInline_UnpackSwitch 0x4682A0):
-// a word at +4 the parser and the unpacker clear, defaultlabel at +8,
-// exprtype at +0xC
 struct SwitchInfo {
     struct SwitchCase* cases;
+#if MWCC_CORE == MWCC_CORE_B52
     void* x4;
+#endif
     struct CLabel* defaultlabel;
     Type* exprtype;
 };

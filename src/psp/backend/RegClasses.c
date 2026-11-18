@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include "compiler/CompilerTools.h"
 #include "compiler/objects.h"
@@ -135,7 +136,7 @@ void func_004621F0(void) {
     data_0062482C = 1;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 void func_004622D0(void) {}
 #else
 void func_004622D0(void) {}
@@ -229,7 +230,7 @@ inline char classletter(char rclass) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 BE_NOINLINE void func_004B8C50(void) {
 #else
 __declspec(noinline) void func_004B8C50(void) {
@@ -272,7 +273,7 @@ __declspec(noinline) void func_004B8C50(void) {
     data_00624744[6] = 32;
 
     limit = -1;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (COPTS_X.mips_option43) {
         limit = COPTS_X.function_align16;
 #else
@@ -357,7 +358,7 @@ __declspec(noinline) void func_004B8C50(void) {
     }
     data_00624C1C[1] = data_00624670[1];
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     vu = COPTS_X.mips_option43;
 #else
     vu = copts.mips_option43;
@@ -451,7 +452,7 @@ next:;
             } else {
                 for (j = 0; j < data_00624670[cls]; j++) {
                     if (REGVAR_REG(vi) == data_0060EF70[cls][j]) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         if (data_00625478[REGVAR_CLASS(vi)] <
                             ps2_regquota_636150[REGVAR_CLASS(vi)]) {
 #else
@@ -468,7 +469,7 @@ next:;
                         } else {
                             name[0] = classletter(cls);
                             name[1] = 0;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             func_004C5940(
                                 0x1D, name, ps2_regquota_636150[REGVAR_CLASS(node->info)]
                             );
@@ -633,7 +634,7 @@ void func_00461D60(Object* func, SInt32* regs) {
     if (!CParser_HasInternalLinkage(func)) {
         return;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (e = data_005EAD88[func->name->hashval & 0x7F]; e && e->func != func; e = e->next) {}
 #else
     for (e = data_005EAD88[func->name->hashval & 0x7F]; e && e->func != func; e = e->next) {}

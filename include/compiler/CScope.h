@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_CSCOPE_H
 #define COMPILER_CSCOPE_H
 
@@ -22,7 +23,7 @@ struct NameResult {
     struct ObjBase* object;
     struct NameSpaceObjectList* objects;
     struct BClassList* basePath;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
     // 3.0.1: 0x28 bytes, is_qualified at +0x22. One pointer after objects
     // and one Boolean before is_qualified are new; where exactly they sit
@@ -38,7 +39,7 @@ struct NameResult {
     Boolean is_type;
     Boolean is_conv_operator;
 #if MWCCPSP_NATIVE
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     // 3.0.1 keeps only the ends of the path to a class member: basePath holds
     // the most derived class and unk1C the class the member is in. Code here
     // still written the 2.4.7 way reads the whole path from this field (see
@@ -48,7 +49,7 @@ struct NameResult {
 #endif
 };
 #pragma pack(pop)
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 
 // the path to a class member, for code written the 2.4.7 way
@@ -100,7 +101,7 @@ extern void CScope_MergeNameSpace(NameSpace* dst, NameSpace* src);
 extern void CScope_AddObject(NameSpace* nspace, HashNameNode* name, ObjBase* obj);
 extern void CScope_AddGlobalObject(Object* obj);
 extern Boolean CScope_FindQualifiedClassMember(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     NameResult* result, TypeClass* tclass, HashNameNode* name
 );
 extern Type* CScope_GetType(NameSpace* nspace, HashNameNode* name, UInt32* qual);
@@ -133,7 +134,7 @@ extern Boolean CScope_ParseQualifiedNameSpace(
 #endif
 #endif
 extern Boolean CScope_ParseElaborateName(NameResult* result);
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 extern Boolean CScope_ParseTypeName(NameResult* result);
 #endif
@@ -145,7 +146,7 @@ extern Boolean CScope_FindClassMemberObject(
     TypeClass* tclass, NameResult* result, HashNameNode* name
 );
 extern void CScope_InitObjectIterator(CScopeObjectIterator* iterator, NameSpace* nspace);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern ObjBase* CScope_NextObjectIteratorObject(CScopeObjectIterator* iterator);
 extern NameSpaceObjectList* CScope_NextObjectIteratorObjectList(CScopeObjectIterator* iterator);
 extern void CScope_DefineTypeTag(NameSpace* nspace, HashNameNode* name, Type* type);

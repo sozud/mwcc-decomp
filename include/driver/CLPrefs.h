@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_CLPREFS_H
 #define DRIVER_CLPREFS_H
 
@@ -7,7 +8,7 @@
 extern "C" {
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 typedef struct PrefPanel PrefPanel;
 
 extern PrefPanel* PrefPanel_New(const char* name, void* initdata, SInt32 initdatasize);

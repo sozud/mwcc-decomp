@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_CINIT_H
 #define COMPILER_CINIT_H
 
@@ -17,7 +18,7 @@ struct OLinkList {
     struct Object* obj;
     SInt32 offset;
     SInt32 addend;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 };
 
 #pragma pack(push, 2)
@@ -35,7 +36,7 @@ typedef struct PooledString {
     char* data;
     SInt32 size;
     Boolean ispascal;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Boolean iswide;
 } PooledString;
 #pragma pack(pop)
@@ -71,7 +72,7 @@ extern void CInit_DeclareData(Object* obj, void* data, OLinkList* list, SInt32 s
 extern void CInit_DeclareReadOnlyData(Object* obj, void* data, OLinkList* list, SInt32 size);
 extern void CInit_DefineTentativeData(void);
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 // 3.0.1: initializers are parsed into a record, then consumed
 struct CInitRecord;

@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CBrowse.h"
 #include "compiler/CDecl.h"
 #include "compiler/CError.h"
@@ -198,7 +199,7 @@ static void AppendGList(GList* dst, GList* src) {
     memcpy(*dst->data + offset, *src->data, src->size);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-1)
 #endif
@@ -231,7 +232,7 @@ static void RecordName(GList* gl, const char* str, SInt32 id) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -564,7 +565,7 @@ void CBrowse_EndStruct(SInt32 offset, GList* gl) {
     gClassData = *gl;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (12)
 #endif
@@ -599,12 +600,12 @@ static void EmitStandardData(
         AppendGListWord(&gBrowseData, 0);
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (12)
 #endif
@@ -636,12 +637,12 @@ void CBrowse_NewTypedef(
         );
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (12)
 #endif
@@ -673,12 +674,12 @@ void CBrowse_NewEnum(
         );
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (12)
 #endif
@@ -714,7 +715,7 @@ void CBrowse_NewEnumConstant(
         );
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -870,7 +871,7 @@ void CBrowse_NewFunction(
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (62)
 #endif
@@ -923,12 +924,12 @@ void CBrowse_NewData(
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (62)
 #endif
@@ -953,7 +954,7 @@ void CBrowse_NewMacro(Macro* macro, CPrepFileInfo* file, SInt32 startOffset, SIn
         );
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif

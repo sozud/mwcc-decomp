@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // b69's local common-subexpression elimination (LocalCSE.c, its assert file
 // name; 0x4A6D20..0x4A7F55). The code generator runs it twice per function,
 // after pipeline1 and after macro expansion B, with no argument. It is GC
@@ -517,9 +518,14 @@ static int isCSEload(MPCode* pcode) {
 }
 
 // 0x4A7750
+#if MWCC_CORE == MWCC_CORE_B52
 static Boolean cse_doit = TRUE;
 #define CSE_DOIT cse_doit&&
 #define CSE_NOTLOAD 0x200080
+#else
+#define CSE_DOIT
+#define CSE_NOTLOAD 0x80
+#endif
 
 static void registercopy(MPCode* pcode) {
     CSEOperand* dest;
@@ -685,13 +691,16 @@ static void removecsesfrombasicblock(MPCodeBlock* block) {
     MPCode* pcode;
     MPCode* next;
 
+#if MWCC_CORE == MWCC_CORE_B52
     // b52 (0x4BDAB0): an asm/noreorder (0x180) block only records values
     cse_doit = !(block->flags2E & 0x180) && block->pcodecount;
+#endif
     for (pcode = block->first; pcode; pcode = next) {
         next = pcode->next;
-        if (cse_doit) {
+#if MWCC_CORE == MWCC_CORE_B52
+        if (cse_doit)
+#endif
             propagatecopiesto(pcode);
-        }
         if (pcode->flags & 0x10) {
             registercopy(pcode);
         } else if (pcode->flags & 8) {

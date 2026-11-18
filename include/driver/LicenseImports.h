@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_LICENSEIMPORTS_H
 #define DRIVER_LICENSEIMPORTS_H
 
@@ -15,7 +16,7 @@ typedef struct VENDORCODE {
     short flexlm_revision;
     char flexlm_patch[2];
     char behavior_ver[5];
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
     char unk27[0x27C - 0x27]; // 3.0.1 links FlexLM 8: VENDORCODE is 0x27C bytes
 #endif

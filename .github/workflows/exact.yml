@@ -1,0 +1,88 @@
+name: Exact
+
+# tools/exact/exact.py: how much of each original compiler the sources
+# reproduce byte for byte (README, "Testing"). The badges in the README read
+# the results from sozud/mwcc-info's main branch; this job commits them there
+# when they change, with the MWCC_INFO_TOKEN secret (a fine-grained token with
+# contents: write on sozud/mwcc-info). Without the secret (forks) it only
+# measures.
+
+on:
+  push:
+    branches: [mwccpsp]
+  workflow_dispatch:
+
+concurrency:
+  group: exact-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  exact:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Install Python packages
+        run: uv sync --locked
+
+      - name: Get the originals and wibo
+        run: |
+          mkdir -p orig/PSP_3_0_1
+          curl -fsSL -o mwccpsp_219.tar.gz \
+            https://github.com/Xeeynamo/sotn-decomp/releases/download/cc1-psx-26/mwccpsp_219.tar.gz
+          echo "62ec4faa807ad5afaefa7c92de6423505072c321fad13c071c2f640e9820b5c8  mwccpsp_219.tar.gz" | sha256sum -c
+          tar -xzf mwccpsp_219.tar.gz -C orig/PSP_3_0_1
+          python3 tools/mwccps2/get_orig.py
+          python3 tools/mwccps2/b52/get_orig.py
+          python3 tools/mwccps2/b69/get_orig.py
+          python3 tools/download_tool.py wibo build/tools/wibo
+
+      # CodeWarrior 9.2, Pro 6, Pro 5.3 and Pro 5, and the discs' MSL/runtime
+      - name: Get the host compilers
+        run: |
+          curl -fsSL -o compilers.tar.gz https://github.com/sozud/mwcc-info/archive/refs/heads/compilers.tar.gz
+          mkdir -p build/mwcc-compilers
+          tar -xzf compilers.tar.gz -C build/mwcc-compilers --strip-components=1
+          (cd build/mwcc-compilers && sha256sum -c --quiet SHA256SUMS)
+
+      - name: Measure
+        run: |
+          mkdir -p build/exact
+          .venv/bin/python tools/exact/exact.py -j 4 --compilers build/mwcc-compilers --json-out build/exact/badges \
+            | tee build/exact/summary.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exact
+          path: |
+            build/exact/badges
+            build/exact/summary.txt
+            build/exact/*/match.csv
+
+      - name: Publish to sozud/mwcc-info
+        env:
+          MWCC_INFO_TOKEN: ${{ secrets.MWCC_INFO_TOKEN }}
+        run: |
+          if [ -z "$MWCC_INFO_TOKEN" ]; then
+            echo "MWCC_INFO_TOKEN is not set: not publishing"
+            exit 0
+          fi
+          git clone --depth 1 "https://x-access-token:${MWCC_INFO_TOKEN}@github.com/sozud/mwcc-info" mwcc-info
+          cp build/exact/badges/*.json mwcc-info/
+          cd mwcc-info
+          git add -- *.json
+          if git diff --cached --quiet; then
+            echo "unchanged"
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "Exact-match badges from ${GITHUB_REPOSITORY}@${GITHUB_SHA::7}" \
+            -m "$(cat ../build/exact/summary.txt)"
+          for attempt in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull -q --rebase origin main
+          done
+          exit 1

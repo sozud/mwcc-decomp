@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_CCLASS_H
 #define COMPILER_CCLASS_H
 
@@ -7,7 +8,7 @@
 extern "C" {
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern void CClass_Init(void);
 extern void CClass_GenThunks(void);
 extern UInt8 CClass_GetOverrideKind(TypeFunc* a, TypeFunc* b, Boolean errorflag);

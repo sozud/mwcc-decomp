@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #if MWCCPSP
 #include "compiler/IrOptimizer.h"
 #endif
@@ -167,9 +168,60 @@ static Boolean StatementContainsSideEffect(IROLinear* linear) {
     return scseai.found;
 }
 
+#if MWCC_CORE == MWCC_CORE_B52
 static void CheckUnorderedRegionsForSideEffects(IROLinear* nd, IROLinear* skip, Boolean* result) {
     int i;
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+    static void CheckUnorderedRegionsForSideEffects(
+        IROLinear * nd, IROLinear * skip, Boolean * result
+    ) {
+        int i;
+#endif
 
+#if MWCC_CORE == MWCC_CORE_B52
+        switch (nd->type) {
+            case IROLinearOp2Arg:
+                if (nd->u.diadic.left != skip && IRO_HasSideEffect(nd->u.diadic.left)) {
+                    *result = TRUE;
+                }
+                if (nd->nodetype != ELAND && nd->nodetype != ELOR && nd->nodetype != ECOMMA) {
+                    if (nd->u.diadic.right != skip && IRO_HasSideEffect(nd->u.diadic.right)) {
+                        *result = TRUE;
+                    }
+                }
+                break;
+            case IROLinearOp3Arg:
+                if (nd->u.args3.a != skip && IRO_HasSideEffect(nd->u.args3.a)) {
+                    *result = TRUE;
+                }
+                if (nd->nodetype != ECOND && nd->nodetype != ECONDASS) {
+                    if (nd->u.args3.b != skip && IRO_HasSideEffect(nd->u.args3.b)) {
+                        *result = TRUE;
+                    }
+                    if (nd->u.args3.c != skip && IRO_HasSideEffect(nd->u.args3.c)) {
+                        *result = TRUE;
+                    }
+                }
+                break;
+            case IROLinearFunccall:
+                if (nd->u.funccall.callee != skip && IRO_HasSideEffect(nd->u.funccall.callee)) {
+                    *result = TRUE;
+                }
+                for (i = 0; !*result && i < nd->u.funccall.argCount; i++) {
+                    if (nd->u.funccall.args[i] != skip &&
+                        IRO_HasSideEffect(nd->u.funccall.args[i])) {
+                        *result = TRUE;
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     switch (nd->type) {
         case IROLinearOp2Arg:
             if (nd->u.diadic.left != skip && IRO_HasSideEffect(nd->u.diadic.left)) {
@@ -209,6 +261,7 @@ static void CheckUnorderedRegionsForSideEffects(IROLinear* nd, IROLinear* skip, 
     }
 }
 
+#endif
 static Boolean HasSideEffectsBeforeUse(
     IRONode* fnode1, IRONode* fnode2, IRONode* fnode3, IROLinear* nd, Boolean clearMarks
 ) {
@@ -232,6 +285,8 @@ static Boolean HasSideEffectsBeforeUse(
     for (scannd = fnode1->first; scannd && scannd != fnode1->last->next; scannd = scannd->next) {
         if (!(scannd->flags & IROLF_Reffed)) {
             if (StatementContainsUse(scannd, nd)) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 result = FALSE;
                 if (scannd != nd) {
                     iter = nd;
@@ -240,29 +295,50 @@ static Boolean HasSideEffectsBeforeUse(
                         CheckUnorderedRegionsForSideEffects(nd, iter, &result);
                         iter = nd;
                         nd = IRO_LocateFather(nd);
+#else
+                // b69 0x4DF20A: the statement holding the use ends the search;
+                // what comes before the use inside it is not checked
+                return FALSE;
+#endif
+#else
+                result = FALSE;
+                if (scannd != nd) {
+                    iter = nd;
+                    nd = IRO_LocateFather(nd);
+                    while (nd && !result) {
+                        CheckUnorderedRegionsForSideEffects(nd, iter, &result);
+                        iter = nd;
+                        nd = IRO_LocateFather(nd);
+#endif
                     }
+#if MWCC_CORE == MWCC_CORE_B52
                 }
                 return result;
             }
-            if (StatementContainsSideEffect(scannd)) {
-                return TRUE;
-            }
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         }
+        return result;
     }
-
-    if (fnode1 != fnode3) {
-        for (i = 0; i < fnode1->numsucc; i++) {
-            if (HasSideEffectsBeforeUse(
-                    IRO_NodeTable[fnode1->succ[i]], fnode2, fnode3, nd, FALSE
-                )) {
-                return TRUE;
-            }
-        }
+#endif
+    if (StatementContainsSideEffect(scannd)) {
+        return TRUE;
     }
-
-    return FALSE;
+}
 }
 
+if (fnode1 != fnode3) {
+    for (i = 0; i < fnode1->numsucc; i++) {
+        if (HasSideEffectsBeforeUse(IRO_NodeTable[fnode1->succ[i]], fnode2, fnode3, nd, FALSE)) {
+            return TRUE;
+        }
+    }
+}
+
+return FALSE;
+}
+
+#if MWCC_CORE == MWCC_CORE_B52
 static void CheckUnorderedRegionForUses(IROLinear* nd, BitVector* bv, Boolean* result) {
     Bv_Clear(IRO_VarKills);
     IRO_WalkInts(nd, nd, Regen_GetExprUses);
@@ -270,12 +346,72 @@ static void CheckUnorderedRegionForUses(IROLinear* nd, BitVector* bv, Boolean* r
         *result = TRUE;
     }
 }
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+static void CheckUnorderedRegionForUses(IROLinear* nd, BitVector* bv, Boolean* result) {
+    Bv_Clear(IRO_VarKills);
+    IRO_WalkInts(nd, nd, Regen_GetExprUses);
+    if (Bv_BitsInCommon(bv, IRO_VarKills)) {
+        *result = TRUE;
+    }
+}
+#endif
 
+#if MWCC_CORE == MWCC_CORE_B52
 static void CheckUnorderedRegionsForUses(
     IROLinear* nd, IROLinear* skip, BitVector* bv, Boolean* result
 ) {
     int i;
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+    static void CheckUnorderedRegionsForUses(
+        IROLinear * nd, IROLinear * skip, BitVector * bv, Boolean * result
+    ) {
+        int i;
+#endif
 
+#if MWCC_CORE == MWCC_CORE_B52
+        switch (nd->type) {
+            case IROLinearOp2Arg:
+                if (nd->u.diadic.left != skip) {
+                    CheckUnorderedRegionForUses(nd->u.diadic.left, bv, result);
+                }
+                if (nd->nodetype != ELAND && nd->nodetype != ELOR && nd->nodetype != ECOMMA) {
+                    if (nd->u.diadic.right != skip) {
+                        CheckUnorderedRegionForUses(nd->u.diadic.right, bv, result);
+                    }
+                }
+                break;
+            case IROLinearOp3Arg:
+                if (nd->u.args3.a != skip) {
+                    CheckUnorderedRegionForUses(nd->u.args3.a, bv, result);
+                }
+                if (nd->nodetype != ECOND && nd->nodetype != ECONDASS) {
+                    if (nd->u.args3.b != skip) {
+                        CheckUnorderedRegionForUses(nd->u.args3.b, bv, result);
+                    }
+                    if (nd->u.args3.c != skip) {
+                        CheckUnorderedRegionForUses(nd->u.args3.c, bv, result);
+                    }
+                }
+                break;
+            case IROLinearFunccall:
+                if (nd->u.funccall.callee != skip) {
+                    CheckUnorderedRegionForUses(nd->u.funccall.callee, bv, result);
+                }
+                for (i = 0; !*result && i < nd->u.funccall.argCount; i++) {
+                    if (nd->u.funccall.args[i] != skip) {
+                        CheckUnorderedRegionForUses(nd->u.funccall.args[i], bv, result);
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     switch (nd->type) {
         case IROLinearOp2Arg:
             if (nd->u.diadic.left != skip) {
@@ -315,6 +451,7 @@ static void CheckUnorderedRegionsForUses(
     }
 }
 
+#endif
 static Boolean UsesAKilledVarBeforeUse(
     IRONode* fnode1,
     IRONode* fnode2,
@@ -343,6 +480,8 @@ static Boolean UsesAKilledVarBeforeUse(
     for (scannd = fnode1->first; scannd && scannd != fnode1->last->next; scannd = scannd->next) {
         if (!(scannd->flags & IROLF_Reffed)) {
             if (StatementContainsUse(scannd, nd)) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 result = FALSE;
                 if (scannd != nd) {
                     iter = nd;
@@ -351,29 +490,51 @@ static Boolean UsesAKilledVarBeforeUse(
                         CheckUnorderedRegionsForUses(nd, iter, bv, &result);
                         iter = nd;
                         nd = IRO_LocateFather(nd);
+#else
+                // b69 0x4DF2ED: the statement holding the use ends the search;
+                // what comes before the use inside it is not checked
+                return FALSE;
+#endif
+#else
+                        result = FALSE;
+                        if (scannd != nd) {
+                            iter = nd;
+                            nd = IRO_LocateFather(nd);
+                            while (nd && !result) {
+                                CheckUnorderedRegionsForUses(nd, iter, bv, &result);
+                                iter = nd;
+                                nd = IRO_LocateFather(nd);
+#endif
                     }
+#if MWCC_CORE == MWCC_CORE_B52
                 }
                 return result;
             }
-            Bv_Clear(IRO_VarKills);
-            IRO_WalkInts(scannd, scannd, Regen_GetExprUses);
-            if (Bv_BitsInCommon(bv, IRO_VarKills)) {
-                return TRUE;
-            }
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+        }
+        return result;
+    }
+#endif
+    Bv_Clear(IRO_VarKills);
+    IRO_WalkInts(scannd, scannd, Regen_GetExprUses);
+    if (Bv_BitsInCommon(bv, IRO_VarKills)) {
+        return TRUE;
+    }
+}
+}
+
+if (fnode1 != fnode3) {
+    for (i = 0; i < fnode1->numsucc; i++) {
+        if (UsesAKilledVarBeforeUse(
+                IRO_NodeTable[fnode1->succ[i]], fnode2, fnode3, nd, bv, FALSE
+            )) {
+            return TRUE;
         }
     }
+}
 
-    if (fnode1 != fnode3) {
-        for (i = 0; i < fnode1->numsucc; i++) {
-            if (UsesAKilledVarBeforeUse(
-                    IRO_NodeTable[fnode1->succ[i]], fnode2, fnode3, nd, bv, FALSE
-                )) {
-                return TRUE;
-            }
-        }
-    }
-
-    return FALSE;
+return FALSE;
 }
 
 static void Regen_GetExprUses(IROLinear* linear, Boolean isEntry) {
@@ -719,6 +880,17 @@ static void RebuildPossibleCondExpression(IRONode* fnode) {
     ifnode->last->expr = NULL;
     target->first->type = IROLinearNop;
     target->first->expr = NULL;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+    // b69 0x4DFE9B: the join label goes too, and both branches' gotos
+    fnode->first->type = IROLinearNop;
+    fnode->first->expr = NULL;
+    if (left->last->type == IROLinearGoto) {
+        left->last->type = IROLinearNop;
+        left->last->expr = NULL;
+    }
+#endif
+#endif
     if (right->last->type == IROLinearGoto) {
         right->last->type = IROLinearNop;
         right->last->expr = NULL;
@@ -823,11 +995,29 @@ static void RebuildPossibleCondExpression(IRONode* fnode) {
             def2->useCount = 0;
         }
     } else {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
         tmp = IRO_NewLinear(IROLinearOp2Arg);
         memcpy(tmp, &copy2, sizeof(IROLinear));
         tmp->index = IRO_NumLinear++;
         tmp->u.diadic.right = rightAss;
         IRO_PasteAfter(tmp, tmp, fnode->first);
+#else
+        // b69 0x4E0310: the assignment takes the (nopped) join label's place
+        IROLinear copy3;
+        memcpy(&copy3, fnode->first, sizeof(IROLinear));
+        memcpy(fnode->first, &copy2, sizeof(IROLinear));
+        fnode->first->index = copy3.index;
+        fnode->first->u.diadic.right = rightAss;
+        fnode->first->next = copy3.next;
+#endif
+#else
+                        tmp = IRO_NewLinear(IROLinearOp2Arg);
+                        memcpy(tmp, &copy2, sizeof(IROLinear));
+                        tmp->index = IRO_NumLinear++;
+                        tmp->u.diadic.right = rightAss;
+                        IRO_PasteAfter(tmp, tmp, fnode->first);
+#endif
         def1->useCount = 0;
         def2->linear = fnode->first;
         if (Bv_IsBitSet(def2->index, right->out)) {
@@ -1106,7 +1296,7 @@ static Boolean CheckForTopLevelExpressions(
     return TRUE;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-12)
 #endif
@@ -1123,7 +1313,7 @@ static void AddNodeAndSuccessorsRecursively(IRONodes* nodes, IRONode* fnode1, IR
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -1414,7 +1604,16 @@ static void RebuildLogicalExpressions(void) {
     IROLinear* nd;
     Boolean changed;
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     do {
+#else
+    changed = TRUE;
+    while (changed) {
+#endif
+#else
+                    do {
+#endif
         changed = FALSE;
         for (fnode = IRO_FirstNode; fnode && fnode->last; fnode = fnode->nextnode) {
             for (nd = fnode->first; nd && nd != fnode->last->next; nd = nd->next) {
@@ -1424,7 +1623,15 @@ static void RebuildLogicalExpressions(void) {
                 }
             }
         }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     } while (changed);
+#else
+    }
+#endif
+#else
+                    } while (changed);
+#endif
 
     IRO_CheckForUserBreak();
 }
@@ -1774,7 +1981,7 @@ static void GenerateCondAssignments(void) {
 // --- 3.0.1: rebuilding ELORs and ELANDs on IRO_UseDef301's records ----------
 #include "compiler/IROUseDef301.h"
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 extern void func_00553000(
     IROLinear* first, IROLinear* last, IROWalkTreeArgFunc func, void* arg
 ); // IroUtil.c
@@ -1785,7 +1992,7 @@ extern void func_00553000(
 #endif
 extern Boolean func_00551B00(IROLinear* stmt);
 extern Boolean func_00551B90(IROLinear* stmt, IROLinear* use);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 extern void func_005518A0(
     IROLinear* nd, IROLinear* excluded, BitVector* kills, BitVector* uses, Boolean* result
 );
@@ -1850,7 +2057,7 @@ Boolean func_00555160(Statement* a, Statement* b) {
 
 // 0x598EC0: a top-level statement lies between start and stop (3.0.1
 // answers the opposite question of 2.4.7's CheckForTopLevelExpressions)
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 Boolean func_00598EC0(
     IRONode* fnode1,
     IRONode* fnode2,
@@ -1886,7 +2093,7 @@ Boolean func_00598EC0(
         }
         fnode1->marked = TRUE;
         for (i = 0; i < fnode1->numsucc; i++) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (func_00598EC0(
                     IRO_NodeTable[fnode1->succ[i]],
                     fnode2,
@@ -1925,7 +2132,7 @@ Boolean func_0059AF70(IROUse301* use, ENode* enode, IROLinear* nd, Boolean repla
     IROLinear* father;
     IROLinear* father2;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (use &&
         use->reachingDefCount &&
         use->linear &&
@@ -1949,7 +2156,7 @@ Boolean func_0059AF70(IROUse301* use, ENode* enode, IROLinear* nd, Boolean repla
         IRO_TypesEqual(father->rtype, nd->rtype) &&
 #endif
         (father2 = IRO_LocateFather(father)) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         ((father2->type != IROLinearOp1Arg && father2->type != IROLinearOp2Arg) ||
          !IRO_IsModifyOp[father2->nodetype])) {
 #else
@@ -1965,7 +2172,7 @@ Boolean func_0059AF70(IROUse301* use, ENode* enode, IROLinear* nd, Boolean repla
 }
 
 // 0x59AD10: 3.0.1's HasSideEffectsBeforeUse
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 Boolean func_0059AD10(
     IRONode* fnode1, IRONode* fnode2, IRONode* fnode3, IROLinear* nd, Boolean clearMarks
 ) {
@@ -2088,7 +2295,7 @@ void func_0059AA50(IROLinear* nd, IROLinear* skip, BitVector* bv, Boolean* resul
 }
 
 // 0x59A7A0: 3.0.1's UsesAKilledVarBeforeUse
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 Boolean func_0059A7A0(
     IRONode* fnode1,
     IRONode* fnode2,
@@ -2169,7 +2376,7 @@ static inline Boolean IsLogicalExpressionAssign301(IROLinear* nd) {
     IROLinear* right;
     IROLinear* left;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     return nd->type == IROLinearOp2Arg &&
         nd->nodetype == EASS &&
         (left = nd->u.diadic.left) &&
@@ -2184,7 +2391,7 @@ static inline Boolean IsLogicalExpressionAssign301(IROLinear* nd) {
 #endif
         (CInt64_Equal(right->u.node->data.intval, cint64_one) ||
          CInt64_Equal(right->u.node->data.intval, cint64_zero)) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         left->type == IROLinearOp1Arg &&
         left->nodetype == EINDIRECT &&
         left->u.monadic &&
@@ -2271,7 +2478,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
         }
         if (labelnode) {
             for (use = (IROUse301*)objnode->data.objref->varptr->uses; use; use = use->varnext) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (use->node != labelnode &&
                     use->reachingDefCount == 2 &&
                     Bv_IsBitSet(def1->index, use->reachingDefs) &&
@@ -2288,7 +2495,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
             }
         }
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!labelnode ||
         !labelnode->first ||
         labelnode->first->type != IROLinearLabel ||
@@ -2316,7 +2523,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
         return FALSE;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!test1node ||
         !(left = test1node->last) ||
         left->type != compareType ||
@@ -2329,7 +2536,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
 #endif
         return FALSE;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!func_00576350(left->u.label.label, &labelnode, &prevnode) ||
         !prevnode ||
         prevnode->numpred != 1 ||
@@ -2349,7 +2556,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
     }
     prevAssign = NULL;
     for (scan = prevnode->first; scan != prevnode->last->next; scan = scan->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (scan->type == IROLinearOp2Arg &&
             scan->nodetype == EASS &&
             !(scan->flags & IROLF_Reffed)) {
@@ -2361,7 +2568,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
             prevAssign = scan;
         }
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!prevAssign ||
         !IsLogicalExpressionAssign301(prevAssign) ||
 #else
@@ -2379,7 +2586,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
     }
 
     if (func_00598EC0(fnode, fnode, test1node, nd->next, left, TRUE) ||
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         func_00598EC0(
             test1node->nextnode,
             test1node->nextnode,
@@ -2410,7 +2617,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
 
     useCount = rewrittenUseCount = 0;
     sideEffectFlag = killedFlag = FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!objnode->data.objref->varptr ||
         !objnode->data.objref->varptr->uses ||
 #else
@@ -2421,7 +2628,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
         objnode = NULL;
     } else {
         def1 = def2 = NULL;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         for (def = (IRODef301*)objnode->data.objref->varptr->defs; def && (!def1 || !def2);
              def = def->varnext) {
 #else
@@ -2437,7 +2644,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
         if (!def1 || !def2) {
             objnode = NULL;
         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             for (use = (IROUse301*)objnode->data.objref->varptr->uses; objnode && use;
                  use = use->varnext) {
 #else
@@ -2446,7 +2653,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
 #endif
                 if (use->reachingDefCount) {
                     useCount++;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (Bv_IsBitSet(def1->index, use->reachingDefs) &&
                         Bv_IsBitSet(def2->index, use->reachingDefs)) {
 #else
@@ -2454,7 +2661,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
                         Bv_IsBitSet(def2->index, use->reachingDefs)) {
 #endif
                         for (i = 0; objnode && i < use->reachingDefs->size; i++) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                             if (i != (UInt32)def1->index &&
                                 i != (UInt32)def2->index &&
 #else
@@ -2477,7 +2684,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
                         }
                         if (objnode) {
                             if (!sideEffectFlag) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                                 sideEffectFlag = func_0059AD10(
                                     labelnode, labelnode, use->node, use->linear, TRUE
                                 );
@@ -2488,7 +2695,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
 #endif
                             }
                             if (!killedFlag &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                                 (IRO_HasSideEffect(left->u.label.cond) ||
                                  IRO_HasSideEffect(right->u.label.cond))) {
 #else
@@ -2510,7 +2717,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
                                     }
                                 }
                                 if (!killedFlag) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                                     killedFlag = func_0059A7A0(
                                         labelnode, labelnode, use->node, use->linear, bv1, TRUE
                                     );
@@ -2535,7 +2742,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
     }
 
     // the use the copy would go to must share the test's exception context
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (rewrittenUseCount == 1 &&
         !sideEffectFlag &&
         !killedFlag &&
@@ -2547,7 +2754,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
         !objnode->data.objref->varptr->noregister) {
 #endif
         for (use = (IROUse301*)objnode->data.objref->varptr->uses; use; use = use->varnext) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (use->reachingDefCount &&
                 Bv_IsBitSet(def1->index, use->reachingDefs) &&
                 Bv_IsBitSet(def2->index, use->reachingDefs) &&
@@ -2559,7 +2766,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
                 func_0059AF70(use, objnode, prevAssign, FALSE)) {
 #endif
                 stmt = use->linear->stmt;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (left->stmt != stmt &&
                     (!left->stmt || !stmt || !func_00555160(left->stmt, stmt))) {
 #else
@@ -2584,7 +2791,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
     newlin->flags |= IROLF_Reffed;
     IRO_Paste(newlin, newlin, prevAssign);
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (rewrittenUseCount == 1 &&
         !sideEffectFlag &&
         !killedFlag &&
@@ -2596,7 +2803,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
         !objnode->data.objref->varptr->noregister) {
 #endif
         for (use = (IROUse301*)objnode->data.objref->varptr->uses; use; use = use->varnext) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (use->reachingDefCount &&
                 Bv_IsBitSet(def1->index, use->reachingDefs) &&
 #else
@@ -2620,7 +2827,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
         def1->useCount = 0;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (test2node->numpred == 1 &&
         IRO_NodeTable[test2node->pred[0]] == test1node &&
 #else
@@ -2630,7 +2837,7 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
         IRO_MergeFlowGraphNodes(test1node, test2node)) {
         test2node = test1node;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (prevnode->numpred == 1 &&
         IRO_NodeTable[prevnode->pred[0]] == test2node &&
 #else
@@ -2647,14 +2854,14 @@ Boolean func_00597D60(IRONode* start, IROLinear* nd) {
 }
 
 // 0x598E70: IRO_FNodeWorkStack_Add (3.0.1 keeps a copy)
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-72)
 #endif
 void func_00598E70(IRONodes* nodes, UInt16 index) {
     IRO_FNodeWorkStack_Add(nodes, index);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -2701,7 +2908,7 @@ Boolean func_0059A630(IRONode* fnode1, IRONode* fnode2, IROLinear* nd, Boolean s
                 result = FALSE;
                 goto done;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             for (scannd = fnode->first; scannd && scannd != fnode->last->next;
                  scannd = scannd->next) {
 #else
@@ -2713,7 +2920,7 @@ Boolean func_0059A630(IRONode* fnode1, IRONode* fnode2, IROLinear* nd, Boolean s
                         if (fnode->numpred == 2 && scannd->type == IROLinearLabel) {
                             func_00599360(fnode);
                         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         if (scannd->type != IROLinearNop &&
                             scannd->type != IROLinearLabel &&
                             scannd->type != IROLinearGoto &&
@@ -2744,7 +2951,7 @@ static inline IROLinear* LastTopLevelAssign301(IRONode* fnode) {
     IROLinear* result = NULL;
 
     for (scan = fnode->first; scan != fnode->last->next; scan = scan->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (scan->type == IROLinearOp2Arg &&
             scan->nodetype == EASS &&
             !(scan->flags & IROLF_Reffed)) {
@@ -2780,7 +2987,7 @@ Boolean func_00599070(IRONode* fnode) {
     IROList list;
     Boolean isIf;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!fnode ||
         fnode->numsucc != 2 ||
         !(last = fnode->last) ||
@@ -2795,7 +3002,7 @@ Boolean func_00599070(IRONode* fnode) {
     succ1 = IRO_NodeTable[fnode->succ[0]];
     succ2 = IRO_NodeTable[fnode->succ[1]];
     stmt = last->stmt;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!succ1 ||
         !succ2 ||
         succ1->numsucc != 0 ||
@@ -2811,7 +3018,7 @@ Boolean func_00599070(IRONode* fnode) {
         succ2->numpred != 1) {
         return FALSE;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (succ1->first &&
         succ1->first->type == IROLinearLabel &&
 #else
@@ -2820,7 +3027,7 @@ Boolean func_00599070(IRONode* fnode) {
 #endif
         succ1->first->u.label.label == last->u.label.label) {
         target = succ1;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     } else if (succ2->first &&
                succ2->first->type == IROLinearLabel &&
 #else
@@ -2835,7 +3042,7 @@ Boolean func_00599070(IRONode* fnode) {
     if (target->numpred != 1) {
         return FALSE;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!func_0059A630(fnode->nextnode, fnode->nextnode, NULL, TRUE) ||
         !func_0059A630(target, target, NULL, TRUE)) {
 #else
@@ -2844,7 +3051,7 @@ Boolean func_00599070(IRONode* fnode) {
 #endif
         return FALSE;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!fnode->nextnode->last ||
         fnode->nextnode->last->type != IROLinearReturn ||
         !fnode->nextnode->last->u.monadic ||
@@ -2861,7 +3068,7 @@ Boolean func_00599070(IRONode* fnode) {
         !IRO_TypesEqual(fnode->nextnode->last->u.monadic->rtype, target->last->u.monadic->rtype)) {
         return FALSE;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!SameContext301(stmt, fnode->nextnode->last->stmt) ||
         !SameContext301(stmt, target->last->stmt)) {
 #else
@@ -2910,7 +3117,7 @@ Boolean func_00599070(IRONode* fnode) {
 static inline ENode* LocalPointerTarget301(IROLinear* ass) {
     ENode* objnode;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!ass ||
         ass->type != IROLinearOp2Arg ||
         !ass->u.diadic.left ||
@@ -2987,7 +3194,7 @@ Boolean func_00599360(IRONode* fnode) {
 
     ifnode = NULL;
     for (i = 0; i < IRO_NumNodes; i++) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (Bv_IsBitSet(i, fnode->dom) &&
             (ifnode = IRO_NodeTable[i]) &&
             ifnode->last &&
@@ -2997,7 +3204,7 @@ Boolean func_00599360(IRONode* fnode) {
             ifnode->last &&
 #endif
             (ifnode->last->type == IROLinearIf || ifnode->last->type == IROLinearIfNot) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             ifnode->last->u.label.label &&
             ifnode->numsucc == 2) {
             if (Bv_IsBitSet(ifnode->succ[0], pred1->dom) &&
@@ -3014,7 +3221,7 @@ Boolean func_00599360(IRONode* fnode) {
 #endif
                 break;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (Bv_IsBitSet(ifnode->succ[0], pred2->dom) &&
                 !Bv_IsBitSet(ifnode->succ[0], pred1->dom) &&
                 Bv_IsBitSet(ifnode->succ[1], pred1->dom) &&
@@ -3035,7 +3242,7 @@ Boolean func_00599360(IRONode* fnode) {
     stmt = ifnode->last->stmt;
 
     target = IRO_NodeTable[ifnode->succ[0]];
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!(target &&
           target->numpred == 1 &&
           target->first &&
@@ -3048,7 +3255,7 @@ Boolean func_00599360(IRONode* fnode) {
 #endif
           target->first->u.label.label == ifnode->last->u.label.label)) {
         target = IRO_NodeTable[ifnode->succ[1]];
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (!(target &&
               target->numpred == 1 &&
               target->first &&
@@ -3079,7 +3286,7 @@ Boolean func_00599360(IRONode* fnode) {
     rightAss = NULL;
     if (objnode) {
         rightAss = LastTopLevelAssign301(right);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (!rightAss ||
             rightAss->type != IROLinearOp2Arg ||
             !rightAss->u.diadic.left ||
@@ -3114,7 +3321,7 @@ Boolean func_00599360(IRONode* fnode) {
         return FALSE;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!func_0059A630(ifnode->nextnode, left, leftAss, FALSE) ||
         !func_0059A630(target, right, rightAss, FALSE)) {
 #else
@@ -3125,7 +3332,7 @@ Boolean func_00599360(IRONode* fnode) {
     }
     useCount = rewrittenUseCount = 0;
     sideEffectFlag = killedFlag = FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!objnode->data.objref->varptr ||
         !objnode->data.objref->varptr->uses ||
         !objnode->data.objref->varptr->defs) {
@@ -3137,7 +3344,7 @@ Boolean func_00599360(IRONode* fnode) {
         return FALSE;
     }
     def1 = def2 = NULL;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     for (def = (IRODef301*)objnode->data.objref->varptr->defs; def && (!def1 || !def2);
          def = def->varnext) {
 #else
@@ -3156,7 +3363,7 @@ Boolean func_00599360(IRONode* fnode) {
     for (use = (IROUse301*)objnode->data.objref->varptr->uses; objnode && use; use = use->varnext) {
         if (use->reachingDefCount) {
             useCount++;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (Bv_IsBitSet(def1->index, use->reachingDefs) &&
                 Bv_IsBitSet(def2->index, use->reachingDefs)) {
 #else
@@ -3164,7 +3371,7 @@ Boolean func_00599360(IRONode* fnode) {
                 Bv_IsBitSet(def2->index, use->reachingDefs)) {
 #endif
                 for (i = 0; objnode && i < use->reachingDefs->size; i++) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (i != (UInt32)def1->index &&
                         i != (UInt32)def2->index &&
                         Bv_IsBitSet(i, use->reachingDefs)) {
@@ -3189,7 +3396,7 @@ Boolean func_00599360(IRONode* fnode) {
                 if (objnode && !sideEffectFlag) {
                     sideEffectFlag = func_0059AD10(fnode, fnode, use->node, use->linear, TRUE);
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (objnode &&
                     !killedFlag &&
                     (IRO_HasSideEffect(ifnode->last->u.label.cond) ||
@@ -3203,7 +3410,7 @@ Boolean func_00599360(IRONode* fnode) {
                      IRO_HasSideEffect(rightAss->u.diadic.right))) {
                     killedFlag = TRUE;
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             } else if (Bv_IsBitSet(def1->index, use->reachingDefs) ||
                        Bv_IsBitSet(def2->index, use->reachingDefs)) {
 #else
@@ -3219,7 +3426,7 @@ Boolean func_00599360(IRONode* fnode) {
     }
 
     // the use the value would go to must share the test's exception context
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (rewrittenUseCount == 1 &&
         !sideEffectFlag &&
         !killedFlag &&
@@ -3231,7 +3438,7 @@ Boolean func_00599360(IRONode* fnode) {
         !objnode->data.objref->varptr->noregister) {
 #endif
         for (use = (IROUse301*)objnode->data.objref->varptr->uses; use; use = use->varnext) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (use->reachingDefCount &&
                 Bv_IsBitSet(def1->index, use->reachingDefs) &&
                 Bv_IsBitSet(def2->index, use->reachingDefs) &&
@@ -3285,7 +3492,7 @@ Boolean func_00599360(IRONode* fnode) {
     }
     rightAss->flags |= IROLF_Reffed;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (rewrittenUseCount == 1 &&
         !sideEffectFlag &&
         !killedFlag &&
@@ -3297,7 +3504,7 @@ Boolean func_00599360(IRONode* fnode) {
         !objnode->data.objref->varptr->noregister) {
 #endif
         for (use = (IROUse301*)objnode->data.objref->varptr->uses; use; use = use->varnext) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (use->reachingDefCount &&
                 Bv_IsBitSet(def1->index, use->reachingDefs) &&
 #else
@@ -3306,7 +3513,7 @@ Boolean func_00599360(IRONode* fnode) {
 #endif
                 Bv_IsBitSet(def2->index, use->reachingDefs)) {
                 func_0059AF70(use, objnode, rightAss, TRUE);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if ((killedFlag =
                          (use->linear->flags & IROLF_InCallArg) && IRO_HasSideEffect(cond))) {
 #else
@@ -3391,7 +3598,7 @@ void IRO_RebuildCondExpressions(void) {
                     changed = TRUE;
                 }
             } else if (fnode->numsucc == 2) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if ((nd = fnode->last) &&
                     (nd->type == IROLinearIf || nd->type == IROLinearIfNot) &&
 #else
@@ -3418,7 +3625,7 @@ void IRO_RebuildLogicalExpressions(void) {
         changed = FALSE;
         for (fnode = IRO_FirstNode; fnode && fnode->last; fnode = fnode->nextnode) {
             for (nd = fnode->first; nd && nd != fnode->last->next; nd = nd->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (fnode->numsucc == 2 &&
                     (last = fnode->last) &&
                     (last->type == IROLinearIf || last->type == IROLinearIfNot) &&
@@ -3449,7 +3656,7 @@ extern void IRO_GenerateCombinedOperations(void);
 extern void IRO_UseDef301(void);
 
 void IRO_RegenerateExpressions(void) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (copts.opt_rebuildlogicals ||
         copts.opt_rebuildconditionals ||
         copts.opt_generateconditionalassignments ||
@@ -3491,7 +3698,7 @@ void IRO_RegenerateExpressions(void) {
         IRO_GenerateCombinedOperations();
         IRO_DumpAfterPhase("GenerateCombinedOperations", FALSE);
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (copts.opt_rebuildlogicals ||
         copts.opt_rebuildconditionals ||
         copts.opt_generateconditionalassignments) {
@@ -3504,30 +3711,32 @@ void IRO_RegenerateExpressions(void) {
     }
 }
 #else
-void IRO_RegenerateExpressions(void) {
-    IRO_UpdateFlagsOnInts();
-    IRO_ComputeSuccPred();
-    IRO_ComputeDom();
-    IRO_UseDef(FALSE, FALSE);
+                void IRO_RegenerateExpressions(void) {
+                    IRO_UpdateFlagsOnInts();
+                    IRO_ComputeSuccPred();
+                    IRO_ComputeDom();
+                    IRO_UseDef(FALSE, FALSE);
 
-    if (copts.optimizationlevel > 0) {
-        IRO_Dump("Rebuilding ELORs and ELANDs\n");
-        RebuildLogicalExpressions();
-        IRO_DumpAfterPhase("RebuildLogicalExpressions", FALSE);
-    }
+                    if (copts.optimizationlevel > 0) {
+                        IRO_Dump("Rebuilding ELORs and ELANDs\n");
+                        RebuildLogicalExpressions();
+                        IRO_DumpAfterPhase("RebuildLogicalExpressions", FALSE);
+                    }
 
-    if (copts.optimizationlevel > 0) {
-        IRO_Dump("Rebuilding ECONDs\n");
-        RebuildCondExpressions();
-        IRO_DumpAfterPhase("RebuildCondExpressions", FALSE);
-    }
+                    if (copts.optimizationlevel > 0) {
+                        IRO_Dump("Rebuilding ECONDs\n");
+                        RebuildCondExpressions();
+                        IRO_DumpAfterPhase("RebuildCondExpressions", FALSE);
+                    }
 
-    if (copts.optimizationlevel > 0) {
-        IRO_Dump("Generating ECONDASSes\n");
-        GenerateCondAssignments();
-        IRO_DumpAfterPhase("GenerateCondAssignments", FALSE);
-    }
-}
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+                    if (copts.optimizationlevel > 0) {
+                        IRO_Dump("Generating ECONDASSes\n");
+                        GenerateCondAssignments();
+                        IRO_DumpAfterPhase("GenerateCondAssignments", FALSE);
+                    }
+#endif
+                }
 #endif
 #if MWCCPSP
 
@@ -3555,7 +3764,7 @@ static inline Boolean IRO_IsMathCall(IROLinear* linear, IROLinear** arg, const c
     callee = linear->u.funccall.callee;
     if (callee->type == IROLinearOperand && callee->u.node->type == EOBJREF) {
         obj = callee->u.node->data.objref;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if ((!copts.cplusplus ||
              CScope_IsStdNameSpace(obj->nspace) ||
              obj->nspace == cscope_root) &&

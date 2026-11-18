@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifdef IRO_POINTER_ANALYSIS_TU
 #include "compiler/common.h"
 #include "driver/CLIO.h"
@@ -13,7 +14,7 @@
 #include <string.h>
 
 #if MWCCPSP
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #define ASSERT_FUNCNAME
 #define IRO_ASSERT(line, expr) \
     ((expr) ? (void)0 \
@@ -26,7 +27,7 @@
 #else
 #endif
 #if MWCCPSP
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 #define IRO_ASSERT(line, expr) \
     ((expr) ? (void)0 \
             : __assertion_failed( \
@@ -40,7 +41,7 @@
 #endif
 
 #if MWCCPSP
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #define IRO_ASSERT_T(line, expr) \
     ((expr) ? 0 \
             : (__assertion_failed( \

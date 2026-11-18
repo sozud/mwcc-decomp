@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/ParserHelpers.h"
 #if MWCCPSP
 #include "driver/pref_structs.h"
@@ -16,7 +17,7 @@
 #include "driver/ParserFace.h"
 #include "driver/Projects.h"
 #include "driver/Utils.h"
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #include "driver/pref_structs.h"
 #endif
 #include <setjmp.h>
@@ -142,7 +143,7 @@ int Opt_AddAccessPath(const char* opt, void* var, const char* arg, int flags) {
 
     err = OS_MakePathSpec(0, path, &spec);
     if (err == ERROR_FILE_NOT_FOUND || err == ERROR_PATH_NOT_FOUND) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         // b52 (0x40F8B7): a missing access path is reported only with -v
         if (pCmdLine.verbose)
 #endif

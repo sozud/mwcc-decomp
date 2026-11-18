@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_CLFILES_H
 #define DRIVER_CLFILES_H
 
@@ -11,7 +12,7 @@
 extern "C" {
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 struct VFile {
     char displayName[32];
     Handle data;
@@ -40,9 +41,9 @@ struct File {
     SInt16 writeToDisk;
     SInt16 wroteToDisk;
     SInt16 tempOnDisk;
-#if MWCCPS2_B52
     struct Plugin* compiler;
     SInt32 dropinflags;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt32 objectflags;
     SInt32 mappingflags;
     SInt16 sourceUsage;
@@ -50,10 +51,10 @@ struct File {
     Handle textdata;
     Handle objectdata;
     Handle browsedata;
+#if MWCC_CORE == MWCC_CORE_B52
     OSSpec tempfss; // b52 (as 3.0.1): File_New allocates 0x8A8, b69's 0x6A4 + an OSSpec
+#endif
 #else
-    struct Plugin* compiler;
-    SInt32 dropinflags;
     SInt32 objectflags;
     SInt32 mappingflags;
     SInt16 sourceUsage;
@@ -83,7 +84,7 @@ struct File {
     Boolean weakimport;
     Boolean initbefore;
     Boolean mergeintooutput;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     // b69's File is 0x6A4 bytes (File_New allocates and clears that much) and
     // every field from deps on is 4 bytes later (Deps_ListDependencies,
     // UCBGetFileInfo, RecordBrowseInfo)
@@ -112,7 +113,7 @@ extern Boolean Files_InsertFile(Files* files, File* file, SInt32 position);
 extern File* Files_GetFile(Files* files, SInt32 filenum);
 extern File* Files_FindFile(Files* files, OSSpec* spec);
 extern int Files_Count(Files* files);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern Boolean VFiles_Initialize(VFile** list);
 extern void VFiles_Terminate(VFile** list);
 extern VFile* VFile_New(const char* name, Handle data);

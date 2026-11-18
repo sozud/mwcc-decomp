@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include "compiler/CInt64.h"
 #include "compiler/CMachine.h"
@@ -76,7 +77,7 @@ ENode* func_004A4260(ENode* expr) {
 
     cmp = lalloc(sizeof(ENode));
     zero = lalloc(sizeof(ENode));
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // b52 (0x4CE640) leaves both nodes as lalloc found them; expand returns
     // early on a float 0.0 without writing its hascall, which ENOTEQU and
     // ELAND/ELOR pass up to call_function. The native takes 0, as the
@@ -144,7 +145,7 @@ int func_004A3930(char* name) {
 void func_004A3840(ENode* expr) {
     ENodeList* args = expr->data.funccall.args;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (ENODE_IS(args->node, EOBJREF) &&
         ENODE_IS(args->next->node, EOBJREF) &&
 #else
@@ -166,7 +167,7 @@ void func_004A3880(ENode* expr) {
     ENode* str;
     ENode* size;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!copts.poolstrings &&
         copts.readonly_strings &&
         ENODE_IS((args = expr->data.funccall.args)->node, EOBJREF) &&
@@ -309,21 +310,30 @@ extern int func_0045B8E0(ENode* expr); // the intrinsic the call is, or 0
     ((IS_SINGLE(t) && !(copts.fp_library & 1)) || (IS_DOUBLE(t) && !(copts.fp_library & 2)))
 
 static inline void note_local(Object* obj) {
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     ObjectList* list;
+#endif
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+    // 8-byte allocations are the argument lists at 0x4B8B96 and 0x4B963A
+    (void)obj;
+#else
     for (list = data_00624D48; list; list = list->next) {
         if (list->object == obj) {
             return;
-        }
-    }
-    if (obj && obj->datatype == DLOCAL) {
-        list = lalloc(sizeof(ObjectList));
-        memclrw(list, sizeof(ObjectList));
-        list->next = data_00624D48;
-        list->object = obj;
-        data_00624D48 = list;
-    }
+#endif
 }
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+}
+if (obj && obj->datatype == DLOCAL) {
+    list = lalloc(sizeof(ObjectList));
+    memclrw(list, sizeof(ObjectList));
+    list->next = data_00624D48;
+    list->object = obj;
+    data_00624D48 = list;
+}
+}
+#endif
 
 // expandIR on an expression: fills in cost and hascall, rewrites what the
 // code generator does not handle directly.
@@ -414,6 +424,7 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
             expr->cost = 0;
             break;
 
+#if MWCC_CORE == MWCC_CORE_B52
         case EMIN:
             func_004A3E00(expr, ELESS);
             func_004A2810(expr, target, ignored);
@@ -422,6 +433,17 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
             func_004A3E00(expr, EGREATER);
             func_004A2810(expr, target, ignored);
             break;
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+        case EMIN:
+            func_004A3E00(expr, ELESS);
+            func_004A2810(expr, target, ignored);
+            break;
+        case EMAX:
+            func_004A3E00(expr, EGREATER);
+            func_004A2810(expr, target, ignored);
+            break;
+#endif
 
         case ECOND:
             while (expr->data.cond.cond->type == ELOGNOT) {
@@ -438,16 +460,16 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
             func_004A2810(expr->data.cond.cond, NULL, 0);
             func_004A2810(left, NULL, ignored);
             func_004A2810(right, NULL, ignored);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             expr->hascall = expr->data.cond.cond->hascall | expr->data.cond.expr1->hascall |
                 expr->data.cond.expr2->hascall;
             expr->cost = expr->data.cond.cond->cost + expr->data.cond.expr1->cost +
                 expr->data.cond.expr2->cost + 3;
 #else
-            expr->hascall = expr->data.cond.cond->hascall | expr->data.cond.expr1->hascall |
-                expr->data.cond.expr2->hascall;
-            expr->cost = expr->data.cond.cond->cost + expr->data.cond.expr1->cost +
-                expr->data.cond.expr2->cost + 3;
+                    expr->hascall = expr->data.cond.cond->hascall | expr->data.cond.expr1->hascall |
+                        expr->data.cond.expr2->hascall;
+                    expr->cost = expr->data.cond.cond->cost + expr->data.cond.expr1->cost +
+                        expr->data.cond.expr2->cost + 3;
 #endif
             if (expr->rtype->type == TYPESTRUCT || expr->rtype->type == TYPEARRAY) {
                 if (left->type == EINDIRECT) {
@@ -474,12 +496,12 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
                         if (list->node->type == ETYPCON) {
                             list->node->rtype = TYPE(&stfloat);
                         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             list->node =
                                 CExpr_AssignmentPromotion(list->node, TYPE(&stfloat), 0, 1);
 #else
-                            list->node =
-                                CExpr_AssignmentPromotion(list->node, TYPE(&stfloat), 0, 1);
+                                    list->node =
+                                        CExpr_AssignmentPromotion(list->node, TYPE(&stfloat), 0, 1);
 #endif
                         }
                     }
@@ -488,14 +510,14 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
                     data_00625EA9 = 0;
                 }
             } else if (expr->data.funccall.funcref->type == EOBJREF) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 id = func_004A3930(
                     CMangler_GetLinkName(expr->data.funccall.funcref->data.objref)->name
                 );
 #else
-                id = func_004A3930(
-                    CMangler_GetLinkName(expr->data.funccall.funcref->data.objref)->name
-                );
+                        id = func_004A3930(
+                            CMangler_GetLinkName(expr->data.funccall.funcref->data.objref)->name
+                        );
 #endif
                 if (id == 8) {
                     func_004A3880(expr);
@@ -507,12 +529,12 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
                         if (list->node->type == ETYPCON) {
                             list->node->rtype = TYPE(&stfloat);
                         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             list->node =
                                 CExpr_AssignmentPromotion(list->node, TYPE(&stfloat), 0, 1);
 #else
-                            list->node =
-                                CExpr_AssignmentPromotion(list->node, TYPE(&stfloat), 0, 1);
+                                    list->node =
+                                        CExpr_AssignmentPromotion(list->node, TYPE(&stfloat), 0, 1);
 #endif
                         }
                         expr->rtype = TYPE(&stfloat);
@@ -524,16 +546,17 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
                         expr->hascall = 1;
                     }
                 } else if (id == -1) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     if (!strcmp(
                             CMangler_GetLinkName(expr->data.funccall.funcref->data.objref)->name,
                             "__throw"
                         )) {
 #else
-                    if (!strcmp(
-                            CMangler_GetLinkName(expr->data.funccall.funcref->data.objref)->name,
-                            "__throw"
-                        )) {
+                            if (!strcmp(
+                                    CMangler_GetLinkName(expr->data.funccall.funcref->data.objref)
+                                        ->name,
+                                    "__throw"
+                                )) {
 #endif
                         data_00625EAE = 1;
                     }
@@ -578,14 +601,14 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
             expr->cost = 10;
             for (list = expr->data.funccall.args; list; list = list->next) {
                 n = list->node;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if (n->type == ETYPCON &&
                     n->data.monadic->type == EINDIRECT &&
                     n->rtype == n->data.monadic->rtype) {
 #else
-                if (n->type == ETYPCON &&
-                    n->data.monadic->type == EINDIRECT &&
-                    n->rtype == n->data.monadic->rtype) {
+                        if (n->type == ETYPCON &&
+                            n->data.monadic->type == EINDIRECT &&
+                            n->rtype == n->data.monadic->rtype) {
 #endif
                     list->node = n->data.monadic;
                 }
@@ -593,16 +616,16 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
                 expr->cost += list->node->cost;
             }
             type = expr->data.funccall.functype->functype;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (type &&
                 (type->type == TYPEARRAY ||
                  type->type == TYPESTRUCT ||
                  type->type == TYPECLASS ||
 #else
-            if (type &&
-                (type->type == TYPEARRAY ||
-                 type->type == TYPESTRUCT ||
-                 type->type == TYPECLASS ||
+                    if (type &&
+                        (type->type == TYPEARRAY ||
+                         type->type == TYPESTRUCT ||
+                         type->type == TYPECLASS ||
 #endif
                  (type->type == TYPEMEMBERPOINTER && type->size == 12))) {
                 if (CMach_GetFunctionResultClass(expr->data.funccall.functype) == 1) {
@@ -639,12 +662,12 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
 
         case EASS:
             right = expr->data.diadic.right;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (right->type == ETYPCON &&
                 right->data.monadic->type == EINDIRECT &&
 #else
-            if (right->type == ETYPCON &&
-                right->data.monadic->type == EINDIRECT &&
+                    if (right->type == ETYPCON &&
+                        right->data.monadic->type == EINDIRECT &&
 #endif
                 right->rtype->type == right->data.monadic->rtype->type &&
                 right->rtype->size == right->data.monadic->rtype->size) {
@@ -658,14 +681,14 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
             }
             expr->cost = 1;
             type = expr->rtype;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (type->type == TYPESTRUCT ||
                 type->type == TYPEARRAY ||
                 type->type == TYPECLASS ||
 #else
-            if (type->type == TYPESTRUCT ||
-                type->type == TYPEARRAY ||
-                type->type == TYPECLASS ||
+                    if (type->type == TYPESTRUCT ||
+                        type->type == TYPEARRAY ||
+                        type->type == TYPECLASS ||
 #endif
                 (type->type == TYPEMEMBERPOINTER && type->size == 12)) {
                 if (expr->data.diadic.right->type != EFUNCCALL) {
@@ -743,12 +766,12 @@ assignop:
         case ESUB:
             if (expr->data.diadic.right->type == EINTCONST) {
                 expr->type = EADD;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 expr->data.diadic.right->data.intval =
                     CInt64_Neg(expr->data.diadic.right->data.intval);
 #else
-                expr->data.diadic.right->data.intval =
-                    CInt64_Neg(expr->data.diadic.right->data.intval);
+                        expr->data.diadic.right->data.intval =
+                            CInt64_Neg(expr->data.diadic.right->data.intval);
 #endif
             }
         case EMUL:
@@ -759,12 +782,12 @@ assignop:
             func_004A2810(expr->data.diadic.left, target, 0);
             func_004A2810(expr->data.diadic.right, target, 0);
             expr->hascall = expr->data.diadic.left->hascall | expr->data.diadic.right->hascall;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (expr->data.diadic.left->type == EOBJREF &&
                 expr->data.diadic.right->type == EINTCONST) {
 #else
-            if (expr->data.diadic.left->type == EOBJREF &&
-                expr->data.diadic.right->type == EINTCONST) {
+                    if (expr->data.diadic.left->type == EOBJREF &&
+                        expr->data.diadic.right->type == EINTCONST) {
 #endif
                 expr->cost = expr->data.diadic.left->cost;
             } else {
@@ -776,25 +799,25 @@ assignop:
             type = expr->rtype;
             tt = type->type;
             sub = expr->data.monadic;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if ((tt == TYPEINT || tt == TYPEENUM) &&
                 type->size < 4 &&
 #else
-            if ((tt == TYPEINT || tt == TYPEENUM) &&
-                type->size < 4 &&
+                    if ((tt == TYPEINT || tt == TYPEENUM) &&
+                        type->size < 4 &&
 #endif
                 (sub->rtype->type == TYPEINT || sub->rtype->type == TYPEENUM)) {
                 func_004A2810(sub, type, 0);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             } else if (copts.fastmath &&
                        sub->type == EMONMIN &&
                        tt == TYPEFLOAT &&
                        sub->rtype->type == TYPEFLOAT &&
 #else
-            } else if (copts.fastmath &&
-                       sub->type == EMONMIN &&
-                       tt == TYPEFLOAT &&
-                       sub->rtype->type == TYPEFLOAT &&
+                    } else if (copts.fastmath &&
+                               sub->type == EMONMIN &&
+                               tt == TYPEFLOAT &&
+                               sub->rtype->type == TYPEFLOAT &&
 #endif
                        sub->data.monadic->rtype->size >= type->size) {
                 func_004A2810(sub, type, tt == TYPEVOID);
@@ -873,14 +896,14 @@ assignop:
             func_004A2810(sub, target, 0);
             expr->hascall = sub->hascall;
             expr->cost = expr->data.monadic->cost + 1;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (copts.fastmath &&
                 target &&
                 expr->data.monadic->type == ETYPCON &&
 #else
-            if (copts.fastmath &&
-                target &&
-                expr->data.monadic->type == ETYPCON &&
+                    if (copts.fastmath &&
+                        target &&
+                        expr->data.monadic->type == ETYPCON &&
 #endif
                 expr->data.monadic->rtype->type == TYPEFLOAT &&
                 expr->data.monadic->data.monadic->rtype->type == TYPEFLOAT &&
@@ -900,16 +923,16 @@ assignop:
         case ENULLCHECK:
             func_004A2810(expr->data.nullcheck.nullcheckexpr, NULL, 0);
             func_004A2810(expr->data.nullcheck.condexpr, NULL, 0);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             expr->hascall = expr->data.nullcheck.nullcheckexpr->hascall |
                 expr->data.nullcheck.condexpr->hascall;
             expr->cost =
                 expr->data.nullcheck.nullcheckexpr->cost + expr->data.nullcheck.condexpr->cost + 2;
 #else
-            expr->hascall = expr->data.nullcheck.nullcheckexpr->hascall |
-                expr->data.nullcheck.condexpr->hascall;
-            expr->cost =
-                expr->data.nullcheck.nullcheckexpr->cost + expr->data.nullcheck.condexpr->cost + 2;
+                    expr->hascall = expr->data.nullcheck.nullcheckexpr->hascall |
+                        expr->data.nullcheck.condexpr->hascall;
+                    expr->cost = expr->data.nullcheck.nullcheckexpr->cost +
+                        expr->data.nullcheck.condexpr->cost + 2;
 #endif
             break;
 
@@ -963,7 +986,7 @@ ENODE_CASE_MONADIC:
         copy->data.monadic = func_004A40C0(expr->data.monadic);
         break;
 ENODE_CASE_DIADIC_ALL:
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     case EMIN:
     case EMAX:
     case EPOINTERSTAR:

@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CSOM.h"
 #include "compiler/CClass.h"
 #include "compiler/CDecl.h"
@@ -149,7 +150,7 @@ void CSOM_Setup(Boolean isPrecompiler) {
     csom_selfname = GetHashNameNodeExport("__somself");
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (41)
 #endif
@@ -192,7 +193,7 @@ void CSOM_Cleanup(void) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -902,7 +903,7 @@ static void CSOM_GenerateOverrideProcs(SOMGenerator* gen, TypeClass* tclass) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CTool_EndianConvertWord16
 #define CTool_EndianConvertWord16(x) (x)
 
@@ -918,14 +919,14 @@ static Object* CSOM_GenerateOverrideData(SOMGenerator* gen) {
         if (ancestor->overrides) {
             SOMOverride* override;
             short overrideCount;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             short b69_dead;
 #endif
 
             AppendGListWord(&name_mangle_list, CTool_EndianConvertWord16(ancestorIndex));
 
             override = ancestor->overrides;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             b69_dead = overrideCount = 0;
 #else
             overrideCount = 0;
@@ -974,7 +975,7 @@ static Object* CSOM_GenerateMigrateData(SOMGenerator* gen) {
     COS_UnlockHandle(name_mangle_list.data);
     return object;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CTool_EndianConvertWord16
 #endif
 
@@ -1089,7 +1090,7 @@ static void CSOM_SetNibble(char* buf, SInt32 offset, UInt8 value) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-4)
 #endif
@@ -1118,7 +1119,7 @@ static Object* CSOM_GenerateSlotUsage(SOMGenerator* gen) {
 
     return CInit_DeclareString(buf, size, FALSE, FALSE);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -1346,7 +1347,7 @@ static void CSOM_GenerateClassDataObject(SOMGenerator* gen, TypeClass* tclass) {
     SInt32 size;
 
     relocs = NULL;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     size = 24;
     for (method = gen->methods; method; method = method->next) {
 #else
@@ -1665,7 +1666,7 @@ static Object* CSOM_FindRTFunc(char* namestr, char* sig) {
 static ENode* CSOM_MakeTempCondition(ENode* left, ENode* cond, ENode* expr1, ENode* right) {
     ENode* expr;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     expr = CExpr_NewENode(ECOND);
 #else
     expr = lalloc(sizeof(ENode));
@@ -1765,7 +1766,7 @@ void CSOM_InitAutoClass(Object* object) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-11)
 #endif
@@ -1835,7 +1836,7 @@ static void CSOM_FindIntroClassOffset(
 
     CError_FATAL(1731);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -1884,18 +1885,18 @@ ENode* CSOM_SOMSelfObjectExpr(TypeClass* tclass) {
     return create_objectnode(obj);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-11)
 #endif
 void CSOM_InitSOMSelf(TypeClass* tclass, Statement* stmt) {
     ObjectList* list;
     HashNameNode* name;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     ENode* selfExpr;
 #endif
     Statement* newStmt;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     ENode* selfExpr;
 #endif
 
@@ -1917,7 +1918,7 @@ void CSOM_InitSOMSelf(TypeClass* tclass, Statement* stmt) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
@@ -1955,7 +1956,7 @@ ENode* CSOM_EnvCheck(ENode* funccall, ENodeList* checkArg) {
 #if MWCCPSP
                 resultTemp = CEXPR_COPYENODE(checkArg->node);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 resultTemp = CExpr_CopyENode(checkArg->node);
 #else
                 resultTemp = lalloc(sizeof(ENode));
@@ -1979,7 +1980,7 @@ ENode* CSOM_EnvCheck(ENode* funccall, ENodeList* checkArg) {
 #if MWCCPSP
             objTemp = CEXPR_COPYENODE(arg2->node);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             objTemp = CExpr_CopyENode(arg2->node);
 #else
             objTemp = lalloc(sizeof(ENode));
@@ -1993,7 +1994,7 @@ ENode* CSOM_EnvCheck(ENode* funccall, ENodeList* checkArg) {
 #if MWCCPSP
         objTemp = CEXPR_COPYENODE(arg2->node);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         objTemp = CExpr_CopyENode(arg2->node);
 #else
         objTemp = lalloc(sizeof(ENode));
@@ -2013,7 +2014,7 @@ ENode* CSOM_EnvCheck(ENode* funccall, ENodeList* checkArg) {
 #if MWCCPSP
         checkExpr = CEXPR_COPYENODE(objTemp);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         checkExpr = CExpr_CopyENode(objTemp);
 #else
         checkExpr = lalloc(sizeof(ENode));

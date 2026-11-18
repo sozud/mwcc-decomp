@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // mwccpsp 3.0.1 StructMoves.c (0x52DE30..0x52FD90): block copies for
 // structure assignment, argument passing and memcpy. Small blocks are
 // copied by straight-line loads and stores, bigger ones by a loop of the
@@ -46,7 +47,7 @@ extern void func_00490370(void); // end the block
 extern MPCode* func_00480420(int op, SInt16 nargs);
 extern SInt32 data_00625A98[7]; // next virtual register of each class
 extern SInt16 data_00625E48; // the move opcode
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern SInt16 data_00625E74; // the 16-byte register move
 #else
 static void func_0052E3B0(
@@ -61,7 +62,7 @@ static void func_0052E3B0(
 );
 #endif
 // an address operand into a register
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #define MWCCPS2_B69_NOQFLAG 1
 static void func_0052E3B0(
     UInt16 loadop,
@@ -206,7 +207,7 @@ static void func_0052FA10(VOperand* dst, VOperand* src, SInt32 len) {
 // the copy loop: len / step iterations (two accesses each when that is even
 // and at least 6) of loadop/storeop through pointer registers, which
 // dstEnd/srcEnd describe afterwards (for the remainder)
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 static void func_0052E3B0(
     UInt16 loadop,
     UInt16 storeop,
@@ -272,7 +273,7 @@ static void func_0052E3B0(
         rtmp2 = data_00625A98[0]++;
     }
     counter = func_0047F660(count);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     {
         SInt16 move = step == 16 ? data_00625E74 : data_00625E48;
         emitpcode(move, rcount, counter.reg);
@@ -280,7 +281,7 @@ static void func_0052E3B0(
     emitpcode(data_00625E48, rcount, counter.reg);
 #endif
         counter.reg = rcount;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         emitpcode(move, rsrc, src->reg);
         emitpcode(move, rdst, dst->reg);
     }
@@ -296,7 +297,7 @@ static void func_0052E3B0(
     pc->args[0] = func_004C3E70(rtmp, 0, 0x12);
     pc->args[1] = func_004C3C60(&smem);
     pc->args[2] = func_004C3E70(rsrc, 0, 0x11);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!MWCCPS2_B69_NOQFLAG && (pc->op == MACRO_OP(0x5D) || pc->op == OPC(0x1D1))) {
 #else
     if (pc->op == MACRO_OP(0x5D) || pc->op == 0x1D1) {
@@ -308,7 +309,7 @@ static void func_0052E3B0(
         pc = func_00480420(loadop, 3);
         pc->flags |= 0x20;
         pc->args[0] = func_004C3E70(rtmp2, 0, 0x12);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (!MWCCPS2_B69_NOQFLAG && (pc->op == MACRO_OP(0x5D) || pc->op == OPC(0x1D1))) {
 #else
         if (pc->op == MACRO_OP(0x5D) || pc->op == 0x1D1) {
@@ -344,7 +345,7 @@ static void func_0052E3B0(
     pc = func_00480420(storeop, 3);
     pc->flags |= 0x20;
     pc->args[0] = func_004C3E70(rtmp, 0, 0x11);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!MWCCPS2_B69_NOQFLAG && (pc->op == MACRO_OP(0x7F) || pc->op == OPC(0x1D2))) {
 #else
     if (pc->op == MACRO_OP(0x7F) || pc->op == 0x1D2) {
@@ -358,7 +359,7 @@ static void func_0052E3B0(
         pc = func_00480420(storeop, 3);
         pc->flags |= 0x20;
         pc->args[0] = func_004C3E70(rtmp2, 0, 0x11);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (!MWCCPS2_B69_NOQFLAG && (pc->op == MACRO_OP(0x5D) || pc->op == OPC(0x1D1))) {
 #else
         if (pc->op == MACRO_OP(0x5D) || pc->op == 0x1D1) {

@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 // mwccpsp 3.0.1 InlineAsmMIPS.c (0x482000..0x48B000): the MIPS inline
 // assembler.
 #include "compiler/common.h"
@@ -15,7 +16,7 @@ extern char volatileasm; // 0x625E8E
 extern UInt8 data_00625E7F; // the assembler's nomacro
 extern UInt8 data_00625E98;
 extern char data_00625EAC;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // b69's 0x5455D0 is InlineAsm.c's allow_array_expressions (symbols.manual.txt)
 #define data_005D161C allow_array_expressions
 extern int allow_array_expressions;
@@ -23,7 +24,7 @@ extern int allow_array_expressions;
 extern SInt32 data_005D161C;
 #endif
 extern struct MPCode* data_00624C3C; // the last branch, whose delay slot noreorder code fills
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // b69's opcode numbering (kept by the source-only/native links' assembler,
 // INLINEASM_OURS: OpcodeMap69.c): 0x3B5 real opcodes, the macros right after them
 // (.set is 0x461; the set-up's table bound is 0x462)
@@ -56,7 +57,7 @@ typedef struct AsmRegName {
 } AsmRegName;
 
 static AsmRegName asm_regnames[] = {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     {"r0", 0, 0, 0},      {"r1", 0, 1, 0},      {"r2", 0, 2, 0},      {"r3", 0, 3, 0},
     {"r4", 0, 4, 0},      {"r5", 0, 5, 0},      {"r6", 0, 6, 0},      {"r7", 0, 7, 0},
     {"r8", 0, 8, 0},      {"r9", 0, 9, 0},      {"r10", 0, 10, 0},    {"r11", 0, 11, 0},
@@ -461,23 +462,23 @@ void func_00483F30(void) {
     UInt16 op;
     int i;
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     volatileasm |= copts.volatileasm;
 #endif
     data_00625E7F = copts.nomacro;
     data_00625E98 = 0;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     data_00625EAC = 0;
 #endif
     data_005D161C = 1;
     data_00624C3C = 0;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     b69_asm_sync_opcodes();
 #endif
     func_0053EB40();
 #if MWCCPS2
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (getenv("MWCCPSP_TRACE")) {
         fprintf(
             stderr,
@@ -904,7 +905,7 @@ void func_00483F30(void) {
     func_0053EC00("vf29w", 5, 16573, NULL);
     func_0053EC00("vf30w", 5, 16574, NULL);
     func_0053EC00("vf31w", 5, 16575, NULL);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     func_0053EC00("I", 6, 0, NULL);
     func_0053EC00("Q", 6, 1, NULL);
     func_0053EC00("R", 6, 3, NULL);
@@ -942,11 +943,11 @@ void func_00483F30(void) {
 // a mnemonic's record (InlineAsmTables.c)
 typedef struct AsmMnemonicRec {
     char* name;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     SInt32 capacity;
 #endif
     SInt32 count;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt32 opcodes[1]; // +8, inline (InlineAsmMnemonics.c)
 #else
     SInt32* opcodes;
@@ -969,11 +970,11 @@ void func_00483B20(void) {
     char mnemonic[0x12C];
     Statement* stmt;
     AsmMnemonicRec* m;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     volatile SInt32 tries;
 #endif
     SInt32 state;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     volatile SInt32 tries;
 #endif
 
@@ -989,7 +990,7 @@ void func_00483B20(void) {
     InlineAsm_SkipComment();
     func_00487F60(mnemonic);
     if (!(m = func_0053E980(mnemonic))) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         CError_Error(0x105); // b69's error numbers are GC's
 #else
         CError_Error(0xA2);
@@ -1022,7 +1023,7 @@ void func_00487F60(char* buf) {
     int i;
     AsmMnemonicRec* m;
     char* p;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     OpcodeDef* def;
     char* fmt;
 #endif
@@ -1034,7 +1035,7 @@ void func_00487F60(char* buf) {
 
     data_00625EA1 = 0;
     data_00625ECD = 0;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if ((m = func_0053E980(buf)) &&
         (def = &data_006115F8[m->opcodes[0]], fmt = def->format, *fmt) == '&') {
         if (lookahead() == '.') {
@@ -1048,7 +1049,7 @@ void func_00487F60(char* buf) {
             tk = lex();
             tk = lex();
             if (tk != TK_IDENTIFIER) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 CError_Error(ASM_ERR(8));
 #else
             CError_Error(8);
@@ -1059,37 +1060,37 @@ void func_00487F60(char* buf) {
             for (p = tkidentifier->name; *p;) {
                 if (*p == 'x') {
                     data_00625EA1 |= 8;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     p++;
 #endif
                 } else if (*p == 'y') {
                     data_00625EA1 |= 4;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     p++;
 #endif
                 } else if (*p == 'z') {
                     data_00625EA1 |= 2;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     p++;
 #endif
                 } else if (*p == 'w') {
                     data_00625EA1 |= 1;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     p++;
 #endif
                 } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     CError_Error(ASM_ERR(8)); // without advancing
 #else
                     CError_Error(8);
                     continue;
 #endif
                 }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                 p++;
 #endif
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else {
             data_00625EA1 = 0xF;
         }
@@ -1117,7 +1118,7 @@ void func_00487F60(char* buf) {
         strcat(buf, ".");
         tk = lex();
         if (tk != TK_IDENTIFIER) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             CError_Error(ASM_ERR(8));
 #else
             CError_Error(8);
@@ -1153,11 +1154,11 @@ extern void InlineAsm_SyntaxError(short code);
 // 0x483C40: a directive (after '.'): .set's options; any other directive is
 // an instruction
 void func_00483C40(void) {
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     Statement* stmt;
 #endif
     AsmSetRecord* rec;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Statement* stmt;
 #else
     AsmSetState* st;
@@ -1167,13 +1168,13 @@ void func_00483C40(void) {
     InlineAsm_SkipComment();
     tk = lex();
     if (tk != TK_IDENTIFIER) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         InlineAsm_SyntaxError(0x6B);
 #else
         InlineAsm_SyntaxError(8);
 #endif
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!strcmp(tkidentifier->name, "set")) {
 #else
     if (strcmp(tkidentifier->name, "set")) {
@@ -1186,7 +1187,7 @@ void func_00483C40(void) {
         rec = lalloc(sizeof(AsmSetRecord));
         memclrw(rec, sizeof(AsmSetRecord));
         stmt->expr = (ENode*)rec;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         rec->opcode = ASM_MACRO_OP(0xAC);
 #else
     rec->opcode = MACRO_OP(0xAC);
@@ -1195,13 +1196,13 @@ void func_00483C40(void) {
         InlineAsm_SkipComment();
         tk = lex();
         if (tk != TK_IDENTIFIER) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             InlineAsm_SyntaxError(0x6B);
 #else
         InlineAsm_SyntaxError(8);
 #endif
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (!strcmp(tkidentifier->name, "reorder")) {
 #else
     name = tkidentifier->name;
@@ -1212,31 +1213,31 @@ void func_00483C40(void) {
     } else if (!strcmp(name, "reorder")) {
 #endif
             rec->mode = 1;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (!strcmp(tkidentifier->name, "noreorder")) {
 #else
     } else if (!strcmp(name, "noreorder")) {
 #endif
             rec->mode = 2;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (!strcmp(tkidentifier->name, "at")) {
 #else
     } else if (!strcmp(name, "at")) {
 #endif
             data_00625E98 = 0;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (!strcmp(tkidentifier->name, "noat")) {
 #else
     } else if (!strcmp(name, "noat")) {
 #endif
             data_00625E98 = 1;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (!strcmp(tkidentifier->name, "nomacro")) {
 #else
     } else if (!strcmp(name, "nomacro")) {
 #endif
             data_00625E7F = 1;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (!strcmp(tkidentifier->name, "macro")) {
 #else
     } else if (!strcmp(name, "macro")) {
@@ -1269,20 +1270,20 @@ void func_00483C40(void) {
             data_00625E5A = st->unk8;
 #endif
         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             CError_Error(0x90);
 #else
         CError_Error(0x2D);
 #endif
         }
         tk = lex();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         return;
     } else {
         func_00483B20();
 #endif
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 }
 #endif
 
@@ -1314,7 +1315,7 @@ extern void func_00489DE0(MAsmOperand* op);
 // b210 (0x4947C0): the R5900 operand letters; "2+" picks VU0's other
 // register class for x/d/s/t, no VFPU constants or write-back forms
 #if MWCCPS2 && MWCCPS2_BUILD < 210
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // register operand ends a 2/2+ prefix (x/d/s/t, P)
 extern void InlineAsm_FloatOperand(MAsmOperand* op); // 0x4B3420
 extern void InlineAsm_IntOperand(MAsmOperand* op); // 0x4B3480
@@ -1347,7 +1348,7 @@ void InlineAsm_IntOperand(MAsmOperand* op) {
 #define ASM_LINE(line, b145) (line)
 #endif
 void* func_00488180(UInt16 opcode) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     OpcodeDef* def = &data_006115F8[opcode];
 #else
         OpcodeDef* def;
@@ -1356,7 +1357,7 @@ void* func_00488180(UInt16 opcode) {
     MAsmOperand* operand;
     char* fmt;
     SInt16 mode;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     char vfpupair = 0;
     char pairplus = 0;
     char flag7 = 0;
@@ -1367,7 +1368,7 @@ void* func_00488180(UInt16 opcode) {
 #endif
     UInt32 i;
 #if MWCCPS2 && MWCCPS2_BUILD < 210
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     union {
         float f;
         SInt32 i;
@@ -1375,7 +1376,7 @@ void* func_00488180(UInt16 opcode) {
 #endif
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (opcode >= OPC(0x355) && opcode <= OPC(0x3BC)) {
         InlineAsm_SyntaxError(0x105);
 #else
@@ -1384,7 +1385,7 @@ void* func_00488180(UInt16 opcode) {
             InlineAsm_SyntaxError(0xA2);
 #endif
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (data_00625E7F && opcode >= OPC(0x3BD)) {
         func_004C5890(0x64);
 #else
@@ -1394,14 +1395,14 @@ void* func_00488180(UInt16 opcode) {
     }
     if (data_00625E98 == 0) {
         if ((def->flags & 0x400000) && copts.warn_inlineasm) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             func_004C5890(0x66);
 #else
                 func_004C5890(3);
 #endif
         }
     } else if (data_00625E98 == 1 && (def->flags & 0x400000) && copts.warn_inlineasm) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         func_004C5940(0x65);
 #else
             func_004C5940(2);
@@ -1410,19 +1411,19 @@ void* func_00488180(UInt16 opcode) {
 
     rec = lalloc(def->nargs * sizeof(MAsmOperand) + 8);
     rec->opcode = opcode;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     rec->flags = volatileasm ? 4 : 0;
 #else
         rec->flags = (volatileasm | data_00625EAC) ? 4 : 0;
 #endif
     rec->nops = 0;
     data_00624810 = 0;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     fmt = def->format;
     operand = rec->ops;
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (fmt = def->format, operand = rec->ops; *fmt; fmt++) {
 #else
         if (*fmt) {
@@ -1434,7 +1435,7 @@ void* func_00488180(UInt16 opcode) {
         flag7 = 0;
         if (*fmt == ',') {
             if (tk != ',') {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 InlineAsm_SyntaxError(ASM_ERR(0x11));
 #else
                         InlineAsm_SyntaxError(0x11);
@@ -1452,14 +1453,14 @@ void* func_00488180(UInt16 opcode) {
 
         mode = 1;
         if (*fmt == '=') {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             mode = 2, ++fmt;
 #else
                     fmt++;
                     mode = 2;
 #endif
         } else if (*fmt == '+') {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             mode = 3, ++fmt;
 #else
                     mode = 3;
@@ -1467,7 +1468,7 @@ void* func_00488180(UInt16 opcode) {
 #endif
         }
         if (*fmt == '!') {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             mode |= 0x8000, ++fmt;
 #else
                     mode |= 0x8000;
@@ -1477,21 +1478,21 @@ void* func_00488180(UInt16 opcode) {
                 mode |= 0x20;
             }
         }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         if (*fmt == '$') {
             mode |= 0x2000;
             fmt++;
         }
 #endif
         if (*fmt == '2') {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             vfpupair = 1, fmt++;
 #else
                     fmt++;
                     vfpupair = 1;
 #endif
             if (*fmt == '+') {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 pairplus = 1, fmt++;
 #else
                         pairplus = 1;
@@ -1500,7 +1501,7 @@ void* func_00488180(UInt16 opcode) {
             }
         }
         if (*fmt == '\'') {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             flag7 = 1, fmt++;
 #else
                     fmt++;
@@ -1513,7 +1514,7 @@ void* func_00488180(UInt16 opcode) {
         switch (*fmt) {
             case '-':
                 if (tk != TK_DECREMENT) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     InlineAsm_SyntaxError(ASM_ERR(0x2D));
 #else
                             InlineAsm_SyntaxError(0x2D);
@@ -1523,7 +1524,7 @@ void* func_00488180(UInt16 opcode) {
                 break;
             case '|':
                 if (tk != TK_INCREMENT) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     InlineAsm_SyntaxError(ASM_ERR(0x2D));
 #else
                             InlineAsm_SyntaxError(0x2D);
@@ -1539,7 +1540,7 @@ void* func_00488180(UInt16 opcode) {
                 break;
             case '(':
                 if (tk != '(') {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     InlineAsm_SyntaxError(ASM_ERR(0xF));
 #else
                             InlineAsm_SyntaxError(0xF);
@@ -1549,7 +1550,7 @@ void* func_00488180(UInt16 opcode) {
                 break;
             case ')':
                 if (tk != ')') {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     InlineAsm_SyntaxError(ASM_ERR(0x10));
 #else
                             InlineAsm_SyntaxError(0x10);
@@ -1558,13 +1559,13 @@ void* func_00488180(UInt16 opcode) {
                 tk = lex();
                 break;
             case '>':
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                 if (opcode == 0x3EE || opcode == 0x3EF) {
                     func_0048AA50(operand, 0, 0x1F);
                 } else {
 #endif
                     func_0048AA50(operand, -0x10, 0xF);
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                 }
 #endif
                 rec->nops++;
@@ -1576,7 +1577,7 @@ void* func_00488180(UInt16 opcode) {
                 rec->nops++;
                 operand++;
                 break;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case '@':
                 func_0048AA50(operand, 1, 0x20);
                 rec->nops++;
@@ -1615,7 +1616,7 @@ void* func_00488180(UInt16 opcode) {
                 break;
             case 'f':
 #if MWCCPS2 && MWCCPS2_BUILD < 210
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 InlineAsm_FloatOperand(operand);
 #else
                 // b145: a float constant only, no sign or integer
@@ -1635,13 +1636,13 @@ void* func_00488180(UInt16 opcode) {
                 break;
             case 'I':
                 if (vfpupair) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     func_004890B0(operand, 6, 0, mode);
 #else
                             func_004890B0(operand, 6, 1, mode);
 #endif
                 } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     InlineAsm_IntOperand(operand);
 #else
                             operand->type = 0;
@@ -1653,7 +1654,7 @@ void* func_00488180(UInt16 opcode) {
                 break;
             case 'Q':
                 if (vfpupair) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     func_004890B0(operand, 6, 1, mode);
 #else
                             func_004890B0(operand, 6, 2, mode);
@@ -1664,7 +1665,7 @@ void* func_00488180(UInt16 opcode) {
                 break;
             case 'R':
                 if (vfpupair) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     func_004890B0(operand, 6, 3, mode);
 #else
                             func_004890B0(operand, 6, 4, mode);
@@ -1684,7 +1685,7 @@ void* func_00488180(UInt16 opcode) {
                 operand++;
                 break;
             case 'x':
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 CError_ASSERT(858, vfpupair);
 #else
                         CError_ASSERT(ASM_LINE(2061, 1038), vfpupair);
@@ -1692,7 +1693,7 @@ void* func_00488180(UInt16 opcode) {
             case 'd':
             case 's':
             case 't':
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 func_004890B0(
                     operand, vfpupair ? (pairplus ? (char)4 : (char)3) : (char)0, -1, mode
                 );
@@ -1705,7 +1706,7 @@ void* func_00488180(UInt16 opcode) {
                 break;
             case 'P':
                 func_004890B0(operand, 0, -2, mode);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 vfpupair = 0;
 #endif
                 rec->nops++;
@@ -1722,7 +1723,7 @@ void* func_00488180(UInt16 opcode) {
             case 'T':
             case 'V':
             case 'W':
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 func_004890B0(operand, vfpupair ? (char)5 : (char)1, flag7 ? -1 : -3, mode);
 #else
                         func_004890B0(operand, vfpupair ? 5 : 1, flag7 ? -1 : -3, mode);
@@ -1741,7 +1742,7 @@ void* func_00488180(UInt16 opcode) {
                 } else if (i == 3) {
                     data_00625ECD |= 1;
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 func_004890B0(operand, vfpupair ? (char)5 : (char)1, flag7 ? -1 : -3, mode);
 #else
                         func_004890B0(operand, vfpupair ? 5 : 1, flag7 ? -1 : -3, mode);
@@ -1751,7 +1752,7 @@ void* func_00488180(UInt16 opcode) {
                 break;
             case 'A':
                 if (vfpupair) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     func_004890B0(operand, 6, 2, mode);
 #else
                             func_004890B0(operand, 6, 3, mode);
@@ -1774,7 +1775,7 @@ void* func_00488180(UInt16 opcode) {
                 operand++;
                 break;
             case 'b':
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if (vfpupair) {
 #else
                         if (!vfpupair) {
@@ -1784,7 +1785,7 @@ void* func_00488180(UInt16 opcode) {
                     func_00488EB0(operand, 1);
                     rec->nops++;
                     operand++;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 } else {
                     CError_FATAL(935);
 #endif
@@ -1806,7 +1807,7 @@ void* func_00488180(UInt16 opcode) {
                 rec->nops++;
                 operand++;
                 break;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             case 'v':
                 func_0048AA50(operand, 0, 0x10);
                 rec->nops++;
@@ -1820,14 +1821,14 @@ void* func_00488180(UInt16 opcode) {
                 break;
 #endif
             default:
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 CError_FATAL(959);
 #else
                         CError_FATAL(ASM_LINE(2186, 1158));
 #endif
                 break;
         }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         fmt++;
     }
     while (*fmt)
@@ -1836,7 +1837,7 @@ void* func_00488180(UInt16 opcode) {
 }
 
 if (tk == ',') {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     InlineAsm_SyntaxError(0x105);
 #else
                 InlineAsm_SyntaxError(0xA2);
@@ -1847,7 +1848,7 @@ if (data_00624810) {
 }
 return rec;
 }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #undef ASM_LINE
 #endif
 #else
@@ -2267,7 +2268,7 @@ vfpu_cc_done:
 // 0x48AA50: an immediate operand in [min, max]; in a GCC asm statement also
 // ?N, %N and %hi()/%lo()
 void func_0048AA50(MAsmOperand* op, SInt32 min, SInt32 max) {
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     MLookupResult result;
 #endif
     CInt64 value;
@@ -2275,20 +2276,20 @@ void func_0048AA50(MAsmOperand* op, SInt32 min, SInt32 max) {
     CInt64 qconst;
     CInt64 intconst;
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     MLookupResult result;
 #else
     char* name;
 #endif
     SInt32 v = 0;
     SInt32 n;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt32 lo;
 #endif
 
     if (InlineAsm_gccmode && tk == '?') {
         tk = lex();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (tk != TK_INTCONST) {
             InlineAsm_SyntaxError(ASM_ERR(0x2D));
         } else {
@@ -2297,7 +2298,7 @@ void func_0048AA50(MAsmOperand* op, SInt32 min, SInt32 max) {
 #endif
 #if MWCCPS2
             value = tkintconst; // b210 copies token constants through the one CInt64 local
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             n = CInt64_GetULong(&value);
 #else
                     n = value.lo;
@@ -2307,13 +2308,13 @@ void func_0048AA50(MAsmOperand* op, SInt32 min, SInt32 max) {
             n = qconst.lo;
 #endif
             if (n < 0) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 InlineAsm_SyntaxError(ASM_ERR(0x2D));
 #else
                 InlineAsm_SyntaxError(0x2D);
 #endif
             }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         }
         else {
             InlineAsm_SyntaxError(0x2D);
@@ -2328,7 +2329,7 @@ void func_0048AA50(MAsmOperand* op, SInt32 min, SInt32 max) {
     if (InlineAsm_gccmode && tk == '%') {
         tk = lex();
         if (tk == TK_IDENTIFIER) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (!strcmp(tkidentifier->name, "hi") || !strcmp(tkidentifier->name, "lo")) {
                 if (!strcmp(tkidentifier->name, "hi")) {
 #else
@@ -2340,24 +2341,24 @@ void func_0048AA50(MAsmOperand* op, SInt32 min, SInt32 max) {
                 } else {
                     data_00625E5A = 2;
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if (tk = lex() == '(') {
 #endif
                     tk = lex();
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                     if (tk == '(') {
                         tk = lex();
 #endif
                         if (tk == TK_INTCONST) {
                             op->type = MOpnd_Imm;
                             if (data_00625E5A & 1) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 v = CInt64_GetULong(&tkintconst) >> 16;
 #else
                         v = (UInt32)tkintconst.lo >> 16;
 #endif
                             } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 v = CInt64_GetULong(&tkintconst) & 0xFFFF;
 #else
                         v = (UInt16)tkintconst.lo;
@@ -2366,53 +2367,53 @@ void func_0048AA50(MAsmOperand* op, SInt32 min, SInt32 max) {
                         } else if (tk == TK_IDENTIFIER) {
                             InlineAsm_LookupSymbolMIPS(tkidentifier, &result);
                             if (!result.object) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 InlineAsm_SyntaxError(ASM_ERR(0x2D));
 #else
                         InlineAsm_SyntaxError(0x2D);
 #endif
                             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             if (result.object->datatype == DDATA &&
                                 (result.object->qual & Q_INLINE_DATA)) {
 #else
                     if (result.object->datatype == DDATA && (result.object->qual & Q_INLINE_DATA)) {
 #endif
                                 if (data_00625E5A & 1) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                     v = CInt64_GetULong(&result.object->u.data.u.intconst) >> 16;
 #else
                             v = (UInt32)result.object->u.data.u.intconst.lo >> 16;
 #endif
                                 } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                     v = CInt64_GetULong(&result.object->u.data.u.intconst) & 0xFFFF;
 #else
                             v = (UInt16)result.object->u.data.u.intconst.lo;
 #endif
                                 }
                             } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 InlineAsm_SyntaxError(ASM_ERR(0x2D));
 #else
                         InlineAsm_SyntaxError(0x2D);
 #endif
                             }
                         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             InlineAsm_SyntaxError(ASM_ERR(0x2D));
 #else
                     InlineAsm_SyntaxError(0x2D);
 #endif
                         }
                         CInt64_SetLong(&op->u.imm, v);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         if (tk = lex() != ')') {
                             InlineAsm_SyntaxError(ASM_ERR(0x10));
                         } else {
 #endif
                             tk = lex();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         }
 #else
                 if (tk != ')') {
@@ -2420,16 +2421,16 @@ void func_0048AA50(MAsmOperand* op, SInt32 min, SInt32 max) {
 #endif
                         return;
                     }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                     tk = lex();
 #endif
                 }
             }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         } else if (tk == TK_INTCONST) {
 #endif
 #if MWCCPS2
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             value = tkintconst; // b210 copies token constants through the one CInt64 local
             n = value.lo;
 #endif
@@ -2437,7 +2438,7 @@ void func_0048AA50(MAsmOperand* op, SInt32 min, SInt32 max) {
         intconst = tkintconst;
         n = intconst.lo;
 #endif
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             if (n < 0) {
                 CError_Error(0x2D);
             }
@@ -2449,7 +2450,7 @@ void func_0048AA50(MAsmOperand* op, SInt32 min, SInt32 max) {
 #endif
     } else {
         value = InlineAsm_Int64Expression();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (CInt64_IsInRange(value, 4) && (lo = CInt64_GetULong(&value)) >= min && lo <= max) {
 #else
         if (CInt64_IsInRange(value, 4) && (SInt32)value.lo >= min && (SInt32)value.lo <= max) {
@@ -2458,7 +2459,7 @@ void func_0048AA50(MAsmOperand* op, SInt32 min, SInt32 max) {
             op->u.imm = value;
             return;
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         InlineAsm_SyntaxError(ASM_ERR(0x37));
 #else
         InlineAsm_SyntaxError(0x37);
@@ -2508,7 +2509,7 @@ void* func_0048AD70(char* name) {
             break;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (c &&
         name[1] >= '0' &&
         name[1] <= '7' &&
@@ -2541,7 +2542,7 @@ void* func_0048AD70(char* name) {
                 lex();
                 if (lookahead() == TK_IDENTIFIER && tkidentifier->name) {
                     ch = tkidentifier->name[0];
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     if ((ch == 's' || ch == 'p' || ch == 't' || ch == 'q') &&
                         tkidentifier->name[1] == 0) {
 #else
@@ -2568,7 +2569,7 @@ void* func_0048AD70(char* name) {
 #include "compiler/CMachine.h"
 #include <stdio.h>
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern void func_00481EE0(
     Statement* stmt, Object* gpr, Object* fpr, Boolean tofloat, Boolean after
 );
@@ -2627,20 +2628,20 @@ void func_00488D60(Statement* stmt) {
 // 0x488EB0: a label operand: a numeric local label (1b, 1f) or a name; a
 // function's name too if allowed
 void func_00488EB0(MAsmOperand* op, Boolean allowfunc) {
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     char buf[0x50];
 #endif
     MLookupResult result;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     char buf[0x50];
 #endif
     HashNameNode* name;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     CLabel* label;
 #endif
     char ch;
     Boolean forward;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Boolean found;
 #endif
 
@@ -2648,7 +2649,7 @@ void func_00488EB0(MAsmOperand* op, Boolean allowfunc) {
         name = MakeLocalLabel(tkintconst);
         tk = lex();
         if (tk != TK_IDENTIFIER) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             InlineAsm_SyntaxError(ASM_ERR(0x2D));
 #else
             InlineAsm_SyntaxError(0x2D);
@@ -2660,27 +2661,27 @@ void func_00488EB0(MAsmOperand* op, Boolean allowfunc) {
         } else if (ch == 'f' || ch == 'F') {
             forward = TRUE;
         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             CError_Error(ASM_ERR(0x2D));
 #else
             CError_Error(0x2D);
 #endif
         }
         if (tkidentifier->name[1]) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             CError_Error(ASM_ERR(0x2D));
 #else
             CError_Error(0x2D);
 #endif
         }
         tk = lex();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         found = InlineAsm_LookupSymbolMIPS(name, &result);
 #else
         label = InlineAsm_LookupLabel(name);
 #endif
         if (forward) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (found) {
                 sprintf(buf, "%i", CInt64_GetULong(&tkintconst));
                 CError_Error(ASM_ERR(0x48), buf);
@@ -2690,7 +2691,7 @@ void func_00488EB0(MAsmOperand* op, Boolean allowfunc) {
                 CError_Error(0x48, buf);
 #endif
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             result.label = InlineAsm_DeclareLabel(name);
         } else if (!found) {
             sprintf(buf, "%i", CInt64_GetULong(&tkintconst));
@@ -2700,14 +2701,14 @@ void func_00488EB0(MAsmOperand* op, Boolean allowfunc) {
                 label = InlineAsm_DeclareLabel(name);
 #endif
         }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     } else if (!label || !label->stmt) {
         sprintf(buf, "%i", tkintconst.lo);
         CError_Error(0x3C, buf);
     }
 #endif
     op->type = MOpnd_Lab;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     op->u.lab.label = result.label;
 #else
             op->u.lab.label = label;
@@ -2725,7 +2726,7 @@ else if (tk == TK_IDENTIFIER) {
         op->u.obj.obj = result.object;
         op->u.obj.offset = 0;
     } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         CError_Error(ASM_ERR(0x2D));
 #else
                 CError_Error(0x2D);
@@ -2734,7 +2735,7 @@ else if (tk == TK_IDENTIFIER) {
     tk = lex();
 }
 else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     InlineAsm_SyntaxError(ASM_ERR(0x2D));
 #else
             InlineAsm_SyntaxError(0x2D);
@@ -2758,21 +2759,21 @@ extern Boolean func_0050CCC0(Object** obj, CInt64* offset); // a variable operan
 #if MWCCPS2
 
 // b210 (0x495320): VU0 registers take x/y/z/w field suffixes (stripped
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #define ASM_IS_XYZW(c) ((c) == 'x' || (c) == 'y' || (c) == 'z' || (c) == 'w')
 #else
 // from the name, checked against the instruction's mask), %N takes one too
 #endif
 void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
     CInt64 c;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     CInt64 c2;
     CInt64 c3;
     Object* obj;
 #endif
     CInt64 offset;
     char name[0x100];
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Object* obj;
 #endif
     AsmRegRec* reg;
@@ -2781,18 +2782,18 @@ void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
     Boolean numeric;
     Boolean fields;
 
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     offset = cint64_zero;
 #endif
     numeric = FALSE;
     fields = FALSE;
     obj = NULL;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     offset = cint64_zero;
 #endif
     if (sub == -2) {
         numeric = TRUE;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (sub == 2 && rclass == 6) {
 #else
         } else if (sub == 3 && rclass == 6) {
@@ -2805,7 +2806,7 @@ void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
     if (tk == '$') {
         numeric = TRUE;
         tk = lex();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (!data_00625E98 &&
             (!strcmp("at", tkidentifier->name) || !strcmp("AT", tkidentifier->name))) {
             func_004C5890(0x66);
@@ -2817,7 +2818,7 @@ void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
         }
     } else if (tk == '%' && InlineAsm_gccmode) {
         tk = lex();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (tk != TK_INTCONST) {
             CError_Error(ASM_ERR(0x2D));
         } else {
@@ -2825,19 +2826,19 @@ void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
             if (tk == TK_INTCONST) {
 #endif
             c = tkintconst;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             n = CInt64_GetULong(&c);
 #else
                 n = c.lo;
 #endif
             if (n < 0) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 CError_Error(ASM_ERR(0x2D));
 #else
                     CError_Error(0x2D);
 #endif
             }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         }
         else {
             CError_Error(0x2D);
@@ -2860,7 +2861,7 @@ void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
             } else if (tkidentifier->name[0] == 'w') {
                 op->u.gcc.xyzw |= 8;
             } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 CError_Error(ASM_ERR(0x2D));
 #else
                     CError_Error(0x2D);
@@ -2876,7 +2877,7 @@ void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
     if (tk == TK_IDENTIFIER) {
         strcpy(name, tkidentifier->name);
         if (fields) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             for (p = name; *p; p++) {}
 #else
                 for (p = name; *p; p++) {}
@@ -2885,7 +2886,7 @@ void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
             while (p > name) {
                 if (!data_00625ECD) {
                     if (!data_00625EA1) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         if (ASM_IS_XYZW(*p)) {
                             *p = 0, --p;
 #else
@@ -2897,31 +2898,31 @@ void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
                         }
                     } else {
                         if (*p == 'x' && ((signed char)data_00625EA1 & 8)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             *p = 0, --p;
 #else
                                 *p-- = 0;
 #endif
                         } else if (*p == 'y' && ((signed char)data_00625EA1 & 4)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             *p = 0, --p;
 #else
                                 *p-- = 0;
 #endif
                         } else if (*p == 'z' && ((signed char)data_00625EA1 & 2)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             *p = 0, --p;
 #else
                                 *p-- = 0;
 #endif
                         } else if (*p == 'w' && ((signed char)data_00625EA1 & 1)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             *p = 0, --p;
 #else
                                 *p-- = 0;
 #endif
                         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             if (ASM_IS_XYZW(*p)) {
                                 CError_Error(ASM_ERR(0x2D));
 #else
@@ -2934,31 +2935,31 @@ void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
                     }
                 } else {
                     if (*p == 'x' && ((signed char)data_00625ECD & 8)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         *p = 0, --p;
 #else
                             *p-- = 0;
 #endif
                     } else if (*p == 'y' && ((signed char)data_00625ECD & 4)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         *p = 0, --p;
 #else
                             *p-- = 0;
 #endif
                     } else if (*p == 'z' && ((signed char)data_00625ECD & 2)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         *p = 0, --p;
 #else
                             *p-- = 0;
 #endif
                     } else if (*p == 'w' && ((signed char)data_00625ECD & 1)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         *p = 0, --p;
 #else
                             *p-- = 0;
 #endif
                     } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         if (ASM_IS_XYZW(*p)) {
                             CError_Error(ASM_ERR(0x2D));
 #else
@@ -2984,7 +2985,7 @@ void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
         }
         tk = lex();
     } else if (tk == TK_INTCONST) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         c = tkintconst;
         n = CInt64_GetULong(&c);
 #else
@@ -2993,7 +2994,7 @@ void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
 #endif
         tk = lex();
         if (n == 0 && tk == TK_INTCONST) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             c = tkintconst;
             n = CInt64_GetULong(&c);
 #else
@@ -3009,14 +3010,14 @@ void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
             op->effect = mode;
             op->rclass = rclass;
         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             InlineAsm_SyntaxError(ASM_ERR(0x2D));
 #else
                 InlineAsm_SyntaxError(0x2D);
 #endif
         }
     } else if (tk == TK_IDENTIFIER && func_0053EBB0(name)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         InlineAsm_SyntaxError(ASM_ERR(0x2D));
 #else
             InlineAsm_SyntaxError(0x2D);
@@ -3032,21 +3033,21 @@ void func_004890B0(MAsmOperand* op, char rclass, SInt32 sub, SInt16 mode) {
             op->xyzw = 0;
             obj->flags |= 1;
         } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             InlineAsm_SyntaxError(ASM_ERR(0x2D));
 #else
                 InlineAsm_SyntaxError(0x2D);
 #endif
         }
     } else {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         InlineAsm_SyntaxError(ASM_ERR(0x2D));
 #else
             InlineAsm_SyntaxError(0x2D);
 #endif
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef ASM_IS_XYZW
 #endif
 #else
@@ -3164,7 +3165,7 @@ void func_00489410(MAsmOperand* op, Boolean kind, SInt16 mode) {
         if (result.object) {
             if (result.object->datatype == DLOCAL) {
                 op->type = MOpnd_LocalObj;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 result.object->u.var.info->noregister = TRUE;
                 result.object->u.var.info->used = TRUE;
 #else
@@ -3176,7 +3177,7 @@ void func_00489410(MAsmOperand* op, Boolean kind, SInt16 mode) {
                 op->effect = mode;
                 op->rclass = 0;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             result.object->u.var.uid = 0; // b69 zeroes +0x2C (3.0.1: u.var.offset)
 #else
                 result.object->u.var.offset = 0;
@@ -3205,7 +3206,7 @@ void func_00489410(MAsmOperand* op, Boolean kind, SInt16 mode) {
         }
     } else if (tk == '%' && InlineAsm_gccmode) {
         tk = lex();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (tk != TK_INTCONST) {
             CError_Error(ASM_ERR(0x2D));
         } else {
@@ -3213,19 +3214,19 @@ void func_00489410(MAsmOperand* op, Boolean kind, SInt16 mode) {
             if (tk == TK_INTCONST) {
 #endif
             c = tkintconst;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             n = CInt64_GetULong(&c);
 #else
                 n = c.lo;
 #endif
             if (n < 0) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 CError_Error(ASM_ERR(0x2D));
 #else
                     CError_Error(0x2D);
 #endif
             }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         }
         else {
             CError_Error(0x2D);
@@ -3243,7 +3244,7 @@ void func_00489410(MAsmOperand* op, Boolean kind, SInt16 mode) {
         func_0048AA50(op, -0x8000, 0x7FFF);
     } else {
 #if MWCCPS2 && MWCCPS2_BUILD < 210
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         InlineAsm_SyntaxError(ASM_ERR(0x2D));
 #else
         InlineAsm_SyntaxError(0x2D); // b145 declares no label here
@@ -3510,7 +3511,7 @@ void func_00489920(MAsmOperand* op) {
                         absval[i] = 1;
                         used[i] = 1;
                     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 } else if ((i == 0 && (ch == 'x' || ch == 'X')) ||
                            (i == 1 && (ch == 'y' || ch == 'Y')) ||
                            (i == 2 && (ch == 'z' || ch == 'Z')) ||
@@ -4121,7 +4122,7 @@ void func_0048A340(MAsmOperand* op, SInt32 n) {
 // mfc1 next to stmt, moving a variable between register
 // classes
 void func_00481EE0(Statement* stmt, Object* gpr, Object* fpr, Boolean tofloat, Boolean after) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Statement* s = NULL;
 #else
         Statement* s;
@@ -4142,7 +4143,7 @@ void func_00481EE0(Statement* stmt, Object* gpr, Object* fpr, Boolean tofloat, B
     }
     s->expr = NULL;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     mi = lalloc(
         (tofloat ? &data_006115F8[0xAD] : &data_006115F8[0xA5])->nargs * sizeof(MAsmOperand) + 8
     );
@@ -4155,7 +4156,7 @@ void func_00481EE0(Statement* stmt, Object* gpr, Object* fpr, Boolean tofloat, B
     } else {
         mi->opcode = 0xA5;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     mi->flags = 0;
 #else
         mi->flags = 0x20;
@@ -4180,7 +4181,7 @@ void func_00481EE0(Statement* stmt, Object* gpr, Object* fpr, Boolean tofloat, B
 }
 
 // 0x481FE0: an instruction's mnemonic
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // variable and a VU0 register (class 5): b69 opcodes 0x23D (in) and 0x23B
 void ps2_gcc_quadmove(Statement* stmt, Object* var, Object* temp, Boolean in, Boolean after) {
     Statement* s = NULL;
@@ -4246,7 +4247,7 @@ extern void func_0046FA50(void);
 extern MPCode* func_00482330(MAsmInstruction* mi, int nargs);
 
 // 0x482000: an asm statement's instruction into PCode
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 typedef MOperand AsmOperand69;
 #define ASM_OPND_FLAGS(op) ((op)->flags)
 #define ASM_OPND_REG(op) ((op)->reg)
@@ -4261,7 +4262,7 @@ typedef MOperand AsmOperand69;
 // clobbers skip class 5 by register count (0x4B3130)
 #endif
 void func_00482000(Statement* stmt) {
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     MAsmInstruction* mi;
     MPCode* pc;
     MOperand* arg;
@@ -4269,24 +4270,24 @@ void func_00482000(Statement* stmt) {
     SInt32 reg;
 #endif
     int nargs;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     AsmOperand69* arg;
 #endif
     int rclass;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     MAsmInstruction* mi;
     SInt32 opcode;
     MPCode* p;
 #endif
     int i;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     MPCodeLabel* label;
     MPCode* pc;
     SInt32 reg;
 #endif
 
     mi = (MAsmInstruction*)stmt->expr;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     opcode = mi->opcode;
     nargs = data_006115F8[opcode].nargs;
     if (opcode == ASM_MACRO_OP(0xAC)) {
@@ -4295,7 +4296,7 @@ void func_00482000(Statement* stmt) {
         if (mi->opcode == MACRO_OP(0xAC)) {
 #endif
         // .set
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
         if (((AsmSetRecord*)mi)->mode & 4) {
             volatileasm = 1;
         }
@@ -4306,31 +4307,39 @@ void func_00482000(Statement* stmt) {
             data_00625EAC = 0;
 #endif
             func_0046FA50();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (((AsmSetRecord*)mi)->mode & 1) {
-#endif
+#if MWCC_CORE == MWCC_CORE_B52
                 data_00625E56 &= 0xBF77;
-#if !MWCCPS2_B52
-                data_006246B4->flags2E = data_00625E56;
+#else
+                    data_00625E56 &= 0xBFF7;
+#endif
+#else
+            data_00625E56 &= 0xBF77;
+            data_006246B4->flags2E = data_00625E56;
 #endif
             }
             if (((AsmSetRecord*)mi)->mode & 2) {
-#if !MWCCPS2_B52
-                data_00625EAC = 1;
-                func_0046FA50();
-#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 data_00625E56 |= 0x4088;
-#if !MWCCPS2_B52
-                data_006246B4->flags2E = data_00625E56;
+#else
+                    data_00625E56 |= 0x4008;
+#endif
+#else
+            data_00625EAC = 1;
+            func_0046FA50();
+            data_00625E56 |= 0x4088;
+            data_006246B4->flags2E = data_00625E56;
 #endif
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             data_006246B4->flags2E = data_00625E56;
 #endif
             return;
         }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (data_006115F8[opcode].flags & 8) {
             nargs += func_00461F50() - func_004B8990();
 #else
@@ -4340,7 +4349,7 @@ void func_00482000(Statement* stmt) {
 #endif
         }
         pc = func_00482330(mi, nargs);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         // b52 (0x4CD626): vmove (b52 0x286, our 0x2AF) is never a plain move;
         // vcallms/vcallmsr (b52 0x24F..0x251, our 0x278..0x27A) only mark the
         // block (0x80); no per-instruction noreorder flag
@@ -4349,30 +4358,53 @@ void func_00482000(Statement* stmt) {
         if (pc->op == OPC(0x2AF)) {
             pc->flags &= ~0x4010;
         }
-#else
-    pc->flags |= 0x200000;
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+        pc->flags |= 0x200000;
 #endif
         appendpcode(data_006246B4, pc);
 #if MWCCPS2
-        // vcallms/vcallmsr (0x278..0x27A) mark the block as starting a VU0
-        // micro program
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
+        // b52 (0x4CD643) tests the three opcodes one by one; our Pro 6 merges
+        // them into a range check whatever the form
         if (pc->op == OPC(0x278) || pc->op == OPC(0x279) || pc->op == OPC(0x27A)) {
-#else
-            if ((UInt16)(pc->op - 0x278) <= 2) {
-#endif
             data_006246B4->flags2E |= 0x80;
+#else
+        if (data_006246B4->flags2E & 0x4000) {
+            pc->flags |= 0x100;
+            pc->flags &= ~0x4000;
+#endif
+#else
+            // vcallms/vcallmsr (0x278..0x27A) mark the block as starting a VU0
+            // micro program
+            if ((UInt16)(pc->op - 0x278) <= 2) {
+                data_006246B4->flags2E |= 0x80;
+#endif
         }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+        if (ASM_PC_OP(pc) == OPC(0x24F) ||
+            ASM_PC_OP(pc) == OPC(0x250) ||
+            ASM_PC_OP(pc) == OPC(0x251)) {
+            data_006246B4->flags2E |= 0x4008;
+            for (p = pc; p; p = p->prev) {
+                p->flags |= 0x100;
+                p->flags &= ~0x4000;
+            }
+        }
+#endif
+#endif
 #endif
 
         if (pc->flags & 1) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (data_006115F8[ASM_PC_OP(pc)].flags & 8) {
 #else
         if (data_006115F8[pc->op].flags & 8) {
 #endif
                 // a call: the registers it uses
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 for (arg = &ASM_ARGS(pc)[nargs - 1], rclass = 0; rclass < 7; rclass++) {
                     for (i = 0; i < data_006241E0[rclass]; i++, --arg) {
 #else
@@ -4386,7 +4418,7 @@ void func_00482000(Statement* stmt) {
                         reg = data_0060E038[rclass][i];
                         arg->kind = 0;
                         arg->rclass = rclass;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         ASM_OPND_REG(arg) = reg;
                         ASM_OPND_FLAGS(arg) = 3;
 #else
@@ -4397,7 +4429,7 @@ void func_00482000(Statement* stmt) {
                     }
                 }
             }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (ASM_PC_OP(pc) <= OPC(0x3BD)) {
 #else
         if (pc->op < MACRO_OP(0x00)) {
@@ -4406,13 +4438,13 @@ void func_00482000(Statement* stmt) {
             }
             if (pc->flags & 0x10000000) {
                 label = makepclabel();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 for (arg = ASM_ARGS(pc);; arg++) {
 #else
             for (arg = pc->args;; arg++) {
 #endif
                     if (arg->kind == 6) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         pcbranch(data_006246B4, ASM_OPND_LABEL(arg), 0);
                         break;
                     }
@@ -4424,7 +4456,7 @@ void func_00482000(Statement* stmt) {
                 data_006246B4->flags2E |= data_00625E56;
                 makepcblock();
                 pclabel(data_006246B4, label);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             } else if (ASM_PC_OP(pc) == OPC(0x3B)) {
 #else
                     break;
@@ -4434,7 +4466,7 @@ void func_00482000(Statement* stmt) {
 #endif
                 data_006246B4->flags2E |= data_00625E56;
                 makepcblock();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             } else if (ASM_ARGS(pc)[0].kind == 6) {
                 pcbranch(data_006246B4, ASM_OPND_LABEL(&ASM_ARGS(pc)[0]), 0);
 #else
@@ -4448,14 +4480,21 @@ void func_00482000(Statement* stmt) {
                 func_0046FA50();
             }
         } else {
-#if !MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
             if (data_00624C3C &&
                 (data_00625E56 & 0x4000) &&
-                pc->op < MACRO_OP(0x00) &&
+                ASM_PC_OP(pc) >= OPC(0x3BD) &&
                 !data_00625E7E) {
 #endif
+#else
+        if (data_00624C3C &&
+            (data_00625E56 & 0x4000) &&
+            pc->op < MACRO_OP(0x00) &&
+            !data_00625E7E) {
+#endif
                 // noreorder: fill the delay slot of the branch before
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 // the macros) fills the delay slot
                 if (data_00624C3C &&
                     (data_00625E56 & 0x4000) &&
@@ -4476,7 +4515,7 @@ void func_00482000(Statement* stmt) {
             data_006246B4->flags2E |= data_00625E56;
             data_00624C18 = data_006246B4;
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef ASM_ARGS
 #endif
 
@@ -4515,7 +4554,7 @@ void func_00482000(Statement* stmt) {
 
             size = 0;
             switch (opcode) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 case OPC(0x454):
                 case 0x458:
                 case 0x459:
@@ -4559,7 +4598,7 @@ void func_00482000(Statement* stmt) {
                         mode = 0;
                     }
                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 case OPC(0x421):
                 case 0x42C:
                 case 0x432:
@@ -4587,7 +4626,7 @@ void func_00482000(Statement* stmt) {
                         mode = 0;
                     }
                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 case OPC(0x489):
 #else
         case 0x489:
@@ -4618,7 +4657,7 @@ void func_00482000(Statement* stmt) {
                         mode = 0;
                     }
                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 case OPC(0x450):
                 case 0x451:
                 case 0x45A:
@@ -4638,7 +4677,7 @@ void func_00482000(Statement* stmt) {
                         mode = 0;
                     }
                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 case OPC(0x474):
                 case 0x47F:
 #else
@@ -4650,7 +4689,7 @@ void func_00482000(Statement* stmt) {
                         mode = 1;
                     }
                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 case OPC(0x4AE):
                 case 0x4B9:
 #else
@@ -4662,7 +4701,7 @@ void func_00482000(Statement* stmt) {
                         mode = 1;
                     }
                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 case 0x4F8:
                 case 0x504:
 #else
@@ -4674,7 +4713,7 @@ void func_00482000(Statement* stmt) {
                         mode = 1;
                     }
                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 case OPC(0x478):
                 case 0x47A:
                 case 0x4B2:
@@ -4694,7 +4733,7 @@ void func_00482000(Statement* stmt) {
                         mode = 0;
                     }
                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 case OPC(0x418):
 #else
         case 0x418:
@@ -4704,7 +4743,7 @@ void func_00482000(Statement* stmt) {
                         mode = 0;
                     }
                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 case OPC(0x40E):
                 case 0x40F:
                 case 0x419:
@@ -4721,19 +4760,19 @@ void func_00482000(Statement* stmt) {
             }
 
             if (size == 0) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 if ((opcode >= OPC(0x41A) && opcode <= OPC(0x451)) || opcode == MACRO_OP(0xA2)) {
 #else
         if ((opcode >= 0x41A && opcode <= 0x451) || opcode == MACRO_OP(0xA2)) {
 #endif
                     size = 1;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 } else if (opcode >= OPC(0x452) && opcode <= OPC(0x492)) {
 #else
         } else if (opcode >= 0x452 && opcode <= 0x492) {
 #endif
                     size = 2;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 } else if (opcode >= OPC(0x493) && opcode <= 0x4CB) {
 #else
         } else if (opcode >= 0x493 && opcode <= 0x4CB) {
@@ -4749,7 +4788,7 @@ void func_00482000(Statement* stmt) {
             if (mode < 0) {
                 // the matrix instructions
                 switch (opcode) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     case OPC(0x45E):
                     case 0x477:
                     case 0x478:
@@ -4924,7 +4963,7 @@ void func_00482000(Statement* stmt) {
                 }
             }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (index == 1 && (opcode == OPC(0x477) || opcode == 0x4B1 || opcode == 0x4FB)) {
 #else
     if (index == 1 && (opcode == 0x477 || opcode == 0x4B1 || opcode == 0x4FB)) {
@@ -4957,7 +4996,7 @@ void func_00482000(Statement* stmt) {
 // takes no label; its asserts sit 1054..1078 lines earlier, unevenly
 #if MWCCPS2 && MWCCPS2_BUILD < 210
 #define ASM_LINE(line, b145) (b145)
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         // b69 (0x4B68E0, ASM_PIN_LOW_REG above): a register operand below its class's
         // first virtual register (a real register written in the asm) pins the
         // instruction: the scheduler leaves such asm in place
@@ -4985,10 +5024,10 @@ void func_00482000(Statement* stmt) {
             Boolean pairplus;
             Boolean flag7;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             def = ASM_TREE_DEF(mi->opcode);
 #else
-                def = &data_006115F8[mi->opcode];
+            def = &data_006115F8[mi->opcode];
 #endif
             fmt = def->format;
             vfpupair = FALSE;
@@ -5002,38 +5041,44 @@ void func_00482000(Statement* stmt) {
             pc = lalloc(size);
             memset(pc, 0, size);
             pc->argcount = nargs;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             pc->op = ASM_BE_OP(mi->opcode);
 #else
-                pc->op = mi->opcode;
+            pc->op = mi->opcode;
 #endif
             pc->unk20 = data_00624D84;
             pc->flags |= def->flags;
 #if MWCCPS2 && MWCCPS2_BUILD < 210
-#if MWCCPS2_B52
-            // b52 (0x4CCB73): a volatile statement's instructions go in a block of
-            // their own, marked 0x80 (the passes skip 0x180 blocks); no 0x100
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+            // b69 (0x4B68E0, the hybrid's version above): an instruction is pinned
+            // when the statement says so (mi->flags & 4), whatever volatileasm says;
+            // it stays a move (0x10: b69 0x4B697F clears 0x4000 only)
             if ((UInt16)mi->flags & 4) {
-                pc->flags &= ~0x4000;
-                if (!(data_00625E56 & 0x80)) {
-                    func_0046FA50();
 #else
             if ((volatileasm && !(mi->flags & 0x20)) || data_00625EAC) {
-                pc->flags |= 0x100;
-                pc->flags &= ~0x4010;
 #endif
+#if MWCC_CORE != MWCC_CORE_B52
+                pc->flags |= 0x100;
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+                pc->flags &= ~0x4000;
+#if MWCC_CORE == MWCC_CORE_B52
+                if (!(data_00625E56 & 0x80)) {
+                    func_0046FA50();
                 }
-#if MWCCPS2_B52
                 data_00625E56 |= 0x80;
-            }
 #endif
 #else
-                if (volatileasm || data_00625EAC || (mi->flags & 4)) {
-                    if (!(mi->flags & 0x20)) {
-                        pc->flags |= 0x100;
-                        pc->flags &= ~0x4010;
-                    }
+                pc->flags &= ~0x4010;
+#endif
+            }
+#else
+            if (volatileasm || data_00625EAC || (mi->flags & 4)) {
+                if (!(mi->flags & 0x20)) {
+                    pc->flags |= 0x100;
+                    pc->flags &= ~0x4010;
                 }
+            }
 #endif
 
             op = mi->ops;
@@ -5187,7 +5232,7 @@ void func_00482000(Statement* stmt) {
                                 arg->rclass = 6;
                                 arg->reg = op->u.reg.num;
                                 arg->flags = mode;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 ASM_PIN69(pc, arg);
 #endif
                             }
@@ -5210,7 +5255,7 @@ void func_00482000(Statement* stmt) {
                         case 'K':
                             // the condition register an FP compare/branch uses
                             switch (pc->op) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 case OPC(0x68):
                                 case 0x69:
                                 case 0x6A:
@@ -5220,14 +5265,14 @@ void func_00482000(Statement* stmt) {
                                 case 0x1CF:
                                 case 0x1D0:
 #else
-                                    case 0x68:
-                                    case 0x69:
-                                    case 0x6A:
-                                    case 0x6B:
-                                    case 0x1CD:
-                                    case 0x1CE:
-                                    case 0x1CF:
-                                    case 0x1D0:
+                                case 0x68:
+                                case 0x69:
+                                case 0x6A:
+                                case 0x6B:
+                                case 0x1CD:
+                                case 0x1CE:
+                                case 0x1CF:
+                                case 0x1D0:
 #endif
                                     arg->kind = 0;
                                     if (pc->args[1].reg == 0x14) {
@@ -5246,7 +5291,7 @@ void func_00482000(Statement* stmt) {
                                         arg->kind = 7;
                                     }
                                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 case OPC(0x26C):
                                 case 0x273:
                                 case 0x27C:
@@ -5261,26 +5306,26 @@ void func_00482000(Statement* stmt) {
                                 case 0x2DB:
                                 case OPC(0x2E2):
 #else
-                                    case 0x26C:
-                                    case 0x273:
-                                    case 0x27C:
-                                    case 0x296:
-                                    case 0x29D:
-                                    case 0x2B3:
-                                    case 0x2BA:
-                                    case 0x2C2:
-                                    case 0x2C9:
-                                    case 0x2D4:
-                                    case 0x2D8:
-                                    case 0x2DB:
-                                    case 0x2E2:
+                                case 0x26C:
+                                case 0x273:
+                                case 0x27C:
+                                case 0x296:
+                                case 0x29D:
+                                case 0x2B3:
+                                case 0x2BA:
+                                case 0x2C2:
+                                case 0x2C9:
+                                case 0x2D4:
+                                case 0x2D8:
+                                case 0x2DB:
+                                case 0x2E2:
 #endif
                                     arg->kind = 0;
                                     arg->rclass = 4;
                                     arg->reg = 0x16;
                                     arg->flags = mode;
                                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 case OPC(0x26B):
                                 case 0x272:
                                 case 0x295:
@@ -5293,31 +5338,31 @@ void func_00482000(Statement* stmt) {
                                 case 0x2DA:
                                 case 0x2E1:
 #else
-                                    case 0x26B:
-                                    case 0x272:
-                                    case 0x295:
-                                    case 0x29C:
-                                    case 0x2A3:
-                                    case 0x2B2:
-                                    case 0x2B9:
-                                    case 0x2C1:
-                                    case 0x2C8:
-                                    case 0x2DA:
-                                    case 0x2E1:
+                                case 0x26B:
+                                case 0x272:
+                                case 0x295:
+                                case 0x29C:
+                                case 0x2A3:
+                                case 0x2B2:
+                                case 0x2B9:
+                                case 0x2C1:
+                                case 0x2C8:
+                                case 0x2DA:
+                                case 0x2E1:
 #endif
                                     arg->kind = 0;
                                     arg->rclass = 4;
                                     arg->reg = 0x15;
                                     arg->flags = mode;
                                     break;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 case OPC(0x2D1):
                                 case 0x2D3:
                                 case 0x2D5:
 #else
-                                    case 0x2D1:
-                                    case 0x2D3:
-                                    case 0x2D5:
+                                case 0x2D1:
+                                case 0x2D3:
+                                case 0x2D5:
 #endif
                                     arg->kind = 0;
                                     arg->rclass = 4;
@@ -5349,25 +5394,25 @@ void func_00482000(Statement* stmt) {
                             arg++;
                             break;
 #else
-                            case 'p':
-                                arg->kind = 6;
-                                MOP_SETLABEL(*arg, op->u.lab.label->pclabel);
-                                if (!arg->value) {
-                                    CError_FATAL(4499);
-                                }
-                                op++;
-                                arg++;
-                                break;
-                            case 'l':
-                                pc->unk38 = 2;
-                                arg->kind = 6;
-                                MOP_SETLABEL(*arg, op->u.lab.label->pclabel);
-                                if (!arg->value) {
-                                    CError_FATAL(4509);
-                                }
-                                op++;
-                                arg++;
-                                break;
+                        case 'p':
+                            arg->kind = 6;
+                            MOP_SETLABEL(*arg, op->u.lab.label->pclabel);
+                            if (!arg->value) {
+                                CError_FATAL(4499);
+                            }
+                            op++;
+                            arg++;
+                            break;
+                        case 'l':
+                            pc->unk38 = 2;
+                            arg->kind = 6;
+                            MOP_SETLABEL(*arg, op->u.lab.label->pclabel);
+                            if (!arg->value) {
+                                CError_FATAL(4509);
+                            }
+                            op++;
+                            arg++;
+                            break;
 #endif
                         case 'b':
                             if (vfpupair) {
@@ -5419,11 +5464,11 @@ memory:
                             if (vfpupair) {
                                 arg->kind = 0;
                                 arg->rclass = 6;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 arg->reg =
                                     2; // b69's ACC (its register table: I 0, Q 1, ACC 2, R 3)
 #else
-                                    arg->reg = 3;
+                                arg->reg = 3;
 #endif
                                 arg->flags = mode;
                                 pc->flags |= 0x100;
@@ -5444,12 +5489,12 @@ memory:
                                 arg++;
                                 arg->kind = 0;
                                 arg->rclass = 0;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 if (op->u.reg.object &&
                                     Registers_GetVarInfo(op->u.reg.object) &&
 #else
-                                    if (op->u.reg.object &&
-                                        Registers_GetVarInfo(op->u.reg.object) &&
+                                if (op->u.reg.object &&
+                                    Registers_GetVarInfo(op->u.reg.object) &&
 #endif
                                     Registers_GetVarInfo(op->u.reg.object)->reg) {
                                     arg->reg = Registers_GetVarInfo(op->u.reg.object)->reg;
@@ -5491,10 +5536,10 @@ memory:
 #if MWCCPS2 && MWCCPS2_BUILD < 210
                         {
 #else
-                                if (op->type == MOpnd_Lab) {
-                                    arg->kind = 6;
-                                    MOP_SETLABEL(*arg, op->u.lab.label->pclabel);
-                                } else {
+                            if (op->type == MOpnd_Lab) {
+                                arg->kind = 6;
+                                MOP_SETLABEL(*arg, op->u.lab.label->pclabel);
+                            } else {
 #endif
                             arg->kind = 4;
                             MOP_SETOBJ(*arg, op->u.obj.obj);
@@ -5526,7 +5571,7 @@ memory:
                             arg->rclass = vfpupair ? (pairplus ? 4 : 3) : 0;
                             arg->reg = op->u.reg.num;
                             arg->flags = mode;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             ASM_PIN69(pc, arg);
 #endif
                             op++;
@@ -5550,14 +5595,14 @@ memory:
                             break;
                         case 'D':
                         case 'S':
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                             if (op->u.reg.object &&
                                 op->u.reg.object->type->type != TYPEFLOAT &&
                                 !vfpupair) {
 #else
-                                if (op->u.reg.object &&
-                                    op->u.reg.object->type->type != TYPEFLOAT &&
-                                    !vfpupair) {
+                            if (op->u.reg.object &&
+                                op->u.reg.object->type->type != TYPEFLOAT &&
+                                !vfpupair) {
 #endif
                                 op->u.reg.num = 0;
                                 CError_Error(0x2D);
@@ -5585,7 +5630,7 @@ memory:
                             }
                             arg->flags = mode;
                             if (vfpupair) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 // b69 (0x4B68E0): only a vmove (b69 0x286) whose mask,
                                 // the operand before, is partial gets flags 3; the
                                 // instruction stays a move
@@ -5594,22 +5639,21 @@ memory:
                                     ((arg - 1)->value ^ 15) &&
                                     pc->op == OPC(0x2AF)) {
 #else
-                                    if ((arg->flags & 2) &&
-                                        data_006115F8[pc->op].format[0] == '&') {
-                                        mode = 0;
-                                        a = arg;
-                                        while (a->kind != 2) {
-                                            if (++mode >= 5) {
-                                                CError_FATAL(ASM_LINE(4803, 3725));
-                                            }
-                                            a--;
+                                if ((arg->flags & 2) && data_006115F8[pc->op].format[0] == '&') {
+                                    mode = 0;
+                                    a = arg;
+                                    while (a->kind != 2) {
+                                        if (++mode >= 5) {
+                                            CError_FATAL(ASM_LINE(4803, 3725));
                                         }
-                                        if (a->value != 15) {
-                                            pc->flags &= ~0x4010;
+                                        a--;
+                                    }
+                                    if (a->value != 15) {
+                                        pc->flags &= ~0x4010;
 #endif
                                     arg->flags |= 3;
                                 }
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                             }
 #endif
                             if (op->xyzw && flag7) {
@@ -5656,7 +5700,7 @@ memory:
                                 }
                             }
                     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     ASM_PIN69(pc, arg);
 #endif
                     op++;
@@ -5667,7 +5711,7 @@ memory:
                         arg->rclass = 2;
                         arg->reg = op->u.reg.num;
                         arg->flags = mode;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         ASM_PIN69(pc, arg);
 #endif
                         op++;
@@ -5708,7 +5752,7 @@ memory:
         return pc;
     }
 #undef ASM_LINE
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 
 // b69 (0x4B7860..0x4B7AD2): the GCC asm statement's name lookup
 // (GCCInlineAsm.c's gcc_parse_name calls it for each operand name). As

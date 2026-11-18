@@ -2,5 +2,6 @@
 !include
 !src
 !tools/mwccpsp
+!tools/mwccps2/native_core.py
 !tools/mwccps2/b52
 **/__pycache__

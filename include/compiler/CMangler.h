@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_CMANGLER_H
 #define COMPILER_CMANGLER_H
 
@@ -21,7 +22,7 @@ extern HashNameNode* CMangler_VTableName(TypeClass* theclass);
 extern HashNameNode* CMangler_RTTIObjectName(Type* type, UInt32 qual);
 extern HashNameNode* CMangler_ThunkName(
     Object* vfunc, SInt32 this_delta, SInt32 return_delta, SInt32 ctoroffset
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 );
 extern HashNameNode* CMangler_TemplateInstanceName(HashNameNode* basename, TemplArg* args);
 extern void CMangler_MangleType(Type* type, UInt32 qual);

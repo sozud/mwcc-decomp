@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "driver/CWPlugins.h"
 #include "driver/CWPluginsPrivate.h"
 #include "driver/DropInCompilerLinker.h"
@@ -10,7 +11,7 @@
 
 #if MWCCPSP_NATIVE
 // the native build has no exe data: the same records, from 0x5C6A42..
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // (b69: 0x52DC8C..0x52DDCC, the same with DROPINCOMPILERLINKERAPIVERSION 12)
 static const DropInFlags ELFImport_sFlags = {2, 'Comp', 9, 0x80400000, '????', 12};
 #else
@@ -18,7 +19,7 @@ static const DropInFlags ELFImport_sFlags = {2, 'Comp', 9, 0x80400000, '????', 1
 #endif
 static const char* const ELFImport_sDropInName = "ELF Importer";
 static const char* const ELFImport_sDisplayName = "ELF Importer";
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 static SInt32 ELFImport_sCPU = '****'; // GC's CWTargetList: SInt32 lists
 static SInt32 ELFImport_sOS = '****';
 #else
@@ -48,7 +49,7 @@ extern const CWPanelList ELFImport_sPanelList; // 0x5C6B7A
 #endif
 
 extern void COS_SetPluginContext(CWPluginContext context);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 typedef SInt16 COSFileRef; // the GC driver's COSToolsCLT.h: file refs are SInt16
 #endif
 extern CW_CALLBACK CWSetPluginAPI(CWPluginContext context, SInt32 api);
@@ -217,7 +218,7 @@ static void ELFImport_ReadSection(const UInt8* data, ELFSection* sec) {
 }
 
 // 0x424230: sums the allocated sections' sizes
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 static int ELFImport_ScanObject(
     const UInt8* data, SInt32* codesize, SInt32* udatasize, SInt32* idatasize
 ) {
@@ -322,7 +323,7 @@ static void ELFImport_ImportFile(const CWFileSpec* spec, ELFObjectData* object) 
     } else {
         CWLockMemHandle(ELFImport_sContext, h, FALSE, &ptr);
         if (ELFImport_IsELF(ptr)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             ok = ELFImport_ScanObject(
                 ptr, &object->codesize, &object->udatasize, &object->idatasize
             );
@@ -332,7 +333,7 @@ static void ELFImport_ImportFile(const CWFileSpec* spec, ELFObjectData* object) 
             );
 #endif
         } else if (ELFImport_IsArchive(ptr)) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             ok = ELFImport_ScanArchive(
                 ptr, size, &object->codesize, &object->udatasize, &object->idatasize
             );
@@ -403,21 +404,21 @@ CWPLUGIN_ENTRY(ELFImport_main)(CWPluginContext context) {
     CWGetPluginRequest(context, &request);
     switch (request) {
         case reqInitialize:
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             CWSetPluginAPI(context, 2);
 #endif
             break;
         case reqTerminate:
             break;
         case reqCompile:
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
             COS_SetPluginContext(context);
 #endif
             CWGetMainFileSpec(context, &spec);
             CWGetMainFileNumber(context, &fileNumber);
             ELFImport_ImportFile(&spec, &object);
             result = CWDonePluginRequest(
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 context,
                 object.objectdata ? CWStoreObjectData(context, fileNumber, (CWObjectData*)&object)
                                   : cwErrRequestFailed

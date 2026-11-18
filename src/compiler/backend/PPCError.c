@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/PPCError.h"
 #include "compiler/CError.h"
 #include "compiler/CParser.h"
@@ -58,7 +59,7 @@ void PPCError_Message(char* format, ...) {
     va_end(list);
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-28)
 #endif
@@ -79,7 +80,7 @@ void PPCError_ErrorTerm(VarArgShort code, ...) {
 
     longjmp(errorreturn, 1);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif

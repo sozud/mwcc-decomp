@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_MEMORY_H
 #define DRIVER_MEMORY_H
 
@@ -10,13 +11,13 @@ extern "C" {
 
 extern OSHandle* OS_PeekMacHandle(Handle h);
 extern Handle OS_CreateMacHandle(OSHandle* h);
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 extern Handle OS_MacHandleFromOSHandle(OSHandle* oh);
 extern Handle OS_CreateMacHandleDup(OSHandle* h);
 #endif
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern void OS_DestroyMacHandle(Handle h, OSHandle* ret);
 extern OSErr MemError(void);
 extern Handle NewHandle(SInt32 dataSize);

@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CMangler.h"
 #include "compiler/CError.h"
 #include "compiler/CFunc.h"
@@ -428,7 +429,7 @@ HashNameNode* CMangler_ThunkName(
     Object* vfunc, SInt32 this_delta, SInt32 return_delta, SInt32 ctoroffset
 ) {
     HashNameNode* linkname;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     HashNameNode* name;
 #endif
     char buf[64];
@@ -447,13 +448,13 @@ HashNameNode* CMangler_ThunkName(
     AppendGListName(&name_mangle_list, buf);
     AppendGListID(&name_mangle_list, linkname->name);
     COS_LockHandle(name_mangle_list.data);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     linkname = GetHashNameNodeExport(*name_mangle_list.data);
 #else
     name = GetHashNameNodeExport(*name_mangle_list.data);
 #endif
     COS_UnlockHandle(name_mangle_list.data);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     return linkname;
 #else
     return name;
@@ -656,7 +657,7 @@ static void CMangler_MangleTypeName(char* str) {
 }
 
 static void CMangler_MangleNameSpaceName(NameSpace* nspace, char* str) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     int b69_dead;
 #endif
     char* stack[10];
@@ -665,7 +666,7 @@ static void CMangler_MangleNameSpaceName(NameSpace* nspace, char* str) {
 
     stack[0] = str;
     scan = nspace;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     b69_dead = stackp = 1;
 #else
     stackp = 1;
@@ -1140,7 +1141,7 @@ static HashNameNode* CMangler_DataLinkName(Object* obj) {
     return name;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (23)
 #endif
@@ -1176,7 +1177,7 @@ HashNameNode* CMangler_GetLinkName(Object* obj) {
             return NULL;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif

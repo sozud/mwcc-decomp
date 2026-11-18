@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/IROUseDef.h"
 #include "compiler/IroDump.h"
 #include "compiler/IroFlowgraph.h"
@@ -30,7 +31,7 @@ ENodeType IRO_NonAssignmentOp[MAXEXPR];
 // 3.0.1's folders (IroSelfAssign301.c) truncate or range-check the result
 // against the constant's type (type) and the self-assignment's (type2); the
 // table (0x6078C8) is read by UpdateUseForOtherSelfAssignment there
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 typedef Boolean (*AssignmentFoldingFunc)(
     CInt64 a, CInt64 b, Type* type, Type* type2, CInt64* result
 );
@@ -274,7 +275,7 @@ CInt64 IRO_GetSelfAssignmentVal(IROLinear* linear) {
 
     if (linear->type == IROLinearOp1Arg) {
         switch (linear->nodetype) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             case EPOSTINC:
             case EPREINC:
                 CInt64_SetLong(&result, 1);
@@ -513,7 +514,7 @@ void UpdateUse(IROLinear* linear, CInt64 val, Type* type) {
                         val = CInt64_Add(val, IRO_GetSelfAssignmentVal(father));
                         father->nodetype = EADDASS;
                         father->type = IROLinearOp2Arg;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         // b52 (0x526F6B) gives the constant the variable's own type, a
                         // pointer type for a pointer: IRO_IsIntConstant then refuses it
                         repl = IRO_NewIntConst(val, type);
@@ -555,7 +556,7 @@ void UpdateUse(IROLinear* linear, CInt64 val, Type* type) {
 
     IRO_InitList(&list);
     promoted = type;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if ((type->type == TYPEINT && TYPE_INTEGRAL(type)->integral < IT_17) ||
         type->type == TYPEENUM) {
 #else
@@ -880,7 +881,9 @@ void IRO_InitializeNonAssignmentOpArray(void) {
     IRO_NonAssignmentOp[EDEFINE] = MAXEXPR;
     IRO_NonAssignmentOp[EREUSE] = MAXEXPR;
     IRO_NonAssignmentOp[EASSBLK] = MAXEXPR;
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     IRO_NonAssignmentOp[EVECTOR128CONST] = MAXEXPR;
+#endif
     IRO_NonAssignmentOp[ECONDASS] = MAXEXPR;
 }
 #endif
@@ -997,7 +1000,9 @@ void IRO_InitializeAssignmentFoldingFunctionArray(void) {
     AssignmentFoldingFunction[EDEFINE] = NULL;
     AssignmentFoldingFunction[EREUSE] = NULL;
     AssignmentFoldingFunction[EASSBLK] = NULL;
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     AssignmentFoldingFunction[EVECTOR128CONST] = NULL;
+#endif
     AssignmentFoldingFunction[ECONDASS] = NULL;
 }
 #endif
@@ -1218,7 +1223,7 @@ static Boolean PropagateIncsAndDecs(void) {
             IROLinear* father;
             CInt64 val;
             SInt32 i;
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 #if VERSION < VERSION_GC_2_5
             Type* type;
 #endif
@@ -1253,7 +1258,7 @@ static Boolean PropagateIncsAndDecs(void) {
                             def->linear->index,
                             use->linear->index
                         );
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         father = IRO_LocateFather(use->linear);
                         val = IRO_GetSelfAssignmentVal(def->linear);
                         UpdateUse(father, val, father->rtype);
@@ -1263,7 +1268,11 @@ static Boolean PropagateIncsAndDecs(void) {
 #if VERSION < VERSION_GC_2_5
                         type = def->linear->rtype;
                         if (IS_TYPE_POINTER_ONLY(def->linear->rtype)) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+                            type = TYPE(&stunsignedint);
+#else
                             type = TYPE(&stunsignedlong);
+#endif
                         }
                         UpdateUse(father, val, type);
 #else
@@ -1296,6 +1305,14 @@ nextDef:
 
 static Boolean PropagateOtherSelfAssignments(void) {
     IRODef* def;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+    IROUse* use;
+    IROUse* use2;
+    IROLinear* father;
+    SInt32 i;
+#endif
+#endif
     Boolean result;
 
     result = FALSE;
@@ -1309,10 +1326,18 @@ static Boolean PropagateOtherSelfAssignments(void) {
             IS_TYPE_INT_OR_ENUM(def->linear->rtype) &&
             IRO_TypesEqual(def->linear->rtype, def->var->object->type) &&
             !is_volatile_object(def->var->object)) {
+#if MWCC_CORE == MWCC_CORE_B52
             IROUse* use;
             IROUse* use2;
             IROLinear* father;
             SInt32 i;
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+            IROUse* use;
+            IROUse* use2;
+            IROLinear* father;
+            SInt32 i;
+#endif
 
             for (use = def->var->uses, i = 0; use; use = use->varnext) {
                 if (Bv_IsBitSet(def->index, use->reachingDefs)) {
@@ -1343,7 +1368,7 @@ static Boolean PropagateOtherSelfAssignments(void) {
                             "Propagating self assignment from %d to %d\n",
                             def->linear->index,
                             use->linear->index
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         );
                         father = IRO_LocateFather(use->linear);
                         UpdateUseForOtherSelfAssignment(father, def->linear, father->rtype);
@@ -1380,7 +1405,7 @@ nextDef:
     return result;
 }
 
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 #if VERSION < VERSION_GC_2_5
 #undef CError_LINE_SHIFT
 #define CError_LINE_SHIFT -159
@@ -1667,11 +1692,50 @@ static void MarkRemovableLoopDefs(void) {
     }
 }
 
+#if MWCC_CORE == MWCC_CORE_B52
 static Boolean EliminateReffedDeadStore(IRODef* def) {
     Boolean isPostIncOrDec;
     IROLinear* nd;
     Boolean result;
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+    static Boolean EliminateReffedDeadStore(IRODef * def) {
+        Boolean isPostIncOrDec;
+        IROLinear* nd;
+        Boolean result;
+#endif
 
+#if MWCC_CORE == MWCC_CORE_B52
+        nd = def->linear;
+        isPostIncOrDec =
+            (nd->type == IROLinearOp1Arg) && (nd->nodetype == EPOSTINC || nd->nodetype == EPOSTDEC);
+
+        result = IRO_LocateFather(nd) != NULL;
+        if (result && IRO_IsAssignment(nd) && IRO_IsModifyOp[nd->nodetype]) {
+            result = IRO_TransformSelfAssignmentToAssignment(nd);
+        }
+        result = result && (nd->type == IROLinearOp2Arg) && (nd->nodetype == EASS);
+
+        if (result) {
+            def->useCount = 0;
+            IRO_Dump("Removing referenced dead assignment %d\n", nd->index);
+
+            if (isPostIncOrDec) {
+                IRO_NopNonSideEffects(nd->u.diadic.right, 0);
+                nd->type = IROLinearNop;
+                IRO_LocateFather_Cut_And_Paste_Without_Nopping(nd, nd->u.diadic.left);
+            } else {
+                IRO_NopNonSideEffects(nd->u.diadic.left, 0);
+                nd->type = IROLinearNop;
+                IRO_LocateFather_Cut_And_Paste_Without_Nopping(nd, nd->u.diadic.right);
+            }
+        }
+
+        return result;
+    }
+
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     nd = def->linear;
     isPostIncOrDec =
         (nd->type == IROLinearOp1Arg) && (nd->nodetype == EPOSTINC || nd->nodetype == EPOSTDEC);
@@ -1700,6 +1764,7 @@ static Boolean EliminateReffedDeadStore(IRODef* def) {
     return result;
 }
 
+#endif
 Boolean IRO_UseDef(Boolean optDeadAssignments, Boolean optPropagation) {
     VarRecord* var;
     Boolean result;
@@ -1897,8 +1962,18 @@ Boolean IRO_UseDef(Boolean optDeadAssignments, Boolean optPropagation) {
                     def->linear->type = IROLinearNop;
                     IRO_Dump("Removing dead assignment %d\n", def->linear->index);
                     result = TRUE;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 } else {
                     result = EliminateReffedDeadStore(def);
+#else
+                    // b69 0x4CDEB7: a dead assignment whose value is used stays
+                    // (2.4.5 has no EliminateReffedDeadStore)
+#endif
+#else
+                } else {
+                    result = EliminateReffedDeadStore(def);
+#endif
                 }
             }
         }
@@ -1999,29 +2074,58 @@ static void AddDefToRange(IRODef* def) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-1590)
+#else
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT (-3)
+#endif
 #endif
 static void ReplaceAssigned(IROLinear* nd, Object* from, Object* to) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     IROLinear* assigned;
 
     if (!(assigned = GetAssigned(nd)) ||
         assigned->type != IROLinearOperand ||
         assigned->u.node->type != EOBJREF ||
         assigned->u.node->data.objref != from) {
+#else
+    if (!(nd = GetAssigned(nd)) ||
+        nd->type != IROLinearOperand ||
+        nd->u.node->type != EOBJREF ||
+        nd->u.node->data.objref != from) {
+#endif
+#else
+    IROLinear* assigned;
+
+    if (!(assigned = GetAssigned(nd)) ||
+        assigned->type != IROLinearOperand ||
+        assigned->u.node->type != EOBJREF ||
+        assigned->u.node->data.objref != from) {
+#endif
         CError_FATAL(2621);
     }
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     assigned->u.node->data.objref = to;
+#else
+    nd->u.node->data.objref = to;
+#endif
+#else
+    assigned->u.node->data.objref = to;
+#endif
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
 static void ReplaceUsed(IROLinear* nd, Object* from, Object* to) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     CError_ASSERT(1054, nd->type == IROLinearOperand && nd->u.node->type == EOBJREF);
 #else
     CError_ASSERT(2644, nd->type == IROLinearOperand && nd->u.node->type == EOBJREF);
@@ -2030,13 +2134,19 @@ static void ReplaceUsed(IROLinear* nd, Object* from, Object* to) {
     if (nd->u.node->data.objref == from) {
         nd->u.node->data.objref = to;
     } else if (nd->u.node->data.objref != to) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         CError_FATAL(1066);
 #else
         CError_FATAL(2656);
 #endif
     }
 }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT 0
+#endif
+#endif
 
 static void SplitOffRange(VarRecord* var) {
     Object* newObj;

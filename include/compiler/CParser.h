@@ -1,4 +1,5 @@
-#if MWCCPS2_B52
+#include "compiler/mwcc_core.h"
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #ifndef COMPILER_CPARSER_H
 #define COMPILER_CPARSER_H
 
@@ -128,17 +129,26 @@ struct CompilerLinkerOptions {
     UInt8 unknown3D[1]; // 0x03d
     Boolean asmsemicolcomment;
     Boolean asmpoundcomment;
-    // b52: inline_bottom_up at 0x052 (re/b52/pragmas.txt); where the two
+    // b69: inline_bottom_up at 0x050, cplusplus at 0x051 (pragma table)
+#if MWCC_CORE == MWCC_CORE_B52
     // extra bytes sit before it is unverified
     UInt8 unknown66[4];
+#else
+    UInt8 unknown66[2];
+#endif
     StringPtr oldprefixname;
     SInt16 inlinelevel;
     SInt32 inlinemaxsize;
     SInt32 inlinemaxtotalsize;
     UInt8 inline_bottom_up;
+#if MWCC_CORE == MWCC_CORE_B52
     UInt8 inline_bottom_up_once; // b52 0x053
+#endif
     UInt8 cplusplus;
     UInt8 ecplusplus;
+#if MWCC_CORE != MWCC_CORE_B52
+    char ARMconform;
+#endif
     char ARMscoping;
     Boolean checkprotos;
     char trigraphs;
@@ -162,6 +172,9 @@ struct CompilerLinkerOptions {
     UInt8 som_env_check;
     UInt8 som_call_optimize;
     UInt8 booltruefalse; // b52 0x06c: bool and _Bool
+#if MWCC_CORE != MWCC_CORE_B52
+    Boolean old_enum_mangler;
+#endif
     UInt8 longlong;
     UInt8 longlong_enums;
     Boolean no_tfuncinline;
@@ -184,7 +197,9 @@ struct CompilerLinkerOptions {
     char simple_prepdump;
     char line_prepdump;
     UInt8 fullpath_prepdump;
+#if MWCC_CORE == MWCC_CORE_B52
     UInt8 unknown83_b52; // b52 0x083: no pragma
+#endif
     Boolean old_mtemplparser;
     UInt8 suppress_init_code;
     Boolean reverse_bitfields;
@@ -195,7 +210,9 @@ struct CompilerLinkerOptions {
     UInt8 const_strings;
     Boolean dumpir;
     UInt8 experimental;
+#if MWCC_CORE == MWCC_CORE_B52
     UInt8 late_fixes; // b52 0x08e
+#endif
     UInt8 gcc_extensions;
     Boolean stdc_fp_contract;
     Boolean stdc_fenv_access;
@@ -204,6 +221,7 @@ struct CompilerLinkerOptions {
     char optEH;
     Boolean optEH2;
     Boolean new_mangler;
+#if MWCC_CORE == MWCC_CORE_B52
     UInt8 parse_func_templ; // b52 0x097
     UInt8 parse_mfunc_templ;
     UInt8 old_depfunc_lookup;
@@ -212,16 +230,21 @@ struct CompilerLinkerOptions {
     UInt8 reg_class_allocs;
     UInt8 old_pragma_once;
     UInt8 new_calldeduction; // b52 0x09e
+#endif
     Boolean fullpath_file;
+#if MWCC_CORE == MWCC_CORE_B52
     UInt8 opt_classresults; // b52 0x0a0
     UInt8 ushort_wchar_t; // b52 0x0a1 (RECONF)
     UInt8 thread_safe_init; // b52 0x0a2
+#endif
     Boolean microsoft_EH;
     // b52 0x0a4: no pragma (b69's stdc_libfuncname_redefined/no-ansi-lib-builtin
     // are gone from b52's table); the field is kept here, unverified
     Boolean no_ansi_lib_builtin;
     char warningerrors;
+#if MWCC_CORE == MWCC_CORE_B52
     UInt8 access_errors; // b52 0x0a6
+#endif
     char pedantic;
     UInt8 checkprecompflags;
     Boolean supress_warnings;
@@ -234,23 +257,29 @@ struct CompilerLinkerOptions {
     Boolean warn_hidevirtual;
     char warn_largeargs;
     Boolean warn_implicitconv;
+#if MWCC_CORE == MWCC_CORE_B52
     UInt8 warn_impl_i2f_conv; // b52 0x0b3
     UInt8 warn_impl_f2i_conv;
     UInt8 warn_impl_s2u_conv;
+#endif
     UInt8 warn_notinlined;
     SInt8 warn_structclass;
     Boolean warn_padding;
     Boolean warn_no_side_effect;
     Boolean warn_resultnotused;
     UInt8 warn_ptr_int_conv;
+#if MWCC_CORE == MWCC_CORE_B52
     UInt8 warn_no_typename; // b52 0x0bc
     UInt8 warn_filenamecaps;
     UInt8 warn_filenamecaps_system;
     UInt8 warn_no_explicit_virtual;
     UInt8 warn_pch_portability; // b52 0x0c0
+#endif
     UInt8 warn_uninitializedvar;
+#if MWCC_CORE == MWCC_CORE_B52
     UInt8 warn_illunionmembers; // b52 0x0c2
     UInt8 warn_undefmacro;
+#endif
     signed char structalignment;
     UInt8 alignarraymembers;
     SInt8 dont_reuse_strings;
@@ -283,8 +312,13 @@ struct CompilerLinkerOptions {
     UInt8 strengthreduction;
     UInt8 strengthreductionstrict;
     UInt8 deadcode;
-    UInt8 logopts; // b52 0x0e4: no pragma; b69 has logopts after lifetimes (unverified)
+#if MWCC_CORE != MWCC_CORE_B52
+    UInt8 lifetimes;
+#endif
+    UInt8 logopts;
+#if MWCC_CORE == MWCC_CORE_B52
     UInt8 lifetimes; // b52 0x0e5
+#endif
     UInt8 unrolling;
     Boolean vectorizeloops;
     UInt8 multiplepasses;
@@ -292,6 +326,7 @@ struct CompilerLinkerOptions {
     UInt8 opt_pointer_analysis_mode;
     signed char unrollfactor;
     SInt8 unrollinstrfactor;
+#if MWCC_CORE == MWCC_CORE_B52
     UInt8 unknownED_b52; // b52 0x0ed: no pragma
     // b52 0x0ee..0x120: the 3.0 optimizer switches (b69 has none), as in
     // tools/mwccpsp's 3.0.1 tree and in b52's pragma table order
@@ -346,8 +381,11 @@ struct CompilerLinkerOptions {
     UInt8 opt_decomposeaggregates;
     UInt8 opt_recomposeaggregates;
     UInt8 opt_scalarizeliveranges; // b52 0x120
+#endif
     UInt8 filesyminfo;
+#if MWCC_CORE == MWCC_CORE_B52
     UInt8 symstringtypes; // b52 0x122
+#endif
     UInt8 unknownfd;
     char dwarf_siblings;
     UInt8 dwarf_relocations;
@@ -356,9 +394,11 @@ struct CompilerLinkerOptions {
     CWDataType headtype;
     CWDataType texttype;
     struct HashNameNode* cursegmentname;
+#if MWCC_CORE == MWCC_CORE_B52
     // fields b52's pragma table no longer places: an unverified tail
     char ARMconform;
     Boolean old_enum_mangler;
+#endif
 };
 
 /* b69's copts ends here: 0xEA bytes (initialize_compiler_options' memclrw,
@@ -507,7 +547,11 @@ extern CompilerLinkerOptions copts;
 extern COptsX coptsx;
 #define COPTS_X coptsx
 // ushort_wchar_t: b52's copts has it (0x0a1, re/b52/pragmas.txt); b69's has not
+#if MWCC_CORE == MWCC_CORE_B52
 #define COPTS_WCHAR copts
+#else
+#define COPTS_WCHAR COPTS_X
+#endif
 extern GList name_mangle_list;
 extern HashNameNode* no_name_node;
 extern HashNameNode* temp_argument_name;
@@ -606,11 +650,21 @@ extern Boolean isdeclaration(
 extern Boolean islookaheaddeclaration(void);
 extern Type* CParser_ParseTypeID(UInt32* qual, Boolean* isTemplateName);
 extern Boolean CParser_TryParamList(Boolean stopAtComma);
+#if MWCC_CORE == MWCC_CORE_B52
 extern Type* CParser_RemoveTopMostQualifiers(Type* type, UInt32* qual);
 extern UInt32 CParser_GetTypeQualifiers(Type* type, UInt32 qual);
 extern UInt32 CParser_GetCVTypeQualifiers(Type* type, UInt32 qual);
 // prototype a caller tests all of eax)
 extern Boolean CParser_IsReadOnly(Type* type, UInt32 qual);
+#else
+extern Type* CParser_RemoveTopMostQualifiers(Type* type, UInt32* qual);
+extern UInt32 CParser_GetTypeQualifiers(Type* type, UInt32 qual);
+extern UInt32 CParser_GetCVTypeQualifiers(Type* type, UInt32 qual);
+#if VERSION >= VERSION_GC_2_5 || 0 // b52's 3.0 optimizer calls it (without the
+// prototype a caller tests all of eax)
+extern Boolean CParser_IsReadOnly(Type* type, UInt32 qual);
+#endif
+#endif
 extern Boolean CParser_IsConst(Type* type, UInt32 qual);
 extern Boolean CParser_IsVolatile(Type* type, UInt32 qual);
 extern Boolean is_const_object(Object* obj);

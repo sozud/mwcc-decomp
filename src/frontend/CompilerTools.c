@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CompilerTools.h"
 #if MWCCPSP
 #include "compiler/IroMalloc.h"
@@ -7,7 +8,7 @@
 #include "driver/COSToolsCLT.h"
 #include <ctype.h>
 #include <string.h>
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 extern void IRO_InitializeAllocator(void* (*heap)(SInt32 size));
 extern void IRO_TerminateAllocator(void* (*heap)(SInt32 size));
 #endif
@@ -342,13 +343,13 @@ SInt16 CHash(const char* string) {
     SInt16 i;
     SInt16 hashval;
     UInt8 u;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     UInt8 b69_dead;
 #endif
 
     if ((hashval = (strlen(string) & 0xFF))) {
         i = hashval;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead = u = 0;
 #else
         u = 0;
@@ -1001,7 +1002,7 @@ void freeoheap(void) {
         blockp->blockfree = blockp->blocksize - sizeof(HeapBlock);
         blockp = blockp->next;
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // b52 (0x4343D4): the 3.0 optimizer's pools on oheap go with it
     IRO_TerminateAllocator(oalloc);
     IRO_InitializeAllocator(oalloc);
@@ -1398,7 +1399,7 @@ void CTool_EndianConvertWord64(CInt64 ci, char* result) {
     buf[1] = ci.mid[1];
     memcpy(result, buf, 8);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     UInt32 hi;
     UInt32 lo;
     UInt32 b69_dead;

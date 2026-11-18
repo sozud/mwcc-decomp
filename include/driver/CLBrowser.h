@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef DRIVER_CLBROWSER_H
 #define DRIVER_CLBROWSER_H
 
@@ -11,7 +12,7 @@ extern "C" {
 extern int Browser_Initialize(OSHandle* browsetableptr);
 extern int Browser_Terminate(OSHandle* browsetableptr);
 extern int Browser_SearchFile(OSHandle* browsetable, const char* fullpath, SInt16* ID);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern int Browser_SearchAndAddFile(OSHandle* browsetable, const char* fullpath, SInt16* ID);
 extern int Browser_PackBrowseFile(
     Handle browsedata, OSHandle* browsetable, OSHandle* browsefileptr

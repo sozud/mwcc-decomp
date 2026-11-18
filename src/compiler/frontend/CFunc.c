@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CFunc.h"
 #include "compiler/CABI.h"
 #include "compiler/CClass.h"
@@ -194,7 +195,7 @@ void CFunc_RestoreBlock(DeclBlock* block) {
 }
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // b52 (0x476930), as 3.0.1's CFunc_AppendLocal: locals are kept in
 // declaration order (GC prepends), which sets the order the back end numbers
 // their virtual registers in (CodeGen 0x4352B0 walks the list)
@@ -1231,7 +1232,7 @@ static inline Statement* CFunc_EmitAllCleanups(Statement* stmt, ExceptionAction*
     return stmt;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // GCC statement expressions, as 3.0.1 (b52 0x47A3A0: parse; spliced into the
 // function's statements before code generation)
 static Boolean cfunc_hasstmtexpr; // a statement expression was parsed in this function
@@ -1756,7 +1757,7 @@ static void scancase(DeclThing* thing) {
     SwitchCase* swcase;
     Statement* stmt;
     CInt64 min;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     CInt64 max;
 #endif
 
@@ -1769,7 +1770,7 @@ static void scancase(DeclThing* thing) {
     min = CExpr_IntConstConvert(
         thing->switchinfo->exprtype, thing->switchinfo->exprtype, CExpr_IntegralConstExpr()
     );
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!copts.ANSIstrict && tk == TK_ELLIPSIS) {
         tk = lex();
         max = CExpr_IntConstConvert(
@@ -1783,19 +1784,19 @@ static void scancase(DeclThing* thing) {
     }
 #endif
     for (swcase = thing->switchinfo->cases; swcase; swcase = swcase->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (CInt64_GreaterEqual(swcase->min, min) && CInt64_LessEqual(swcase->min, max)) {
 #else
         if (CInt64_GreaterEqual(swcase->min, min) && CInt64_LessEqual(swcase->min, min)) {
 #endif
             CError_Error(ERR_CASE_CONSTANT_DEFINED_MORE_THAN_ONCE);
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (CInt64_GreaterEqual(swcase->max, min) && CInt64_LessEqual(swcase->max, max)) {
             CError_Error(ERR_CASE_CONSTANT_DEFINED_MORE_THAN_ONCE);
 #endif
         }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (CInt64_Less(swcase->min, min) && CInt64_Greater(swcase->max, max)) {
             CError_Error(ERR_CASE_CONSTANT_DEFINED_MORE_THAN_ONCE);
         }
@@ -1811,7 +1812,7 @@ static void scancase(DeclThing* thing) {
     swcase->label = stmt->label;
     swcase->next = thing->switchinfo->cases;
     thing->switchinfo->cases = swcase;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     swcase->max = max;
 #endif
 
@@ -1831,7 +1832,7 @@ static void CFunc_NameLocalStaticDataObject(Object* obj, char* str) {
     if (!(cscope_currentfunc && (cscope_currentfunc->qual & Q_INLINE)) ||
         CParser_HasInternalLinkage(cscope_currentfunc)) {
         obj->name = CParser_AppendUniqueName(str);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         return;
 #endif
     } else {
@@ -2027,7 +2028,7 @@ static void CFunc_LocalDataDeclarator(
                         sinit_label->stmt = stmt;
                     }
                 } else {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     // b52 (0x478426) defines a local static at once, never as
                     // a tentative definition, so its data comes before the
                     // function's code
@@ -2049,7 +2050,7 @@ static void CFunc_LocalDataDeclarator(
                     di->qual & ~(Q_CONST | Q_VOLATILE | Q_PASCAL | Q_ALIGNED_MASK)
                 );
                 object->datatype = DLOCAL;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 object->u.var.uid = CParser_GetUniqueID();
 #endif
                 CFunc_SetupLocalVarInfo(object);
@@ -2084,7 +2085,7 @@ static void CFunc_LocalDataDeclarator(
                 }
 
                 if (object->datatype == DLOCAL) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     CFunc_AppendLocal(object);
 #else
                     ObjectList* list = lalloc(sizeof(ObjectList));
@@ -2333,7 +2334,7 @@ Statement* CFunc_GenerateLoop(
     Statement* s;
 
     cursor = CExpr_NewETEMPNode(type, TRUE);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     ind = CExpr_CopyENode(cursor);
 #else
     ind = lalloc(sizeof(ENode));
@@ -2351,7 +2352,7 @@ Statement* CFunc_GenerateLoop(
 
     if (increment2) {
         cursor2 = CExpr_NewETEMPNode(type, TRUE);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         ind = CExpr_CopyENode(cursor2);
 #else
         ind = lalloc(sizeof(ENode));
@@ -2378,7 +2379,7 @@ Statement* CFunc_GenerateLoop(
     label->stmt = s;
 
     if (callback) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         ind = CExpr_CopyENode(cursor);
 #else
         ind = lalloc(sizeof(ENode));
@@ -2388,7 +2389,7 @@ Statement* CFunc_GenerateLoop(
         ind->rtype = type;
 
         if (increment2) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             ind2 = CExpr_CopyENode(cursor2);
 #else
             ind2 = lalloc(sizeof(ENode));
@@ -2411,7 +2412,7 @@ Statement* CFunc_GenerateLoop(
     }
 
     if (increment1) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         ind = CExpr_CopyENode(cursor);
 #else
         ind = lalloc(sizeof(ENode));
@@ -2428,7 +2429,7 @@ Statement* CFunc_GenerateLoop(
         s->expr = makediadicnode(ind, increment1, EADDASS);
 
         if (increment2) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             ind = CExpr_CopyENode(cursor2);
 #else
             ind = lalloc(sizeof(ENode));
@@ -2446,7 +2447,7 @@ Statement* CFunc_GenerateLoop(
         }
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     ind = CExpr_CopyENode(cursor);
 #else
     ind = lalloc(sizeof(ENode));
@@ -2547,7 +2548,7 @@ static void CFunc_AutoResultCheck(ENode* expr) {
 #endif
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 // b52 (0x479450), as 3.0.1's CFunc_LoopStatement: for and while take their
 // three labels (top, continue, break) right after the for's initializer and
 // a fourth for the condition before parsing it, so @N names come out in
@@ -3483,7 +3484,7 @@ static void statement(DeclThing* thing) {
             }
 
             stmt = CFunc_AppendStatement(ST_SWITCH);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             // b52 (0x479AB2): the info first; a template-dependent expression
             // is kept as it is, with no type
             stmt->label = (CLabel*)lalloc(sizeof(SwitchInfo));
@@ -3493,7 +3494,7 @@ static void statement(DeclThing* thing) {
             if (!CTemplTool_IsTemplateArgumentDependentExpression(expr)) {
 #endif
                 stmt->expr = CExpr_ConvertToIntegral(expr);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 ((SwitchInfo*)stmt->label)->exprtype = stmt->expr->rtype;
             } else {
                 stmt->expr = expr;
@@ -3507,7 +3508,7 @@ static void statement(DeclThing* thing) {
                 tk = lex();
             }
 
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
             stmt->label = (CLabel*)lalloc(sizeof(SwitchInfo));
             ((SwitchInfo*)stmt->label)->defaultlabel = NULL;
             ((SwitchInfo*)stmt->label)->cases = NULL;
@@ -3590,7 +3591,7 @@ static void statement(DeclThing* thing) {
             tk = lex();
             break;
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         case TK_FOR:
             CFunc_LoopStatement52(thing, TRUE);
 #else
@@ -3740,7 +3741,7 @@ static void statement(DeclThing* thing) {
             }
 #endif
             return;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         case TK_WHILE:
             CFunc_LoopStatement52(thing, FALSE);
             return;
@@ -3801,7 +3802,7 @@ static void statement(DeclThing* thing) {
             break;
         }
 
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
         case TK_WHILE: {
             CLabel* label1;
             CLabel* label2;
@@ -5142,11 +5143,11 @@ static void CFunc_InsertArgumentCopyConversion(
     Object* obj, Type* type1, Type* type2, Boolean byPointer
 ) {
     Object* newobj;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     Statement* stmt;
 #endif
     ENode* expr;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Statement* stmt;
 #endif
     NameSpaceObjectList* nsol;
@@ -5155,7 +5156,7 @@ static void CFunc_InsertArgumentCopyConversion(
     newobj = lalloc(sizeof(Object));
     *newobj = *obj;
     newobj->type = type2;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     newobj->u.var.uid = CParser_GetUniqueID();
 #endif
 
@@ -5174,7 +5175,7 @@ static void CFunc_InsertArgumentCopyConversion(
     );
     nsol->object = OBJ_BASE(newobj);
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     CFunc_AppendLocal(newobj);
 #else
     list = lalloc(sizeof(ObjectList));
@@ -5275,7 +5276,7 @@ void CFunc_SetupNewFuncArgs(Object* func, FuncArg* args) {
             IsCompleteType(args->type);
 
             obj = CParser_NewLocalDataObject(NULL, FALSE);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             obj->name = args->name ? args->name : no_name_node;
 #else
             if (!args->name) {
@@ -5308,7 +5309,7 @@ void CFunc_SetupNewFuncArgs(Object* func, FuncArg* args) {
                 CFunc_CopyHiddenArgument(NULL, obj);
             }
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             // b69 0x4738B7: only a class passed by reference becomes a pointer here; a
             // struct passed by address is copied in by SetupFunctionArguments
             if (IS_TYPE_CLASS(obj->type) && CClass_ReferenceArgument(TYPE_CLASS(obj->type))) {
@@ -5580,7 +5581,7 @@ static void SetupFunctionArguments(Object* func, DeclInfo* di, Statement* firstS
     for (list = arguments; list; list = list->next) {
         NameSpaceObjectList* nsol = CScope_InsertName(cscope_current, list->object->name);
         nsol->object = OBJ_BASE(list->object);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         // b69 0x473C05: an argument passed by address is copied into a local
         if (!(IS_TYPE_CLASS(list->object->type) &&
               CClass_ReferenceArgument(TYPE_CLASS(list->object->type))) &&
@@ -5591,7 +5592,7 @@ static void SetupFunctionArguments(Object* func, DeclInfo* di, Statement* firstS
 #endif
         }
     }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 }
 #endif
 #endif
@@ -5624,7 +5625,7 @@ NameSpace* CFunc_FuncGenSetup(Statement* stmt, Object* func) {
 
     localcount = 0;
     cfunc_staticvarcount = 0;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     cfunc_hasstmtexpr = FALSE;
 #endif
 #if MWCCPSP
@@ -6064,7 +6065,7 @@ static void CFunc_FunctionRedefinedCheck(Object* func) {
     TYPE_FUNC(func->type)->flags |= FUNC_DEFINED;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (4074)
 #endif
@@ -6086,19 +6087,19 @@ static Object* CFunc_DeclareFuncName(char* str, HashNameNode* name) {
 #if MWCCPSP
     CFunc_NameLocalStaticDataObject(obj);
 #else
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     CFunc_NameLocalStaticDataObject(obj, obj->name->name);
 #endif
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // function (no $localstatic name)
     obj->name = CParser_AppendUniqueName(obj->name->name);
 
 #endif
     return aliasobj;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -6790,7 +6791,7 @@ void CFunc_ParseFuncDef(
                 CABI_TransDestructor(func, func, &firstStmt, cscope_currentclass, CABIDestroyBase);
             }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (cfunc_hasstmtexpr) {
                 CFunc_SpliceStatementExpressions(&firstStmt);
             }
@@ -6906,7 +6907,7 @@ void CFunc_GenerateSingleExprFunc(Object* func, ENode* expr) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-2)
 #endif
@@ -6915,12 +6916,12 @@ void CFunc_GenerateSingleExprFunc(Object* func, ENode* expr) {
 #define CError_B145_SHIFT -54 // b145 asserts
 #endif
 void CFunc_GenerateDummyCtorFunc(Object* func, Object* real_ctor) {
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     NameSpace* nspace;
     FuncArg* arg;
 #endif
     ENodeList* list;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     FuncArg* arg;
     NameSpace* nspace;
 #endif
@@ -7009,7 +7010,7 @@ void CFunc_GenerateDummyCtorFunc(Object* func, Object* real_ctor) {
         copts.filesyminfo = saveDebugInfo;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif

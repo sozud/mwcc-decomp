@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #if MWCCPSP
 #include "compiler/IroMalloc.h"
 #endif
@@ -67,7 +68,7 @@ static BitVector* AllKills;
 static Boolean KnownBounds;
 static SInt32 Times;
 static IROLinear* PredInt;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 static IROElmList* FirstAddendLinear;
 static IROElmList* LastAddendLinear;
 static int NoSubableSubs;
@@ -209,7 +210,7 @@ static int IsSafeTypcon(IROLinear* nd) {
     }
 
     srcSize = srcType->size;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     destSize = destType->size;
     srcUnsigned = is_unsigned(srcType);
     destUnsigned = is_unsigned(destType);
@@ -265,10 +266,14 @@ static Boolean TreeContains(IROLinear* tree, IROLinear* target) {
 #endif
 #endif
 
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 #if VERSION < VERSION_GC_2_5
 #undef CError_LINE_SHIFT
 #define CError_LINE_SHIFT -26
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT (-6)
 #endif
 #endif
 static int Reducable(
@@ -542,7 +547,7 @@ static int Reducable(
         return FALSE;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (copts.ANSIstrict || copts.strengthreductionstrict) {
         Type* type = (*resultVar)->object->type;
         if (is_unsigned(type) && type->size < stunsignedlong.size) {
@@ -559,7 +564,11 @@ static int Reducable(
 #else
     if (copts.ANSIstrict || copts.strengthreductionstrict) {
         Type* type = (*resultVar)->object->type;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+        if (is_unsigned(type) && type->size < stunsignedint.size) {
+#else
         if (is_unsigned(type) && type->size < stunsignedlong.size) {
+#endif
             return FALSE;
         }
     }
@@ -573,7 +582,7 @@ static int Reducable(
     CError_ASSERT(873, ind != NULL);
 #endif
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 
     if (nd->type == IROLinearOp2Arg && (nd->nodetype == ESHR || nd->nodetype == EDIV)) {
 #else
@@ -595,7 +604,7 @@ static int Reducable(
             SInt32 addConst = ind->addConst;
             if (addConst < (val = CInt64_GetULong(&divisor))) {
                 return FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             }
             if ((div = addConst / val) <= 0) {
                 return FALSE;
@@ -618,7 +627,7 @@ static int Reducable(
             *resultNd1 = IRO_NewLinear(IROLinearOperand);
             enode = IRO_NewENode(EINTCONST);
             CInt64_SetULong(&enode->data.intval, div);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             enode->rtype = nd->u.diadic.left->rtype;
             (*resultNd1)->rtype = nd->u.diadic.left->rtype;
             (*resultNd1)->u.node = enode;
@@ -656,6 +665,12 @@ static int Reducable(
 
     return TRUE;
 }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT 0
+#endif
+#endif
 
 static void IRO_RemoveExpr_Action(IROLinear* linear, Boolean isFirst) {
     if (isFirst && linear->expr) {
@@ -810,7 +825,7 @@ static IROExpr* CreateRIS(
                 );
                 fifthnode->u.diadic.right->u.node = enode;
                 IRO_AddToList(fifthnode->u.diadic.right, &list2);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             }
         } else {
             fifthnode->u.diadic.right = IRO_TempReference(stepTempObj, &list2);
@@ -858,10 +873,14 @@ static IROExpr* CreateRIS(
     return expr;
 }
 
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
 #if VERSION < VERSION_GC_2_5
 #undef CError_LINE_SHIFT
 #define CError_LINE_SHIFT -53
+#endif
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT (-6)
 #endif
 #endif
 static IRONode* CreatePreHeader(IRONode* fnode1, IRONode* fnode2) {
@@ -955,7 +974,19 @@ static IRONode* CreatePreHeader(IRONode* fnode1, IRONode* fnode2) {
     IRO_ComputeDom();
     return newfnode;
 }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT 0
+#endif
+#endif
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT (-6)
+#endif
+#endif
 static IRONode* CreateNewLoopExitSuccessor(IRONode* fnode1) {
     IROLinear* labelnode;
     IRONode* fnode2;
@@ -1070,6 +1101,12 @@ static IRONode* CreateNewLoopExitSuccessor(IRONode* fnode1) {
     IRO_ComputeDom();
     return newfnode;
 }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+#undef CError_B69_SHIFT
+#define CError_B69_SHIFT 0
+#endif
+#endif
 
 void AddPreds(IRONode* fnode) {
     IRONode* pred;
@@ -1097,13 +1134,28 @@ static void RemoveNoopsFromExprList(void) {
             } else {
                 IRO_FirstExpr = expr->next;
             }
+#if MWCC_CORE == MWCC_CORE_B52
             expr = expr->next;
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+            expr = expr->next;
+#endif
         } else {
             prev = expr;
-            expr = expr->next;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
         }
+#endif
+#endif
+        expr = expr->next;
     }
 }
+#if MWCC_CORE == MWCC_CORE_B52
+}
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+}
+#endif
 
 void IncLoopDepth(void) {
     IRONode* fnode;
@@ -1297,7 +1349,7 @@ void func_0058B050(IRONaturalLoop* loop) {
             }
         }
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     IRO_Dump(
         "IRO_FindLoopTailsAndExits:For header %d, Loop exits and loop tails are  \n",
         loop->header->index
@@ -1335,7 +1387,7 @@ void func_0058B250(IRONaturalLoop* loop) {
             if (Bv_IsBitSet(scan->index, loop->x58) && !Bv_IsBitSet(fnode->index, scan->dom)) {
                 fnode->mustreach1 = FALSE;
             }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (Bv_IsBitSet(scan->index, loop->x54) &&
                 scan != loop->header &&
 #else
@@ -1401,7 +1453,7 @@ void func_0058B3D0(IRONaturalLoop* loop) {
 }
 
 static inline Boolean IsIntOrPointer(Type* type) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     return (type->type == TYPEINT && TYPE_INTEGRAL(type)->integral < IT_17) ||
         type->type == TYPEPOINTER;
 #else
@@ -1444,7 +1496,7 @@ void func_00588CC0(IRONaturalLoop* loop) {
             IRO_GetKills(nd);
 #endif
             isUpdate = FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (nd->type == IROLinearOp2Arg &&
                 (nd->nodetype == EADDASS || nd->nodetype == ESUBASS) &&
                 (obj = IRO_IsVariable(nd->u.diadic.left)) &&
@@ -1461,7 +1513,7 @@ void func_00588CC0(IRONaturalLoop* loop) {
 #endif
                 !IRO_IsConstantZero(nd->u.diadic.right)) {
                 isUpdate = TRUE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             } else if (nd->type == IROLinearOp1Arg &&
                        nd->nodetype <= EPREDEC &&
                        (obj = IRO_IsVariable(nd->u.monadic)) &&
@@ -1474,7 +1526,7 @@ void func_00588CC0(IRONaturalLoop* loop) {
 #endif
                        obj->type->size == nd->rtype->size) {
                 isUpdate = TRUE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             } else if (nd->type == IROLinearOp2Arg &&
                        nd->nodetype == EASS &&
                        (obj = IRO_IsVariable(nd->u.diadic.left)) &&
@@ -1500,7 +1552,7 @@ void func_00588CC0(IRONaturalLoop* loop) {
                 other = IRO_IsVariable(right->u.diadic.right);
                 if (right->nodetype == EADD) {
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (left == obj &&
                         other != obj &&
                         IsStep(right->u.diadic.right) &&
@@ -1512,7 +1564,7 @@ void func_00588CC0(IRONaturalLoop* loop) {
                         !IRO_IsConstantZero(right->u.diadic.right)) {
                         isUpdate = TRUE;
                     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (other == obj &&
                         left != obj &&
                         IsStep(right->u.diadic.left) &&
@@ -1539,7 +1591,7 @@ void func_00588CC0(IRONaturalLoop* loop) {
                     }
                 }
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 } else if (left == obj &&
                            other != obj &&
                            IsStep(right->u.diadic.right) &&
@@ -1595,7 +1647,7 @@ void func_00588CC0(IRONaturalLoop* loop) {
             if (((nd->type == IROLinearOp2Arg &&
                   (nd->nodetype == EADDASS || nd->nodetype == ESUBASS || nd->nodetype == EASS)) ||
                  (nd->type == IROLinearOp1Arg && nd->nodetype <= EPREDEC)) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 (var = IRO_FindAssigned301(nd, NULL)) &&
                 var->inductionState == 2) {
 #else
@@ -1624,7 +1676,7 @@ void func_00588CC0(IRONaturalLoop* loop) {
                                 nd->nodetype = ESUBASS;
                                 right->u.node->data.intval = CInt64_Neg(value);
                             }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                             IRO_TruncateValueToType(
                                 &nd->u.diadic.right->u.node->data.intval, nd->u.diadic.right->rtype
                             );
@@ -1649,7 +1701,7 @@ void func_00588CC0(IRONaturalLoop* loop) {
                                 right->nodetype = ESUB;
                                 right->u.diadic.right->u.node->data.intval = CInt64_Neg(value);
                             }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                             IRO_TruncateValueToType(
                                 &right->u.diadic.right->u.node->data.intval,
                                 right->u.diadic.right->rtype
@@ -1682,7 +1734,7 @@ void func_00588CC0(IRONaturalLoop* loop) {
                     }
                 }
                 loop->inductions = ind;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (nd->type == IROLinearOp2Arg &&
                     (nd->nodetype == EADDASS || nd->nodetype == ESUBASS)) {
 #else
@@ -1690,7 +1742,7 @@ void func_00588CC0(IRONaturalLoop* loop) {
                     (nd->nodetype == EADDASS || nd->nodetype == ESUBASS)) {
 #endif
                     if (nd->u.diadic.right->flags & IROLF_LoopInvariant) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         IRO_Dump(
                             "Found induction variable the new way: %s\n", var->object->name->name
                         );
@@ -1700,7 +1752,7 @@ void func_00588CC0(IRONaturalLoop* loop) {
                         );
 #endif
                     } else {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         IRO_Dump(
                             "Found induction variable the old way: %s\n", var->object->name->name
                         );
@@ -1711,7 +1763,7 @@ void func_00588CC0(IRONaturalLoop* loop) {
 #endif
                     }
                 } else if (nd->type == IROLinearOp2Arg &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                            (nd->u.diadic.right->nodetype == EADD ||
                             nd->u.diadic.right->nodetype == ESUB)) {
 #else
@@ -1916,7 +1968,7 @@ void func_00588AE0(IRONaturalLoop* loop, IROLoopInd301* ind) {
 #define LOOP_DOWN 0x2000
 
 // a step's direction, when it is not +1 or -1
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 static inline void StepDirection(
     IRONaturalLoop* loop, CInt64 step, Type* type, UInt32 positive, UInt32 negative
 ) {
@@ -1968,7 +2020,7 @@ void func_00588260(IRONaturalLoop* loop) {
                 break;
             case EASS:
                 right = nd->u.diadic.right;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (right->type != IROLinearOp2Arg ||
                     !IRO_IsIntConstant(constant = right->u.diadic.right)) {
 #else
@@ -2033,7 +2085,7 @@ Type* func_0055A660(void) {
 }
 
 extern Boolean func_004CF1B0(Object* func, Object* obj, struct PointsToFunction* ptf);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 extern void func_004CE930(
     Object* func, Object* obj, struct PointsToFunction* ptf, IROListNode** list
 );
@@ -2054,7 +2106,7 @@ IROLinear* func_00588A10(IRONaturalLoop* loop, IROLoopInd301* ind) {
 
     if (ind->init) {
         result = ind->init->u.diadic.right;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     } else if (loop->preheader &&
                (last = loop->preheader->last) &&
                copts.opt_pointer_analysis &&
@@ -2334,7 +2386,7 @@ static inline void CastTail(IROList* list, Type* type, int line) {
 // the condition that a op b (+ or -, signed) does not overflow, given
 // r = a op b and nb the second operand as added: sign(a) != sign(nb) ||
 // sign(a) == sign(r)
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 static inline Boolean NoSignedOverflow(
     IROLinear* a, IROLinear* nb, IROLinear* r, IROLinear* min, IROList* list
 ) {
@@ -2476,7 +2528,7 @@ IROLinear* func_00585DC0(IROLinear* a, ENodeType op, IROLinear* b, IROList* list
             if (!IRO_IsConstantZero(a) && !IRO_IsConstantZero(b)) {
 #endif
                 if (uns) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (!func_005868D0(r, EGREATEREQU, a, list) ||
                         !func_005868D0(r, EGREATEREQU, b, list)) {
 #else
@@ -2654,7 +2706,7 @@ Boolean func_00586F30(IRONaturalLoop* loop, IROLinear* nd) {
     node = ind->initNode;
     killed = KillsDepends(ind->init->next, node, IRO_Depends);
     while (node && !killed) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (node->numsucc == 1 &&
             !Bv_IsBitSet(node->succ[0], loop->nodes) &&
 #else
@@ -2833,7 +2885,7 @@ static inline Boolean StepFits(IROLinear* nd, CInt64 step, IROList* list) {
 }
 
 // a constant count from two sums that differ by a constant d (b - a)
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 static inline IROLinear* ConstCount(
     IRONaturalLoop* loop,
     IROLinear* a,
@@ -2868,7 +2920,7 @@ static inline IROLinear* ConstCount(
 // step' is |step| (less one when the test is strict), with the conditions
 // it needs added to list; NULL when it cannot be had. a is the counter's
 // start, b and x the bounds the test uses
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 IROLinear* func_00584E20(
     IRONaturalLoop* loop,
     IROLinear* a,
@@ -2930,7 +2982,7 @@ IROLinear* func_00584E20(
     bothConst = IRO_IsIntConstant(b) && IRO_IsIntConstant(a);
     zero = IRO_NewIntConst(cint64_zero, type);
     one = IRO_NewIntConst(cint64_one, type);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     IRO_NewIntConst(cint64_negone, type); // b52 (0x508847) makes a -1 here too
 #endif
     stepNd = IRO_NewIntConst(absstep, type);
@@ -2946,7 +2998,7 @@ IROLinear* func_00584E20(
                         if (!incl) {
                             stepNd = func_00585DC0(stepNd, ESUB, one, list);
                         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         result =
                             func_00585DC0(stepNd, EADDV, func_00585DC0(b, ESUB, a, list), list);
 #else
@@ -2963,7 +3015,7 @@ IROLinear* func_00584E20(
                     result = func_00585DC0(func_00585DC0(maxNd, ESUB, a, list), EADDV, t, list);
                 } else if (runs || !func_005868D0(b, incl ? ELESSEQU : ELESS, a, list)) {
                     result = zero;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 } else if (func_005868D0(
                                func_00585DC0(maxNd, EADD, stepNd, list), EGREATER, a, list
                            )) {
@@ -2987,7 +3039,7 @@ IROLinear* func_00584E20(
                         if (!incl) {
                             stepNd = func_00585DC0(stepNd, ESUB, one, list);
                         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         result =
                             func_00585DC0(stepNd, EADDV, func_00585DC0(a, ESUB, b, list), list);
 #else
@@ -3005,7 +3057,7 @@ IROLinear* func_00584E20(
                 } else if (runs || !func_005868D0(b, incl ? EGREATEREQU : EGREATER, a, list)) {
                     result = zero;
                 } else if (func_005868D0(stepNd, ELESSEQU, a, list)) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     result =
                         func_00585DC0(func_00585DC0(maxNd, ESUB, b, list), EADDV, stepNd, list);
 #else
@@ -3019,7 +3071,7 @@ IROLinear* func_00584E20(
         }
     } else {
         runs = FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (func_00585D30(loop->cond, step, a, x, list) &&
             (flag || func_00585D30(loop->cond, step, a, b, list))) {
 #else
@@ -3030,7 +3082,7 @@ IROLinear* func_00584E20(
         }
         if (neg) {
             if (runs && func_005868D0(b, EGREATEREQU, a, list)) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (StepFits(a, step, list) &&
                     StepFits(x, step, list) &&
                     (flag || StepFits(b, step, list))) {
@@ -3043,7 +3095,7 @@ IROLinear* func_00584E20(
                         if (!incl) {
                             stepNd = func_00585DC0(stepNd, ESUB, one, list);
                         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         result =
                             func_00585DC0(stepNd, EADDV, func_00585DC0(b, ESUBV, a, list), list);
 #else
@@ -3069,7 +3121,7 @@ IROLinear* func_00584E20(
             }
         } else {
             if (runs && func_005868D0(b, ELESSEQU, a, list)) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (StepFits(a, step, list) &&
                     StepFits(x, step, list) &&
                     (flag || StepFits(b, step, list))) {
@@ -3082,7 +3134,7 @@ IROLinear* func_00584E20(
                         if (!incl) {
                             stepNd = func_00585DC0(stepNd, ESUB, one, list);
                         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         result =
                             func_00585DC0(stepNd, EADDV, func_00585DC0(a, ESUBV, b, list), list);
 #else
@@ -3102,7 +3154,7 @@ IROLinear* func_00584E20(
                     if (!func_00586F30(loop, b)) {
                         result = ConstCount(loop, a, b, &d, FALSE, incl, type);
                     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 } else if (func_00586AB0(b, a, CInt64_GreaterEqual, &d) &&
                            !func_00586F30(loop, b)) {
 #else
@@ -3201,7 +3253,7 @@ Boolean func_00584670(IRONaturalLoop* loop, Boolean withConds) {
         tailTest = !headerTest;
     }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if ((tailTest || headerTest) &&
         (ind = loop->induction) &&
         ind->fnode->mustreach1 &&
@@ -3213,7 +3265,7 @@ Boolean func_00584670(IRONaturalLoop* loop, Boolean withConds) {
         (cond = loop->cond)) {
 #endif
         ok = FALSE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (cond &&
             (cond->type == IROLinearOp1Arg || cond->type == IROLinearOp2Arg) &&
             (cond->nodetype <= EINDIRECT ||
@@ -3238,7 +3290,7 @@ Boolean func_00584670(IRONaturalLoop* loop, Boolean withConds) {
             }
             if (bound &&
                 (IRO_IsVariable(bound) ||
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                  (bound->type == IROLinearOp1Arg &&
                   bound->nodetype == ETYPCON &&
                   func_0055A3F0(bound) &&
@@ -3248,7 +3300,7 @@ Boolean func_00584670(IRONaturalLoop* loop, Boolean withConds) {
                   func_0055A3F0(bound) &&
 #endif
                   IRO_IsVariable(bound->u.monadic))) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 !IRO_HasSideEffect(bound) &&
                 (limit = func_00588900(loop)) &&
                 (IRO_IsIntConstant(limit) || (limit->flags & IROLF_LoopInvariant)) &&
@@ -3275,7 +3327,7 @@ Boolean func_00584670(IRONaturalLoop* loop, Boolean withConds) {
                     }
                     if (tailTest) {
                         init = AddConst584670(init, d, countType);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     } else if (headerTest &&
                                loop->cond->type == IROLinearOp1Arg &&
                                loop->cond->nodetype <= EPREDEC) {
@@ -3286,7 +3338,7 @@ Boolean func_00584670(IRONaturalLoop* loop, Boolean withConds) {
 #endif
                         limit = AddConst584670(limit, CInt64_Neg(d), limitType);
                     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     // b52 (0x5095F5 -> 0x509625) counts with the limit as it is:
                     // no range check or conversion to the counter's type
                     if (1) {
@@ -3312,7 +3364,7 @@ Boolean func_00584670(IRONaturalLoop* loop, Boolean withConds) {
                             limit = IRO_MakeTypeConversion(list.tail, init->rtype, &list);
                             func_0058C530(limit);
                         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                         count = func_00584E20(
                             loop, limit, init, start, d, headerTest, conds, countType
                         );
@@ -3327,7 +3379,7 @@ Boolean func_00584670(IRONaturalLoop* loop, Boolean withConds) {
                             ok = TRUE;
                             if (op <= EINDIRECT || op == ENOTEQU) {
                                 zeroNd = IRO_NewIntConst(cint64_zero, countType);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                                 ok = func_005868D0(
                                     func_00585DC0(count, EMODULO, stepNd, conds),
                                     EEQU,
@@ -3346,7 +3398,7 @@ Boolean func_00584670(IRONaturalLoop* loop, Boolean withConds) {
                             if (ok) {
                                 if (tailTest) {
                                     oneNd = IRO_NewIntConst(cint64_one, countType);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                                     count = func_00585DC0(
                                         func_00585DC0(count, EDIV, stepNd, conds),
                                         EADDV,
@@ -3384,7 +3436,7 @@ Boolean func_00584670(IRONaturalLoop* loop, Boolean withConds) {
         func_00587120(&loop->countExpr);
         func_00587120(conds);
     }
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     if (loop->hasCount && CInt64_Greater(loop->count, cint64_zero) && !loop->countConds.tail) {
         for (node = IRO_FirstNode; node; node = node->nextnode) {
             if (Bv_IsBitSet(node->index, loop->nodes) && node->mustreach1) {
@@ -3476,7 +3528,7 @@ static inline Boolean InLoop301(IRONaturalLoop* loop, IRONode* node) {
 
 // the If ending node, whose fall-through leaves the loop
 static inline Boolean IsExitTest(IRONaturalLoop* loop, IRONode* node) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     return (node->last->type == IROLinearIf || node->last->type == IROLinearIfNot) &&
         node->nextnode &&
 #else
@@ -3560,7 +3612,7 @@ void func_00587540(IRONaturalLoop* loop) {
     cond = (testNode->last->type == IROLinearIf) ? testNode->last->u.label.cond : NULL;
 
     // while (*p) becomes while (*p != 0)
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (cond &&
         cond->type == IROLinearOp1Arg &&
         cond->nodetype == EINDIRECT &&
@@ -3596,7 +3648,7 @@ void func_00587540(IRONaturalLoop* loop) {
         left = cond->u.diadic.left;
         right = cond->u.diadic.right;
         if ((left = VarOperand301(left)) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             (var = IRO_FindVar(left->u.monadic->u.node->data.objref, FALSE, TRUE)) &&
             (ind = FindInd301(loop, var))) {
 #else
@@ -3607,7 +3659,7 @@ void func_00587540(IRONaturalLoop* loop) {
             loop->induction = ind;
         }
         if ((right = VarOperand301(right)) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             (var = IRO_FindVar(right->u.monadic->u.node->data.objref, FALSE, TRUE)) &&
             (ind = FindInd301(loop, var))) {
 #else
@@ -3618,7 +3670,7 @@ void func_00587540(IRONaturalLoop* loop) {
             loop->induction = ind;
         }
         // the counter on the left
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (loop->induction &&
             !(loop->flags & 1) &&
             ComplementaryOpLogical[cond->nodetype] != IRO_MAXEXPR) {
@@ -3655,7 +3707,7 @@ void func_00587540(IRONaturalLoop* loop) {
                 }
             }
             if (!(cond->type == IROLinearOp2Arg &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                   (cond->nodetype == ELESS ||
                    cond->nodetype == ELESSEQU ||
                    cond->nodetype == EGREATER ||
@@ -3665,7 +3717,7 @@ void func_00587540(IRONaturalLoop* loop) {
                    cond->nodetype == EGREATER ||
 #endif
                    cond->nodetype == EGREATEREQU) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                   cond->u.diadic.left &&
                   cond->u.diadic.left->rtype &&
                   IsIntOrPointer(cond->u.diadic.left->rtype) &&
@@ -3682,7 +3734,7 @@ void func_00587540(IRONaturalLoop* loop) {
                 loop->flags |= 0x20;
             }
             if (CInt64_IsZero(&((IROLoopInd301*)loop->induction)->step) ||
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 (!is_unsigned(indNd->rtype) &&
                  CInt64_IsNegative(&((IROLoopInd301*)loop->induction)->step))) {
 #else
@@ -3693,7 +3745,7 @@ void func_00587540(IRONaturalLoop* loop) {
             }
         }
     } else if (cond && cond->type == IROLinearOp1Arg && IsSmallInt(cond->rtype)) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (cond->nodetype <= EPREDEC &&
             IRO_IsVariable(cond->u.monadic) &&
 #else
@@ -3734,7 +3786,7 @@ void func_00587540(IRONaturalLoop* loop) {
         loop->flags |= 0x100;
         nd = (loop->flags & 0x8000) ? testNode->first : indNd->next;
         for (; nd && nd != loop->cond; nd = nd->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (!InElmList(loop->x30, nd) &&
                 !InElmList(loop->x28, nd) &&
                 nd->type != IROLinearLabel &&
@@ -3766,7 +3818,7 @@ void func_00587540(IRONaturalLoop* loop) {
                     hasCtrl = TRUE;
                 }
                 if (!InElmList(loop->x28, nd)) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (nd->type == IROLinearIf ||
                         nd->type == IROLinearIfNot ||
                         nd->type == IROLinearSwitch ||
@@ -3778,7 +3830,7 @@ void func_00587540(IRONaturalLoop* loop) {
                         nd->type == IROLinearReturn) {
                         hasCtrl = TRUE;
                     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (!(nd->flags & IROLF_Reffed) &&
                         nd->type != IROLinearNop &&
                         nd->type != IROLinearLabel) {
@@ -3791,7 +3843,7 @@ void func_00587540(IRONaturalLoop* loop) {
                             loop->flags |= 8;
                         } else if (!InElmList(loop->x30, nd)) {
                             numAssigns++;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                             if (IRO_Hook10 &&
                                 ((Boolean (*)(IROLinear*))IRO_Hook10)(nd) &&
                                 numAssigns == 1) {
@@ -3811,7 +3863,7 @@ void func_00587540(IRONaturalLoop* loop) {
                 if (nd->type == IROLinearAsm) {
                     loop->flags |= 0x4000;
                 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (!InElmList(loop->x30, nd) &&
                     !InElmList(loop->x28, nd) &&
                     nd->type == IROLinearOperand &&
@@ -3823,7 +3875,7 @@ void func_00587540(IRONaturalLoop* loop) {
                     nd->u.node->type == EOBJREF) {
                     flags = nd->flags;
                     obj = nd->u.node->data.objref;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if ((flags & IROLF_Ind) &&
                         obj &&
                         loop->induction &&
@@ -3840,7 +3892,7 @@ void func_00587540(IRONaturalLoop* loop) {
                 }
                 if (!InElmList(loop->x30, nd)) {
                     // x >> c and x & c of a counter
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (nd->type == IROLinearOp2Arg &&
                         nd->nodetype == ESHR &&
                         (obj = IRO_IsVariable(nd->u.diadic.left)) &&
@@ -3858,7 +3910,7 @@ void func_00587540(IRONaturalLoop* loop) {
                             }
                         }
                     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                     if (nd->type == IROLinearOp2Arg &&
                         nd->nodetype == EAND &&
                         (obj = IRO_IsVariable(nd->u.diadic.left)) &&
@@ -4015,7 +4067,7 @@ IRONode* func_0058AB50(IRONaturalLoop* loop, IRONode* header, IRONode* pred) {
             IRO_LastLinear = label->next;
         }
     } else {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         // b52 (0x504788): 2.4.7's placement, at the end of the function,
         // jumping to the header's label
         if (header->first->type != IROLinearLabel) {
@@ -4054,7 +4106,7 @@ IRONode* func_0058AB50(IRONaturalLoop* loop, IRONode* header, IRONode* pred) {
             IRO_FirstNode = newnode;
         }
     }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 placed:
 #endif
     newnode->last = label->next;
@@ -4103,7 +4155,7 @@ IRONode* func_0058A5D0(IRONaturalLoop* loop) {
             }
             exitNode = node;
             if (!placeAfterExit) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 if (!node->last ||
                     !succ->first ||
                     succ->first->type != IROLinearLabel ||
@@ -4135,7 +4187,7 @@ IRONode* func_0058A5D0(IRONaturalLoop* loop) {
         newnode->nextnode = succ;
     } else {
         if (succ->first->type != IROLinearLabel) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             CError_FATAL(549);
         }
         label->next = IRO_NewLinear(IROLinearGoto);
@@ -4198,7 +4250,7 @@ IRONode* func_0058A5D0(IRONaturalLoop* loop) {
 
 // 0x58A430: the loop's preheader (made when *made is not set) and its last
 // linear in *at
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 void func_0058A430(
     IRONaturalLoop* loop, IRONode* header, IRONode* pred, IROLinear** at, Boolean* made
 ) {
@@ -4219,7 +4271,7 @@ void func_0058A430(
     }
     if (loop->preheader) {
         *at = loop->preheader->last;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if ((*at)->type == IROLinearGoto &&
             (*at)->u.label.label != loop->x10->first->u.label.label) {
 #else
@@ -4257,7 +4309,7 @@ void func_00589F20(IRONaturalLoop* loop, IRONode** exitNode, IROLinear** at) {
             loop->exitSuccessor = *exitNode;
             *at = (*exitNode)->first;
             if ((*exitNode)->last) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
                 while (*at &&
                        (*at)->type == IROLinearLabel &&
                        (*at)->next != (*exitNode)->last->next) {
@@ -4280,7 +4332,7 @@ void func_00589F20(IRONaturalLoop* loop, IRONode** exitNode, IROLinear** at) {
 
 // 0x58A240: the loop's test can be copied before it: nothing from the header
 // to the test's successor in the loop has a side effect
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-96)
 #endif
@@ -4324,7 +4376,7 @@ Boolean func_0058A240(IRONaturalLoop* loop) {
             CError_FATAL(840);
         }
         for (nd = node->first; nd && nd != node->last->next; nd = nd->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
             if (!(nd->flags & IROLF_Reffed) &&
                 (root = func_00552E90(nd)) &&
                 IRO_HasSideEffect(root)) {
@@ -4339,14 +4391,14 @@ Boolean func_0058A240(IRONaturalLoop* loop) {
     }
     return TRUE;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
 // 0x58A030: copy the loop test before the loop (into a fresh preheader),
 // inverted to jump to the exit node
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 Boolean func_0058A030(
     IRONaturalLoop* loop, IROLinear** pre, IRONode* exitNode, IRONode** newPre, void* unused
 ) {
@@ -4543,7 +4595,7 @@ void func_00583D30(UInt32 flags) {
 #else
 void func_00583D30(UInt32 flags) {
     static const char* names[22] = {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         "LP_INDUCTION_AT_LEFT ",
         "LP_HAS_CALLS ",
         "LP_HAS_CNTRLFLOW ",
@@ -4687,7 +4739,7 @@ void func_005887B0(IRONaturalLoop* loop) {
 }
 
 // 0x58A4F0: the loop's predecessors outside it; TRUE if there is one
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-95)
 #endif
@@ -4719,7 +4771,7 @@ Boolean func_0058A4F0(IRONaturalLoop* loop) {
     }
     return found;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -4800,7 +4852,7 @@ void func_00589A80(IRONaturalLoop* loops) {
 }
 
 // 0x589B10: empty in 3.0.1 (the loops are left in the order found)
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 void func_00589B10(IRONaturalLoop** loops) {}
 #else
 void func_00589B10(IRONaturalLoop** loops) {}
@@ -4819,7 +4871,7 @@ Boolean IRO_PullOutInvariantAssignments(void) {
     changed = FALSE;
     for (loop = loops; loop; loop = loop->next) {
         ComputeLoopBody(loop);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         IRO_Dump(
             "IRO_PullOutInvariantAssignments:transforming loop with header %d\n",
             loop->header->index
@@ -4890,7 +4942,7 @@ void func_00591C70(IROLinear* nd) {
     IROElmList* elm;
 
 #if !MWCCPS2 || MWCCPS2_BUILD >= 210 // b145 does not look through casts
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     while (nd->type == IROLinearOp1Arg && nd->nodetype == ETYPCON && func_0055A3F0(nd)) {
         nd = nd->u.monadic;
     }
@@ -4939,7 +4991,7 @@ static inline IROLinear* AddAddend301(
 }
 #else
 // result + a copy of addend, in the types the two have in common
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 static inline IROLinear* AddAddend301(
     IROLinear* result, IROLinear* addend, Boolean invariant, IROList* list
 ) {
@@ -4958,7 +5010,7 @@ static inline IROLinear* AddAddend301(
     }
     rtype = result->rtype;
     func_005916C0(&type, &rtype);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // b52 (0x530B6E) numbers the sum before copying the addend
     if (IRO_TypesEqual(result->rtype, rtype) && IRO_TypesEqual(addend->rtype, type)) {
         sum = IRO_NewLinear(IROLinearOp2Arg);
@@ -5160,7 +5212,7 @@ void func_00591E00(IRONaturalLoop* loop, IROLinear* pre) {
 
     for (expr = IRO_FirstExpr; expr; expr = next) {
         next = expr->next;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (Bv_IsBitSet(expr->node->index, loop->nodes) &&
             !expr->notSubable &&
             (!expr->couldError || expr->node->unk3F) &&
@@ -5214,7 +5266,7 @@ Boolean func_0059C350(IRONaturalLoop* loop) {
     IROList list;
 
     func_00587540(loop);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (loop->x10 == loop->header &&
         !(loop->flags & LP301_FORM_UNRECOGNIZABLE) &&
 #else
@@ -5224,7 +5276,7 @@ Boolean func_0059C350(IRONaturalLoop* loop) {
         (!copts.optimizesize || (loop->hasCount && CInt64_Greater(loop->count, cint64_zero)))) {
         func_00587270(loop);
         pre = loop->preheader;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (pre &&
             pre->last->type == IROLinearGoto &&
             pre->nextnode == loop->x20 &&
@@ -5298,7 +5350,7 @@ void func_00591250(IROLinear* nd) {
             inv = left;
             var = right;
         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     } else if (nd->nodetype == ESHL &&
                (right->flags & IROLF_LoopInvariant) &&
                !(left->flags & IROLF_LoopInvariant)) {
@@ -5360,7 +5412,7 @@ void func_005920D0(IRONaturalLoop* loop) {
     IROLinear* next;
 
     for (expr = IRO_FirstExpr; expr; expr = expr->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (Bv_IsBitSet(expr->node->index, loop->nodes) &&
             !expr->notSubable &&
             (!expr->couldError || expr->node->unk3F) &&
@@ -5375,7 +5427,7 @@ void func_005920D0(IRONaturalLoop* loop) {
         }
     }
     for (expr = IRO_FirstExpr; expr; expr = expr->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (Bv_IsBitSet(expr->node->index, loop->nodes) &&
             !expr->notSubable &&
             (!expr->couldError || expr->node->unk3F)) {
@@ -5468,7 +5520,7 @@ Boolean IRO_RemoveAllEmptyLoops(void) {
 #else
         if (func_0058DB90(loop)) {
             changed = TRUE;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         } else {
 #else
             IRO_UpdateFlagsOnInts(IRO_FirstLinear);
@@ -5483,18 +5535,18 @@ Boolean IRO_RemoveAllEmptyLoops(void) {
             }
             if (removed) {
                 changed = TRUE;
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
                 IRO_UpdateFlagsOnInts(IRO_FirstLinear);
 #endif
             }
         }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         IRO_UpdateFlagsOnInts(IRO_FirstLinear);
     }
 #endif
     func_00589A80(loops);
     if (changed) {
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
         if (copts.deadcode) {
             IRO_RemoveUnreachable();
         } else {
@@ -5502,7 +5554,7 @@ Boolean IRO_RemoveAllEmptyLoops(void) {
             IRO_ComputeSuccPred();
             IRO_ComputeDom();
         }
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     } else {
         IRO_UpdateFlagsOnInts(IRO_FirstLinear);
     }
@@ -5534,7 +5586,7 @@ void IRO_DoCommonLoopTransformations(void) {
         changed = FALSE;
         header = loop->header;
         ComputeLoopBody(loop);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         IRO_Dump(
             "IRO_DoCommonLoopTransformations:transforming loop with header %d\n", header->index
         );
@@ -5545,7 +5597,7 @@ void IRO_DoCommonLoopTransformations(void) {
 #endif
         IRO_DumpBits("Loop includes: ", loop->nodes);
         func_00587540(loop);
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         // b52 (0x50555D): the non-register accesses first, then the counter loop
         if (copts.opt_optimizenonregaccess || copts.opt_marknonregtemps) {
             func_0059CCD0(loop, &changed);
@@ -5566,7 +5618,7 @@ void IRO_DoCommonLoopTransformations(void) {
                 changed = TRUE;
             }
         }
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
         if (copts.opt_optimizenonregaccess || copts.opt_marknonregtemps) {
             func_0059CCD0(loop, &changed);
             IRO_DumpAfterPhase("IRO_OptimizeNonRegAccesses", FALSE);
@@ -5583,7 +5635,7 @@ void IRO_DoCommonLoopTransformations(void) {
             func_0058A430(loop, header, loop->x18, &pre, &changed);
             if (pre && (copts.loopinvariants || (copts.strengthreduction && !copts.optimizesize))) {
                 func_00591FB0(loop);
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
                 func_005915E0(loop);
                 IRO_DumpAfterPhase("IRO_DistributePartiallyInvariantMultiplies", FALSE);
 #endif
@@ -5630,50 +5682,60 @@ void IRO_DoCommonLoopTransformations(void) {
 }
 
 #else
-void IRO_SetLoopDepth(void) {
-    IRONode* fnode;
-    IRONode* pred;
-    UInt16 i;
-    UInt16 isHeader;
+    void IRO_SetLoopDepth(void) {
+        IRONode* fnode;
+        IRONode* pred;
+        UInt16 i;
+        UInt16 isHeader;
 
-    for (fnode = IRO_FirstNode; fnode; fnode = fnode->nextnode) {
-        fnode->loopdepth = 0;
-    }
+        for (fnode = IRO_FirstNode; fnode; fnode = fnode->nextnode) {
+            fnode->loopdepth = 0;
+        }
 
-    for (fnode = IRO_FirstNode; fnode; fnode = fnode->nextnode) {
-        isHeader = FALSE;
+        for (fnode = IRO_FirstNode; fnode; fnode = fnode->nextnode) {
+            isHeader = FALSE;
 
-        for (i = 0; i < fnode->numpred; i++) {
-            pred = IRO_NodeTable[fnode->pred[i]];
-            if (Bv_IsBitSet(fnode->index, pred->dom)) {
-                if (!isHeader) {
-                    Bv_AllocVector(&InLoop, IRO_NumNodes + 1);
-                    Bv_Clear(InLoop);
-                    Bv_SetBit(fnode->index, InLoop);
+            for (i = 0; i < fnode->numpred; i++) {
+                pred = IRO_NodeTable[fnode->pred[i]];
+                if (Bv_IsBitSet(fnode->index, pred->dom)) {
+                    if (!isHeader) {
+                        Bv_AllocVector(&InLoop, IRO_NumNodes + 1);
+                        Bv_Clear(InLoop);
+                        Bv_SetBit(fnode->index, InLoop);
+                    }
+                    isHeader = TRUE;
+                    Bv_SetBit(pred->index, InLoop);
+                    if (pred != fnode) {
+                        AddPreds(pred);
+                    }
                 }
-                isHeader = TRUE;
-                Bv_SetBit(pred->index, InLoop);
-                if (pred != fnode) {
-                    AddPreds(pred);
-                }
+            }
+
+            if (isHeader) {
+                IncLoopDepth();
             }
         }
 
-        if (isHeader) {
-            IncLoopDepth();
-        }
+        IRO_CheckForUserBreak();
     }
-
-    IRO_CheckForUserBreak();
-}
 #endif
 
 static void InsertBranchAroundLoopPreheaders(void) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+    CLabel* label;
+#endif
+#endif
     IRONode* fnode;
     IROLinear* labelnode;
     IRONode* iter;
     IROLinear* endnode;
+#if MWCC_CORE == MWCC_CORE_B52
     CLabel* label;
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+    CLabel* label;
+#endif
 
     if (IRO_EndNode && IRO_EndNode->last && IRO_EndNode->last->type == IROLinearEnd) {
         label = IRO_NewLabel();
@@ -5685,7 +5747,7 @@ static void InsertBranchAroundLoopPreheaders(void) {
         // 3.0.1 frees the table back to the pools (IRO_RebuildNodeTable)
         IRO_NodeTable = IRO_malloc(sizeof(IRONode*) * IRO_NumNodes);
 #else
-        IRO_NodeTable = oalloc(sizeof(IRONode*) * IRO_NumNodes);
+            IRO_NodeTable = oalloc(sizeof(IRONode*) * IRO_NumNodes);
 #endif
         memset(IRO_NodeTable, 0, sizeof(IRONode*) * IRO_NumNodes);
         for (iter = IRO_FirstNode; iter; iter = iter->nextnode) {
@@ -5749,14 +5811,14 @@ void IRO_FindLoops(void) {
 #if MWCCPSP
             IRO_UpdateFlagsOnInts(IRO_FirstLinear);
 #else
-            IRO_UpdateFlagsOnInts();
+                IRO_UpdateFlagsOnInts();
 #endif
             MyHandleLoop_Vector(fnode);
             RemoveNoopsFromExprList();
 #if MWCCPSP
             IRO_UpdateFlagsOnInts(IRO_FirstLinear);
 #else
-            IRO_UpdateFlagsOnInts();
+                IRO_UpdateFlagsOnInts();
 #endif
             IRO_UpdateVars();
         }
@@ -5768,7 +5830,16 @@ void IRO_FindLoops(void) {
 }
 
 static void CheckSubableSub(IROLinear* linear, Boolean isFirst) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (isFirst && IRO_IsSubableExpression(linear)) {
+#else
+    // b69 0x4DC457: an integer constant does not count
+    if (isFirst && IRO_IsSubableExpression(linear) && !IRO_IsIntConstant(linear)) {
+#endif
+#else
+        if (isFirst && IRO_IsSubableExpression(linear)) {
+#endif
         IRO_Dump("Subable Expression is %d\n", linear->index);
         NoSubableSubs = FALSE;
     }
@@ -5807,11 +5878,28 @@ void ComputeLoopKills(void) {
 void ComputeLoopInvariance(void) {
     IRONode* fnode;
     IROLinear* nd;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+    IRONode* b69_dead;
+#endif
+#endif
 
     IRO_Depends = IRO_VarKills;
 
     for (fnode = IRO_FirstNode; fnode; fnode = fnode->nextnode) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
         if (Bv_IsBitSet(fnode->index, InLoop) && (nd = fnode->first)) {
+#else
+        if (Bv_IsBitSet(fnode->index, InLoop)) {
+            b69_dead = fnode; // b69 keeps a dead register copy of fnode here
+            if (!(nd = fnode->first)) {
+                continue;
+            }
+#endif
+#else
+            if (Bv_IsBitSet(fnode->index, InLoop) && (nd = fnode->first)) {
+#endif
             nd->flags &= ~IROLF_LoopInvariant;
             while (1) {
                 if ((nd->flags & IROLF_Reffed) && nd->type != IROLinearNop) {
@@ -6073,6 +6161,11 @@ static void MyHandleLoop_Vector(IRONode* fnode) {
     IROLinear* reduceNd1;
     VarRecord* var;
     IROLinear* reduceNd2;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+    int rotated;
+#endif
+#endif
 
     IRO_FirstExpr = NULL;
     LoopNode = fnode;
@@ -6112,7 +6205,104 @@ static void MyHandleLoop_Vector(IRONode* fnode) {
         return;
     }
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (!preheader || preheader->last->type != IROLinearGoto) {
+#else
+    // b69 0x4DCE10..0x4DD13C (2.4.5): a loop entered by a goto to its
+    // conditional header is rotated before the preheader is made: the
+    // entering goto becomes a guard (a copy of the header's condition,
+    // inverted, branching to a new node after the header), and the preheader
+    // goes in front of the loop body, which becomes the loop's head.
+    rotated = FALSE;
+    if (!copts.optimizesize &&
+        (LoopNode->last->type == IROLinearIf || LoopNode->last->type == IROLinearIfNot) &&
+        LoopNode->nextnode &&
+        !Bv_IsBitSet(LoopNode->nextnode->index, InLoop) &&
+        NoSubableSubExprs(LoopNode->last->u.label.cond)) {
+        IRONode* body;
+        IRONode* outpred;
+        int numOutside;
+
+        body = NULL;
+        for (i = 0; i < LoopNode->numsucc; i++) {
+            pred = IRO_NodeTable[LoopNode->succ[i]];
+            if (Bv_IsBitSet(pred->index, InLoop)) {
+                // b69 asserts with line 3242
+                CError_ASSERT(3242 - CError_LINE, body == NULL);
+                body = pred;
+            }
+        }
+
+        outpred = NULL;
+        numOutside = 0;
+        for (i = 0; i < LoopNode->numpred; i++) {
+            pred = IRO_NodeTable[LoopNode->pred[i]];
+            if (!Bv_IsBitSet(pred->index, InLoop)) {
+                numOutside++;
+                outpred = pred;
+            }
+        }
+
+        if (numOutside == 1 &&
+            outpred->last->type == IROLinearGoto &&
+            outpred->nextnode == body &&
+            body != LoopNode) {
+            IROLinear* labelnode;
+            IROList list;
+            CLabel* exitlabel;
+            IRONode* exitnode;
+
+            labelnode = IRO_FindLabelNode(outpred->last->u.label.label, outpred->last);
+            IRO_InitList(&list);
+            IRO_DuplicateExprRange(labelnode->next, LoopNode->last->u.label.cond, &list);
+            IRO_DuplicateExpr(LoopNode->last->u.label.cond, &list);
+            IRO_Paste(list.head, list.tail, outpred->last);
+            if (LoopNode->last->type == IROLinearIf) {
+                outpred->last->type = IROLinearIfNot;
+            } else {
+                outpred->last->type = IROLinearIf;
+            }
+            exitlabel = IRO_NewLabel();
+            outpred->last->u.label.label = exitlabel;
+            outpred->last->u.label.cond = list.tail;
+
+            exitnode = oalloc(sizeof(IRONode));
+            memset(exitnode, 0, sizeof(IRONode));
+            exitnode->index = IRO_NumNodes;
+            IRO_NumNodes++;
+            labelnode = IRO_NewLinear(IROLinearLabel);
+            labelnode->index = IRO_NumLinear++;
+            labelnode->next = NULL;
+            labelnode->u.label.label = exitlabel;
+            labelnode->flags |= IROLF_StartsNode;
+            exitlabel->stmt = (Statement*)exitnode;
+            exitnode->first = labelnode;
+            exitnode->last = labelnode;
+            labelnode->next = LoopNode->last->next;
+            LoopNode->last->next = labelnode;
+            exitnode->nextnode = LoopNode->nextnode;
+            LoopNode->nextnode = exitnode;
+
+            preheader = CreatePreHeader(outpred->nextnode, outpred);
+            rotated = TRUE;
+            LoopNode = fnode = body;
+        }
+    }
+
+    if (rotated) {
+        IRO_NodeTable = oalloc(sizeof(IRONode*) * IRO_NumNodes);
+        memset(IRO_NodeTable, 0, sizeof(IRONode*) * IRO_NumNodes);
+        for (iter = IRO_FirstNode; iter; iter = iter->nextnode) {
+            IRO_NodeTable[iter->index] = iter;
+        }
+    }
+
+    if (!rotated && (!preheader || preheader->last->type != IROLinearGoto)) {
+#endif
+#else
+        if (!preheader || preheader->last->type != IROLinearGoto) {
+#endif
         preheader = CreatePreHeader(fnode, fallpred);
     }
     PredInt = preheader->last;
@@ -6664,7 +6854,12 @@ IROLoop* ExtractLoopInfo(IRONode* fnode) {
     loop->lo = -1;
     loop->hi = -1;
     loop->weight = 0;
+#if MWCC_CORE == MWCC_CORE_B52
     IRO_RenumberInts();
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+    IRO_RenumberInts();
+#endif
 
     if (nd->type == IROLinearOp2Arg && IS_TYPE_INT(nd->rtype)) {
         testInd = NULL;
@@ -7027,10 +7222,15 @@ static void MoveInvarianceInAddressExpr(void) {
 
 #if MWCCPSP
     IRO_UpdateFlagsOnInts(IRO_FirstLinear);
-#else
-    IRO_UpdateFlagsOnInts();
-#endif
+#if MWCC_CORE == MWCC_CORE_B52
     ComputeLoopInvariance();
+#endif
+#else
+        IRO_UpdateFlagsOnInts();
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+    ComputeLoopInvariance();
+#endif
 }
 
 static void AddAddendLinear(IROLinear* nd) {
@@ -7144,7 +7344,7 @@ static IROLinear* RearrangeInvarianceInAddressExpr(IROLinear* nd, IROList* list)
 #define FindAddendForReductionPattern func_004C46C0
 IROLinear* FindAddendForReductionPattern(
 #else
-static IROLinear* FindAddendForReductionPattern(
+    static IROLinear* FindAddendForReductionPattern(
 #endif
     IROLinear* target, IROLinear* sum, Boolean* inLeft
 ) {
@@ -7222,7 +7422,7 @@ static void ReorderOperandsForReductionPattern(IROLinear* target, IROLinear* sum
 
     if (sum->nodetype == EADD &&
         (addend = FindAddendForReductionPattern(target, sum, &addendInLeft)) &&
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         addend != left) {
         if (addendInLeft && IS_LINEAR_DIADIC_2(left, EADD, ESUB) && addend->rtype == right->rtype) {
             swap = left;
@@ -7249,36 +7449,38 @@ static void ReorderOperandsForReductionPattern(IROLinear* target, IROLinear* sum
                 sum->u.diadic.left = list.tail;
             }
 #else
-        addend != left) {
-        if (addendInLeft && IS_LINEAR_DIADIC_2(left, EADD, ESUB) && addend->rtype == right->rtype) {
-            swap = left;
-            sum->u.diadic.left = right;
-            left = sum->u.diadic.left;
-            sum->u.diadic.right = swap;
-            right = sum->u.diadic.right;
-            addendInLeft = FALSE;
-        }
+            addend != left) {
+            if (addendInLeft &&
+                IS_LINEAR_DIADIC_2(left, EADD, ESUB) &&
+                addend->rtype == right->rtype) {
+                swap = left;
+                sum->u.diadic.left = right;
+                left = sum->u.diadic.left;
+                sum->u.diadic.right = swap;
+                right = sum->u.diadic.right;
+                addendInLeft = FALSE;
+            }
 
-        if (!addendInLeft &&
-            IS_LINEAR_DIADIC_2(right, EADD, ESUB) &&
-            addend->rtype == left->rtype) {
+            if (!addendInLeft &&
+                IS_LINEAR_DIADIC_2(right, EADD, ESUB) &&
+                addend->rtype == left->rtype) {
 #if VERSION < VERSION_GC_2_5
-            if (IRO_LocateFather_Cut_And_Paste_Without_Nopping(addend, left)) {
-                sum->u.diadic.left = addend;
-            }
+                if (IRO_LocateFather_Cut_And_Paste_Without_Nopping(addend, left)) {
+                    sum->u.diadic.left = addend;
+                }
 #else
-            IROList list;
-            IRO_InitList(&list);
-            IRO_DuplicateExpr(left, &list);
-            IRO_NopOut(left);
-            IRO_PasteAfter(list.head, list.tail, addend);
-            if (IRO_LocateFather_Cut_And_Paste_Without_Nopping(addend, list.tail)) {
+                IROList list;
                 IRO_InitList(&list);
-                IRO_DuplicateExpr(addend, &list);
-                IRO_NopOut(addend);
-                IRO_Paste(list.head, list.tail, sum);
-                sum->u.diadic.left = list.tail;
-            }
+                IRO_DuplicateExpr(left, &list);
+                IRO_NopOut(left);
+                IRO_PasteAfter(list.head, list.tail, addend);
+                if (IRO_LocateFather_Cut_And_Paste_Without_Nopping(addend, list.tail)) {
+                    IRO_InitList(&list);
+                    IRO_DuplicateExpr(addend, &list);
+                    IRO_NopOut(addend);
+                    IRO_Paste(list.head, list.tail, sum);
+                    sum->u.diadic.left = list.tail;
+                }
 #endif
 #endif
         }

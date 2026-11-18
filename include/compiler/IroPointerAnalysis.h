@@ -1,8 +1,9 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_IROPOINTERANALYSIS_H
 #define COMPILER_IROPOINTERANALYSIS_H
 
 #include "compiler/common.h"
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #pragma pack(push, 2)
 #endif
 
@@ -30,7 +31,7 @@ extern void PointerAnalysis_ParseFunctionModifiesSpecifier(DeclInfo* di);
 }
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #pragma pack(pop)
 #endif
 #endif

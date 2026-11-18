@@ -1,3 +1,9 @@
+#include "compiler/mwcc_core.h"
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+#include <stdlib.h>
+#endif
+#endif
 #include "compiler/IroDump.h"
 #include "compiler/IroCSE.h"
 #include "compiler/IroFlowgraph.h"
@@ -20,7 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 FILE* DumpFile; // b52: not in this unit's .bss (IRO_SetupDump 0x51F600 writes 0x5A3818)
 #else
 static FILE* DumpFile;
@@ -207,7 +213,9 @@ void IRO_InitializeNodeNamesArray(void) {
     nodenames[EDEFINE] = "EDEFINE";
     nodenames[EREUSE] = "EREUSE";
     nodenames[EASSBLK] = "EASSBLK";
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     nodenames[EVECTOR128CONST] = "EVECTOR128CONST";
+#endif
     nodenames[ECONDASS] = "ECONDASS";
 }
 #endif
@@ -215,7 +223,17 @@ void IRO_InitializeNodeNamesArray(void) {
 static void DumpENode(ENode* enode) {
     char buf[64];
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (IRO_Log) {
+#else
+    if (!IRO_Log) {
+        return;
+    }
+#endif
+#else
+    if (IRO_Log) {
+#endif
         switch (enode->type) {
             case EOBJREF:
                 fprintf(DumpFile, "%s", enode->data.objref->name->name);
@@ -227,7 +245,12 @@ static void DumpENode(ENode* enode) {
             case EFLOATCONST:
                 fprintf(DumpFile, "%g", enode->data.floatval.data.value);
                 break;
+#if MWCC_CORE == MWCC_CORE_B52
             case EVECTOR128CONST:
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+            case EVECTOR128CONST:
+#endif
                 fprintf(
                     DumpFile,
                     "%.8lX%.8lX%.8lX%.8lX",
@@ -241,7 +264,12 @@ static void DumpENode(ENode* enode) {
                 break;
         }
     }
+#if MWCC_CORE == MWCC_CORE_B52
 }
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+}
+#endif
 
 static void DumpLinearNode(IROLinear* linear) {
     int i;
@@ -251,6 +279,20 @@ static void DumpLinearNode(IROLinear* linear) {
     }
 
     fprintf(DumpFile, "%4d: ", linear->index);
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+    // MWCCPS2_IRODUMP=2: each node's result type (type, size) first
+    if (getenv("MWCCPS2_IRODUMP") && getenv("MWCCPS2_IRODUMP")[0] == '2' && linear->rtype) {
+        fprintf(
+            DumpFile,
+            "[t%d s%d i%d] ",
+            linear->rtype->type,
+            (int)linear->rtype->size,
+            linear->rtype->type == TYPEINT ? TYPE_INTEGRAL(linear->rtype)->integral : -1
+        );
+    }
+#endif
+#endif
     switch (linear->type) {
         case IROLinearNop:
             fprintf(DumpFile, "Nop");
@@ -420,13 +462,28 @@ void IRO_DumpLinearList(IROLinear* linear) {
 static void DumpList(int num, UInt16* list) {
     int i;
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52
     if (IRO_Log) {
+#else
+    if (!IRO_Log) {
+        return;
+    }
+#endif
+#else
+        if (IRO_Log) {
+#endif
         for (i = 0; i < num; i++) {
             fprintf(DumpFile, "%d ", list[i]);
         }
         fprintf(DumpFile, "\n");
     }
+#if MWCC_CORE == MWCC_CORE_B52
 }
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+}
+#endif
 
 #if MWCCPS2
 Boolean func_00557340(void);
@@ -471,45 +528,45 @@ void IRO_DumpBits(char* name, BitVector* bv) {
     }
     IRO_Dump("\n");
 #else
-    if (!IRO_Log) {
-        return;
-    }
+            if (!IRO_Log) {
+                return;
+            }
 
 #ifdef __MWERKS__
-    fprintf(DumpFile, name);
+            fprintf(DumpFile, name);
 #else
-    fprintf(DumpFile, "%s", name);
+            fprintf(DumpFile, "%s", name);
 #endif
-    if (!bv) {
-        fprintf(DumpFile, "NULL");
-    } else {
-        for (i = 0; (UInt32)i < (bv->size * 32); i++) {
-            if (Bv_IsBitSet(i, bv)) {
-                if (!inRange) {
-                    if (!isFirst) {
-                        fputc(',', DumpFile);
-                    }
-                    isFirst = FALSE;
-                    fprintf(DumpFile, "%d", (int)i);
-                    inRange = TRUE;
-                    rangeStart = i;
-                }
+            if (!bv) {
+                fprintf(DumpFile, "NULL");
             } else {
-                if (inRange) {
-                    inRange = FALSE;
-                    if (i != (rangeStart + 1)) {
-                        fprintf(DumpFile, "-%d", (int)(i - 1));
+                for (i = 0; (UInt32)i < (bv->size * 32); i++) {
+                    if (Bv_IsBitSet(i, bv)) {
+                        if (!inRange) {
+                            if (!isFirst) {
+                                fputc(',', DumpFile);
+                            }
+                            isFirst = FALSE;
+                            fprintf(DumpFile, "%d", (int)i);
+                            inRange = TRUE;
+                            rangeStart = i;
+                        }
+                    } else {
+                        if (inRange) {
+                            inRange = FALSE;
+                            if (i != (rangeStart + 1)) {
+                                fprintf(DumpFile, "-%d", (int)(i - 1));
+                            }
+                        }
                     }
+                }
+
+                if (inRange && i != (rangeStart + 1)) {
+                    fprintf(DumpFile, "-%d", (int)(i - 1));
                 }
             }
-        }
 
-        if (inRange && i != (rangeStart + 1)) {
-            fprintf(DumpFile, "-%d", (int)(i - 1));
-        }
-    }
-
-    fprintf(DumpFile, "\n");
+            fprintf(DumpFile, "\n");
 #endif
 }
 
@@ -523,7 +580,7 @@ void IRO_ResetDumpTicks(void) {
 }
 
 void IRO_DumpAfterPhase(char* str, Boolean dumpGraph) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     {
         extern char* getenv(const char*);
         static int on = -1;
@@ -628,19 +685,26 @@ void IRO_DumpBeforePhase(char* str, Boolean dumpGraph) {
 #endif
 }
 #else
-void IRO_DumpAfterPhase(char* str, Boolean dumpGraph) {
-    if (dumpGraph) {
-        IRO_Dump(
-            "Dumping function %s after %s \n",
-            FunctionName ? FunctionName->name->name : "Init-code",
-            str
-        );
-        IRO_Dump(
-            "--------------------------------------------------------------------------------\n"
-        );
-        IRO_DumpFlowgraph();
-    }
-}
+        void IRO_DumpAfterPhase(char* str, Boolean dumpGraph) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+            // native only: MWCCPS2_IRODUMP dumps every phase (compare a hybrid whose
+            // IRO_Setup sets IRO_Log and whose IRO_DumpAfterPhase ignores dumpGraph)
+            if (IRO_Log && getenv("MWCCPS2_IRODUMP")) {
+                dumpGraph = TRUE;
+            }
+#endif
+            if (dumpGraph) {
+                IRO_Dump(
+                    "Dumping function %s after %s \n",
+                    FunctionName ? FunctionName->name->name : "Init-code",
+                    str
+                );
+                IRO_Dump(
+                    "--------------------------------------------------------------------------------\n"
+                );
+                IRO_DumpFlowgraph();
+            }
+        }
 #endif
 
 void IRO_LogForFunction(char* name) {
@@ -820,7 +884,7 @@ void IRO_DumpExprs(void) {
     }
     IRO_Dump("Expressions\n\n");
     for (expr = IRO_FirstExpr; expr; expr = expr->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
         IRO_Dump(
             "%4d: %d FN:%d CE:%d NS:%d ",
             expr->index,
@@ -845,29 +909,29 @@ void IRO_DumpExprs(void) {
     IRO_Dump("\n");
 }
 #else
-void IRO_DumpExprs(void) {
-    IROExpr* expr;
+        void IRO_DumpExprs(void) {
+            IROExpr* expr;
 
-    if (!IRO_Log) {
-        return;
-    }
+            if (!IRO_Log) {
+                return;
+            }
 
-    fprintf(DumpFile, "Expressions\n\n");
-    for (expr = IRO_FirstExpr; expr; expr = expr->next) {
-        fprintf(
-            DumpFile,
-            "%4d: %d FN:%d CE:%d NS:%d ",
-            expr->index,
-            expr->linear->index,
-            expr->node->index,
-            expr->couldError,
-            expr->notSubable
-        );
-        IRO_DumpBits("Depends: ", expr->depends);
-        fprintf(DumpFile, "\n");
-    }
-    fprintf(DumpFile, "\n");
-}
+            fprintf(DumpFile, "Expressions\n\n");
+            for (expr = IRO_FirstExpr; expr; expr = expr->next) {
+                fprintf(
+                    DumpFile,
+                    "%4d: %d FN:%d CE:%d NS:%d ",
+                    expr->index,
+                    expr->linear->index,
+                    expr->node->index,
+                    expr->couldError,
+                    expr->notSubable
+                );
+                IRO_DumpBits("Depends: ", expr->depends);
+                fprintf(DumpFile, "\n");
+            }
+            fprintf(DumpFile, "\n");
+        }
 #endif
 
 #if MWCCPSP
@@ -880,7 +944,7 @@ void IRO_SetupDump(void) {
     int len;
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     // debugging aid: MWCCPS2_IROLOG=1 writes the IRO log, =2 also every
     // phase's dump (opt_alwaysdumpopts), as gdb used to set them
     {
@@ -929,24 +993,29 @@ void IRO_SetupDump(void) {
     }
 }
 #else
-void IRO_SetupDump(void) {
-    char name[256];
-    int i;
+        void IRO_SetupDump(void) {
+            char name[256];
+            int i;
 
-    if (IRO_Log) {
-        COS_FileGetPathName(name, &cparams.sourcefile, NULL);
-        for (i = strlen(name); i >= 0; i--) {
-            if (name[i] == '.') {
-                name[i] = 0;
-                break;
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+            if (getenv("MWCCPS2_IRODUMP")) {
+                IRO_Log = TRUE;
+            }
+#endif
+            if (IRO_Log) {
+                COS_FileGetPathName(name, &cparams.sourcefile, NULL);
+                for (i = strlen(name); i >= 0; i--) {
+                    if (name[i] == '.') {
+                        name[i] = 0;
+                        break;
+                    }
+                }
+                strcat(name, ".log");
+                if ((DumpFile = fopen(name, "wt")) == NULL) {
+                    IRO_Log = FALSE;
+                }
             }
         }
-        strcat(name, ".log");
-        if ((DumpFile = fopen(name, "wt")) == NULL) {
-            IRO_Log = FALSE;
-        }
-    }
-}
 #endif
 
 void IRO_CleanupDump(void) {

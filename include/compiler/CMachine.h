@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #ifndef COMPILER_CMACHINE_H
 #define COMPILER_CMACHINE_H
 
@@ -16,7 +17,7 @@ extern TypeIntegral stunsignedshort;
 extern TypeIntegral stsignedint;
 extern TypeIntegral stunsignedint;
 extern TypeIntegral stsignedlong;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern TypeIntegral stunsignedlong;
 extern TypeIntegral stsignedlonglong;
 extern TypeIntegral stunsignedlonglong;
@@ -39,7 +40,7 @@ extern TypeIntegral stfloat;
 extern TypeIntegral stshortdouble;
 extern TypeIntegral stdouble;
 extern TypeIntegral stlongdouble;
-#if !MWCCPS2_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
 #if MWCCPSP
 extern TypeIntegral stint128; // 3.0.1: 16-byte integer, integral 18 (0x5CCB44)
 #endif
@@ -77,7 +78,7 @@ extern Boolean CMach_FloatIsZero(Float fval);
 extern Boolean CMach_FloatIsOne(Float fval);
 extern Boolean CMach_FloatIsNegOne(Float fval);
 extern void CMach_InitFloatMem(Type* type, Float val, void* mem);
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 extern void CMach_PrintFloat(char* buf, Float val);
 extern void CMach_PragmaParams(void);
 extern int CMach_GetStructAlign(TypeStruct* str);

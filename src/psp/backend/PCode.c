@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/common.h"
 #include <stdarg.h>
 #include "psp/BE.h"
@@ -152,7 +153,7 @@ void pclabel(MPCodeBlock* block, MPCodeLabel* label) {
     block->labels = label;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-2)
 #endif
@@ -170,7 +171,7 @@ void pcbranch(MPCodeBlock* block, MPCodeLabel* label, UInt16 flags) {
         label->block = (MPCodeBlock*)p;
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -189,26 +190,61 @@ void func_0046FA50(void) {
     func_0046FA90(makepclabel());
 }
 
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+// b69 (0x498680): the first block is never deleted and the last one keeps
+// data_006246B4; not inlined into deleteunreachableblocks
+#ifdef __MWERKS__
+#pragma auto_inline off
+#endif
+#endif
+#endif
 void deleteblock(MPCodeBlock* block) {
+#if MWCC_CORE == MWCC_CORE_B52
     if (block->prev) {
-        block->prev->next = block->next;
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+        if (block->prev) {
+#endif
+            block->prev->next = block->next;
+#if MWCC_CORE == MWCC_CORE_B52
+        } else {
+            data_00624FD0 = block->next;
+        }
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     } else {
         data_00624FD0 = block->next;
     }
+#endif
     if (block->next) {
         block->next->prev = block->prev;
+#if MWCC_CORE == MWCC_CORE_B52
     } else {
         data_006246B4 = block->prev;
+#endif
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+    }
+    else {
+        data_006246B4 = block->prev;
+#endif
     }
     block->flags2E |= 0x20;
 }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52
+#ifdef __MWERKS__
+#pragma auto_inline reset
+#endif
+#endif
+#endif
 
 void deleteunreachableblocks(void) {
     MPCodeBlock* block;
 
     computedepthfirstordering();
     for (block = data_00624FD0->next; block; block = block->next) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         // b69 (0x4986A0): a noreorder block (0x4000) is kept, unreached or not
         // (the delay slot of an asm `b` under .set noreorder)
         if (!(block->flags2E & 4) && !(block->flags2E & 0x4000)) {

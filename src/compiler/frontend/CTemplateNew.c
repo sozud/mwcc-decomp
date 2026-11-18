@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CTemplateNew.h"
 #include "compiler/CBrowse.h"
 #include "compiler/CDecl.h"
@@ -59,7 +60,7 @@ static short CTempl_MemberParseLex(void) {
 }
 
 static void CTempl_MemberParseTemplArgList(void) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     int b69_dead;
 #endif
     struct {
@@ -70,7 +71,7 @@ static void CTempl_MemberParseTemplArgList(void) {
 
     stack[0].ch = '>';
     stack[0].flag = TRUE;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     b69_dead = pos = 0;
 #else
     pos = 0;
@@ -596,7 +597,7 @@ defaultProc:
 }
 
 static TemplParam* CTempl_ParseParamList(NameSpace* nspace, UInt8 nindex) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     TemplParam** b69_dead;
 #endif
     TemplParam* params;
@@ -607,7 +608,7 @@ static TemplParam* CTempl_ParseParamList(NameSpace* nspace, UInt8 nindex) {
 
     params = NULL;
     index = 0;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     b69_dead = ptr = &params;
 #else
     ptr = &params;
@@ -646,7 +647,7 @@ static TemplParam* CTempl_ParseParamList(NameSpace* nspace, UInt8 nindex) {
 }
 
 TemplArg* CTempl_ParseUncheckTemplArgs(TemplParam* params, Boolean is_global) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     UInt16 b69_dead;
 #endif
     TemplArg* args;
@@ -663,7 +664,7 @@ TemplArg* CTempl_ParseUncheckTemplArgs(TemplParam* params, Boolean is_global) {
     }
 
     args = NULL;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     b69_dead = index = 0;
 #else
     index = 0;
@@ -745,7 +746,7 @@ TemplArg* CTempl_ParseUncheckTemplArgs(TemplParam* params, Boolean is_global) {
         }
 
         tk = lex();
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead = (index++);
 #else
         index++;
@@ -1012,7 +1013,7 @@ Type* CTempl_ClassGetType(TemplClass* templ) {
 // always inlined; b210 has no out-of-line copy
 inline
 #endif
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     static void CTempl_SetupClassParamNameSpace(
         TemplateScopeState* templateScope, TypeClass* tclass
     ) {
@@ -1022,7 +1023,7 @@ static void CTempl_SetupClassParamNameSpace(TemplateScopeState* templateScope, T
     cscope_current = tclass->nspace;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (100)
 #endif
@@ -1046,7 +1047,7 @@ Boolean CTempl_IsQualifiedMember(DeclInfo* di, Type* type, NameSpace** resultnsp
 
     return FALSE;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -1277,7 +1278,7 @@ static HashNameNode* CTempl_FindConversionFuncName(TypeClass* tclass, Type* type
     return object->name;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (225)
 #endif
@@ -1311,7 +1312,7 @@ static void CTempl_ParseConversionFunctionTemplate(
     templfunc = CTempl_DeclareTemplateFunction(di, params, tclass, access, FALSE);
     CTempl_ParseTemplateFunction(templfunc, tclass, startOffset);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -1441,7 +1442,7 @@ static void CTempl_ParseFunctionOrMemberTemplate(
     CError_QualifierCheck(
         di.qual &
         ~(Q_CONST | Q_VOLATILE | Q_ASM | Q_PASCAL | Q_INLINE | Q_EXPLICIT | Q_IMPLICIT_WEAK |
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
           Q_WEAK | Q_ALIGNED_MASK)
 #else
           Q_WEAK | Q_ALIGNED_MASK | Q_INTERRUPT)
@@ -1658,7 +1659,7 @@ skipPastStuff:
             return;
         }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         nsol = CScope_FindName(di.nspace, di.name);
 #else
         CScope_FindName(di.nspace, di.name);
@@ -1669,7 +1670,7 @@ skipPastStuff:
             return;
         }
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         nsol = CScope_FindName(cscope_current, di.name);
 #else
         CScope_FindName(cscope_current, di.name);
@@ -2355,7 +2356,7 @@ Boolean CTempl_Instantiate(void) {
     return result;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-1260)
 #endif
@@ -2390,7 +2391,7 @@ Boolean CTempl_InlineFunctionCheck(Object* funcobj) {
 
     return FALSE;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif

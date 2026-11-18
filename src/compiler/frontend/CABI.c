@@ -1,3 +1,4 @@
+#include "compiler/mwcc_core.h"
 #include "compiler/CABI.h"
 #include "compiler/CClass.h"
 #include "compiler/CDecl.h"
@@ -19,7 +20,7 @@
 #include "compiler/tokens.h"
 #include "compiler/types.h"
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // 2.4.5 builds offset and size constants as int where 2.4.7 uses long: b69's
 // CABI_MakeThisExpr, CClass_AccessMember, CExcept_CatchExpressionInit ... reference
 // stunsignedint (0x5360D8, integral 8) and CABI_GetPtrDiffTType stsignedint
@@ -46,7 +47,7 @@ Type* CABI_GetSizeTType(void) {
 #if MWCCPSP
     return TYPE(&stunsignedint);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     return TYPE(&stunsignedint);
 #else
     return TYPE(&stunsignedlong);
@@ -58,7 +59,7 @@ Type* CABI_GetPtrDiffTType(void) {
 #if MWCCPSP
     return TYPE(&stsignedint);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     return TYPE(&stofslong);
 #else
     return TYPE(&stsignedlong);
@@ -75,7 +76,7 @@ SInt16 CABI_StructSizeAlignValue(Type* type, SInt32 size) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (3)
 #endif
@@ -109,7 +110,7 @@ void CABI_ReverseBitField(TypeBitfield* tbitfield) {
     offset = tbitfield->offset;
     tbitfield->offset = (bits - offset) - length;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -190,7 +191,7 @@ static void CABI_AllocateVirtualBasePointers(ClassLayout* layout, TypeClass* tcl
     tclass->size = size;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (110)
 #endif
@@ -212,12 +213,12 @@ static SInt32 CABI_GetMemberOffset(TypeClass* tclass, HashNameNode* name) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (110)
 #endif
@@ -320,7 +321,7 @@ static void CABI_AllocateMembers(ClassLayout* layout, TypeClass* tclass) {
         }
     }
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -339,7 +340,7 @@ static void CABI_AllocateVirtualBases(ClassLayout* layout, TypeClass* tclass) {
 #if MWCCPSP
             size += CMach_MemberAlignValue(TYPE_UNSIGNED_OFFSET, size) + 4;
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             size += CMach_MemberAlignValue(TYPE(&ST_OFFS_U), size) + 4;
 #else
             size += CMach_MemberAlignValue(TYPE(&stunsignedlong), size) + 4;
@@ -581,7 +582,7 @@ void CABI_LayoutClass(ClassLayout* layout, TypeClass* tclass) {
     copts.structalignment = saveAlignMode;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (179)
 #endif
@@ -621,14 +622,14 @@ void CABI_MakeDefaultArgConstructor(TypeClass* tclass, Object* func) {
 
     memclrw(&returnStmt, sizeof(Statement));
     returnStmt.type = ST_RETURN;
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     returnStmt.expr = CExpr_NewENode(EFUNCCALL);
 #else
     returnStmt.expr = lalloc(sizeof(ENode));
     returnStmt.expr->type = EFUNCCALL;
 #endif
     returnStmt.expr->cost = 200;
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     returnStmt.expr->flags = 0;
 #endif
     returnStmt.expr->rtype = TYPE(&void_ptr);
@@ -669,12 +670,12 @@ void CABI_MakeDefaultArgConstructor(TypeClass* tclass, Object* func) {
 
     func->u.func.defargdata = NULL;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (179)
 #endif
@@ -686,7 +687,7 @@ static Object* CABI_ThisArg(void) {
 #endif
     return arguments->object;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -712,7 +713,7 @@ ENode* CABI_MakeThisExpr(TypeClass* tclass, SInt32 offset) {
 #if MWCCPSP
         expr = makediadicnode(expr, intconstnode(TYPE_UNSIGNED_OFFSET, offset), EADD);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         expr = makediadicnode(expr, intconstnode(TYPE(&stofsulong), offset), EADD);
 #else
         expr = makediadicnode(expr, intconstnode(TYPE(&stunsignedlong), offset), EADD);
@@ -723,7 +724,7 @@ ENode* CABI_MakeThisExpr(TypeClass* tclass, SInt32 offset) {
     return expr;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (179)
 #endif
@@ -731,7 +732,7 @@ static Object* CABI_VArg(void) {
     CError_ASSERT(976, arguments && arguments->next && IS_TYPE_INT(arguments->next->object->type));
     return arguments->next->object;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -740,7 +741,7 @@ static ENode* CABI_MakeVArgExpr(void) {
     return create_objectnode(CABI_VArg());
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (179)
 #endif
@@ -756,7 +757,7 @@ static ENode* CABI_MakeCopyConArgExpr(TypeClass* tclass, Boolean isCopyCtor) {
 
     return create_objectnode(args->object);
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
@@ -824,7 +825,7 @@ static OffsetList* CABI_GetVBasePath(TypeClass* tclass, TypeClass* baseclass) {
     OffsetList* scan;
     short bestLength;
     short length;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     ClassList* b69_dead;
     short b69_dead2;
 #endif
@@ -840,13 +841,13 @@ static OffsetList* CABI_GetVBasePath(TypeClass* tclass, TypeClass* baseclass) {
 
     best = NULL;
 
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (b69_dead = base = tclass->bases; base; base = base->next) {
 #else
     for (base = tclass->bases; base; base = base->next) {
 #endif
         if ((list = CABI_GetVBasePath(base->base, baseclass))) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             for (scan = list->next, b69_dead2 = length = 1; scan; scan = scan->next) {
 #else
             for (scan = list->next, length = 1; scan; scan = scan->next) {
@@ -875,7 +876,7 @@ static OffsetList* CABI_GetVBasePath(TypeClass* tclass, TypeClass* baseclass) {
     return best;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (179)
 #endif
@@ -892,7 +893,7 @@ static ENode* CABI_GetVBasePtr(TypeClass* tclass, TypeClass* baseclass) {
 #if MWCCPSP
             expr = makediadicnode(expr, intconstnode(TYPE_UNSIGNED_OFFSET, path->offset), EADD);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             expr = makediadicnode(expr, intconstnode(TYPE(&ST_OFFS_U), path->offset), EADD);
 #else
             expr = makediadicnode(expr, intconstnode(TYPE(&stunsignedlong), path->offset), EADD);
@@ -904,7 +905,7 @@ static ENode* CABI_GetVBasePtr(TypeClass* tclass, TypeClass* baseclass) {
 
     return expr;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
@@ -927,7 +928,7 @@ static SInt32 CABI_FindNVBase(TypeClass* tclass, TypeClass* baseclass, SInt32 of
     return -1;
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (179)
 #endif
@@ -954,7 +955,7 @@ SInt32 CABI_GetCtorOffsetOffset(TypeClass* tclass, TypeClass* baseclass) {
 #if MWCCPSP
     size += CMach_MemberAlignValue(TYPE(&stunsignedint), size);
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     size += CMach_MemberAlignValue(TYPE(&stofsulong), size);
 #else
     size += CMach_MemberAlignValue(TYPE(&stunsignedlong), size);
@@ -964,12 +965,12 @@ SInt32 CABI_GetCtorOffsetOffset(TypeClass* tclass, TypeClass* baseclass) {
 
     return size;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (179)
 #endif
@@ -1002,7 +1003,7 @@ static Statement* CABI_InitVBaseCtorOffsets(Statement* stmt, TypeClass* tclass) 
 #if MWCCPSP
                 intconstnode(TYPE_UNSIGNED_OFFSET, ctorOffsetOffset),
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 intconstnode(TYPE(&ST_OFFS_U), ctorOffsetOffset),
 #else
                 intconstnode(TYPE(&stunsignedlong), ctorOffsetOffset),
@@ -1014,7 +1015,7 @@ static Statement* CABI_InitVBaseCtorOffsets(Statement* stmt, TypeClass* tclass) 
 #if MWCCPSP
             expr->rtype = TYPE_UNSIGNED_OFFSET;
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             expr->rtype = TYPE(&ST_OFFS_U);
 #else
             expr->rtype = TYPE(&stunsignedlong);
@@ -1032,7 +1033,7 @@ static Statement* CABI_InitVBaseCtorOffsets(Statement* stmt, TypeClass* tclass) 
 
     return stmt;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
 #endif
@@ -1077,7 +1078,7 @@ static Statement* CABI_InitVTablePtrs(
 #if MWCCPSP
                     intconstnode(TYPE_UNSIGNED_OFFSET, voffset + CABI_GetVTableOffset(baseclass)),
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     intconstnode(TYPE(&ST_OFFS_U), voffset + CABI_GetVTableOffset(baseclass)),
 #else
                     intconstnode(TYPE(&stunsignedlong), voffset + CABI_GetVTableOffset(baseclass)),
@@ -1093,7 +1094,7 @@ static Statement* CABI_InitVTablePtrs(
 #if MWCCPSP
                     pathExpr, intconstnode(TYPE_UNSIGNED_OFFSET, baseclass->vtable->offset), EADD
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     pathExpr, intconstnode(TYPE(&ST_OFFS_U), baseclass->vtable->offset), EADD
 #else
                     pathExpr, intconstnode(TYPE(&stunsignedlong), baseclass->vtable->offset), EADD
@@ -1735,7 +1736,7 @@ static Statement* CABI_CopyConAssignCB(
 #if MWCCPSP
                     expr->data.monadic, intconstnode(TYPE_UNSIGNED_OFFSET, regions->start), EADD
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     expr->data.monadic, intconstnode(TYPE(&ST_OFFS_U), regions->start), EADD
 #else
                     expr->data.monadic, intconstnode(TYPE(&stunsignedlong), regions->start), EADD
@@ -1765,7 +1766,7 @@ static Statement* CABI_CopyConAssignCB(
 #if MWCCPSP
                                     expr, intconstnode(TYPE_UNSIGNED_OFFSET, regions->start), EADD
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                     expr, intconstnode(TYPE(&ST_OFFS_U), regions->start), EADD
 #else
                                     expr, intconstnode(TYPE(&stunsignedlong), regions->start), EADD
@@ -1785,7 +1786,7 @@ static Statement* CABI_CopyConAssignCB(
 #if MWCCPSP
                                 intconstnode(TYPE_UNSIGNED_OFFSET, type->size),
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                 intconstnode(TYPE(&ST_OFFS_U), type->size),
 #else
                                 intconstnode(TYPE(&stunsignedlong), type->size),
@@ -1805,7 +1806,7 @@ static Statement* CABI_CopyConAssignCB(
 #if MWCCPSP
                                         intconstnode(TYPE_UNSIGNED_OFFSET, off),
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                                         intconstnode(TYPE(&ST_OFFS_U), off),
 #else
                                         intconstnode(TYPE(&stunsignedlong), off),
@@ -2054,26 +2055,26 @@ static Statement* CABI_DestroyMembers(Statement* stmt, ObjMemberVar* ivars, Type
 }
 
 static Statement* CABI_DestroyBases(Statement* stmt, ClassList* bases) {
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt32 b69_dead;
 #endif
     ClassList* base;
     Object* dtor;
     SInt32 count;
     SInt32 i;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt32 b69_dead2;
 #endif
 
     base = bases;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     b69_dead = count = 0;
 #else
     count = 0;
 #endif
     while (base) {
         base = base->next;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead = (count++);
 #else
         count++;
@@ -2082,7 +2083,7 @@ static Statement* CABI_DestroyBases(Statement* stmt, ClassList* bases) {
 
     while (count > 0) {
         base = bases;
-#if MWCCPS2_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         b69_dead2 = i = 1;
 #else
         i = 1;
@@ -2393,7 +2394,7 @@ void CABI_AddLayeredDestructors(TypeClass* tclass) {
     }
 }
 
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (182)
 #endif
@@ -2432,14 +2433,14 @@ ENode* CABI_DestroyObject(
     expr->cost = 200;
     expr->rtype = &stvoid;
 #else
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
     expr = CExpr_NewENode(EFUNCCALL);
 #else
     expr = lalloc(sizeof(ENode));
     expr->type = EFUNCCALL;
 #endif
     expr->cost = 200;
-#if !MWCCPS2_B52
+#if MWCC_CORE != MWCC_CORE_B52
     expr->flags = 0;
 #endif
     expr->rtype = &stvoid;
@@ -2460,7 +2461,7 @@ ENode* CABI_DestroyObject(
     list->node = intconstnode(TYPE(&stsignedshort), varg);
     return expr;
 }
-#if MWCCPS2_B52
+#if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
