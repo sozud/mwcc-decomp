@@ -7,15 +7,25 @@
 #line 1 "RegisterInfo.c"
 // mwccpsp 3.0.1 RegisterInfo.c (named by its assertions).
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -8 // b119 asserts
 // only locals have register info in 3.0.1
 VarInfo* Registers_GetVarInfo(Object* obj) {
     switch (obj->datatype) {
 #if MWCCPS2
         case DDATA: // b210: data objects carry register info too
+#if MWCC_CORE == MWCC_CORE_B233
+            if (!OBJ_DATA_INFO(obj)) {
+#else
             if (!obj->u.data.info) {
+#endif
                 CError_FATAL(821);
             }
+#if MWCC_CORE == MWCC_CORE_B233
+            return OBJ_DATA_INFO(obj);
+#else
             return obj->u.data.info;
+#endif
 #endif
         case DLOCAL:
             if (!obj->u.var.info) {
@@ -27,6 +37,8 @@ VarInfo* Registers_GetVarInfo(Object* obj) {
             return NULL;
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 #if MWCCPS2
 #include "compiler/CParser.h"
@@ -41,7 +53,15 @@ extern char data_00625ECC; // register class being colored (Coloring.c)
 Boolean func_004B8980(Object* obj) {
     VarInfo* vi;
 
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B233
+    if (COPTS_X.mips_option43 &&
+        obj != NULL &&
+        (vi = OBJ_DATA_INFO(obj)) != NULL &&
+        obj->datatype == DDATA) {
+        if (vi->reg != 0 ||
+            VI_B210_CLASS(vi) == 5 ||
+            (VI_B210_2F(vi) != 0 && VI_B210_CLASS(vi) == 0)) {
+#elif MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (COPTS_X.mips_option43 &&
         obj != NULL &&
         (vi = obj->u.data.info) != NULL &&
@@ -68,7 +88,11 @@ Boolean func_004B89A0(SInt32 a, SInt32 b) {
     if (data_00625ECC == 0) {
         return (a == 0) || (b == 0);
     }
+#if MWCC_CORE == MWCC_CORE_B233
+    if (COPTS_T.enable_vu0_registers && data_00625ECC == 5) {
+#else
     if (copts.enable_vu0_registers && data_00625ECC == 5) {
+#endif
         return (a == 0) || (b == 0);
     }
     return 0;
@@ -80,12 +104,20 @@ Type* func_004B89D0(void* node) {
     if (data_00625ECC == 0) {
         return TYPE(&stint128);
     }
+#if MWCC_CORE == MWCC_CORE_B233
+    if (COPTS_T.enable_vu0_registers) {
+#else
     if (copts.enable_vu0_registers) {
+#endif
         if (data_00625ECC == 5) {
             return TYPE(&stint128);
         }
     }
+#if MWCC_CORE == MWCC_CORE_B233
+    if (!COPTS_T.enable_vu0_registers && data_00625ECC == 5) {
+#else
     if (!copts.enable_vu0_registers && data_00625ECC == 5) {
+#endif
         return TYPE(&stint128);
     }
     if (copts.floatsp32) {

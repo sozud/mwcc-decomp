@@ -144,7 +144,11 @@ static void FindDefsAndUses(void) {
                 );
             }
 
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3's FindDefsAndUses (0x4CA570) has no asm operands
             if (linear->type == IROLinearAsm) {
+#else
+            if (0) {
+#endif
                 IAEffects effects;
                 int i;
                 CodeGen_GetAsmEffects(linear->u.asm_stmt, &effects);
@@ -270,6 +274,8 @@ static Boolean IsOtherSelfAssignment(IROLinear* linear) {
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -32 // b145 asserts
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 CInt64 IRO_GetSelfAssignmentVal(IROLinear* linear) {
     CInt64 result;
 
@@ -319,6 +325,8 @@ CInt64 IRO_GetSelfAssignmentVal(IROLinear* linear) {
 
     return result;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #line 305 "IROUseDef.c"
@@ -653,7 +661,9 @@ static void UpdateUse(IROLinear* linear, CInt64 val, Type* type) {
 #if VERSION < VERSION_GC_2_5
     repl = IRO_NewIntConst(val, type);
     newdiadic = IRO_NewLinear(IROLinearOp2Arg);
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3 (0x4CA973) leaves it unnumbered (index 0)
     newdiadic->index = ++IRO_NumLinear;
+#endif
     newdiadic->nodetype = EADD;
     newdiadic->u.diadic.left = linear;
     newdiadic->u.diadic.right = repl;
@@ -692,7 +702,9 @@ static void UpdateUse(IROLinear* linear, CInt64 val, Type* type) {
     repl = IRO_NewIntConst(val, constType);
     IRO_AddToList(repl, &list);
     newdiadic = IRO_NewLinear(IROLinearOp2Arg);
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3 (0x4CA973) leaves it unnumbered (index 0)
     newdiadic->index = ++IRO_NumLinear;
+#endif
     newdiadic->nodetype = EADD;
     newdiadic->u.diadic.left = operand;
     newdiadic->u.diadic.right = repl;
@@ -908,6 +920,19 @@ void IRO_InitializeAssignmentFoldingFunctionArray(void) {
         AssignmentFoldingFunction[i] = NULL;
     }
 
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+    // b119 (0x579890) stores the older form's plain CInt64 operations
+    // (IroSelfAssign301.c calls them as such)
+    AssignmentFoldingFunction[EMULASS] = (AssignmentFoldingFunc)CInt64_Mul;
+    AssignmentFoldingFunction[EDIVASS] = (AssignmentFoldingFunc)CInt64_Mul;
+    AssignmentFoldingFunction[EADDASS] = (AssignmentFoldingFunc)CInt64_Add;
+    AssignmentFoldingFunction[ESUBASS] = (AssignmentFoldingFunc)CInt64_Add;
+    AssignmentFoldingFunction[ESHLASS] = (AssignmentFoldingFunc)CInt64_Add;
+    AssignmentFoldingFunction[ESHRASS] = (AssignmentFoldingFunc)CInt64_Add;
+    AssignmentFoldingFunction[EANDASS] = (AssignmentFoldingFunc)CInt64_And;
+    AssignmentFoldingFunction[EXORASS] = (AssignmentFoldingFunc)CInt64_Xor;
+    AssignmentFoldingFunction[EORASS] = (AssignmentFoldingFunc)CInt64_Or;
+#else
     AssignmentFoldingFunction[EMULASS] = IROUseDef_FoldMul;
     AssignmentFoldingFunction[EDIVASS] = IROUseDef_FoldMul;
     AssignmentFoldingFunction[EADDASS] = IROUseDef_FoldAdd;
@@ -917,6 +942,7 @@ void IRO_InitializeAssignmentFoldingFunctionArray(void) {
     AssignmentFoldingFunction[EANDASS] = IROUseDef_FoldAnd;
     AssignmentFoldingFunction[EXORASS] = IROUseDef_FoldXor;
     AssignmentFoldingFunction[EORASS] = IROUseDef_FoldOr;
+#endif
 }
 #else
 void IRO_InitializeAssignmentFoldingFunctionArray(void) {
@@ -1157,7 +1183,9 @@ static void UpdateUseForOtherSelfAssignment(IROLinear* a, IROLinear* b, Type* ty
 #if VERSION < VERSION_GC_2_5
     repl = IRO_NewIntConst(val, type);
     newdiadic = IRO_NewLinear(IROLinearOp2Arg);
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3 (0x4CA973) leaves it unnumbered (index 0)
     newdiadic->index = ++IRO_NumLinear;
+#endif
     newdiadic->nodetype = IRO_NonAssignmentOp[b->nodetype];
     newdiadic->u.diadic.left = a;
     newdiadic->u.diadic.right = repl;
@@ -1189,7 +1217,9 @@ static void UpdateUseForOtherSelfAssignment(IROLinear* a, IROLinear* b, Type* ty
     repl = IRO_NewIntConst(val, promoted);
     IRO_AddToList(repl, &list);
     newdiadic = IRO_NewLinear(IROLinearOp2Arg);
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3 (0x4CA973) leaves it unnumbered (index 0)
     newdiadic->index = ++IRO_NumLinear;
+#endif
     newdiadic->nodetype = IRO_NonAssignmentOp[b->nodetype];
     newdiadic->u.diadic.left = operand;
     newdiadic->u.diadic.right = repl;
@@ -1422,7 +1452,11 @@ static void MarkUsesByIndirect(IROLinear* linear, BitVector* a, BitVector* b) {
 
     found = FALSE;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (linear && COPTS_T.opt_pointer_analysis && linear->pointsToFunction && FunctionName) {
+#else
     if (linear && copts.opt_pointer_analysis && linear->pointsToFunction && FunctionName) {
+#endif
         IROListNode* resultList;
         resultList = NULL;
         PointerAnalysis_LookupLinearNodePointerExpr(FunctionName, linear, &resultList);
@@ -1506,7 +1540,11 @@ static void MarkUsesByFunctionCall(IROLinear* linear, BitVector* a, BitVector* b
     found = FALSE;
 
     if ((funcnd = linear->u.funccall.callee) &&
+#if MWCC_CORE == MWCC_CORE_B233
+        COPTS_T.opt_pointer_analysis &&
+#else
         copts.opt_pointer_analysis &&
+#endif
         funcnd->pointsToFunction &&
         FunctionName) {
         IROListNode* resultList;
@@ -1616,7 +1654,11 @@ static void MarkUsesByFunctionCall(IROLinear* linear, BitVector* a, BitVector* b
     }
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+static BOOL_INT UseOfVarIsInsideASimpleDefOfVar(IROUse* use) {
+#else
 static Boolean UseOfVarIsInsideASimpleDefOfVar(IROUse* use) {
+#endif
     VarRecord* var;
     VarRecord* varAss;
     IROLinear* nd;
@@ -1945,6 +1987,25 @@ Boolean IRO_UseDef(Boolean optDeadAssignments, Boolean optPropagation) {
     result = FALSE;
 
     if (optDeadAssignments) {
+#if MWCC_CORE == MWCC_CORE_B233
+        // 2.3.3 (0x4CB198): no removable loop definitions, no reffed dead
+        // stores and no volatile type test; a definition is removed only
+        // when it reaches no use, is not noregister, and its value is unused
+        for (def = FirstDef; def; def = def->globalnext) {
+            if (!Bv_IsBitSet(def->index, MightReachAnyUse) &&
+                !def->noregister &&
+                def->linear &&
+                def->linear->type != IROLinearAsm &&
+                !(def->linear->flags & IROLF_Reffed) &&
+                !is_volatile_object(def->var->object)) {
+                def->useCount = 0;
+                IRO_NopNonSideEffects(def->linear, -1);
+                def->linear->type = IROLinearNop;
+                IRO_Dump("Removing dead assignment %d\n", def->linear->index);
+                result = TRUE;
+            }
+        }
+#else
         MarkRemovableLoopDefs();
         for (def = FirstDef; def; def = def->globalnext) {
             if (def->linear &&
@@ -1977,13 +2038,18 @@ Boolean IRO_UseDef(Boolean optDeadAssignments, Boolean optPropagation) {
                 }
             }
         }
+#endif
     }
 
     IRO_CheckForUserBreak();
 
     if (optPropagation) {
         while (1) {
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 (0x4CB250): no PropagateOtherSelfAssignments
+            if (PropagateIncsAndDecs()) {
+#else
             if (PropagateIncsAndDecs() || PropagateOtherSelfAssignments()) {
+#endif
                 result = TRUE;
             } else {
                 break;
@@ -2033,9 +2099,11 @@ static IROLinear* GetAssigned(IROLinear* nd) {
 
     nd = nd->u.monadic;
 
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3 (0x4CB30D) does not look through a bitfield
     if (nd->type == IROLinearOp1Arg && nd->nodetype == EBITFIELD) {
         nd = nd->u.monadic;
     }
+#endif
 
     if (nd->type == IROLinearOp2Arg && nd->nodetype == EADD) {
         nd = GetOperand(nd);
@@ -2148,6 +2216,8 @@ static void ReplaceUsed(IROLinear* nd, Object* from, Object* to) {
 #endif
 #endif
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -2 // b119 asserts
 static void SplitOffRange(VarRecord* var) {
     Object* newObj;
     IRODef* def;
@@ -2160,7 +2230,13 @@ static void SplitOffRange(VarRecord* var) {
     IRO_DumpBits("All uses: ", alluses);
 
     newObj = create_temp_object(var->object->type);
+#if MWCC_CORE != MWCC_CORE_B233
     IRO_FindVar(newObj, TRUE, TRUE);
+#else
+    // 2.3.3's SplitOffRange (0x4CB510) makes the temporary and nothing
+    // more: it has no VarRecord (varptr stays 0), so the regeneration's
+    // use-def does not see it (no ECOND rebuilt into a split range)
+#endif
 
     for (def = var->defs; def; def = def->varnext) {
         if (Bv_IsBitSet(def->index, defset) && def->linear) {
@@ -2174,6 +2250,8 @@ static void SplitOffRange(VarRecord* var) {
         }
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 #if !MWCCPSP // 3.0.1's is in IROUseDef301.c (IroLifetime.c in the original)
 void IRO_SplitLifetimes(void) {

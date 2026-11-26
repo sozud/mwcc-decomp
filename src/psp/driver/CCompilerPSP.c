@@ -339,11 +339,20 @@ static void initialize_compiler_options(CompilerLinkerParamBlk* params) {
         copts.warn_no_typename = TRUE;
     }
     copts.c9x = pFrontEnd.c99;
+#if MWCC_CORE == MWCC_CORE_B233
+    COPTS_T.inline_bottom_up = pFrontEnd.bottomupinline;
+#else
     copts.inline_bottom_up = pFrontEnd.bottomupinline;
+#endif
     copts.unknown52 = 15;
     copts.inline_bottom_up_once = TRUE;
+#if MWCC_CORE == MWCC_CORE_B233
+    COPTS_T.inlinemaxsize = 256;
+    COPTS_T.inlinemaxtotalsize = 10000;
+#else
     copts.inlinemaxsize = 256;
     copts.inlinemaxtotalsize = 10000;
+#endif
 
     GetWarningPrefs(&pWarningC);
 
@@ -364,7 +373,11 @@ static void initialize_compiler_options(CompilerLinkerParamBlk* params) {
 
     copts.optimizationlevel = pGlobalOptimizer.optimizationlevel;
     copts.optimizesize = (Boolean)(pGlobalOptimizer.optfor == 1);
+#if MWCC_CORE == MWCC_CORE_B233
+    COPTS_T.crippled = crippled;
+#else
     copts.crippled = crippled;
+#endif
     copts.unrollfactor = 8;
     copts.unknownF6 = 8;
     copts.unrollinstrfactor = 100;

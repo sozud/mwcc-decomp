@@ -270,10 +270,15 @@ extern "C" {
 #endif
 
 #pragma pack(push, 2)
+// 2.3.3: 0xA bytes, no tokenoffset (CParser_Setup memclrw(&cparser_fileoffset,
+// 0xA); CInline_PackIFunctionData copies 0xA and sets is_inline at +8;
+// CPrep_GetFileOffsetInfo 0x440C00 tracks and returns the line only)
 struct FileOffsetInfo {
     struct CPrepFileInfo* file;
     SInt32 tokenline;
+#if MWCC_CORE != MWCC_CORE_B233
     SInt32 tokenoffset;
+#endif
     Boolean is_inline;
 };
 

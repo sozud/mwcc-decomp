@@ -1,0 +1,7 @@
+*
+!include
+!src
+!tools/mwccpsp
+!tools/mwccps2/native_core.py
+!tools/mwccps2/b011126
+**/__pycache__

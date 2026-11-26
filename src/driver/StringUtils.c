@@ -71,7 +71,11 @@ char* mvprintf(char* mybuf, unsigned int len, const char* format, va_list va) {
 #if MWCCPSP
     OS_ASSERT(136, mybuf != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(135, mybuf != NULL);
+#else
     OS_ASSERT(134, mybuf != NULL);
+#endif
 #endif
 
     maxlen = len - 1;

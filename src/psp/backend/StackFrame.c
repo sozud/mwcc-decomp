@@ -95,11 +95,21 @@ extern void func_0048B5D0(MPCode** pc, int flag);
 extern void func_004584C0(CInt64* dst, SInt32 value); // CInt64_SetLong
 extern CInt64 func_00458340(CInt64 a, CInt64 b); // CInt64_Add
 
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+// b119 (0x499C30): the save areas are locals (b145 and b210 keep them in
+// data_00625018/data_006250AC, which func_004A46A0 resets per function)
+#define B119_SAVE_LOCALS 1
+#endif
+
 void func_0048F260(Object* func) {
     int i;
     MPCodeBlock* block;
     MPCode* pc;
     CInt64 delta;
+#if B119_SAVE_LOCALS
+    SInt32 data_00625018 = 0; // integer save area
+    SInt32 data_006250AC = 0; // floating-point save area
+#endif
 
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (getenv("MWCCPSP_TRACE")) {
@@ -155,9 +165,18 @@ void func_0048F260(Object* func) {
                 data_006250AC += 4;
             }
         }
+#if B119_SAVE_LOCALS
+        // b119: 8-byte aligned unless fp_library bit 1, then always to 16
+        // (even when no register is saved, which leaves 0)
+        if ((copts.fp_library & 1) && !(copts.fp_library & 2)) {
+            data_006250AC = (data_006250AC + 7) & ~7;
+        }
+        data_006250AC = (data_006250AC + 15) & ~15;
+#else
         if (data_006250AC) {
             data_006250AC = ALIGN_FRAME(data_006250AC);
         }
+#endif
     }
     data_00624DB0 += data_006250AC + data_00625018;
     if (data_00624DB0 != ALIGN_FRAME(data_00624DB0)) {
@@ -186,8 +205,10 @@ void func_0048F260(Object* func) {
     }
     if (!data_005F0BFC) {
         data_0062597C = 0;
+#if !B119_SAVE_LOCALS
         data_00625018 = 0;
         data_006250AC = 0;
+#endif
     }
 
     for (block = data_00624FD0; block; block = block->next) {

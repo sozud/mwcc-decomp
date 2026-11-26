@@ -666,10 +666,18 @@ static Boolean EvalExpr(
         LocationSetSet_Term(lss2);
         LocationSetSet_Delete(lss2);
     } else if (Int->type == IROLinearFunccall) {
+#if MWCC_CORE == MWCC_CORE_B233
+        IRO_ASSERT_MSG(1337, IRO_RETURNEDLOCS(Int) != NULL, "Int->u.Funccall.returnedLocs != NULL");
+#else
         IRO_ASSERT_MSG(
             1337, Int->u.funccall.returnedLocs != NULL, "Int->u.Funccall.returnedLocs != NULL"
         );
+#endif
+#if MWCC_CORE == MWCC_CORE_B233
+        LocationSetSet_AddSet(lss, IRO_RETURNEDLOCS(Int));
+#else
         LocationSetSet_AddSet(lss, Int->u.funccall.returnedLocs);
+#endif
     } else if (Int->type == IROLinearOp1Arg && Int->nodetype == EINDIRECT) {
         lss2 = LocationSetSet_New();
         LocationSetSet_Init(lss2);
@@ -1462,8 +1470,13 @@ static void StoreReturnedLocations(
     IRO_ASSERT(2309, map != NULL);
 
     retLoc = PartialTransferFunction_returnLocation(ptf);
+#if MWCC_CORE == MWCC_CORE_B233
+    if (!(retLocs = IRO_RETURNEDLOCS(nd))) {
+        retLocs = IRO_RETURNEDLOCS(nd) = LocationSetSet_New();
+#else
     if (!(retLocs = nd->u.funccall.returnedLocs)) {
         retLocs = nd->u.funccall.returnedLocs = LocationSetSet_New();
+#endif
         LocationSetSet_Init(retLocs);
     } else {
         LocationSetSet_RemoveAll(retLocs);
@@ -2041,9 +2054,15 @@ static Boolean GetActualLocsOfExtendedParam(
                 if (savedStride) {
                     IROLinear* d;
                     right = IRO_NewLinear(IROLinearFunccall);
+#if MWCC_CORE == MWCC_CORE_B233
+                    IRO_RETURNEDLOCS(right) = LocationSetSet_New();
+                    LocationSetSet_Init(IRO_RETURNEDLOCS(right));
+                    LocationSetSet_AddUnknown(IRO_RETURNEDLOCS(right), NULL, NULL, NULL);
+#else
                     right->u.funccall.returnedLocs = LocationSetSet_New();
                     LocationSetSet_Init(right->u.funccall.returnedLocs);
                     LocationSetSet_AddUnknown(right->u.funccall.returnedLocs, NULL, NULL, NULL);
+#endif
                     d = IRO_NewLinear(IROLinearOp2Arg);
                     d->index = ++IRO_NumLinear;
                     d->rtype = nd->rtype;
@@ -3061,13 +3080,21 @@ static PartialTransferFunction* AllocatePTF(
     PartialTransferFunction* newPTF;
 
     IRO_ASSERT(4211, proc != NULL);
+#if MWCC_CORE == MWCC_CORE_B233
+    IRO_ASSERT(4212, OBJ_PTFLIST(proc) != NULL);
+#else
     IRO_ASSERT(4212, proc->u.func.ptfList != NULL);
+#endif
     IRO_ASSERT(4213, nd == NULL || nd != NULL);
     IRO_ASSERT(4214, ptf == NULL || ptf != NULL);
 
     newPTF = PartialTransferFunction_New();
     PartialTransferFunction_Init(newPTF, nd, ptf);
+#if MWCC_CORE == MWCC_CORE_B233
+    PTFList_Add(OBJ_PTFLIST(proc), newPTF);
+#else
     PTFList_Add(proc->u.func.ptfList, newPTF);
+#endif
     return newPTF;
 }
 
@@ -3095,7 +3122,11 @@ static ObjectList* FunctionArguments(Object* proc) {
         for (list = arguments; list; list = list->next) {
             if ((obj = list->object) && obj->name && (name = obj->name->name) && name[0]) {
                 prev = NULL;
+#if MWCC_CORE == MWCC_CORE_B233
+                for (scan = OBJ_ARGLIST(proc); scan; scan = scan->next) {
+#else
                 for (scan = proc->u.func.argList; scan; scan = scan->next) {
+#endif
                     prev = scan;
                     if ((search = scan->object) && search->name && &search->name->name[0]) {
                         if (!strcmp(name, search->name->name)) {
@@ -3117,12 +3148,20 @@ static ObjectList* FunctionArguments(Object* proc) {
                     memset(search->u.var.info, 0, sizeof(VarInfo));
                     search->u.var.info->func = proc;
                 } else {
+#if MWCC_CORE == MWCC_CORE_B233
+                    ep = OBJ_EXTPARAM(search);
+#else
                     ep = search->extParam;
+#endif
                 }
 
                 vi = search->u.var.info;
                 memcpy(search, obj, sizeof(Object));
+#if MWCC_CORE == MWCC_CORE_B233
+                OBJ_EXTPARAM(search) = ep;
+#else
                 search->extParam = ep;
+#endif
                 search->u.var.info = vi;
                 search->u.var.realObj = obj;
 
@@ -3131,7 +3170,11 @@ static ObjectList* FunctionArguments(Object* proc) {
                     scan->next = NULL;
                     scan->object = search;
                     if (!prev) {
+#if MWCC_CORE == MWCC_CORE_B233
+                        OBJ_ARGLIST(proc) = scan;
+#else
                         proc->u.func.argList = scan;
+#endif
                     } else {
                         prev->next = scan;
                     }
@@ -3142,7 +3185,11 @@ static ObjectList* FunctionArguments(Object* proc) {
         for (args = TYPE_FUNC(proc->type)->args; args; args = args->next) {
             if (args->name && (name = args->name->name) && name[0]) {
                 prev = NULL;
+#if MWCC_CORE == MWCC_CORE_B233
+                for (scan = OBJ_ARGLIST(proc); scan; scan = scan->next) {
+#else
                 for (scan = proc->u.func.argList; scan; scan = scan->next) {
+#endif
                     prev = scan;
                     if ((search = scan->object) && search->name && &search->name->name[0]) {
                         if (!strcmp(name, search->name->name)) {
@@ -3159,7 +3206,11 @@ static ObjectList* FunctionArguments(Object* proc) {
                     search = IRO_malloc(sizeof(Object));
                     memset(search, 0, sizeof(Object));
                     search->datatype = DLOCAL;
+#if MWCC_CORE == MWCC_CORE_B233
+                    OBJ_EXTPARAM(search) = NULL;
+#else
                     search->extParam = NULL;
+#endif
                     search->name = GetHashNameNodeExport(name);
                     search->type = args->type;
                     search->qual = args->qual;
@@ -3171,7 +3222,11 @@ static ObjectList* FunctionArguments(Object* proc) {
                     scan->next = NULL;
                     scan->object = search;
                     if (!prev) {
+#if MWCC_CORE == MWCC_CORE_B233
+                        OBJ_ARGLIST(proc) = scan;
+#else
                         proc->u.func.argList = scan;
+#endif
                     } else {
                         prev->next = scan;
                     }
@@ -3180,7 +3235,11 @@ static ObjectList* FunctionArguments(Object* proc) {
         }
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    return OBJ_ARGLIST(proc);
+#else
     return proc->u.func.argList;
+#endif
 }
 
 static IRONode** FunctionNodeTable(Object* proc) {
@@ -4033,12 +4092,22 @@ static PartialTransferFunction* GetPTF(
         params.contextPTF = NULL;
         params.match = NULL;
 
+#if MWCC_CORE == MWCC_CORE_B233
+        if (!OBJ_PTFLIST(proc)) {
+            OBJ_PTFLIST(proc) = PTFList_New();
+            PTFList_Init(OBJ_PTFLIST(proc));
+#else
         if (!proc->u.func.ptfList) {
             proc->u.func.ptfList = PTFList_New();
             PTFList_Init(proc->u.func.ptfList);
+#endif
         }
 
+#if MWCC_CORE == MWCC_CORE_B233
+        PTFList_ForEach(OBJ_PTFLIST(proc), GetPTFAction, &params);
+#else
         PTFList_ForEach(proc->u.func.ptfList, GetPTFAction, &params);
+#endif
 
         result = params.match;
         if (result && !*needVisit) {
@@ -4658,8 +4727,13 @@ static void PointerAnalysis_TermAction2(Object* obj, void* refcon) {
             obj->u.var.info &&
             (proc = obj->u.var.info->func) &&
             ObjectIsAFunction(proc) &&
+#if MWCC_CORE == MWCC_CORE_B233
+            OBJ_ARGLIST(proc)) {
+            for (list = OBJ_ARGLIST(proc); list; list = list->next) {
+#else
             proc->u.func.argList) {
             for (list = proc->u.func.argList; list; list = list->next) {
+#endif
                 if (obj == list->object) {
                     break;
                 }
@@ -4936,7 +5010,11 @@ Boolean PointerAnalysis_TwoLinearNodePointerExprsMightAlias(
         pointsTo2 = pointsTo1;
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (COPTS_T.opt_pointer_analysis_mode == 2 && !is_typeequal(nd1->rtype, nd2->rtype)) {
+#else
     if (copts.opt_pointer_analysis_mode == 2 && !is_typeequal(nd1->rtype, nd2->rtype)) {
+#endif
         return FALSE;
     }
     if (!pointsTo1 || !pointsTo2) {
@@ -5009,7 +5087,11 @@ Boolean PointerAnalysis_TwoENodePointerExprsMightAlias(Object* proc, ENode* nd1,
         pointsTo2 = pointsTo1;
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (COPTS_T.opt_pointer_analysis_mode == 2 && !is_typeequal(nd1->rtype, nd2->rtype)) {
+#else
     if (copts.opt_pointer_analysis_mode == 2 && !is_typeequal(nd1->rtype, nd2->rtype)) {
+#endif
         return FALSE;
     }
     if (!pointsTo1 || !pointsTo2) {
@@ -5657,7 +5739,11 @@ static void DestroyFalseContext(
 
 static inline int NoPTF(Object* proc, PartialTransferFunction** ptf) {
     int fail = 1;
+#if MWCC_CORE == MWCC_CORE_B233
+    if (OBJ_PTFLIST(proc) && (*ptf = PTFList_FindFirst(OBJ_PTFLIST(proc)))) {
+#else
     if (proc->u.func.ptfList && (*ptf = PTFList_FindFirst(proc->u.func.ptfList))) {
+#endif
         fail = 0;
     }
     return fail;
@@ -5711,7 +5797,11 @@ void PointerAnalysis_GetFunctionKills(Object* proc, IROLinear* funccall, ObjectL
 
 static inline int NoPTFList(Object* proc) {
     int fail = 1;
+#if MWCC_CORE == MWCC_CORE_B233
+    if (OBJ_PTFLIST(proc) && PTFList_FindFirst(OBJ_PTFLIST(proc))) {
+#else
     if (proc->u.func.ptfList && PTFList_FindFirst(proc->u.func.ptfList)) {
+#endif
         fail = 0;
     }
     return fail;
@@ -5786,15 +5876,27 @@ void PointerAnalysis_PragmaMode(void) {
     if (notendofline()) {
         if (plex() == TK_IDENTIFIER) {
             if (!strcmp(tkidentifier->name, "addr")) {
+#if MWCC_CORE == MWCC_CORE_B233
+                COPTS_T.opt_pointer_analysis_mode = 0;
+#else
                 copts.opt_pointer_analysis_mode = 0;
+#endif
                 return;
             }
             if (!strcmp(tkidentifier->name, "ansi")) {
+#if MWCC_CORE == MWCC_CORE_B233
+                COPTS_T.opt_pointer_analysis_mode = 1;
+#else
                 copts.opt_pointer_analysis_mode = 1;
+#endif
                 return;
             }
             if (!strcmp(tkidentifier->name, "type")) {
+#if MWCC_CORE == MWCC_CORE_B233
+                COPTS_T.opt_pointer_analysis_mode = 2;
+#else
                 copts.opt_pointer_analysis_mode = 2;
+#endif
                 return;
             }
         }
@@ -5942,7 +6044,11 @@ static void ParseLocationSet(
                             obj = IRO_malloc(sizeof(Object));
                             memset(obj, 0, sizeof(Object));
                             obj->datatype = DLOCAL;
+#if MWCC_CORE == MWCC_CORE_B233
+                            OBJ_EXTPARAM(obj) = NULL;
+#else
                             obj->extParam = NULL;
+#endif
                             obj->name = CParser_GetUniqueName();
                             obj->type = (Type*)&stunsignedlong;
                             obj->qual = 0;
@@ -5962,7 +6068,11 @@ static void ParseLocationSet(
                             failed = TRUE;
                         }
                     } else {
+#if MWCC_CORE == MWCC_CORE_B233
+                        ep = OBJ_EXTPARAM(obj);
+#else
                         ep = obj->extParam;
+#endif
                         IRO_ASSERT(7678, ep != NULL);
                     }
 
@@ -6191,7 +6301,9 @@ static Object* GetFunctionObjectFromDeclInfo(DeclInfo* di) {
         Boolean isFirstDeclaration;
         proc = CDecl_GetFunctionObject(di, NULL, &isFirstDeclaration, TRUE);
         if (isFirstDeclaration) {
+#if MWCC_CORE != MWCC_CORE_B233
             di->firstDeclaration = TRUE;
+#endif
         }
     } else {
         proc = NULL;
@@ -6265,11 +6377,21 @@ void PointerAnalysis_ParseEntryPointsToSpecifier(DeclInfo* di) {
                     PointsToFunction* pointsToFunc;
                     PointsToEntry* pte;
 
+#if MWCC_CORE == MWCC_CORE_B233
+                    if (!OBJ_PTFLIST(proc)) {
+                        OBJ_PTFLIST(proc) = PTFList_New();
+                        PTFList_Init(OBJ_PTFLIST(proc));
+#else
                     if (!proc->u.func.ptfList) {
                         proc->u.func.ptfList = PTFList_New();
                         PTFList_Init(proc->u.func.ptfList);
+#endif
                     }
+#if MWCC_CORE == MWCC_CORE_B233
+                    ptf = PTFList_FindFirst(OBJ_PTFLIST(proc));
+#else
                     ptf = PTFList_FindFirst(proc->u.func.ptfList);
+#endif
                     if (!ptf) {
                         ptf = AllocatePTF(proc, NULL, NULL);
                     }
@@ -6355,11 +6477,21 @@ void PointerAnalysis_ParseExitPointsToSpecifier(DeclInfo* di) {
                     PointsToFunction* pointsToFunc;
                     PointsToEntry* pte;
 
+#if MWCC_CORE == MWCC_CORE_B233
+                    if (!OBJ_PTFLIST(proc)) {
+                        OBJ_PTFLIST(proc) = PTFList_New();
+                        PTFList_Init(OBJ_PTFLIST(proc));
+#else
                     if (!proc->u.func.ptfList) {
                         proc->u.func.ptfList = PTFList_New();
                         PTFList_Init(proc->u.func.ptfList);
+#endif
                     }
+#if MWCC_CORE == MWCC_CORE_B233
+                    ptf = PTFList_FindFirst(OBJ_PTFLIST(proc));
+#else
                     ptf = PTFList_FindFirst(proc->u.func.ptfList);
+#endif
                     if (!ptf) {
                         ptf = AllocatePTF(proc, NULL, NULL);
                     }
@@ -6409,11 +6541,21 @@ void PointerAnalysis_ParseFunctionModifiesSpecifier(DeclInfo* di) {
         LocationSetSet_Init(lss);
         ParseLocationSetSet(lss, NULL, proc, CREATE_NEW_PARAM_OBJECTS_FALSE, &failed);
         if (!failed) {
+#if MWCC_CORE == MWCC_CORE_B233
+            if (!OBJ_PTFLIST(proc)) {
+                OBJ_PTFLIST(proc) = PTFList_New();
+                PTFList_Init(OBJ_PTFLIST(proc));
+#else
             if (!proc->u.func.ptfList) {
                 proc->u.func.ptfList = PTFList_New();
                 PTFList_Init(proc->u.func.ptfList);
+#endif
             }
+#if MWCC_CORE == MWCC_CORE_B233
+            ptf = PTFList_FindFirst(OBJ_PTFLIST(proc));
+#else
             ptf = PTFList_FindFirst(proc->u.func.ptfList);
+#endif
             if (!ptf) {
                 ptf = AllocatePTF(proc, NULL, NULL);
             }
@@ -6427,3 +6569,13 @@ void PointerAnalysis_ParseFunctionModifiesSpecifier(DeclInfo* di) {
 }
 
 #pragma pack(2)
+
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3 has no pointer analysis and its Object no fields for it (0x30 bytes);
+// the pass is never enabled (no opt_pointer_analysis pragma), so reaching an
+// object's analysis fields is an internal error
+void* PA_NoObjectField(void) {
+    CError_FATAL(0);
+    return NULL;
+}
+#endif

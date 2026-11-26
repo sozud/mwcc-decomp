@@ -290,6 +290,8 @@ __declspec(noinline) // b210 calls it (func_0055D090)
 #endif
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 2 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -6 // b119 asserts
 IROLinear* func_005888B0(IRONaturalLoop* loop) {
     IROLinear* cond = loop->cond;
 
@@ -302,6 +304,8 @@ IROLinear* func_005888B0(IRONaturalLoop* loop) {
     CError_Internal("IroLoop.c", CError_B145_LINE(0x870));
     return NULL;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 

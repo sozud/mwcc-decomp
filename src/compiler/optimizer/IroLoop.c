@@ -1999,6 +1999,8 @@ static inline void StepDirection(
 // 0x588260: which way the loop's induction variable goes
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 2 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -6 // b119 asserts
 void func_00588260(IRONaturalLoop* loop) {
     IROLoopInd301* ind = (IROLoopInd301*)loop->induction;
     IROLinear* nd = ind->nd;
@@ -2082,6 +2084,8 @@ void func_00588260(IRONaturalLoop* loop) {
         CError_FATAL(2518);
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 
@@ -2150,6 +2154,8 @@ IROLinear* func_00588A10(IRONaturalLoop* loop, IROLoopInd301* ind) {
 // the step it compares against
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 2 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -6 // b119 asserts
 IROLinear* func_00588900(IRONaturalLoop* loop) {
     IROLinear* cond = loop->cond;
     IROLinear* result = NULL;
@@ -2185,6 +2191,8 @@ IROLinear* func_00588900(IRONaturalLoop* loop) {
     }
     return result;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 
@@ -2436,6 +2444,15 @@ IROLinear* func_00585DC0(IROLinear* a, ENodeType op, IROLinear* b, IROList* list
     IROLinear* nb;
     IROLinear* nd;
 
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+    // b119 (0x598590) builds no overflow conditions: its callers add and
+    // subtract with EADD/ESUB, and it folds only * / % + - (no comparisons)
+    if (op == EADDV) {
+        op = EADD;
+    } else if (op == ESUBV) {
+        op = ESUB;
+    }
+#endif
     if (a->rtype->type == TYPEPOINTER) {
         anyPtr = TRUE;
         ptrType = IRO_UnqualifiedType(a->rtype);
@@ -3570,6 +3587,8 @@ static inline IROLinear* VarOperand301(IROLinear* nd) {
 static inline Boolean IsSmallInt(Type* type) {
     return type->type == TYPEINT && TYPE_INTEGRAL(type)->integral < IT_17;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 // 0x587540: what the loop is: its test, counter, trip count and the
 // properties the loop transformations check (loop->flags)
@@ -3967,6 +3986,8 @@ void func_00587540(IRONaturalLoop* loop) {
     FreeElms(&loop->x30);
     FreeElms(&loop->x28);
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 // a jump out of node may not be retargeted (a computed goto, or asm with
 // labels)
@@ -4256,6 +4277,8 @@ IRONode* func_0058A5D0(IRONaturalLoop* loop) {
     return newnode;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -6 // b119 asserts
 // 0x58A430: the loop's preheader (made when *made is not set) and its last
 // linear in *at
 #if MWCC_CORE == MWCC_CORE_B52
@@ -4296,6 +4319,8 @@ void func_0058A430(
         *at = NULL;
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 // 0x589F20: the loop's one exit successor (made when it has other
 // predecessors) and its first linear after the labels
@@ -4338,6 +4363,8 @@ void func_00589F20(IRONaturalLoop* loop, IRONode** exitNode, IROLinear** at) {
     }
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -6 // b119 asserts
 // 0x58A240: the loop's test can be copied before it: nothing from the header
 // to the test's successor in the loop has a side effect
 #if MWCC_CORE == MWCC_CORE_B52
@@ -4826,6 +4853,8 @@ void func_005887B0(IRONaturalLoop* loop) {
     }
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -6 // b119 asserts
 // 0x58A4F0: the loop's predecessors outside it; TRUE if there is one
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
@@ -5908,13 +5937,19 @@ void IRO_FindLoops(void) {
             IncLoopDepth();
             IRO_Dump("IRO_FindLoops:Found loop with header %d\n", fnode->index);
             IRO_DumpBits("Loop includes: ", InLoop);
-            MyHandleLoop_Motion(fnode);
+#if MWCC_CORE == MWCC_CORE_B233
+            // 2.3.3's IRO_FindLoops (0x4CCF24) has one loop handler, without
+            // the memory motion (no "Loop Motion Candidate" in 2.3.3)
+            MyHandleLoop_Vector(fnode);
+#else
+                MyHandleLoop_Motion(fnode);
 #if MWCCPSP
-            IRO_UpdateFlagsOnInts(IRO_FirstLinear);
+                IRO_UpdateFlagsOnInts(IRO_FirstLinear);
 #else
                 IRO_UpdateFlagsOnInts();
 #endif
-            MyHandleLoop_Vector(fnode);
+                MyHandleLoop_Vector(fnode);
+#endif
             RemoveNoopsFromExprList();
 #if MWCCPSP
             IRO_UpdateFlagsOnInts(IRO_FirstLinear);
@@ -7326,8 +7361,10 @@ static void MoveInvarianceInAddressExpr(void) {
 #if MWCC_CORE == MWCC_CORE_B52
     ComputeLoopInvariance();
 #endif
+#elif MWCC_CORE == MWCC_CORE_B233
+        // 2.3.3 (0x4CE11B) stops after the last paste: flags not updated
 #else
-        IRO_UpdateFlagsOnInts();
+                    IRO_UpdateFlagsOnInts();
 #endif
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     ComputeLoopInvariance();

@@ -392,7 +392,7 @@ SInt32 BE_AssignColors(IGNode* node) {
 // Rewrite register operands of the current class to their colors, drop
 // moves that became no-ops, and record each variable's register.
 #if MWCCPS2
-#define COLOR_VU0OP(op) ((op) > 0x21E && (op) <= 0x2E7)
+#define COLOR_VU0OP(op) ((op) > PS2_OP(0x21E) && (op) <= PS2_OP(0x2E7))
 #endif
 void BE_ApplyColoring(void) {
     MPCodeBlock* block;
@@ -934,7 +934,11 @@ extern void func_004AFFD0(SInt32 keep, SInt32 gone);
 // Representative of a coalesced node.
 static SInt16 coalesce_find(SInt16 r) {
     if ((UInt32)r > data_00625A98[data_00625ECC]) {
+#if MWCC_CORE == MWCC_CORE_B011126
+        CError_Internal("InterferenceGraph.c", 396); // 011126 (0x4A6D8C)
+#else
         CError_FATAL(400);
+#endif
     }
     while (r != data_005F3DA8[r]) {
         r = data_005F3DA8[r];
@@ -972,7 +976,7 @@ SInt32 func_004B3B80(void) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             vu = pc->op > OPC(0x21E) && pc->op <= OPC(0x2E7);
 #else
-            vu = pc->op > 0x21E && pc->op <= 0x2E7;
+            vu = pc->op > PS2_OP(0x21E) && pc->op <= PS2_OP(0x2E7);
 #endif
             if (pc->args[vu ? 2 : 1].rclass != data_00625ECC) {
                 continue;
@@ -1172,9 +1176,16 @@ MPCode* func_004B8A00(SInt16 reg, IGNode* node) {
     PAIR_OFFSET(node, off);
 #endif
     op = func_0047FFD0(type);
+#if MWCC_CORE == MWCC_CORE_B011126
+    // 011126 (0x4B396B): with the VU0 registers, the real sqc2
+    if (copts.enable_vu0_registers && op == MACRO_OP(0x7F) && data_00625ECC == 5) {
+        op = 0x268;
+    }
+#else
     if (data_00625ECC == 5 && op == MACRO_OP(0x7F)) {
         op = MACRO_OP(0x80);
     }
+#endif
     pc = func_00480420(op, 3);
     pc->args[0].kind = 0;
     pc->args[0].rclass = data_00625ECC;
@@ -1214,9 +1225,16 @@ MPCode* func_004B8B00(SInt16 reg, IGNode* node) {
     PAIR_OFFSET(node, off);
 #endif
     op = func_0047FD20(type, &extra);
+#if MWCC_CORE == MWCC_CORE_B011126
+    // 011126 (0x4B3864): with the VU0 registers, the real lqc2
+    if (copts.enable_vu0_registers && op == MACRO_OP(0x5D) && data_00625ECC == 5) {
+        op = 0x263;
+    }
+#else
     if (op == MACRO_OP(0x5D) && data_00625ECC == 5) {
         op = MACRO_OP(0x5E);
     }
+#endif
     pc = func_00480420(op, 3);
     pc->args[0].kind = 0;
     pc->args[0].rclass = data_00625ECC;
@@ -1299,7 +1317,7 @@ Type* func_004B89D0(IGNode* node);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         int vu = pc->op > OPC(0x21E) && pc->op <= OPC(0x2E7);
 #else
-    int vu = pc->op > 0x21E && pc->op <= 0x2E7;
+    int vu = pc->op > PS2_OP(0x21E) && pc->op <= PS2_OP(0x2E7);
 #endif
         SInt16 src = pc->args[vu ? 2 : 1].reg;
         SInt16 dst = pc->args[vu ? 1 : 0].reg;

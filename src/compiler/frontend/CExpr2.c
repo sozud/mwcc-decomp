@@ -1115,6 +1115,23 @@ Boolean CExpr_IsOne(ENode* expr) {
 Boolean CExpr_AllBitsSet(ENode* expr) {
     SInt32 v;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x4BA2E0): sizes up to 2 compare the low 16 bits with 0xFFFF
+    // (a 1-byte 0xFF is not all ones), up to 4 the low word, else both
+    if (ENODE_IS(expr, EINTCONST)) {
+        if (expr->rtype->size <= 2) {
+            return (CInt64_GetULong(&expr->data.intval) & 0xFFFF) == 0xFFFF;
+        }
+        if ((SInt32)CInt64_GetULong(&expr->data.intval) != -1) {
+            return FALSE;
+        }
+        if (expr->rtype->size <= 4) {
+            return TRUE;
+        }
+        return (SInt32)expr->data.intval.hi == -1;
+    }
+    return FALSE;
+#endif
     if (ENODE_IS(expr, EINTCONST)) {
         switch (expr->rtype->size) {
             case 1:
@@ -1379,7 +1396,11 @@ void CExpr_ArithmeticConversion(ENode** left, ENode** right) {
 #if MWCCPSP
                 CError_ASSERT(1484, (*left)->rtype == TYPE(&stsignedlonglong));
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_ASSERT(735, (*left)->rtype == TYPE(&stsignedlonglong));
+#else
                 CError_ASSERT(838, (*left)->rtype == TYPE(&stsignedlonglong));
+#endif
 #endif
                 *left = promote(*left, TYPE(&stunsignedlonglong));
             }
@@ -1550,9 +1571,11 @@ Boolean CExpr_IsLValue(ENode* expr) {
     }
 
 #if MWCCPS2
+#if MWCCPS2_BUILD != 119 // b119 has no 0x800 flag test
     if (expr->flags & 0x800) {
         return TRUE;
     }
+#endif
     expr = expr->data.monadic;
     while (ENODE_IS(expr, ECOMMA)) {
         expr = expr->data.diadic.right;
@@ -1686,7 +1709,7 @@ loop:
             break;
         case EFUNCCALL:
             if ((IS_TYPE_CLASS(expr->rtype) || IS_TYPE_STRUCT(expr->rtype)) &&
-                !Type_RequiresMemoryReturn(expr->rtype)) {
+                !CEXPR_RESULT_IN_MEMORY(expr->rtype)) {
                 ENode* temp;
                 ENode* tempcopy;
 
@@ -1851,6 +1874,8 @@ static ENode* CExpr_ExpandArg(ENode* expr, Type* type) {
 #if MWCCPS2
 #undef CError_PS2_SHIFT
 #define CError_PS2_SHIFT (1951 - 1277) // mwccps2: 0x79F
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 // 3.0.1/b210 (0x537900): a Boolean; the constructor call's object argument
 // goes to *resultexpr
 Boolean CExpr_IsTempConstruction(ENode* expr, Type* type, ENode** resultexpr) {
@@ -1881,6 +1906,8 @@ Boolean CExpr_IsTempConstruction(ENode* expr, Type* type, ENode** resultexpr) {
     }
     return TRUE;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_PS2_SHIFT
 #define CError_PS2_SHIFT 0
 #else
@@ -1903,7 +1930,11 @@ ENode* CExpr_IsTempConstruction(ENode* expr, Type* type, ENode** resultexpr) {
         }
         if (CABI_GetStructResultArgumentIndex(expr->data.monadic->data.funccall.functype) == 1) {
             args = args->next;
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(1154, args);
+#else
             CError_ASSERT(1277, args);
+#endif
         }
     }
 
@@ -1970,6 +2001,8 @@ ENode* CExpr_AdjustFunctionCall(ENode* expr) {
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (673)
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 ENode* funccallexpr(Object* func, ENode* arg1, ENode* arg2, ENode* arg3, ENode* arg4) {
     ENode* expr;
     TypeFunc* tfunc;
@@ -1979,7 +2012,11 @@ ENode* funccallexpr(Object* func, ENode* arg1, ENode* arg2, ENode* arg3, ENode* 
 #if MWCCPSP
     CError_ASSERT(2085, IS_TYPE_FUNC(tfunc));
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(1288, IS_TYPE_FUNC(tfunc));
+#else
     CError_ASSERT(1411, IS_TYPE_FUNC(tfunc));
+#endif
 #endif
 
 #if MWCCPS2
@@ -2132,6 +2169,8 @@ static void CExpr_CalcStdAssign(
         }
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 void CExpr_MatchCV(Type* t1, UInt32 q1, Type* t2, UInt32 q2, ArgMatch* match) {
     Boolean check_cv;
@@ -2169,6 +2208,8 @@ void CExpr_MatchCV(Type* t1, UInt32 q1, Type* t2, UInt32 q2, ArgMatch* match) {
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (675)
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 Boolean CExpr_MatchAssign(Type* type, UInt32 qual, ENode* expr, ArgMatch* match) {
     switch (assign_check(expr, type, qual, FALSE, FALSE, TRUE)) {
         case CheckResult_NoMatch:
@@ -2195,7 +2236,11 @@ Boolean CExpr_MatchAssign(Type* type, UInt32 qual, ENode* expr, ArgMatch* match)
 #if MWCCPSP
             CError_FATAL(2261);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(1462);
+#else
             CError_FATAL(1585);
+#endif
 #endif
     }
 
@@ -2205,6 +2250,8 @@ Boolean CExpr_MatchAssign(Type* type, UInt32 qual, ENode* expr, ArgMatch* match)
 
     return TRUE;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
@@ -2249,6 +2296,8 @@ static short CExpr_StdMatchCompare(
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (675)
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static short CExpr2_MemberPointerConversion(Type* type, ENode* expr, Boolean doConvert) {
     ENode* newnode;
     short depth;
@@ -2408,6 +2457,8 @@ ENode* CExpr_ClassPointerCast(BClassList* cls, ENode* origexpr, Boolean nullchec
     }
     return expr;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 ENode* CExpr_GetClassAccessNode(
     BClassList* a, BClassList* b, ENode* expr, Object* obj, AccessType access, Boolean checkAccess
@@ -2469,6 +2520,8 @@ ENode* CExpr_GetClassAccessNode(
     return expr;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static short std_assign_check_overload(
     NameSpaceObjectList* list, TemplArg* templargs, Type* type, Boolean doConvert
 ) {
@@ -2570,6 +2623,8 @@ static short std_assign_check_overload(
         return CheckResult_NoMatch;
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 ENode* CExpr_ConvertToBool(ENode* expr, Boolean isExplicit) {
     if (IS_TYPE_MEMBERPOINTER(expr->rtype)) {
@@ -3036,6 +3091,8 @@ restart:
 }
 #endif
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 short user_assign_check(
     ENode* expr,
     Type* type,
@@ -3077,7 +3134,11 @@ short user_assign_check(
 #if MWCCPSP
     CError_ASSERT(3066, copts.old_argmatch);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(2378, COPTS_T.old_argmatch);
+#else
     CError_ASSERT(2378, copts.old_argmatch);
+#endif
 #endif
 
     memclrw(&stdmatch, sizeof(ComparisonValues));
@@ -3307,6 +3368,8 @@ short user_assign_check(
         return CheckResult_NoMatch;
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 ENode* CExpr_ConvertToCondition(ENode* expr) {
     switch (expr->rtype->type) {
@@ -3361,6 +3424,8 @@ ENode* CExpr_ConvertToIntegral(ENode* expr) {
     return nullnode();
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 void CExpr_CheckArithmConversion(ENode* expr, Type* type) {
     CInt64 val;
 
@@ -3375,7 +3440,11 @@ void CExpr_CheckArithmConversion(ENode* expr, Type* type) {
         if (IS_TYPE_FLOAT(type)) {
             return;
         }
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(2616, IS_TYPE_INT(type));
+#else
         CError_ASSERT(2772, IS_TYPE_INT(type));
+#endif
 
         if (type->size > expr->rtype->size) {
             return;
@@ -3480,6 +3549,8 @@ ENode* get_address_of_temp_copy(ENode* expr, Boolean copyConstant) {
         return result;
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 short assign_check(
     ENode* expr,
@@ -3748,7 +3819,15 @@ static void CExpr_MatchArgList(
     Boolean is_template;
     FuncMatchArgs fma;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (!COPTS_T.old_argmatch) {
+#else
+#if MWCC_CORE == MWCC_CORE_B233
+    if (!COPTS_T.old_argmatch) {
+#else
     if (!copts.old_argmatch) {
+#endif
+#endif
         CExpr_FuncArgMatch(
             CExpr_CopyNameSpaceObjectList(list), templargs, argexprs, match, expr, excludeExplicit
         );
@@ -3792,6 +3871,8 @@ static void CExpr_MatchArgList(
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (712)
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 ENode* CExpr_GetDefaultArgument(ENode* funcexpr, FuncArg* arg) {
     ENode* expr;
 
@@ -3861,6 +3942,8 @@ static ENode* CExpr_GenericCall(
     funcexpr->data.objref->flags |= OBJECT_USED;
     return CExpr_AdjustFunctionCall(callexpr);
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 #if MWCCPSP
 // 0x5253A0: 3.0.1 asks for an object of class tclass itself
@@ -3924,7 +4007,11 @@ static Boolean CExpr_IsStaticType(ENode* expr, TypeClass* tclass) {
 extern ENode* getpointertomemberfunc301(ENode* expr, Type* type, Boolean a, Boolean b, Boolean c);
 #endif
 ENode* CExpr_VarArgPromotion(ENode* expr, Boolean toEllipsis) {
+#if MWCC_CORE == MWCC_CORE_B233
+    if (!COPTS_T.old_argmatch) {
+#else
     if (!copts.old_argmatch) {
+#endif
         expr = pointer_generation(expr);
     }
 #if MWCCPSP
@@ -4193,6 +4280,8 @@ ENode* CExpr_GenericPtmfCall(Object* obj, TypeFunc* tfunc, ENodeList* arg_exprs)
 }
 
 #if MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 // 0x524660: a call through a pointer to member function (call_ptmf without
 // the parsing): the member function pointer and the object go first
 ENode* func_00524660(ENode* funcexpr, ENodeList* args) {
@@ -4221,6 +4310,8 @@ ENode* func_00524660(ENode* funcexpr, ENodeList* args) {
         callobj, TYPE_FUNC(TPTR_TARGET(funcexpr->data.mfpointer.mfpointer->rtype)), first
     );
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #endif
 #if MWCCPSP
 
@@ -4275,6 +4366,8 @@ extern ENode* func_004E2210(
     TypeClass* tclass, TypeClass* memberclass, Object* func, Boolean qualified
 ); // SOM method reference
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 // 0x524910: a call of `func` (or of the function an overload match picks
 // from the access's list): `this` argument, access checks, promotion
 ENode* CExpr_GenericFuncCall301(
@@ -4475,6 +4568,8 @@ promote:
     }
     return CExpr_GenericCall(funcref, args, tfunc, arg);
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 #pragma auto_inline off
 // 0x524640: a call's value (references dereferenced), after `pre`
@@ -4501,6 +4596,8 @@ static ENode* CExpr_CallResult301(ENode* expr, ENode* pre) {
 }
 #pragma auto_inline reset
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 // 0x524050: funcexpr(args)
 ENode* CExpr_MakeFunctionCall(ENode* funcexpr, ENodeList* arg_exprs) {
     EObjAccess acc;
@@ -4681,6 +4778,8 @@ ENode* CExpr_MakeFunctionCall(ENode* funcexpr, ENodeList* arg_exprs) {
     result->data.funccall.functype = tfunc;
     return CExpr_CallResult301(CExpr_AdjustFunctionCall(result), NULL);
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #else
 ENode* CExpr_MakeFunctionCall(ENode* funcexpr, ENodeList* arg_exprs) {
     ENode* expr;
@@ -4881,7 +4980,11 @@ static Boolean accept_conversion_type(Type* type, short mode) {
 #if MWCCPSP
             CError_FATAL(4911);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(3728);
+#else
             CError_FATAL(3912);
+#endif
 #endif
             return FALSE;
     }
@@ -4950,6 +5053,8 @@ found_right:
     return TRUE;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static Boolean monadic_conversion_check(ENode* expr, short which, Conversion* conv) {
     ConversionIterator iter;
     Object* obj;
@@ -5107,7 +5212,11 @@ mode1:
 #if MWCCPSP
             CError_FATAL(5131);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(3948);
+#else
             CError_FATAL(4132);
+#endif
 #endif
             return FALSE;
     }
@@ -5287,6 +5396,8 @@ Boolean CExpr_CheckOperatorConversion(
     return TRUE;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 Boolean CExpr_CheckOperator(short token, ENode* left, ENode* right, Conversion* conv) {
     HashNameNode* name;
     NameResult pr;
@@ -5304,7 +5415,7 @@ Boolean CExpr_CheckOperator(short token, ENode* left, ENode* right, Conversion* 
     EObjAccess acc;
 #endif
 
-    if (!copts.old_argmatch) {
+    if (!COPTS_T.old_argmatch) {
 #if MWCCPS2 // b210 hands operator() to CExpr_OperatorMatch as well
         return CExpr_OperatorMatch(token, left, right, conv);
 #else
@@ -5538,6 +5649,8 @@ Boolean CExpr_CheckOperator(short token, ENode* left, ENode* right, Conversion* 
     conv->right = NULL;
     return TRUE;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 static inline int IS_FUNC_LIST(NameSpaceObjectList* list) {
     return list->object->otype == OT_OBJECT && IS_TYPE_FUNC(OBJECT(list->object)->type);
@@ -5547,6 +5660,8 @@ static inline Boolean IS_TEMPL_FUNC_LIST(NameSpaceObjectList* list) {
     return IS_FUNC_LIST(list) && (TYPE_FUNC(OBJECT(list->object)->type)->flags & FUNC_IS_TEMPL);
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 ENode* CExpr_ConstructObject(
     TypeClass* tclass,
     ENode* addr_expr,
@@ -5632,6 +5747,8 @@ ENode* CExpr_ConstructObject(
         return addr_expr;
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 static ENode* CExpr_DeleteFuncCall(Object* obj, ENode* arg, Type* type, Boolean include_size) {
     ENode* expr;
@@ -5677,6 +5794,8 @@ static ENode* CExpr_DeleteFuncCall(Object* obj, ENode* arg, Type* type, Boolean 
 #define CError_B52_SHIFT (976)
 #endif
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static ENode* CExpr_CopyPlacementNewArg(ENodeList* list) {
     switch (list->node->type) {
         case EINDIRECT:
@@ -5787,6 +5906,8 @@ static ENode* CExpr_PlacementDeleteCall(
 
     return result;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 static Type* scan_type_name(UInt32* qual) {
     DeclInfo di;
@@ -5835,6 +5956,8 @@ static UInt32 cv_qualifier_list(void) {
     return qual;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static void scan_new_declarator(DeclInfo* di, Boolean isFirst) {
     NameResult pr;
     SInt32 size;
@@ -5906,6 +6029,8 @@ static void scan_new_declarator(DeclInfo* di, Boolean isFirst) {
         }
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 static Type* scan_new_type_name(UInt32* qual) {
     DeclInfo di;
@@ -5919,6 +6044,8 @@ static Type* scan_new_type_name(UInt32* qual) {
     return di.thetype;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static ENode* CExpr_NewAlloc(Type* type, ENodeList* args, Boolean isGlobal, Boolean isArray) {
     NameSpaceObjectList* list;
     Object* obj;
@@ -6014,6 +6141,8 @@ static ENode* CExpr_NewExceptionSafeAlloc(
 
     return result;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
@@ -6045,6 +6174,8 @@ static ENode* CExpr_NewExceptionSafeInit(ENode* expr, ENode* tryexpr) {
 #define CError_B69_SHIFT 0
 #endif
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static ENode* CExpr_NewArray(Type* type, UInt32 qual, ENodeList* nodelist, Boolean isGlobal) {
     Type* tptr;
     Type* sizetype;
@@ -6176,6 +6307,8 @@ static ENode* CExpr_NewArray(Type* type, UInt32 qual, ENodeList* nodelist, Boole
     result->flags |= (qual & ENODE_FLAG_QUALS);
     return result;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 static ENode* CExpr_NewSimpleClass(TypeClass* tclass, ENode* expr, ENodeList* args) {
     ENode* precomp;
@@ -6402,6 +6535,8 @@ extern ENode* func_005201A0(
     Boolean isGlobal
 );
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts (inlined into func_0051FEE0)
 // a parenthesized type-id: new (T)
 static inline Type* CExpr_NewTypeId301(UInt32* qual, ENode** bound) {
     DeclInfo di;
@@ -6435,6 +6570,8 @@ static inline Type* CExpr_NewTypeName301(UInt32* qual, ENode** bound) {
     return di.thetype;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 // 0x51FEE0: new [(placement)] type [(initializer)]
 ENode* func_0051FEE0(Boolean isGlobal) {
     Boolean hasInit;
@@ -6491,6 +6628,8 @@ ENode* func_0051FEE0(Boolean isGlobal) {
 
     return func_005201A0(type, qual, bound, placement, init, hasInit, isGlobal);
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 #if MWCCPSP_NATIVE
 // native only, until 3.0.1's scan_new_declarator is written: 2.4.7's, with
@@ -6687,6 +6826,8 @@ static ENode* CExpr_DeleteArray(ENode* expr, Type* type, Boolean isGlobal) {
 }
 
 #if MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 // 0x51F530, the delete expression after its operand is parsed. Not 3.0.1's
 // code yet: 2.4.7's scandelete, which the native build runs
 ENode* func_0051F530(ENode* expr, Boolean isGlobal, Boolean is_array) {
@@ -6742,7 +6883,11 @@ ENode* scandelete(Boolean isGlobal) {
                 }
             }
             if (conv_type) {
+#if MWCC_CORE == MWCC_CORE_B233
+                if (!COPTS_T.old_argmatch) {
+#else
                 if (!copts.old_argmatch) {
+#endif
                     expr = CExpr_Convert(expr, conv_type, conv_qual, TRUE, TRUE);
                 } else {
                     if (user_assign_check(expr, conv_type, conv_qual, TRUE, FALSE, TRUE)) {
@@ -6883,5 +7028,7 @@ ENode* scandelete(Boolean isGlobal) {
         return result_expr;
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 #pragma pack(2)

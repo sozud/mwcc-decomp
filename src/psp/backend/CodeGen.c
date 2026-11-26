@@ -195,6 +195,14 @@ void CodeGen_GenerateFunction(Object* func, Boolean emitreturn, Boolean optimize
     Boolean opt;
 
     opt = FALSE;
+#if MWCC_CORE == MWCC_CORE_B233 && MWCCPSP_NATIVE
+    {
+        // the padloop pass walks the loops the loop-invariant pass found
+        // (2.3.3 searches none for it); none from an earlier function
+        extern struct Loop301* data_006258BC;
+        data_006258BC = NULL;
+    }
+#endif
     rettype = TYPE_FUNC(func->type)->functype;
     name = func_0049F6E0(func)->name;
     op = special ? MACRO_OP(0xA5) : MACRO_OP(0xA4);
@@ -261,11 +269,46 @@ void CodeGen_GenerateFunction(Object* func, Boolean emitreturn, Boolean optimize
         BE_DumpPCode(func_0049F6E0(func)->name, "AFTER CodeGen");
 #endif
     }
+#if MWCC_CORE == MWCC_CORE_B233
+    TRACE_PCODE("After code selection");
+#endif
 #if MWCCPS2 && MWCCPS2_BUILD < 198 // b145 always deletes unreachable blocks
     deleteunreachableblocks();
 #else
     if (!data_0062525C) {
         deleteunreachableblocks();
+    }
+#endif
+#if MWCC_CORE == MWCC_CORE_B233
+    {
+        // 2.3.3 (0x435895): the predecessor lists are made here, from the
+        // successors of the blocks left (its pcbranch links successors
+        // alone); ours, made with each edge, still name deleted blocks. The
+        // successor links themselves are threaded (as 0x493950 pushes them,
+        // block by block), so removing an edge still finds its entry
+        MPBlockLink* succ;
+        for (block = data_00624FD0; block; block = block->next) {
+            block->predecessors = NULL;
+        }
+        for (block = data_00624FD0; block; block = block->next) {
+            for (succ = block->successors; succ; succ = succ->next) {
+#if MWCCPSP_NATIVE
+                // an edge made more than once is that many links in 2.3.3
+                int k;
+                for (k = succ->flags >> 8; k > 0; k--) {
+                    MPBlockLink* e = lalloc(sizeof(MPBlockLink));
+                    memclrw(e, sizeof(MPBlockLink));
+                    e->from = block;
+                    e->block = succ->block;
+                    e->nextpred = succ->block->predecessors;
+                    succ->block->predecessors = e;
+                }
+                succ->flags &= 0xFF;
+#endif
+                succ->nextpred = succ->block->predecessors;
+                succ->block->predecessors = succ;
+            }
+        }
     }
 #endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -274,13 +317,18 @@ void CodeGen_GenerateFunction(Object* func, Boolean emitreturn, Boolean optimize
         DUMP("After coalesceregisters");
         pipeline1(func);
         DUMP("After pipeline1");
-#if MWCC_CORE == MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B233
+        // 2.3.3 (0x4358CC..0x4358EF) goes from pipeline1 to the peephole: no first CSE
+        {
+#elif MWCC_CORE == MWCC_CORE_B52
         if (optimize && copts.commonsubs && !special) {
 #else
         if (optimize && copts.commonsubs) {
 #endif
+#if MWCC_CORE != MWCC_CORE_B233
             BE_CSE(0);
             DUMP_CSE("After  first time CSE");
+#endif
 #else
     if (opt) {
         func_004AF700(func);
@@ -298,6 +346,9 @@ void CodeGen_GenerateFunction(Object* func, Boolean emitreturn, Boolean optimize
     if (optimize && copts.commonsubs && !special) {
 #else
     if (optimize && copts.commonsubs) {
+#endif
+#if MWCC_CORE == MWCC_CORE_B233
+        deleteunreachableblocks(); // 2.3.3 (0x435945)
 #endif
 #else
 
@@ -339,6 +390,16 @@ void CodeGen_GenerateFunction(Object* func, Boolean emitreturn, Boolean optimize
             func_004B3650();
         }
 
+#if MWCC_CORE == MWCC_CORE_B233
+        // 2.3.3 (0x4359C1..0x4359D5): an asm function is colored too unless
+        // macros are off, which also ends the register-pressure mode
+        // (data_0062482C) the scheduler of its blocks would otherwise use
+        if (special && !copts.nomacro) {
+            BE_ColorRegisters(func);
+            DUMP("After register");
+        }
+#endif
+
         if (!special) {
             if (copts.schedule && optimize) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -362,10 +423,13 @@ void CodeGen_GenerateFunction(Object* func, Boolean emitreturn, Boolean optimize
                     DUMP("After peepholeoptimizepcode [POST SCHEDULE]");
 #endif
                 }
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-                if (copts.peephole && optimize && copts.enable_vu0_registers) {
-                    BE_Peephole69(func);
-                    DUMP("Second time peephole");
+#if MWCC_CORE == MWCC_CORE_B233
+                // 2.3.3 (0x435A6C) goes from the scheduler to coloring
+                {
+#elif MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+    if (copts.peephole && optimize && copts.enable_vu0_registers) {
+        BE_Peephole69(func);
+        DUMP("Second time peephole");
 #else
     if (opt && copts.commonsubs) {
         BE_CSE(0);
@@ -382,8 +446,8 @@ void CodeGen_GenerateFunction(Object* func, Boolean emitreturn, Boolean optimize
         DUMP("After register");
         if (optimize && copts.commonsubs && !special) {
 #else
-        DUMP("After register coloring");
-        if (opt && copts.commonsubs) {
+    DUMP("After register coloring");
+    if (opt && copts.commonsubs) {
 #endif
             BE_CSE(1);
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
@@ -461,11 +525,18 @@ if (opt && copts.peephole && COPTS_FIELD(late_conditional_move, 0) && copts.mips
             ps2_dividefix_4C4910(func);
             DUMP("After dividefix operation");
         }
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3 (0x435D28..0x435D45) searches no loops for padloop
         if (copts.padloop) {
             ps2_padloop_636D5C = 0;
             func_0054AB90(0);
         }
+#endif
+#if MWCC_CORE == MWCC_CORE_B233
+        // 2.3.3 (0x435D28): at level 3 and up only, and no loop search reset
+        if (copts.padloop && copts.optimizationlevel >= 3 && !special) {
+#else
         if (copts.padloop && !special) {
+#endif
             ps2_padloop_4C2950(func);
         }
 #endif
@@ -1101,7 +1172,57 @@ badtoken:
 extern int ps2_pragma_align(void); // 0x4337A0
 extern int ps2_pragma_processor(void); // 0x433A30
 extern int ps2_pragma_maxtempforblkmv(void); // 0x433D30
+#if MWCC_CORE == MWCC_CORE_B011126
+extern void PPCError_Warning(int code, ...);
+extern SInt16 notendofline(void);
+extern void skipendofline(void);
+
+// 011126 (0x437E80): #pragma vu0_register_number n (0..32) | reset. n sets the
+// VU0 register count and turns the VU0 registers on, with a warning below 5;
+// reset is 32 (and on). The original's return value is whatever its last call
+// left; here 1 after a number of 5 or more (func_004621F0's count), 0 otherwise
+// (reset returns strcmp's 0, so CodeGen_ParsePragma warns as for a bad pragma)
+int ps2_pragma_vu0regnumber(void) {
+    SInt16 t;
+    SInt32 n;
+
+    if (!notendofline()) {
+        if (copts.warn_illpragma) {
+            CPrep_Warning(0xBA);
+        }
+        skipendofline();
+        return 0;
+    }
+    t = plex();
+    if (t == TK_INTCONST) {
+        n = CInt64_GetULong(&tkintconst);
+        if (n < 0 || n > 32) {
+            CPrep_Error(0x9A);
+            skipendofline();
+            return 0;
+        }
+        copts.vu0_register_number = n;
+        copts.enable_vu0_registers = TRUE;
+        func_004621F0();
+        if (n < 5) {
+            // the warning's return value (0): CodeGen_ParsePragma warns as well
+            PPCError_Warning(0x6A, n);
+            return 0;
+        }
+        return 1;
+    }
+    if (t == TK_IDENTIFIER && !strcmp(tkidentifier->name, "reset")) {
+        copts.vu0_register_number = 0x20;
+        copts.enable_vu0_registers = TRUE;
+        return 0;
+    }
+    CPrep_Error(0x69);
+    skipendofline();
+    return 0;
+}
+#else
 extern int ps2_pragma_vu0regnumber(void); // 0x4336D0
+#endif
 extern int ps2_pragma_vu0maxusednvreg(void); // 0x433660
 extern int ps2_pragma_section(void); // 0x433DC0
 extern int ps2_pragma_definesection(void); // 0x4338D0
@@ -1195,8 +1316,10 @@ extern int ps2_pragma_definesection(void); // 0x4338D0
         if (copts.warn_illpragma) {
 #if MWCC_CORE == MWCC_CORE_B52
             CError_Warning(0x57);
+#elif MWCC_CORE == MWCC_CORE_B011126
+            CError_Warning(0xBA); // 011126 (0x43805B): "illegal #pragma" in its numbering
 #else
-            CPrep_Warning(0x57);
+        CPrep_Warning(0x57);
 #endif
         }
         do {
@@ -1253,6 +1376,8 @@ extern int ps2_pragma_definesection(void); // 0x4338D0
 #endif
 #undef CError_B198_SHIFT
 #define CError_B198_SHIFT -9
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -8 // b119 asserts
     void CodeGen_UpdateObject(Object * obj) {
 #if MWCCPS2
         // b210 (0x433EF0): a data object in a register takes over the entry
@@ -1268,7 +1393,11 @@ extern int ps2_pragma_definesection(void); // 0x4338D0
             VarInfo* other;
 
             node = ps2_objgen_636288;
+#if MWCC_CORE == MWCC_CORE_B233
+            vi = OBJ_DATA_INFO(obj);
+#else
             vi = obj->u.data.info;
+#endif
             for (; node; node = node->next) {
                 other = node->info;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -1319,13 +1448,13 @@ extern int ps2_pragma_definesection(void); // 0x4338D0
                 case 0x80:
                     obj->qual |= Q_ALIGNED_128;
                     break;
-                case 0x100:
+                case 0x100: // alignment, not an opcode
                     obj->qual |= Q_ALIGNED_256;
                     break;
-                case 0x200:
+                case 0x200: // not an opcode
                     obj->qual |= Q_ALIGNED_512;
                     break;
-                case 0x400:
+                case 0x400: // not an opcode
                     obj->qual |= Q_ALIGNED_1024;
                     break;
                 case 0x800:
@@ -1354,6 +1483,8 @@ extern int ps2_pragma_definesection(void); // 0x4338D0
 #define CError_B198_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
     // The target's predefined macros; their values are computed when expanded
     // (CPrep). The Macro records are this unit's statics.
@@ -1442,6 +1573,8 @@ extern int ps2_pragma_definesection(void); // 0x4338D0
         CPrep_InsertSpecialMacro(&mATTRIBUTE_IMPURE_PTRM, "__ATTRIBUTE_IMPURE_PTR__");
     }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 7 // b119 asserts
     static void func_00436DA0(
         Object * func, MPCode * pc, ObjCodeReloc * *head, ObjCodeReloc * *tail
     ) {
@@ -1500,6 +1633,8 @@ extern int ps2_pragma_definesection(void); // 0x4338D0
             pc->pair->unk38 = 0;
         }
     }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
     // Collect the function's relocations: the %lo ones last, each after its %hi.
     void func_00436D00(Object * func) {
@@ -1550,9 +1685,9 @@ extern int ps2_pragma_definesection(void); // 0x4338D0
 
     void func_00434E50(Boolean on) {
         if (on) {
-            data_00625AD0 = 0x3E5;
-            data_00625B58 = 0x3E4;
-            data_00625E48 = 0x3DF;
+            data_00625AD0 = PS2_OP(0x3E5);
+            data_00625B58 = PS2_OP(0x3E4);
+            data_00625E48 = PS2_OP(0x3DF);
             data_00624778 = 1;
         } else {
             data_00625AD0 = MACRO_OP(0x82);
@@ -1563,6 +1698,12 @@ extern int ps2_pragma_definesection(void); // 0x4338D0
 
     // 128-bit integers can only appear as constants.
     ENode* CodeGen_CheckExpr(ENode * expr) {
+#if MWCC_CORE == MWCC_CORE_B233
+        // 2.3.3 has no such check: CExpr_New_ENOTEQU_Node (0x4749A0) goes from
+        // the comparison straight to logicalexpression, and nothing in 2.3.3
+        // raises error 0x39 (dotr's __int128 comparisons compile)
+        return expr;
+#endif
         if (expr) {
 #if MWCCPS2
             if (expr->type == EASS || expr->type == ETYPCON || expr->type == EINTCONST) {
@@ -1715,6 +1856,23 @@ extern int __stdcall func_004162B0(
         copts.mips_option10 = 0;
         copts.mips_option0F = 1;
         copts.gcc_extensions = 1;
+#if MWCC_CORE == MWCC_CORE_B233 || MWCC_CORE == MWCC_CORE_B011126
+        // 2.3.3 (0x436745), 011126 (0x436C09): only when not optimizing for size (-O2 is -O2,s)
+        if (!copts.optimizesize) {
+            copts.padloop = 1;
+            copts.dividefix = 1;
+        }
+#if MWCC_CORE == MWCC_CORE_B233
+        // 2.3.3 has no fastmath/fast_fptosi: sqrtf is a call, float to int calls fptosi/fptoui
+        COPTS_T.fastmath = 0;
+        COPTS_T.enable_vu0_registers = 0;
+        COPTS_T.vu0_register_number = 0x20;
+#else
+        // 011126 leaves fastmath as initialize_compiler_options cleared it
+        copts.enable_vu0_registers = 0;
+        copts.vu0_register_number = 0x20;
+#endif
+#else
         copts.padloop = 1;
         copts.dividefix = 1;
         copts.fastmath = 1;
@@ -1724,6 +1882,7 @@ extern int __stdcall func_004162B0(
         copts.enable_vu0_registers = 1;
 #endif
         copts.vu0_register_number = 0x20;
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         COPTS_X.function_align16 = 0x19; // copts+0x48
         COPTS_X.mips_option43 = 0; // copts+0x47
@@ -1734,7 +1893,9 @@ extern int __stdcall func_004162B0(
         copts.function_align16 = 0x19; // copts+0x48
         copts.mips_option43 = 0; // copts+0x47
         copts.cse_hard_reg_vu0 = 0;
+#if COPTS_B145_FIELDS
         copts.cse_vector_type = 0;
+#endif
         copts.volatileasm = 0;
 #endif
 
@@ -1759,6 +1920,12 @@ extern int __stdcall func_004162B0(
             copts.mips_option17 = 1;
         }
         copts.cats = 1;
+#if MWCCPS2_BUILD == 119
+        {
+            extern SInt32 data_0062421C;
+            data_0062421C = 8; // b119 only
+        }
+#endif
         data_00625CE0 = MACRO_OP(0x5F);
         data_00625E4A = MACRO_OP(0x5F);
         data_00625E4E = MACRO_OP(0x3A);
@@ -1821,7 +1988,12 @@ void func_00434F30(void) {
     copts.gcc_extensions = 1;
     copts.mips_option3D = 1;
     copts.mips_option3B = 1;
+#if MWCC_CORE == \
+    MWCC_CORE_B233 // 2.3.3 has no fastmath/fast_fptosi: sqrtf is a call, float to int calls fptosi/fptoui
+    COPTS_T.fastmath = 0;
+#else
     copts.fastmath = 1;
+#endif
     copts.mips_option41 = 0;
     copts.mips_option43 = 0x20;
     copts.volatileasm = 1;
@@ -1878,6 +2050,8 @@ void func_00434F30(void) {
 #define CError_B145_SHIFT -10 // b145 asserts
 #undef CError_B198_SHIFT
 #define CError_B198_SHIFT -2
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 4 // b119 asserts
     inline char panel_fp_library(void) {
         switch (data_005B0A78.fpu) {
             case 0:
@@ -1897,12 +2071,16 @@ void func_00434F30(void) {
 #define CError_B198_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 // Set the ISA, FPU and code generation options for the selected processor.
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -21 // b145 asserts
 #undef CError_B198_SHIFT
 #define CError_B198_SHIFT -2
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 2 // b119 asserts
     void func_00435300(void) {
         SInt16 processor;
 
@@ -2002,8 +2180,8 @@ void func_00434F30(void) {
                 copts.mips_isa = 4;
                 copts.gencvtcheck = 1;
                 copts.mips_option2F = 1;
-                data_00625CE0 = 0x187;
-                data_00625E4A = 0x188;
+                data_00625CE0 = PS2_OP(0x187);
+                data_00625E4A = PS2_OP(0x188);
                 break;
             case 4:
             case 5:
@@ -2025,7 +2203,7 @@ void func_00434F30(void) {
             case 13:
                 copts.mips_flags02 |= 0x2000;
                 copts.fp_library = 1;
-                data_00625CE0 = 0x176;
+                data_00625CE0 = PS2_OP(0x176);
                 copts.no_load_delay_nops = 1;
                 copts.mips_isa = 3;
                 copts.floatsp32 = 1;
@@ -2041,7 +2219,7 @@ void func_00434F30(void) {
                 break;
             case 14:
                 copts.mips_flags02 |= 0x2000;
-                data_00625CE0 = 0x176;
+                data_00625CE0 = PS2_OP(0x176);
                 copts.mips_isa = 2;
                 copts.no_load_delay_nops = 1;
                 copts.fp_library = 0;
@@ -2061,12 +2239,12 @@ void func_00434F30(void) {
                 copts.mips_flags02 |= 0x2000;
                 copts.fp_library = 0;
                 copts.no_load_delay_nops = 1;
-                data_00625CE0 = 0x17E;
-                data_00625E4A = 0x17F;
-                data_00625E4E = 0x180;
-                data_00625E72 = 0x181;
-                data_00625E42 = 0x184;
-                data_00625E54 = 0x182;
+                data_00625CE0 = PS2_OP(0x17E);
+                data_00625E4A = PS2_OP(0x17F);
+                data_00625E4E = PS2_OP(0x180);
+                data_00625E72 = PS2_OP(0x181);
+                data_00625E42 = PS2_OP(0x184);
+                data_00625E54 = PS2_OP(0x182);
                 copts.mips_isa = 3;
                 break;
             case 27:
@@ -2074,7 +2252,7 @@ void func_00434F30(void) {
                 copts.fp_library = 7;
                 copts.trunc = 1;
                 copts.no_load_delay_nops = 1;
-                data_00625CE0 = 0x2EC;
+                data_00625CE0 = PS2_OP(0x2EC);
                 copts.mips_isa = 3;
                 break;
             case 28:
@@ -2085,10 +2263,10 @@ void func_00434F30(void) {
                 data_00625318 = 1;
                 copts.fp_library = 0;
                 copts.mips_option16 = 1;
-                data_00625AD0 = 0x3E5;
-                data_00625B58 = 0x3E4;
+                data_00625AD0 = PS2_OP(0x3E5);
+                data_00625B58 = PS2_OP(0x3E4);
 #if MWCCPS2
-                data_00625E48 = 0x3DF;
+                data_00625E48 = PS2_OP(0x3DF);
 #endif
                 break;
             case 29:
@@ -2115,11 +2293,15 @@ void func_00434F30(void) {
 #else
             copts.mips_option3C = 1;
 #endif
-                data_00625CE0 = 0x1DB;
-                data_00625E4A = 0x1DC;
-                data_00625E74 = 0x1CC;
-#if MWCCPS2
-                data_00625E48 = 0xAB;
+                data_00625CE0 = PS2_OP(0x1DB);
+                data_00625E4A = PS2_OP(0x1DC);
+                data_00625E74 = PS2_OP(0x1CC);
+#if MWCC_CORE == MWCC_CORE_B233
+                // 2.3.3 (0x4363A0): the default move is qmove (paddub d,s,zero),
+                // [0x557C9C] = 2.3.3's qmove
+                data_00625E48 = PS2_OP(0x1CC);
+#elif MWCCPS2
+            data_00625E48 = 0xAB;
 #endif
                 break;
             case 24:
@@ -2134,7 +2316,7 @@ void func_00434F30(void) {
                 copts.mips_option2F = 1;
                 copts.sqrt = 1;
                 copts.mips_option23 = 1;
-                data_00625CE0 = 0x17B;
+                data_00625CE0 = PS2_OP(0x17B);
                 break;
             default:
                 if (processor == 0x1000) {
@@ -2179,7 +2361,7 @@ void func_00434F30(void) {
         data_00625E40 = MACRO_OP(0x4A);
         data_00625E4C = MACRO_OP(0x6F);
         data_00625E52 = 0x93;
-        data_00625E5C = 0xC4;
+        data_00625E5C = PS2_OP(0xC4);
         if (data_00625E48 == 0) {
             data_00625E48 = 0xAB;
         }
@@ -2190,7 +2372,7 @@ void func_00434F30(void) {
     data_00625E40 = MACRO_OP(0x55);
     data_00625E4C = MACRO_OP(0x77);
     data_00625E52 = 0x9D;
-    data_00625E5C = 0xCB;
+    data_00625E5C = PS2_OP(0xCB);
     data_00625E48 = 0xAA;
 #endif
         func_0046FFB0();
@@ -2198,6 +2380,8 @@ void func_00434F30(void) {
     }
 #undef CError_B198_SHIFT
 #define CError_B198_SHIFT 0
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 
@@ -2802,16 +2986,20 @@ void CodeGen_Generator(
                     if (!stmt->next || (stmt->next && stmt->next->type != 16)) {
                         data_00625FCF = 0;
                     }
-#if MWCC_CORE == MWCC_CORE_B52
-                    // b52 (0x4382DE): a following non-asm statement starts a new
-                    // block when the asm left this one noreorder-like (0x4000); the
-                    // asm block keeps its flags
-                    if (stmt->next && stmt->next->type != 16 && (data_006246B4->flags2E & 0x4000)) {
+#if MWCC_CORE == MWCC_CORE_B011126
+                    // 011126 (0x43716C): a following expression statement starts a new block
+                    if (stmt->next && stmt->next->type == ST_EXPRESSION) {
                         func_0046FA50();
+#elif MWCC_CORE == MWCC_CORE_B52
+                // b52 (0x4382DE): a following non-asm statement starts a new
+                // block when the asm left this one noreorder-like (0x4000); the
+                // asm block keeps its flags
+                if (stmt->next && stmt->next->type != 16 && (data_006246B4->flags2E & 0x4000)) {
+                    func_0046FA50();
 #else
-                if (stmt->next && stmt->next->type != 16 && stmt->next->type != ST_LABEL) {
-                    data_006246B4->flags2E = 0;
-                    data_00625E56 = 0;
+            if (stmt->next && stmt->next->type != 16 && stmt->next->type != ST_LABEL) {
+                data_006246B4->flags2E = 0;
+                data_00625E56 = 0;
 #endif
                     }
                     break;
@@ -2825,8 +3013,14 @@ void CodeGen_Generator(
                         label->pclabel = (struct PCodeLabel*)makepclabel();
                     }
                     if (!((MPCodeLabel*)label->pclabel)->resolved) {
-                        func_0046FA90((MPCodeLabel*)label->pclabel);
+#if MWCC_CORE == MWCC_CORE_B233
+                        // 2.3.3 (0x434CF0): the alignment goes in the block before the label
                         func_00490370();
+                        func_0046FA90((MPCodeLabel*)label->pclabel);
+#else
+                    func_0046FA90((MPCodeLabel*)label->pclabel);
+                    func_00490370();
+#endif
                         data_00625E7E = 1;
                     }
                     for (list = data_005E8B94; list; list = list->next) {
@@ -2960,8 +3154,14 @@ gotlast:
                 label->pclabel = (struct PCodeLabel*)makepclabel();
             }
             if (!((MPCodeLabel*)label->pclabel)->resolved) {
+#if MWCC_CORE == MWCC_CORE_B233
+                // 2.3.3 (0x434CF0): the alignment goes in the block before the label
+                func_00490370();
+                func_0046FA90((MPCodeLabel*)label->pclabel);
+#else
                 func_0046FA90((MPCodeLabel*)label->pclabel);
                 func_00490370();
+#endif
                 data_00625E7E = 1;
             }
             for (list = data_005E8B94; list; list = list->next) {
@@ -3104,7 +3304,7 @@ skipped:;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xBF), reg, 0, value); // ori
 #else
-                emitpcode(0xBF, reg, 0, value); // ori
+                emitpcode(PS2_OP(0xBF), reg, 0, value); // ori
 #endif
             } else if (value & 0xFFFF) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -3112,7 +3312,7 @@ skipped:;
                 emitpcode(OPC(0xBF), reg, reg, value & 0xFFFF);
 #else
                 emitpcode(0x90, reg, (UInt16)(value >> 16)); // lui
-                emitpcode(0xBF, reg, reg, value & 0xFFFF);
+                emitpcode(PS2_OP(0xBF), reg, reg, value & 0xFFFF);
 #endif
             } else {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -3127,6 +3327,8 @@ skipped:;
     }
 #endif
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -9 // b119 asserts
 // 0x433FB0: a thunk that adjusts this (through the vtable when ctoroffset
 // is not negative) and jumps to func; the adjustment goes in the delay slot
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -3238,6 +3440,8 @@ skipped:;
         appendpcode(data_006246B4, jump);
         CodeGen_GenerateFunction(thunkobj, 0, 0, 1);
     }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 // Note the registers that carry the function's result, and $sp.
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -3308,10 +3512,12 @@ skipped:;
 #endif
                 break;
             default:
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_FATAL(2389);
+#elif MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 CError_FATAL(2390);
 #else
-                CError_FATAL(2364);
+            CError_FATAL(2364);
 #endif
         }
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
@@ -3340,6 +3546,42 @@ skipped:;
 
     // How a value of this type is returned: 0 nothing, 1 in memory, 2 in $v0,
     // 3 in $v0/$v1, 4 in $f0.
+#if MWCC_CORE == MWCC_CORE_B011126
+    // 011126 0x499140: a class without a vtable whose only member is a 128-bit
+    // integer (no counterpart in b69)
+    static Boolean b011126_IsQuadwordClass(Type * type) {
+        ObjMemberVar* ivar;
+        if (!type) {
+            return 0;
+        }
+        if (type->type == TYPECLASS && !TYPE_CLASS(type)->vtable) {
+            ivar = TYPE_CLASS(type)->ivars;
+            if (ivar && !ivar->next && ivar->type->type == TYPEINT && ivar->type->size == 16) {
+                return 1;
+            }
+        }
+        return 0;
+    }
+#endif
+
+#if MWCC_CORE == MWCC_CORE_B011126
+    // 011126 0x57AB9C (psp/BE.h)
+    B011126QuadLocal* b011126_quadlocals;
+
+    // 011126 0x499360: the VU0 register func_00438160 gave a listed object, or 0
+    SInt16 b011126_QuadLocalReg(Object * obj) {
+        B011126QuadLocal* q;
+        if (obj) {
+            for (q = b011126_quadlocals; q; q = q->next) {
+                if (q->obj && q->obj == obj && q->vi->reg) {
+                    return q->vi->reg;
+                }
+            }
+        }
+        return 0;
+    }
+#endif
+
     UInt8 func_00436B30(Type * type) {
         if (!type) {
             return 0;
@@ -3357,15 +3599,22 @@ skipped:;
             return 4;
         }
         if (type->type == TYPEMEMBERPOINTER && type->size == 4) {
-#if MWCC_CORE != MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126
             if (func_00464EE0(type)) {
                 return 1;
             }
 #endif
             return 2;
         }
+#if MWCC_CORE == MWCC_CORE_B011126
+        // 011126 (0x435936): a quadword class is returned in a register when optimizing with VU0
+        // registers; no func_00464EE0 tests
+        if (b011126_IsQuadwordClass(type) && data_00625350 && copts.enable_vu0_registers) {
+            return 2;
+        }
+#endif
         if (copts.mips_long64 && (type->type == TYPESTRUCT || type->type == TYPECLASS)) {
-#if MWCC_CORE != MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126
             if (func_00464EE0(type)) {
                 return 1;
             }
@@ -3413,6 +3662,8 @@ skipped:;
 #define CError_B145_SHIFT 5 // b145 asserts
 #undef CError_B198_SHIFT
 #define CError_B198_SHIFT 6
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -6 // b119 asserts
     void func_00436F90(ENode * expr, Boolean islast) {
         Type* type;
         UInt16 opcode;
@@ -3460,6 +3711,30 @@ skipped:;
                 if (op.kind) {
                     func_004A64C0(&op, type, 0);
                 }
+#if MWCC_CORE == MWCC_CORE_B011126
+                // 011126 (0x4353CB): a VU0 register (kind 5) or a listed quadword object
+                // (kind 6) is returned with qmfc2 (011126/b69 0x23B, the tree's 0x264)
+                if (op.kind == 0) {
+                    opcode = ((type->type == TYPEINT || type->type == TYPEENUM) && type->size == 16)
+                        ? data_00625E74
+                        : data_00625E48;
+                    func_0047FC80(op, opcode, 0, 0);
+                } else if (op.kind == 5) {
+                    func_0047FC80(op, 0x264, 0, 0);
+                } else if (op.kind == 6) {
+                    if (op.object) {
+                        if (b011126_QuadLocalReg((Object*)op.object)) {
+                            op.reg = b011126_QuadLocalReg((Object*)op.object);
+                            func_0047FC80(op, 0x264, 0, 0);
+                        } else {
+                            func_0047FC80(op, data_00625E74, 0, 0);
+                        }
+                    }
+                } else {
+                    CError_FATAL(2052);
+                }
+                goto returned;
+#endif
 #if MWCCPS2 // b210 (0x437090): one 64-bit register, never a pair
                 pair = FALSE;
 #else
@@ -3479,6 +3754,9 @@ skipped:;
             } else if (kind != 1) {
                 CError_FATAL(1960);
             }
+#if MWCC_CORE == MWCC_CORE_B011126
+returned:;
+#endif
         } else if (copts.mips_option01) {
             func_004A4A20(rt_profile_e);
         }
@@ -3496,6 +3774,8 @@ skipped:;
     }
 #undef CError_B198_SHIFT
 #define CError_B198_SHIFT 0
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 
@@ -4112,7 +4392,12 @@ void func_00437C90(Object* obj, SInt16 reg, Boolean isint) {
         obj->datatype = DLOCAL;
         Registers_GetVarInfo(obj)->flags |= 1;
         OBJECT_FRAMEOFFSET(obj) = offset;
-        data_00624FCC += ALIGN_UP(obj->type->size, 16);
+#if MWCC_CORE == MWCC_CORE_B233
+        data_00624FCC +=
+            ALIGN_UP(obj->type->size, data_00624788); // 2.3.3 (0x4342AA): word-size slots
+#else
+                    data_00624FCC += ALIGN_UP(obj->type->size, 16);
+#endif
     }
 }
 
@@ -4492,6 +4777,30 @@ void func_004383C0(Object* obj, SInt16 reg, Boolean isint) {
     }
 }
 
+#if MWCC_CORE == MWCC_CORE_B011126
+// 011126 0x4991E0: a pointer to a quadword class
+static Boolean b011126_IsQuadwordClassPointer(Type* type) {
+    if (!type || type->type != TYPEPOINTER) {
+        return 0;
+    }
+    if (b011126_IsQuadwordClass(TPTR_TARGET(type))) {
+        return 1;
+    }
+    return 0;
+}
+
+// 011126 0x499320: a local pointer variable to a quadword class
+Boolean b011126_IsQuadwordClassPointerLocal(Object* obj) {
+    ObjectList* list;
+    for (list = locals; list; list = list->next) {
+        if (list->object == obj && obj->type->type == TYPEPOINTER && obj->datatype == DLOCAL) {
+            return b011126_IsQuadwordClassPointer(obj->type);
+        }
+    }
+    return 0;
+}
+#endif
+
 // With the optimizer, every eligible argument and local gets a virtual register.
 void func_00438160(void) {
     ObjectList* list;
@@ -4499,6 +4808,9 @@ void func_00438160(void) {
     VarInfo* vi;
     Type* type;
 
+#if MWCC_CORE == MWCC_CORE_B011126
+    b011126_quadlocals = NULL; // 011126 (0x433FE7)
+#endif
     if (copts.mips_long64) {
         func_004388C0(func_004383C0, 0);
     } else {
@@ -4515,13 +4827,35 @@ void func_00438160(void) {
             data_00625EA7 = 1;
             continue;
         }
-#if MWCCPS2
-        // b210 (0x438000): a 128-bit integer local flagged at VarInfo +0x2D
-        // goes to a VU0 register; no register pairs
-        if (vi->unk24[1] && (type->type == TYPEINT || type->type == TYPEENUM) && type->size == 16) {
-            vi->rclass = 5;
-            vi->reg = data_00625A98[5]++;
-        } else if (!IS_INTLIKE(type) && type->type != TYPEFLOAT) {
+#if MWCC_CORE == MWCC_CORE_B011126
+        // 011126 (0x434053): with VU0 registers, a flagged 128-bit integer goes to a
+        // VU0 register; a quadword class or a pointer to one also gets one (listed),
+        // and a compiler temporary of a quadword class a GPR
+        if (copts.enable_vu0_registers) {
+            if (vi->unk24[1] &&
+                (type->type == TYPEINT || type->type == TYPEENUM) &&
+                type->size == 16) {
+                vi->rclass = 5;
+                vi->reg = data_00625A98[5]++;
+                continue;
+            }
+            if ((type->type == TYPECLASS && b011126_IsQuadwordClass(type)) ||
+                (type->type == TYPEPOINTER && b011126_IsQuadwordClassPointerLocal(obj))) {
+                B011126QuadLocal* q = lalloc(sizeof(B011126QuadLocal));
+                q->obj = obj;
+                q->vi = lalloc(sizeof(VarInfo));
+                q->vi->reg = data_00625A98[5]++;
+                q->vi->rclass = 5;
+                q->next = b011126_quadlocals;
+                b011126_quadlocals = q;
+            }
+            if (type->type == TYPECLASS && b011126_IsQuadwordClass(type) && IsTempName(obj->name)) {
+                vi->rclass = 0;
+                vi->reg = data_00625A98[0]++;
+                continue;
+            }
+        }
+        if (!IS_INTLIKE(type) && type->type != TYPEFLOAT) {
             data_00625EA7 = 1;
         } else if (IS_INTLIKE(type)) {
             vi->rclass = 0;
@@ -4535,34 +4869,56 @@ void func_00438160(void) {
                 vi->reg = data_00625A98[1]++;
             }
         }
-#else
-                    if (type->type == TYPEFLOAT && TYPE_INTEGRAL(type)->integral == IT_17) {
+#elif MWCCPS2
+                    // b210 (0x438000): a 128-bit integer local flagged at VarInfo +0x2D
+                    // goes to a VU0 register; no register pairs
+                    if (vi->unk24[1] &&
+                        (type->type == TYPEINT || type->type == TYPEENUM) &&
+                        type->size == 16) {
                         vi->rclass = 5;
                         vi->reg = data_00625A98[5]++;
                     } else if (!IS_INTLIKE(type) && type->type != TYPEFLOAT) {
                         data_00625EA7 = 1;
                     } else if (IS_INTLIKE(type)) {
                         vi->rclass = 0;
-                        if ((type->type == TYPEINT || type->type == TYPEENUM) && type->size == 8) {
-                            vi->reg = data_00625A98[0]++;
-                            vi->regHi = data_00625A98[0]++;
-                        } else {
-                            vi->reg = data_00625A98[0]++;
-                        }
+                        vi->reg = data_00625A98[0]++;
                     } else if (type->type == TYPEFLOAT) {
                         if (type->type == TYPEFLOAT && IS_SOFTFLOAT(type)) {
                             vi->rclass = 0;
-                            if (type->type == TYPEFLOAT && IS_DOUBLE(type)) {
-                                vi->reg = data_00625A98[0]++;
-                                vi->regHi = data_00625A98[0]++;
-                            } else {
-                                vi->reg = data_00625A98[0]++;
-                            }
+                            vi->reg = data_00625A98[0]++;
                         } else {
                             vi->rclass = 1;
                             vi->reg = data_00625A98[1]++;
                         }
                     }
+#else
+        if (type->type == TYPEFLOAT && TYPE_INTEGRAL(type)->integral == IT_17) {
+            vi->rclass = 5;
+            vi->reg = data_00625A98[5]++;
+        } else if (!IS_INTLIKE(type) && type->type != TYPEFLOAT) {
+            data_00625EA7 = 1;
+        } else if (IS_INTLIKE(type)) {
+            vi->rclass = 0;
+            if ((type->type == TYPEINT || type->type == TYPEENUM) && type->size == 8) {
+                vi->reg = data_00625A98[0]++;
+                vi->regHi = data_00625A98[0]++;
+            } else {
+                vi->reg = data_00625A98[0]++;
+            }
+        } else if (type->type == TYPEFLOAT) {
+            if (type->type == TYPEFLOAT && IS_SOFTFLOAT(type)) {
+                vi->rclass = 0;
+                if (type->type == TYPEFLOAT && IS_DOUBLE(type)) {
+                    vi->reg = data_00625A98[0]++;
+                    vi->regHi = data_00625A98[0]++;
+                } else {
+                    vi->reg = data_00625A98[0]++;
+                }
+            } else {
+                vi->rclass = 1;
+                vi->reg = data_00625A98[1]++;
+            }
+        }
 #endif
     }
 }

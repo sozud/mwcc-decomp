@@ -623,7 +623,11 @@ static UInt32 CPrec_AppendPointerPatch(void* v) {
 
     if (v) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(625, addrPatch = CPrec_FindAddrPatch(v));
+#else
         CError_ASSERT(644, addrPatch = CPrec_FindAddrPatch(v));
+#endif
 #else
         CError_ASSERT(660, addrPatch = CPrec_FindAddrPatch(v));
 #endif
@@ -634,7 +638,11 @@ static UInt32 CPrec_AppendPointerPatch(void* v) {
             patch->next = cprec_patch_list;
             cprec_patch_list = patch;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(632, (patch->offset & 0x80000001) == 0);
+#else
             CError_ASSERT(651, (patch->offset & 0x80000001) == 0);
+#endif
 #else
             CError_ASSERT(667, (patch->offset & 0x80000001) == 0);
 #endif
@@ -1088,7 +1096,11 @@ static FuncArg* CPrec_GetArgListPatch(FuncArg* lst, Boolean includeNames) {
                 (void*)(current + offsetof(FuncArg, type)), CPrec_GetTypePatch(lst->type)
             );
         } else {
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(1162);
+#else
             CError_FATAL(1183);
+#endif
         }
 
         if (!lst->next) {
@@ -1233,7 +1245,11 @@ static TypeTemplDep* CPrec_GetTypeTemplDepPatch(TypeTemplDep* type) {
             );
             break;
         default:
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(1290);
+#else
             CError_FATAL(1311);
+#endif
     }
 
     return (TypeTemplDep*)p;
@@ -1906,6 +1922,8 @@ static TemplParam* CPrec_GetTemplateParamPatch(TemplParam* param) {
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-16)
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static TStreamElement* CPrec_GetTStreamPatch(TStreamElement* tokens, SInt32 count) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     int b69_dead;
@@ -1996,7 +2014,11 @@ static TStreamElement* CPrec_GetTStreamPatch(TStreamElement* tokens, SInt32 coun
 #if MWCCPSP
                     CError_FATAL(2078);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+                    CError_FATAL(1978);
+#else
                     CError_FATAL(2079);
+#endif
 #endif
                 }
         }
@@ -2011,6 +2033,8 @@ static TStreamElement* CPrec_GetTStreamPatch(TStreamElement* tokens, SInt32 coun
 
     return (TStreamElement*)first;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
@@ -2334,6 +2358,8 @@ static TypeClass* CPrec_GetTemplClassInstPatch301(TypeClass* tclass) {
     return CPrec_GetTemplClassPatch301(tclass);
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 // 0x4F44D0: 3.0.1 writes a plain class here and leaves templates and their
 // instances to the walkers
 static TypeClass* CPrec_GetTypeClassPatch(TypeClass* tclass) {
@@ -2388,6 +2414,8 @@ static TypeClass* CPrec_GetTypeClassPatch(TypeClass* tclass) {
     }
     return (TypeClass*)current;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 // 0x4F4710: the 2.4.7 walker; in 3.0.1 it writes class templates
 static TypeClass* CPrec_GetTemplClassPatch301(TypeClass* tclass) {
@@ -2623,6 +2651,8 @@ static TypeClass* CPrec_GetTypeClassPatch(TypeClass* tclass) {
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-16)
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static Type* CPrec_GetTypePatch(Type* type) {
     AddrPatch* addrPatch;
 
@@ -2655,10 +2685,16 @@ static Type* CPrec_GetTypePatch(Type* type) {
         case TYPEOBJCID:
         case TYPETEMPLDEPEXPR:
         default:
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(2711);
+#else
             CError_FATAL(2812);
+#endif
             return NULL;
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
@@ -2832,7 +2868,11 @@ static ENodeList* CPrec_GetExpressionListPatch(ENodeList* lst) {
 static EMemberInfo* CPrec_GetEMemberInfoPatch(EMemberInfo* emember) {
     EMemberInfo* p;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_FATAL(2868);
+#else
     CError_FATAL(2969);
+#endif
 
     p = (void*)CPrec_AppendAlign();
     CPrec_AppendData(emember, sizeof(EMemberInfo));
@@ -2843,7 +2883,11 @@ static EMemberInfo* CPrec_GetEMemberInfoPatch(EMemberInfo* emember) {
     if (emember->expr) {
         CPrec_NewPointerPatch(&p->expr, CPrec_GetExpressionPatch(emember->expr));
     }
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(2883, !emember->templargs);
+#else
     CError_ASSERT(2984, !emember->templargs);
+#endif
     CPrec_NewPointerPatch(&p->list, CPrec_GetNameSpaceObjectListPatch(emember->list));
 
     return p;
@@ -3155,7 +3199,9 @@ static CI_Statement* CPrec_GetStatementPatch(CI_Statement* stmt, short count) {
     SInt32 current;
 
     for (i = 0; i < count; i++) {
+#if MWCC_CORE != MWCC_CORE_B233
         stmt[i].sourcefilepath = NULL;
+#endif
         stmt[i].sourceoffset = -1;
     }
 
@@ -3300,6 +3346,8 @@ static CI_FuncData* CPrec_GetInlineFuncPatch(CI_FuncData* ifunc) {
 #undef CError_B198_SHIFT
 #define CError_B198_SHIFT -3 // b198 asserts, as b145's
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static ObjEnumConst* CPrec_GetObjEnumConstPatch(ObjEnumConst* obj) {
     AddrPatch* addrPatch;
     SInt32 first;
@@ -3318,7 +3366,11 @@ static ObjEnumConst* CPrec_GetObjEnumConstPatch(ObjEnumConst* obj) {
 #if MWCCPSP
             CError_ASSERT(3544, obj->access != 255);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(3299, obj->access != 255);
+#else
             CError_ASSERT(3416, obj->access != 255);
+#endif
 #endif
             obj->access = 255;
         }
@@ -3347,6 +3399,8 @@ static ObjEnumConst* CPrec_GetObjEnumConstPatch(ObjEnumConst* obj) {
 
     return (ObjEnumConst*)first;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
@@ -3473,6 +3527,8 @@ static InlineXRef* CPrec_GetInlineXRefPatch(InlineXRef* ix) {
     return (InlineXRef*)first;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static Object* CPrec_GetObjectPatch(Object* obj) {
     AddrPatch* addrPatch;
     SInt32 p;
@@ -3542,17 +3598,21 @@ static Object* CPrec_GetObjectPatch(Object* obj) {
                     (void*)(p + offsetof(Object, u.func.linkname)), obj->u.func.linkname
                 );
             }
+#if MWCC_CORE != MWCC_CORE_B233
             if (obj->u.func.inst) {
                 CPrec_NewPointerPatch(
                     (void*)(p + offsetof(Object, u.func.inst)),
                     CPrec_GetTemplFuncInstancePatch(obj->u.func.inst)
                 );
             }
+#endif
             break;
 
         case DDATA:
 #if MWCCPSP
             CError_ASSERT(3885, !obj->u.data.info);
+#elif MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(3689, !OBJ_DATA_INFO(obj));
 #else
             CError_ASSERT(3689, !obj->u.data.info);
 #endif
@@ -3657,6 +3717,8 @@ static ObjBase* CPrec_GetObjBasePatch(ObjBase* obj) {
             return (ObjBase*)CPrec_GetObjectPatch((Object*)obj);
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 static NameSpaceObjectList* CPrec_GetNameSpaceObjectListPatch(NameSpaceObjectList* nsol) {
     AddrPatch* addrPatch;
@@ -3839,7 +3901,11 @@ static void CPrec_DumpRootNameSpace(void) {
     NameSpaceName* nsname;
     SInt32 i;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(3832, cscope_root->is_hash);
+#else
     CError_ASSERT(3972, cscope_root->is_hash);
+#endif
 
     if (cscope_root->usings) {
         nslist = CPrec_GetNameSpaceListPatch(cscope_root->usings);
@@ -4877,6 +4943,8 @@ static void CPrec_RelocateMacroTable(void) {
     } while (++i < 0x800);
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 #if MWCCPSP
 void PrecompilerRead(COSFileRef refnum, void* buffer) {
 #else
@@ -5111,6 +5179,8 @@ void PrecompilerRead(short refnum, void* buffer) {
         }
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 #pragma pack(2)
 #if MWCCPSP

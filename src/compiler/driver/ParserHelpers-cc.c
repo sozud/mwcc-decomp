@@ -184,7 +184,11 @@ int SetupPragmas(const Pragma* pragmas) {
 #if MWCCPSP
                 OS_ASSERT(191, *((char *)pragmas->value) == PR_UNSET);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+                OS_ASSERT(181, *((char *)pragmas->value) == PR_UNSET);
+#else
                 OS_ASSERT(186, *((char *)pragmas->value) == PR_UNSET);
+#endif
 #endif
             }
 
@@ -196,7 +200,11 @@ int SetupPragmas(const Pragma* pragmas) {
 #if MWCCPSP
             OS_ASSERT(200, !"Can't handle pragma");
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            OS_ASSERT(190, !"Can't handle pragma");
+#else
             OS_ASSERT(195, !"Can't handle pragma");
+#endif
 #endif
         }
         pragmas++;

@@ -2476,8 +2476,13 @@ void CMach_GetBackEndOptions(struct CInlineBackendOptions* options) {
     options->unrolling = copts.unrolling;
     options->vectorizeloops = copts.vectorizeloops;
     options->multiplepasses = copts.multiplepasses;
+#if MWCC_CORE == MWCC_CORE_B233
+    options->opt_pointer_analysis = COPTS_T.opt_pointer_analysis;
+    options->opt_pointer_analysis_mode = COPTS_T.opt_pointer_analysis_mode;
+#else
     options->opt_pointer_analysis = copts.opt_pointer_analysis;
     options->opt_pointer_analysis_mode = copts.opt_pointer_analysis_mode;
+#endif
     options->unrollfactor = copts.unrollfactor;
     options->unrollinstrfactor = copts.unrollinstrfactor;
 }
@@ -2533,8 +2538,13 @@ void CMach_SetBackEndOptions(struct CInlineBackendOptions* options) {
     copts.unrolling = options->unrolling;
     copts.vectorizeloops = options->vectorizeloops;
     copts.multiplepasses = options->multiplepasses;
+#if MWCC_CORE == MWCC_CORE_B233
+    COPTS_T.opt_pointer_analysis = options->opt_pointer_analysis;
+    COPTS_T.opt_pointer_analysis_mode = options->opt_pointer_analysis_mode;
+#else
     copts.opt_pointer_analysis = options->opt_pointer_analysis;
     copts.opt_pointer_analysis_mode = options->opt_pointer_analysis_mode;
+#endif
     copts.unrollfactor = options->unrollfactor;
     copts.unrollinstrfactor = options->unrollinstrfactor;
 }

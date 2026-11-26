@@ -10,7 +10,11 @@
 
 #if MWCCPSP
 #if MWCC_CORE == MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B233
+static BOOL_INT CheckChain(CLabel** labelptr) {
+#else
 static Boolean CheckChain(CLabel** labelptr) {
+#endif
 #else
 // 3.0.1 (0x58D6E0): CheckChain; a goto that ends a loop (IROLF_EndLoop) is
 // not followed

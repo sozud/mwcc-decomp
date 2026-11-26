@@ -77,6 +77,102 @@ static IROLinear* FindLastDiadicTopLevelAssignmentInFlowgraphNode(IRONode* fnode
     return result;
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3's RewriteUse (0x43BF90): from the use's node on, every operand slot
+// of every statement node is tried (0x43BF10): an EINDIRECT of the use's
+// operand with nd's type is the use; a modifying operator's target slot
+// (Op1Arg's operand, Op2Arg's left) is skipped, its right is not
+static int b233_rewriteslot(
+    IROLinear** slot, ENode* enode, IROLinear* nd, Boolean replaceNode, IROLinear* uselinear
+) {
+    IROLinear* x = *slot;
+    IROLinear* op;
+
+    if (x &&
+        x->type == IROLinearOp1Arg &&
+        x->nodetype == EINDIRECT &&
+        (op = x->u.monadic) &&
+        x->rtype == nd->rtype &&
+        (!uselinear || uselinear == op) &&
+        op->type == IROLinearOperand &&
+        op->u.node->type == EOBJREF &&
+        op->u.node->data.objref == enode->data.objref) {
+        if (replaceNode) {
+            IRO_NopOut(x);
+            *slot = nd;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+static Boolean RewriteUse(IROUse* use, ENode* enode, IROLinear* nd, Boolean replaceNode) {
+    IRONode* fnode;
+    IROLinear* scan;
+    IROLinear* ul;
+    int count;
+    int i;
+
+    if (!use ||
+        !use->reachingDefCount ||
+        !(ul = use->linear) ||
+        ul->type != IROLinearOperand ||
+        ul->u.node->type != EOBJREF ||
+        ul->u.node->data.objref != enode->data.objref) {
+        return FALSE;
+    }
+
+    count = 0;
+    for (fnode = use->node; fnode && !count; fnode = fnode->nextnode) {
+        for (scan = fnode->first; scan && !count && (!fnode->last || scan != fnode->last->next);
+             scan = scan->next) {
+            switch (scan->type) {
+                case IROLinearOp1Arg:
+                    if (!IRO_IsModifyOp[scan->nodetype]) {
+                        count += b233_rewriteslot(&scan->u.monadic, enode, nd, replaceNode, ul);
+                    }
+                    break;
+                case IROLinearOp2Arg:
+                    if (!IRO_IsModifyOp[scan->nodetype]) {
+                        count += b233_rewriteslot(&scan->u.diadic.left, enode, nd, replaceNode, ul);
+                    }
+                    count += b233_rewriteslot(&scan->u.diadic.right, enode, nd, replaceNode, ul);
+                    break;
+                case IROLinearIf:
+                case IROLinearIfNot:
+                    count += b233_rewriteslot(&scan->u.label.cond, enode, nd, replaceNode, ul);
+                    break;
+                case IROLinearReturn:
+                    count += b233_rewriteslot(&scan->u.monadic, enode, nd, replaceNode, ul);
+                    break;
+                case IROLinearSwitch:
+                    count += b233_rewriteslot(&scan->u.swtch.cond, enode, nd, replaceNode, ul);
+                    break;
+                case IROLinearOp3Arg:
+                    count += b233_rewriteslot(&scan->u.args3.a, enode, nd, replaceNode, ul);
+                    count += b233_rewriteslot(&scan->u.args3.b, enode, nd, replaceNode, ul);
+                    count += b233_rewriteslot(&scan->u.args3.c, enode, nd, replaceNode, ul);
+                    break;
+                case IROLinearFunccall:
+                    count += b233_rewriteslot(&scan->u.funccall.callee, enode, nd, replaceNode, ul);
+                    for (i = 0; i < scan->u.funccall.argCount; i++) {
+                        count +=
+                            b233_rewriteslot(&scan->u.funccall.args[i], enode, nd, replaceNode, ul);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    if (count && replaceNode) {
+        use->reachingDefCount = 0;
+    }
+    return count;
+}
+#endif
+#if MWCC_CORE != MWCC_CORE_B233
 static Boolean RewriteUse(IROUse* use, ENode* enode, IROLinear* nd, Boolean replaceNode) {
     IROLinear* father;
     IROLinear* father2;
@@ -102,6 +198,7 @@ static Boolean RewriteUse(IROUse* use, ENode* enode, IROLinear* nd, Boolean repl
 
     return FALSE;
 }
+#endif
 
 #pragma pack(push, 2)
 static struct {
@@ -285,6 +382,12 @@ static Boolean HasSideEffectsBeforeUse(
     for (scannd = fnode1->first; scannd && scannd != fnode1->last->next; scannd = scannd->next) {
         if (!(scannd->flags & IROLF_Reffed)) {
             if (StatementContainsUse(scannd, nd)) {
+#if MWCC_CORE == MWCC_CORE_B233
+                // 2.3.3 (0x43C5D3..0x43C5E4): the statement holding the use
+                // ends the walk with no side effect, whatever its unordered
+                // regions hold
+                return FALSE;
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if MWCC_CORE == MWCC_CORE_B52
                 result = FALSE;
@@ -480,6 +583,10 @@ static Boolean UsesAKilledVarBeforeUse(
     for (scannd = fnode1->first; scannd && scannd != fnode1->last->next; scannd = scannd->next) {
         if (!(scannd->flags & IROLF_Reffed)) {
             if (StatementContainsUse(scannd, nd)) {
+#if MWCC_CORE == MWCC_CORE_B233
+                // 2.3.3 (0x43C793..0x43C7A4): likewise
+                return FALSE;
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if MWCC_CORE == MWCC_CORE_B52
                 result = FALSE;
@@ -584,7 +691,16 @@ static void CheckUnorderedRegionsForSideEffectsAndUses(
 
     switch (nd->type) {
         case IROLinearOp2Arg:
-            if (nd->nodetype != ELAND && nd->nodetype != ELOR && nd->nodetype != ECOMMA) {
+#if MWCC_CORE == MWCC_CORE_B233
+            // 2.3.3 (0x43C8C3..0x43C8F5) compares the node's linear type (the
+            // byte at +0) with ELAND, ELOR and ECOMMA, so no operator is left
+            // out: both sides of a comma are checked too
+            if (nd->type != ELAND && nd->type != ELOR && nd->type != ECOMMA) {
+#else
+                            if (nd->nodetype != ELAND &&
+                                nd->nodetype != ELOR &&
+                                nd->nodetype != ECOMMA) {
+#endif
                 if (nd->u.diadic.left != excluded) {
                     CheckUnorderedRegionForSideEffectsAndUses(nd->u.diadic.left, bv1, bv2, result);
                 }
@@ -610,6 +726,64 @@ static void CheckUnorderedRegionsForSideEffectsAndUses(
     }
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3 (0x43C990): a depth-first walk from the branch's first node to its
+// last (end), the successors before the node's own statements; the visited
+// set is one vector (0x52B676) that a nested call with clearMarks makes anew
+static BitVector* b233_branchmarks;
+
+static Boolean CheckThenOrElseBranch(
+    IRONode* fnode,
+    IRONode* start,
+    IRONode* end,
+    IROLinear* nd,
+    Boolean clearMarks,
+    Boolean stopAtReturn
+) {
+    IROLinear* scannd;
+    UInt16 i;
+
+    if (fnode != end) {
+        if (!Bv_IsBitSet(start->index, fnode->dom)) {
+            return FALSE;
+        }
+        if (clearMarks) {
+            Bv_AllocVector(&b233_branchmarks, IRO_NumNodes);
+            Bv_Clear(b233_branchmarks);
+        } else if (Bv_IsBitSet(fnode->index, b233_branchmarks)) {
+            return TRUE;
+        }
+        Bv_SetBit(fnode->index, b233_branchmarks);
+        for (i = 0; i < fnode->numsucc; i++) {
+            if (!CheckThenOrElseBranch(
+                    IRO_NodeTable[fnode->succ[i]], start, end, nd, FALSE, stopAtReturn
+                )) {
+                return FALSE;
+            }
+        }
+    }
+
+    for (scannd = fnode->first; scannd && scannd != fnode->last->next; scannd = scannd->next) {
+        if (nd && scannd == nd) {
+            continue;
+        }
+        if (stopAtReturn && scannd->type == IROLinearReturn) {
+            continue;
+        }
+        if (fnode->numpred == 2 && scannd->type == IROLinearLabel) {
+            RebuildPossibleCondExpression(fnode);
+        }
+        if (scannd->type != IROLinearNop &&
+            scannd->type != IROLinearLabel &&
+            scannd->type != IROLinearGoto &&
+            !(scannd->flags & IROLF_Reffed)) {
+            return FALSE;
+        }
+    }
+    return TRUE;
+}
+#endif
+#if MWCC_CORE != MWCC_CORE_B233
 static Boolean CheckThenOrElseBranch(
     IRONode* fnode1, IRONode* fnode2, IROLinear* nd, Boolean stopAtReturn
 ) {
@@ -659,6 +833,7 @@ done:
     IRO_FNodeWorkStack_Free(&nodes);
     return result;
 }
+#endif
 
 static void RebuildPossibleCondExpression(IRONode* fnode) {
     IRONode* pred1;
@@ -765,6 +940,12 @@ static void RebuildPossibleCondExpression(IRONode* fnode) {
         !(objnode = leftAss->u.diadic.left->u.monadic->u.node) ||
         !objnode->rtype ||
         !IS_TYPE_POINTER_ONLY(objnode->rtype) ||
+#if MWCC_CORE == MWCC_CORE_B233 && MWCCPSP_NATIVE
+        // the original (0x43CE4C) reads the object word of whatever node this
+        // is: for a pointer constant the high word of its value, 0 for an
+        // address below 4 GB; a 64-bit read would take the low word too
+        objnode->type != EOBJREF ||
+#endif
         !objnode->data.objref ||
         is_volatile_object(objnode->data.objref) ||
         objnode->data.objref->datatype != DLOCAL) {
@@ -790,11 +971,23 @@ static void RebuildPossibleCondExpression(IRONode* fnode) {
         }
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x43CEE8..0x43CF30): both branches are checked (and the joins
+    // inside them rebuilt) whether or not the assignments qualified
+    if (!CheckThenOrElseBranch(
+            ifnode->nextnode, ifnode->nextnode, left, objnode ? leftAss : NULL, TRUE, FALSE
+        ) ||
+        !CheckThenOrElseBranch(target, target, right, objnode ? rightAss : NULL, TRUE, FALSE)) {
+        return;
+    }
+#endif
     if (objnode) {
+#if MWCC_CORE != MWCC_CORE_B233
         if (!CheckThenOrElseBranch(ifnode->nextnode, left, leftAss, FALSE) ||
             !CheckThenOrElseBranch(target, right, rightAss, FALSE)) {
             return;
         }
+#endif
 
         useCount = rewrittenUseCount = 0;
         sideEffectFlag = killedFlag = FALSE;
@@ -852,7 +1045,39 @@ static void RebuildPossibleCondExpression(IRONode* fnode) {
                                 (IRO_HasSideEffect(ifnode->last->u.label.cond) ||
                                  IRO_HasSideEffect(leftAss->u.diadic.right) ||
                                  IRO_HasSideEffect(rightAss->u.diadic.right))) {
-                                killedFlag = TRUE;
+#if MWCC_CORE == MWCC_CORE_B233
+                                // 2.3.3 0x43D184..0x43D29B: killed only if an
+                                // unordered region of the use's statement has a
+                                // side effect or uses a variable the three
+                                // expressions kill, or one is used before the use
+                                IROLinear* iter = use->linear;
+                                IROLinear* father;
+                                BitVector* bv1;
+                                BitVector* bv2;
+                                if ((father = IRO_LocateFather(use->linear))) {
+                                    Bv_AllocVector(&bv1, IRO_NumVars + 1);
+                                    Bv_AllocVector(&bv2, IRO_NumVars + 1);
+                                    Bv_AllocVector(&IRO_VarKills, IRO_NumVars + 1);
+                                    IRO_WalkTree(ifnode->last->u.label.cond, Regen_GetExprKills);
+                                    IRO_WalkTree(leftAss->u.diadic.right, Regen_GetExprKills);
+                                    IRO_WalkTree(rightAss->u.diadic.right, Regen_GetExprKills);
+                                    Bv_Or(IRO_VarKills, bv1);
+                                    while (father && !killedFlag) {
+                                        CheckUnorderedRegionsForSideEffectsAndUses(
+                                            father, iter, bv1, bv2, &killedFlag
+                                        );
+                                        iter = father;
+                                        father = IRO_LocateFather(father);
+                                    }
+                                }
+                                if (!killedFlag) {
+                                    killedFlag = UsesAKilledVarBeforeUse(
+                                        fnode, fnode, use->node, use->linear, bv1, TRUE
+                                    );
+                                }
+#else
+                                                killedFlag = TRUE;
+#endif
                             }
                         } else if (Bv_IsBitSet(def1->index, use->reachingDefs) ||
                                    Bv_IsBitSet(def2->index, use->reachingDefs)) {
@@ -1084,10 +1309,20 @@ static void RebuildPossibleReturnCondExpression(IRONode* fnode) {
         return;
     }
 
-    if (!CheckThenOrElseBranch(fnode->nextnode, fnode->nextnode, NULL, TRUE) ||
-        !CheckThenOrElseBranch(target, target, NULL, TRUE)) {
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x43DA57..0x43DA80): each branch alone, its own statements
+    if (!CheckThenOrElseBranch(
+            fnode->nextnode, fnode->nextnode, fnode->nextnode, NULL, TRUE, TRUE
+        ) ||
+        !CheckThenOrElseBranch(target, target, target, NULL, TRUE, TRUE)) {
         return;
     }
+#else
+                    if (!CheckThenOrElseBranch(fnode->nextnode, fnode->nextnode, NULL, TRUE) ||
+                        !CheckThenOrElseBranch(target, target, NULL, TRUE)) {
+                        return;
+                    }
+#endif
 
     if (!fnode->nextnode->last ||
         fnode->nextnode->last->type != IROLinearReturn ||
@@ -1112,10 +1347,15 @@ static void RebuildPossibleReturnCondExpression(IRONode* fnode) {
     target->first->type = IROLinearNop;
     target->first->expr = NULL;
 
-    if (IRO_IsIntConstant(thenValue) &&
-        IRO_IsIntConstant(elseValue) &&
-        ((IRO_IsConstantOne(thenValue) && IRO_IsConstantZero(elseValue)) ||
-         (IRO_IsConstantZero(thenValue) && IRO_IsConstantOne(elseValue)))) {
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x43DAD4) always makes an ECOND: no !!cond for returns of 1 and 0
+    if (0) {
+#else
+                    if (IRO_IsIntConstant(thenValue) &&
+                        IRO_IsIntConstant(elseValue) &&
+                        ((IRO_IsConstantOne(thenValue) && IRO_IsConstantZero(elseValue)) ||
+                         (IRO_IsConstantZero(thenValue) && IRO_IsConstantOne(elseValue)))) {
+#endif
         if (!(condition->type == IROLinearOp1Arg &&
               condition->nodetype == ELOGNOT &&
               condition->rtype == type)) {
@@ -1599,11 +1839,266 @@ static Boolean RebuildPossibleLogicalExpression(IRONode* start, IROLinear* nd) {
     return TRUE;
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3's logical-expression rebuild: a walk over the linear list
+// (0x43E6B0) with 0x43DC50 as the start test and 0x43DEC0 as the rebuild,
+// which looks only at the statements between the two assignments of the
+// temporary, counts the temporary's uses itself and rewrites the one use
+
+// 0x43DC50
+static Boolean b233_IsPossibleLogicalExpressionStart(IROLinear* nd) {
+    IROLinear* left;
+    IROLinear* right;
+    IROLinear* op;
+    Object* obj;
+
+    return nd->type == IROLinearOp2Arg &&
+        nd->nodetype == EASS &&
+        (left = nd->u.diadic.left) &&
+        (right = nd->u.diadic.right) &&
+        right->type == IROLinearOperand &&
+        right->u.node &&
+        right->u.node->type == EINTCONST &&
+        (CInt64_Equal(right->u.node->data.intval, cint64_zero) ||
+         CInt64_Equal(right->u.node->data.intval, cint64_one)) &&
+        left->type == IROLinearOp1Arg &&
+        left->nodetype == EINDIRECT &&
+        (op = left->u.monadic) &&
+        op->rtype->type == TYPEPOINTER &&
+        op->type == IROLinearOperand &&
+        op->u.node &&
+        op->u.node->type == EOBJREF &&
+        (obj = op->u.node->data.objref) &&
+        IsTempName(obj->name) &&
+        obj->varptr &&
+        !obj->varptr->noregister;
+}
+
+// the operand slots 0x43DEC0 tries (tables 0x513F28, 0x513EEC): no
+// modifying-operator test, a call's arguments but not its callee
+static int b233_LogicalUses(IROLinear* scan, ENode* objnode, IROLinear* value, Boolean replace) {
+    int n = 0;
+    int i;
+
+    switch (scan->type) {
+        case IROLinearOp1Arg:
+        case IROLinearEndCatch:
+        case IROLinearEndCatchDtor:
+            n += b233_rewriteslot(&scan->u.monadic, objnode, value, replace, NULL);
+            break;
+        case IROLinearOp2Arg:
+            n += b233_rewriteslot(&scan->u.diadic.left, objnode, value, replace, NULL);
+            n += b233_rewriteslot(&scan->u.diadic.right, objnode, value, replace, NULL);
+            break;
+        case IROLinearIf:
+        case IROLinearIfNot:
+            n += b233_rewriteslot(&scan->u.label.cond, objnode, value, replace, NULL);
+            break;
+        case IROLinearReturn:
+            n += b233_rewriteslot(&scan->u.monadic, objnode, value, replace, NULL);
+            break;
+        case IROLinearSwitch:
+            n += b233_rewriteslot(&scan->u.swtch.cond, objnode, value, replace, NULL);
+            break;
+        case IROLinearOp3Arg:
+        case IROLinearBeginCatch:
+            n += b233_rewriteslot(&scan->u.args3.a, objnode, value, replace, NULL);
+            n += b233_rewriteslot(&scan->u.args3.b, objnode, value, replace, NULL);
+            n += b233_rewriteslot(&scan->u.args3.c, objnode, value, replace, NULL);
+            break;
+        case IROLinearFunccall:
+            for (i = 0; i < scan->u.funccall.argCount; i++) {
+                n += b233_rewriteslot(&scan->u.funccall.args[i], objnode, value, replace, NULL);
+            }
+            break;
+        default:
+            break;
+    }
+    return n;
+}
+
+static Boolean b233_NonTrivial(IROLinear* scan) {
+    return scan->type != IROLinearNop &&
+        scan->type != IROLinearLabel &&
+        !(scan->flags & IROLF_Reffed);
+}
+
+#define B233_LOGOBJ(nd) ((nd)->u.diadic.left->u.monadic->u.node->data.objref)
+
+// 0x43DEC0
+static void b233_RebuildPossibleLogicalExpression(IROLinear* nd) {
+    ENode* objnode;
+    UInt8 compareType;
+    CInt64 compareVal;
+    IROLinear* scan;
+    IROLinear* test1;
+    IROLinear* test2;
+    IROLinear* prevAss;
+    IROLinear* useStmt;
+    IRONode* labelnode;
+    IRONode* prevnode;
+    IRONode* fnode;
+    IRONode* useNode;
+    SInt16 total;
+    SInt16 n;
+    int i;
+
+    objnode = nd->u.diadic.left->u.monadic->u.node;
+    if (CInt64_Equal(nd->u.diadic.right->u.node->data.intval, cint64_zero)) {
+        compareType = IROLinearIfNot;
+        compareVal = cint64_one;
+    } else {
+        compareType = IROLinearIf;
+        compareVal = cint64_zero;
+    }
+
+    prevAss = NULL;
+    labelnode = prevnode = NULL;
+    for (scan = nd->next; scan; scan = scan->next) {
+        if (scan->type == compareType &&
+            scan->u.label.label &&
+            FindFlowgraphNodeThatStartsWithLabel(scan->u.label.label, &labelnode, &prevnode) &&
+            (prevAss = FindLastDiadicTopLevelAssignmentInFlowgraphNode(prevnode)) &&
+            b233_IsPossibleLogicalExpressionStart(prevAss) &&
+            B233_LOGOBJ(prevAss) == objnode->data.objref &&
+            CInt64_Equal(compareVal, prevAss->u.diadic.right->u.node->data.intval) &&
+            prevAss->rtype == nd->rtype) {
+            break;
+        }
+        if (b233_IsPossibleLogicalExpressionStart(scan)) {
+            b233_RebuildPossibleLogicalExpression(scan);
+        }
+        if (b233_NonTrivial(scan)) {
+            return;
+        }
+    }
+    if (!(test1 = scan)) {
+        return;
+    }
+
+    for (scan = test1->next; scan; scan = scan->next) {
+        if (scan->type == compareType && scan->u.label.label == test1->u.label.label) {
+            break;
+        }
+        if (b233_IsPossibleLogicalExpressionStart(scan)) {
+            b233_RebuildPossibleLogicalExpression(scan);
+        }
+        if (b233_NonTrivial(scan)) {
+            return;
+        }
+    }
+    if (!(test2 = scan)) {
+        return;
+    }
+
+    for (scan = test2->next; scan; scan = scan->next) {
+        if (b233_IsPossibleLogicalExpressionStart(scan)) {
+            if (B233_LOGOBJ(scan) == objnode->data.objref) {
+                if (CInt64_Equal(compareVal, scan->u.diadic.right->u.node->data.intval)) {
+                    break;
+                }
+                return;
+            }
+            b233_RebuildPossibleLogicalExpression(scan);
+        }
+        if (b233_NonTrivial(scan)) {
+            return;
+        }
+    }
+    if (scan != prevAss) {
+        return;
+    }
+
+    for (scan = prevAss->next; scan && scan != labelnode->first; scan = scan->next) {
+        if (b233_IsPossibleLogicalExpressionStart(scan)) {
+            b233_RebuildPossibleLogicalExpression(scan);
+        }
+        if (b233_NonTrivial(scan)) {
+            return;
+        }
+    }
+    if (scan != labelnode->first) {
+        return;
+    }
+
+    // 0x43E188: the temporary's uses, the two assignments' targets aside
+    total = 0;
+    useNode = NULL;
+    useStmt = NULL;
+    for (fnode = IRO_FirstNode; fnode; fnode = fnode->nextnode) {
+        for (scan = fnode->first; scan && fnode->last && scan != fnode->last->next;
+             scan = scan->next) {
+            n = b233_LogicalUses(scan, objnode, prevAss, FALSE);
+            if (n && (scan == nd || scan == prevAss)) {
+                n--;
+            }
+            total += n;
+            if (n == 1) {
+                useStmt = scan;
+                useNode = fnode;
+            }
+            if (total == 2) {
+                return;
+            }
+        }
+    }
+    if (total != 1 || !useNode || !useStmt) {
+        return;
+    }
+    if (useNode->numpred < 2) {
+        return;
+    }
+    for (i = 0; i < useNode->numpred; i++) {
+        if (prevnode->index == useNode->pred[i]) {
+            break;
+        }
+    }
+    if (i == useNode->numpred) {
+        return;
+    }
+    if (IRO_HasSideEffect(test1->u.label.cond) || IRO_HasSideEffect(test2->u.label.cond)) {
+        return;
+    }
+    if (HasSideEffectsBeforeUse(labelnode, labelnode, useNode, useStmt, TRUE)) {
+        return;
+    }
+
+    // 0x43E470: the second assignment becomes the && / ||
+    IRO_NopOut(prevAss);
+    prevAss->type = IROLinearOp2Arg;
+    prevAss->nodetype = (compareType == IROLinearIf) ? ELOR : ELAND;
+    prevAss->u.diadic.left = test1->u.label.cond;
+    prevAss->u.diadic.right = test2->u.label.cond;
+    prevAss->flags |= IROLF_Reffed;
+    IRO_NopOut(nd);
+    test2->type = IROLinearNop;
+    test1->type = test2->type;
+    test2->expr = NULL;
+    test1->expr = test2->expr;
+
+    n = 0;
+    for (scan = IRO_FirstLinear; scan; scan = scan->next) {
+        n += b233_LogicalUses(scan, objnode, prevAss, TRUE);
+    }
+    CError_ASSERT(4453, n == 1);
+}
+#endif
+
 static void RebuildLogicalExpressions(void) {
     IRONode* fnode;
     IROLinear* nd;
     Boolean changed;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    // 0x43E6B0
+    for (nd = IRO_FirstLinear; nd; nd = nd->next) {
+        if (b233_IsPossibleLogicalExpressionStart(nd)) {
+            b233_RebuildPossibleLogicalExpression(nd);
+            IRO_CheckForUserBreak();
+        }
+    }
+    return;
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if MWCC_CORE == MWCC_CORE_B52
     do {

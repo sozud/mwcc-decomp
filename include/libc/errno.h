@@ -9,7 +9,10 @@ extern "C" {
 #endif
 
 typedef struct _ThreadLocalData {
+// 2.3.3's MSL: errno at +0 (_InitializeThreadData 0x402020, malloc(0x254))
+#if MWCC_CORE != MWCC_CORE_B233
     struct _ThreadLocalData* next;
+#endif
     int errno;
     unsigned long random_next;
     unsigned char* strtok_n;

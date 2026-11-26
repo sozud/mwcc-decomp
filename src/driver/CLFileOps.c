@@ -33,6 +33,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+// b119 has no -gccdep (PCmdLineCompiler ends at keepObjects): GetOutputFile
+// names every output after the source, in the target's output directory
+#if MWCCPSP && !(MWCCPS2 && MWCCPS2_BUILD == 119)
+#define HAS_GCCDEP 1
+#else
+#define HAS_GCCDEP 0
+#endif
+// DO_INTERNAL_ERROR lines take the CError_B119_SHIFT set around a function
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+#define B119_LINE(line) ((line) + CError_B119_SHIFT)
+#else
+#define B119_LINE(line) (line)
+#endif
+
 static void set_bytes(UInt32 size, int* amount, const char** unit);
 #if MWCCPSP
 
@@ -210,11 +224,16 @@ int GetOutputFile(File* file, SInt16 stage) {
     char* fnptr;
     char text[256];
     char* inname;
+#if HAS_GCCDEP
     char* basename;
+#endif
     OSPathSpec tmppath;
     OSPathSpec* outdir;
 
     outdir = &gTarg->outputDirectory;
+#if !HAS_GCCDEP
+#define basename file->srcfilename
+#endif
     if (optsCmdLine.toDisk & stage) {
         file->writeToDisk |= stage;
     }
@@ -231,11 +250,13 @@ int GetOutputFile(File* file, SInt16 stage) {
         specifiedName = FALSE;
     }
 
+#if HAS_GCCDEP
     if (stage == CmdLineStageMask_Dp && optsCompiler.gccDepends) {
         basename = file->outfilename[0] ? file->outfilename : file->srcfilename;
     } else {
         basename = file->srcfilename;
     }
+#endif
 
     if (!(stage & (optsCmdLine.toDisk | file->writeToDisk | file->tempOnDisk))) {
         if ((stage == CmdLineStageMask_Cg) &&
@@ -324,9 +345,11 @@ int GetOutputFile(File* file, SInt16 stage) {
     }
 
     if (stage & (file->writeToDisk | file->tempOnDisk)) {
+#if HAS_GCCDEP
         if (stage == CmdLineStageMask_Dp && optsCompiler.gccDepends) {
             outdir = &file->outfss.path;
         }
+#endif
         err = OS_MakeSpecWithPath(
             outdir, targetoutfilename, !optsCompiler.relPathInOutputDir, &file->outfss
         );
@@ -354,6 +377,7 @@ int GetOutputFile(File* file, SInt16 stage) {
 
     return TRUE;
 }
+#undef basename
 #else
 int GetOutputFile(File* file, SInt16 stage) {
     int err;
@@ -635,12 +659,14 @@ static int RecordBrowseInfo(File* file) {
     return TRUE;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -47 // b119 asserts
 static int RecordObjectData(File* file) {
     const CWObjectFlags* cof = Plugin_CL_GetObjectFlags(file->compiler);
 
 #if MWCCPS2
     if (file->objectOnDisk) {
-        DO_INTERNAL_ERROR(798, "Object data is flushed");
+        DO_INTERNAL_ERROR(B119_LINE(798), "Object data is flushed");
     }
     if (file->objectdata == NULL && !file->objectOnDisk) {
         return TRUE;
@@ -669,7 +695,7 @@ int StoreObjectFile(File* file) {
 
 #if MWCCPS2
     if (file->objectOnDisk) {
-        DO_INTERNAL_ERROR(820, "Object data flushed before storing?\n");
+        DO_INTERNAL_ERROR(B119_LINE(820), "Object data flushed before storing?\n");
     }
     if (file->objectdata == NULL && file->browsedata == NULL) {
         return TRUE;
@@ -695,6 +721,8 @@ int StoreObjectFile(File* file) {
 
     return FALSE;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 #if MWCCPSP
 extern void func_0041C200(File* file); // frees the object data
@@ -947,8 +975,14 @@ static int CompileEntry(File* file, Boolean* compiled) {
 #if MWCCPS2
     OS_ASSERT(1169, file->compiler);
 #else
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && \
+    MWCC_CORE <= MWCC_CORE_B52 && \
+    MWCC_CORE != MWCC_CORE_B011126 // 011126 0x41B750: 835
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(840, file->compiler);
+#else
     OS_ASSERT(1010, file->compiler);
+#endif
 #else
     OS_ASSERT(835, file->compiler);
 #endif
@@ -1014,6 +1048,8 @@ static void set_bytes(UInt32 size, int* amount, const char** unit) {
     *unit = "bytes";
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -47 // b119 asserts
 static void DumpFileAndPathInfo(void) {
     int i;
 
@@ -1029,9 +1065,11 @@ static void DumpFileAndPathInfo(void) {
         for (i = 0; i < Paths_Count(&gTarg->userPaths); i++) {
             Path* path = Paths_GetPath(&gTarg->userPaths, i);
 #if MWCCPSP
-            OS_ASSERT(1358, path != NULL);
+            OS_ASSERT(B119_LINE(1358), path != NULL);
 #else
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && \
+    MWCC_CORE <= MWCC_CORE_B52 && \
+    MWCC_CORE != MWCC_CORE_B011126 // 011126: the older lines
             OS_ASSERT(1199, path != NULL);
 #else
             OS_ASSERT(1024, path != NULL);
@@ -1052,9 +1090,11 @@ static void DumpFileAndPathInfo(void) {
                 for (j = 0; j < Paths_Count(path->recursive); j++) {
                     Path* sub = Paths_GetPath(path->recursive, j);
 #if MWCCPSP
-                    OS_ASSERT(1373, sub);
+                    OS_ASSERT(B119_LINE(1373), sub);
 #else
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && \
+    MWCC_CORE <= MWCC_CORE_B52 && \
+    MWCC_CORE != MWCC_CORE_B011126 // 011126: the older lines
                     OS_ASSERT(1214, sub);
 #else
                     OS_ASSERT(1039, sub);
@@ -1077,9 +1117,11 @@ static void DumpFileAndPathInfo(void) {
     for (i = 0; i < Paths_Count(&gTarg->sysPaths); i++) {
         Path* path = Paths_GetPath(&gTarg->sysPaths, i);
 #if MWCCPSP
-        OS_ASSERT(1388, path != NULL);
+        OS_ASSERT(B119_LINE(1388), path != NULL);
 #else
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && \
+    MWCC_CORE <= MWCC_CORE_B52 && \
+    MWCC_CORE != MWCC_CORE_B011126 // 011126: the older lines
         OS_ASSERT(1229, path != NULL);
 #else
         OS_ASSERT(1054, path != NULL);
@@ -1100,9 +1142,11 @@ static void DumpFileAndPathInfo(void) {
             for (j = 0; j < Paths_Count(path->recursive); j++) {
                 Path* sub = Paths_GetPath(path->recursive, j);
 #if MWCCPSP
-                OS_ASSERT(1403, sub);
+                OS_ASSERT(B119_LINE(1403), sub);
 #else
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && \
+    MWCC_CORE <= MWCC_CORE_B52 && \
+    MWCC_CORE != MWCC_CORE_B011126 // 011126: the older lines
                 OS_ASSERT(1244, sub);
 #else
                 OS_ASSERT(1069, sub);
@@ -1130,6 +1174,8 @@ static void DumpFileAndPathInfo(void) {
         }
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 int CompileFilesInProject(void) {
     struct BuildInfo* tinfo;

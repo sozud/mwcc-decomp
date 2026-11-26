@@ -65,6 +65,240 @@ enum {
 #define COPTS_B210_OPTION(name, f)
 #define COPTS_B210_SET(f, v) ((void)0)
 
+#if MWCC_CORE == MWCC_CORE_B233
+/* mwccps2 2.3.3's copts (0x557BA0): 0xD2 bytes (initialize_compiler_options
+   0x41FC80 clears 0xD2). Every field marked #pragma sits at the offset the
+   compileroptions table gives (tools/mwccps2/re/b233/pragmas.txt; checked by
+   b233/re/pragma_check.py). Unmarked head fields keep b69's order (the MIPS
+   options, unverified). The fields after cursegmentname are named by the
+   shared code but have no place in 2.3.3's copts (b69 or later additions);
+   they lie beyond 0xD2 (placement ours alone: never bind them to the
+   original's image). */
+struct CompilerLinkerOptions {
+    UInt8 littleendian; // 0x000 NOPRAGMA little_endian
+    UInt8 mips_option01; // 0x001
+    SInt16 mips_flags02; // 0x002
+    SInt16 mips_option04; // 0x004
+    SInt16 mips_option39; // 0x006 (CodeGen's processor setup 0x436430: word 3)
+    char fp_library; // 0x008 #pragma fp_library
+    UInt8 mips_option07; // 0x009
+    UInt8 mips_option08; // 0x00a
+    UInt8 unknown09[1]; // 0x00b
+    SInt16 mips_option0A; // 0x00c
+    SInt16 mips_isa; // 0x00e
+    UInt8 unknown0E[1]; // 0x010
+    UInt8 mips_option0F; // 0x011
+    UInt8 mips_option10; // 0x012
+    UInt8 mips_option11; // 0x013
+    UInt8 inline_intrinsics; // 0x014 #pragma inline_intrinsics
+    unsigned char debuglisting; // 0x015 #pragma debug_listing
+    UInt8 interrupt; // 0x016 #pragma interrupt
+    UInt8 mips_long64; // 0x017
+    UInt8 mips_option16; // 0x018
+    UInt8 mips_option17; // 0x019
+    char cats; // 0x01a #pragma cats
+    UInt8 mips_option19; // 0x01b
+    UInt8 mips_option1A; // 0x01c
+    UInt8 warn_inlineasm; // 0x01d #pragma warn_inlineasm
+    UInt8 mips_option41; // 0x01e (R5900 case 0x4363A0; CParser_ParseAttribute's "TI")
+    UInt8 conditional_move; // 0x01f #pragma conditional_move
+    UInt8 gencvtcheck; // 0x020 #pragma gencvtcheck
+    UInt8 far_call; // 0x021 #pragma far_call
+    UInt8 prefetch; // 0x022 #pragma prefetch
+    UInt8 trunc; // 0x023 #pragma trunc
+    UInt8 sqrt; // 0x024 #pragma sqrt
+    UInt8 floatsp32; // 0x025 #pragma floatsp32
+    UInt8 mips_option25; // 0x026
+    UInt8 mips_option26; // 0x027
+    UInt8 no_branch_likely; // 0x028
+    UInt8 no_load_delay_nops; // 0x029
+    UInt8 mips_option2F; // 0x02a
+    UInt8 mips_option30; // 0x02b
+    UInt8 mips_option31; // 0x02c
+    UInt8 nofpregforblkmv; // 0x02d #pragma nofpregforblkmv
+    UInt8 mips_option33; // 0x02e
+    UInt8 schedule; // 0x02f #pragma schedule
+    UInt8 tailcall; // 0x030 #pragma tailcall
+    UInt8 unknown36[1]; // 0x031
+    UInt8 divbyzerocheck; // 0x032 #pragma divbyzerocheck
+    UInt8 nomacro; // 0x033 #pragma nomacro
+    union {
+        UInt8 alignlabel; // 0x034 #pragma alignlabel
+        UInt8 mips_option3A; // set by CodeGen's setup (0x4365F0); gates p2alignl (0x4957D0)
+    };
+    UInt8 padloop; // 0x035 #pragma padloop
+    UInt8 dividefix; // 0x036 #pragma dividefix
+    UInt8 usefloatacc; // 0x037 #pragma usefloatacc
+    UInt8 uclcregister; // 0x038 #pragma uclcregister
+    union {
+        UInt8 rsqrt; // 0x039 #pragma rsqrt
+        UInt8 mips_option23; // the opcode table builder 0x48A600 tests it; set for ISA >= 4
+    };
+    Boolean asmsemicolcomment; // 0x03a #pragma asmsemicolcomment
+    Boolean asmpoundcomment; // 0x03b #pragma asmpoundcomment
+    UInt8 x86_3dnow; // 0x03c #pragma 3dnow / k63d
+    UInt8 unknown3D_b233; // 0x03d
+    StringPtr oldprefixname; // 0x03e
+    SInt16 inlinelevel; // 0x042
+    UInt8 cplusplus; // 0x044 #pragma cplusplus
+    UInt8 ecplusplus; // 0x045 #pragma ecplusplus
+    UInt8 objective_c; // 0x046
+    SInt8 objc_strict; // 0x047
+    char ARMconform; // 0x048 #pragma ARM_conform
+    char ARMscoping;
+    Boolean checkprotos;
+    char trigraphs;
+    UInt8 onlystdkeywords;
+    UInt8 enumsalwaysint;
+    UInt8 ANSIstrict;
+    UInt8 mpwc_relax;
+    UInt8 mpwc_newline;
+    Boolean ignore_oldstyle;
+    Boolean cpp_extensions;
+    UInt8 pointercast_lvalue;
+    char RTTI;
+    UInt8 delete_exception; // 0x055 #pragma delete_exception
+    Boolean test_dummy;
+    Boolean oldalignment; // 0x057 #pragma oldalignment
+    UInt8 unsigned_char;
+    char multibyteaware;
+    UInt8 auto_inline;
+    UInt8 defer_codegen;
+    UInt8 direct_to_som;
+    UInt8 som_env_check;
+    UInt8 som_call_optimize;
+    UInt8 booltruefalse;
+    Boolean old_enum_mangler;
+    UInt8 longlong;
+    UInt8 longlong_enums;
+    Boolean no_tfuncinline; // 0x063 #pragma no_tfuncinline
+    UInt8 always_vdispatch;
+    char flat_include; // 0x065 #pragma flat_include
+    char syspath_once;
+    char always_import;
+    UInt8 simple_class_byval;
+    char wchar_type;
+    UInt8 vbase_ctor_offset;
+    char vbase_abi_v2;
+    char def_inherited;
+    UInt8 template_patch;
+    UInt8 template_friends;
+    Boolean faster_pch_gen;
+    UInt8 array_new_delete;
+    UInt8 dollar_identifiers;
+    Boolean def_inline_tfuncs;
+    UInt8 arg_dep_lookup;
+    char simple_prepdump;
+    char line_prepdump;
+    UInt8 fullpath_prepdump;
+    Boolean old_mtemplparser;
+    UInt8 suppress_init_code;
+    Boolean reverse_bitfields;
+    UInt8 c9x;
+    Boolean float_constants;
+    Boolean no_static_dtors;
+    Boolean longlong_prepeval;
+    UInt8 const_strings;
+    Boolean dumpir;
+    UInt8 experimental;
+    UInt8 gcc_extensions;
+    Boolean stdc_fp_contract;
+    Boolean stdc_fenv_access;
+    Boolean stdc_cx_limitedr; // 0x084 #pragma stdc_cx_limitedr
+    Boolean microsoft_EH; // 0x085 #pragma microsoft_exceptions
+    char warningerrors; // 0x086 #pragma warning_errors
+    char pedantic;
+    UInt8 checkprecompflags;
+    Boolean warn_illpragma; // 0x089 #pragma warn_illpragma
+    UInt8 warn_emptydecl;
+    Boolean warn_possunwant;
+    char warn_unusedvar;
+    char warn_unusedarg;
+    UInt8 warn_extracomma;
+    Boolean warn_hidevirtual;
+    char warn_largeargs;
+    Boolean warn_implicitconv;
+    UInt8 warn_notinlined;
+    SInt8 warn_structclass;
+    Boolean warn_padding;
+    Boolean warn_no_side_effect;
+    Boolean warn_resultnotused; // 0x096 #pragma warn_resultnotused
+    signed char structalignment;
+    UInt8 alignarraymembers; // 0x098 #pragma align_array_members
+    SInt8 dont_reuse_strings;
+    UInt8 poolstrings;
+    UInt8 explicit_zero_data;
+    UInt8 readonly_strings;
+    UInt8 exceptions; // 0x09d #pragma exceptions
+    Boolean dddummy;
+    UInt8 dontinline; // 0x09f #pragma dont_inline
+    UInt8 alwaysinline;
+    char peephole;
+    Boolean globaloptimizer;
+    UInt8 sideeffects; // 0x0a3 #pragma side_effects
+    char profile; // 0x0a4 #pragma profile
+    UInt8 cfm_internal; // 0x0a5 #pragma internal
+    UInt8 cfm_import;
+    UInt8 cfm_export;
+    UInt8 cfm_lib_export; // 0x0a8 #pragma lib_export
+    char nosyminline; // 0x0a9 #pragma nosyminline
+    char force_active;
+    Boolean has8bytebitfields; // 0x0ab #pragma has8bytebitfields
+    SInt8 optimizationlevel;
+    UInt8 optimizesize; // 0x0ad #pragma optimize_for_size
+    UInt8 optimizewithasm; // 0x0ae (or crippled)
+    UInt8 commonsubs; // 0x0af #pragma opt_common_subs
+    UInt8 loopinvariants;
+    UInt8 propagation;
+    UInt8 deadstore;
+    UInt8 strengthreduction;
+    UInt8 strengthreductionstrict;
+    UInt8 deadcode;
+    UInt8 lifetimes; // 0x0b6 #pragma opt_lifetimes
+    UInt8 logopts;
+    UInt8 unrolling; // 0x0b8 #pragma opt_unroll_loops
+    Boolean vectorizeloops; // 0x0b9 #pragma opt_vectorize_loops
+    UInt8 multiplepasses;
+    signed char unrollfactor;
+    SInt8 unrollinstrfactor;
+    UInt8 filesyminfo; // 0x0bd #pragma sym
+    UInt8 unknownfd;
+    char dwarf_siblings;
+    UInt8 dwarf_relocations;
+    Boolean absolutepath;
+    CWDataType appltype; // 0x0c2
+    CWDataType headtype;
+    CWDataType texttype;
+    struct HashNameNode* cursegmentname; // 0x0ce; ends at 0x0d2
+};
+/* Not in 2.3.3's copts (beyond its 0xD2 bytes): a separate COptsT233
+   (copts_tail, ours alone) read through COPTS_T, so that writing them does
+   not land on what follows copts in 2.3.3's image (ctempl_instdepth 0x557C72,
+   optsLinker, catchinfostruct; the source-only link binds copts there). */
+typedef struct COptsT233 {
+    SInt32 inlinemaxsize;
+    SInt32 inlinemaxtotalsize;
+    UInt8 inline_bottom_up;
+    UInt8 old_argmatch;
+    char optEH;
+    Boolean optEH2;
+    Boolean new_mangler;
+    Boolean fullpath_file;
+    Boolean no_ansi_lib_builtin;
+    Boolean supress_warnings;
+    UInt8 warn_ptr_int_conv;
+    UInt8 warn_uninitializedvar;
+    unsigned char block_assign;
+    UInt8 crippled;
+    UInt8 opt_pointer_analysis;
+    UInt8 opt_pointer_analysis_mode;
+    UInt8 fast_fptosi;
+    UInt8 irocseglobaladdresses;
+    UInt8 enable_vu0_registers;
+    UInt8 fastmath;
+    UInt8 vu0_register_number;
+} COptsT233;
+#else
 struct CompilerLinkerOptions {
     UInt8 littleendian;
     // mwccps2 2.4.5 b69 (MIPS) head: the compileroptions table in b69
@@ -400,6 +634,7 @@ struct CompilerLinkerOptions {
     Boolean old_enum_mangler;
 #endif
 };
+#endif
 
 /* b69's copts ends here: 0xEA bytes (initialize_compiler_options' memclrw,
    C_Compiler's copy at 0x43CB00). The fields below are named by the shared
@@ -544,6 +779,12 @@ extern Object* Xicth_func;
 extern Object* Xecth_func;
 extern Object* Xunex_func;
 extern CompilerLinkerOptions copts;
+#if MWCC_CORE == MWCC_CORE_B233
+extern COptsT233 copts_tail;
+#define COPTS_T copts_tail
+#else
+#define COPTS_T copts
+#endif
 extern COptsX coptsx;
 #define COPTS_X coptsx
 // ushort_wchar_t: b52's copts has it (0x0a1, re/b52/pragmas.txt); b69's has not
@@ -766,6 +1007,11 @@ enum {
 /* b198 already has b210's layout (identical compileroptions tables), so the
    fields arrived between b145 and b198. */
 #define COPTS_B210_FIELDS (!MWCCPS2 || MWCCPS2_BUILD >= 198)
+/* b119 (MWCCPS2_BUILD == 119) also lacks cse_vector_type (b145 0x043) and
+   opt_constnonchanging (b145 0x12b) (pragma tables of both exes): fields
+   from b145 0x044 sit 1 byte lower up to oldprefixname, whose alignment
+   absorbs it, and from b145 0x12c on 1 byte lower again. */
+#define COPTS_B145_FIELDS (!MWCCPS2 || MWCCPS2_BUILD != 119)
 /* COPTS_B210_OPTION (a compileroptions entry) and COPTS_B210_SET (a store)
    vanish in such a build; they keep the line numbers asserts encode. */
 /* b145's processor setup sets conditional_move where b210's sets
@@ -873,7 +1119,9 @@ struct CompilerLinkerOptions {
     UInt8 mips_option43; // 0x047 placement unverified (PSP 0x043)
     UInt8 function_align16; // 0x048 placement unverified (PSP 0x03e)
     UInt8 cse_hard_reg_vu0; // 0x049 #pragma cse_hard_reg_vu0
+#if COPTS_B145_FIELDS
     UInt8 cse_vector_type; // 0x04a #pragma cse_vector_type
+#endif
     UInt8 volatileasm; // 0x04b #pragma volatileasm
     UInt8 memoryrewrite; // 0x04c #pragma memoryrewrite
     UInt8 mips_option3B; // 0x04d placement unverified (PSP 0x03b)
@@ -1122,7 +1370,9 @@ struct CompilerLinkerOptions {
     UInt8 opt_decomposeaggregates; // 0x128 #pragma opt_decomposeaggregates
     UInt8 opt_recomposeaggregates; // 0x129 #pragma opt_recomposeaggregates
     UInt8 opt_scalarizeliveranges; // 0x12a #pragma opt_scalarizeliveranges
+#if COPTS_B145_FIELDS
     UInt8 opt_constnonchanging; // 0x12b #pragma opt_constnonchanging
+#endif
     UInt8 filesyminfo; // 0x12c #pragma sym
     UInt8 symstringtypes; // 0x12d #pragma symstringtypes
     UInt8 unknown12E[2]; // 0x12e unknown (2 bytes)
@@ -1412,6 +1662,7 @@ extern Object* Xicth_func;
 extern Object* Xecth_func;
 extern Object* Xunex_func;
 extern CompilerLinkerOptions copts;
+#define COPTS_T copts // 2.3.3 reads part of copts through COPTS_T (copts_tail)
 #if MWCCPSP
 // 2.4.7 options that mwccpsp 3.0.1 does not have, or whose place in the
 // 0x144-byte struct is not known yet. Shared code reads them from here (all

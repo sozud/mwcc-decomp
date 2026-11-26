@@ -300,7 +300,7 @@ static void func_0052E3B0(
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!MWCCPS2_B69_NOQFLAG && (pc->op == MACRO_OP(0x5D) || pc->op == OPC(0x1D1))) {
 #else
-    if (pc->op == MACRO_OP(0x5D) || pc->op == 0x1D1) {
+    if (pc->op == MACRO_OP(0x5D) || pc->op == PS2_OP(0x1D1)) {
 #endif
         pc->args[0].flags |= 0x2000;
     }
@@ -312,7 +312,7 @@ static void func_0052E3B0(
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (!MWCCPS2_B69_NOQFLAG && (pc->op == MACRO_OP(0x5D) || pc->op == OPC(0x1D1))) {
 #else
-        if (pc->op == MACRO_OP(0x5D) || pc->op == 0x1D1) {
+        if (pc->op == MACRO_OP(0x5D) || pc->op == PS2_OP(0x1D1)) {
 #endif
             pc->args[0].flags |= 0x2000;
         }
@@ -348,7 +348,7 @@ static void func_0052E3B0(
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!MWCCPS2_B69_NOQFLAG && (pc->op == MACRO_OP(0x7F) || pc->op == OPC(0x1D2))) {
 #else
-    if (pc->op == MACRO_OP(0x7F) || pc->op == 0x1D2) {
+    if (pc->op == MACRO_OP(0x7F) || pc->op == PS2_OP(0x1D2)) {
 #endif
         pc->args[0].flags |= 0x2000;
     }
@@ -362,7 +362,7 @@ static void func_0052E3B0(
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (!MWCCPS2_B69_NOQFLAG && (pc->op == MACRO_OP(0x5D) || pc->op == OPC(0x1D1))) {
 #else
-        if (pc->op == MACRO_OP(0x5D) || pc->op == 0x1D1) {
+        if (pc->op == MACRO_OP(0x5D) || pc->op == PS2_OP(0x1D1)) {
 #endif
             pc->args[0].flags |= 0x2000;
         }
@@ -387,6 +387,13 @@ static void func_0052E3B0(
 
 // straight-line copy of 16-byte aligned blocks (quadwords, then doubles,
 // words, halfwords and bytes), mips_option33 registers at a time
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3's quadword block move (0x4E6430) asks for its floating-point
+// temporaries in class 0 (0x4E651F, 0x4E65AE push 0 where the word and
+// doubleword moves, 0x4E5E87 and 0x4E6137, push 1): they are colored as
+// general registers and encoded by number ($f2 for v0, $f9 for t1)
+#define B233_QUADFPCLASS 0
+#endif
 static void func_0052EC70(VOperand* dst, VOperand* src, SInt32 len) {
     VOperand regs[6];
     VOperand s;
@@ -407,7 +414,11 @@ static void func_0052EC70(VOperand* dst, VOperand* src, SInt32 len) {
                 n -= 16;
             } else if (n >= 8) {
                 if (!copts.nofpregforblkmv && (copts.fp_library & 2)) {
+#if MWCC_CORE == MWCC_CORE_B233
+                    regs[i] = func_00479870(MACRO_OP(0x4B), &s, B233_QUADFPCLASS);
+#else
                     regs[i] = func_00479870(MACRO_OP(0x4B), &s, 1);
+#endif
                 } else {
                     regs[i] = func_00479870(MACRO_OP(0x4A), &s, 0);
                 }
@@ -415,7 +426,11 @@ static void func_0052EC70(VOperand* dst, VOperand* src, SInt32 len) {
                 n -= 8;
             } else if (n >= 4) {
                 if (!copts.nofpregforblkmv && (copts.fp_library & 1)) {
+#if MWCC_CORE == MWCC_CORE_B233
+                    regs[i] = func_00479870(MACRO_OP(0x56), &s, B233_QUADFPCLASS);
+#else
                     regs[i] = func_00479870(MACRO_OP(0x56), &s, 1);
+#endif
                 } else {
                     regs[i] = func_00479870(MACRO_OP(0x55), &s, 0);
                 }

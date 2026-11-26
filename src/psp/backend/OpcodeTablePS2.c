@@ -1,5 +1,11 @@
 #include "compiler/mwcc_core.h"
-#if MWCCPS2
+#if MWCC_CORE == MWCC_CORE_B011126
+// 011126's flags where they are not b69's (its initialiser 0x48EB10)
+#define F011126(b69, b011126) (b011126)
+#else
+#define F011126(b69, b011126) (b69)
+#endif
+#if MWCCPS2 && MWCCPS2_BUILD != 119 // b119: OpcodeTablePS2B119.c
 #include "compiler/common.h"
 #include <string.h>
 #include "compiler/CParser.h"
@@ -494,19 +500,21 @@ L2bb8:
     data_006115F8[0xde].alias = (char*)"sync.l";
     goto L15a0;
 L2bf0:
-    func_00478ED0(0x264, "qmfc2", "=t,2S", r_ecx, 0x4000, 0, 0x800000, 1);
+    func_00478ED0(0x264, "qmfc2", "=t,2S", r_ecx, F011126(0x4000, 0), 0, 0x800000, 1);
     r_edi = 0x48200001; // 01001000001000000000000000000001
 L2c38:
-    func_00478ED0(0x265, "qmfc2.i", "=t,2S", r_edi, 0x4000, 0, 0x800000, 1);
+    func_00478ED0(0x265, "qmfc2.i", "=t,2S", r_edi, F011126(0x4000, 0), 0, 0x800000, 1);
     r_edx = 0x48a00000; // 01001000101000000000000000000000
 L2c84:
-    func_00478ED0(0x266, "qmtc2", "t,=2S", r_edx, 0x80004000, 0, 0x800000, 1);
+    func_00478ED0(0x266, "qmtc2", "t,=2S", r_edx, F011126(0x80004000, 0x80000000), 0, 0x800000, 1);
     r_edi = 0x48a00001; // 01001000101000000000000000000001
 L2ccc:
-    func_00478ED0(0x267, "qmtc2.i", "t,=2S", r_edi, 0x80004000, 0, 0x800000, 1);
+    func_00478ED0(
+        0x267, "qmtc2.i", "t,=2S", r_edi, F011126(0x80004000, 0x80000000), 0, 0x800000, 1
+    );
     r_edx = 0xd8000000; // 11011000000000000000000000000000
 L2d14:
-    func_00478ED0(0x263, "lqc2", "=2T,o(s)", r_edx, 0x4002, 0, 0x800000, 1);
+    func_00478ED0(0x263, "lqc2", "=2T,o(s)", r_edx, F011126(0x4002, 2), 0, 0x800000, 1);
     r_edi = 0xf8000000; // 11111000000000000000000000000000
 L2d5c:
     func_00478ED0(0x268, "sqc2", "2T,o(s)", r_edi, 4, 0, 0x800000, 1);
@@ -1006,13 +1014,13 @@ L5159:
     func_00478ED0(0x275, "vaddax", "&+2A,2S,2N", 0x4a00003c, 0x2000, 0, 4, 1);
     func_00478ED0(0x276, "vadday", "&+2A,2S,2N", 0x4a00003d, 0x2000, 0, 4, 1);
     func_00478ED0(0x277, "vaddaz", "&+2A,2S,2N", 0x4a00003e, 0x2000, 0, 4, 1);
-    func_00478ED0(0x278, "vcallms", "2b", 0x4a000038, 0x8000001, 0, 4, 1);
-    func_00478ED0(0x279, "vcallms", "2i", 0x4a000038, 0x8000001, 0, 4, 1);
+    func_00478ED0(0x278, "vcallms", "2b", 0x4a000038, F011126(0x8000001, 0x28000001), 0, 4, 1);
+    func_00478ED0(0x279, "vcallms", "2i", 0x4a000038, F011126(0x8000001, 0x28000001), 0, 4, 1);
     r_ecx = 0x4a00d839; // 01001010000000001101100000111001
 L6cec:
-    func_00478ED0(0x27a, "vcallmsr", "9", r_ecx, 0x8000009, 0, 4, 1);
+    func_00478ED0(0x27a, "vcallmsr", "9", r_ecx, F011126(0x8000009, 0x28000009), 0, 4, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-    func_00478ED0(0x27b, "vclipw", "=2S,2T", 0x4bc001ff, 0x100, 0, 4, 1);
+    func_00478ED0(0x27b, "vclipw", "=2S,2T", 0x4bc001ff, F011126(0x100, 0), 0, 4, 1);
 #else
     func_00478ED0(0x27b, "vclipw", "2S,2T", 0x4bc001ff, 0x100, 0, 4, 1);
 #endif

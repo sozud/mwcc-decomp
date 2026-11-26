@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """How much of each original compiler the decompiled sources reproduce exactly.
 
-    exact.py [--compilers DIR] [--json-out DIR] [-j N] [mwccpsp|mwccps2|b52|b69 ...]
+    exact.py [--compilers DIR] [--json-out DIR] [-j N] [mwccpsp|mwccps2|b52|b69|b119|b198|b233 ...]
 
 For each compiler (default: all four), every unit is compiled for Windows x86
 with the host compiler and flags the original itself was built with (under
@@ -53,6 +53,7 @@ from pe import PE  # noqa: E402
 
 B69 = os.path.join("tools", "mwccps2", "b69")
 B52 = os.path.join("tools", "mwccps2", "b52")
+B233 = os.path.join("tools", "mwccps2", "b233")
 COMPILERS = {
     "mwccpsp": {
         "label": "mwccpsp b219",
@@ -83,6 +84,18 @@ COMPILERS = {
         "fallback": "-DMWCCPS2=1",
         "map": "config/PS2_3_0_1b198/native",
     },
+    "b119": {
+        "label": "mwccps2 b119",
+        "badge": "mwccps2-b119.json",
+        "exe": "orig/PS2_3_0_1_b119/mwccps2.exe",
+        # b210's units with -DMWCCPS2_BUILD=119 (Persona 3 FES's compiler); the
+        # name map, address map and function table come from the sotn-decomp
+        # tree's MWCCPS2_BUILD=119 work (tools/mwccps2/b119/get_orig.py)
+        "units": "config/PS2_3_0_1b119/native/exact_units.json",
+        "functions": "config/PS2_3_0_1b119/native/functions.csv",
+        "fallback": "-DMWCCPS2=1",
+        "map": "config/PS2_3_0_1b119/native",
+    },
     "b52": {
         "label": "mwccps2 b52",
         "badge": "mwccps2-b52.json",
@@ -100,6 +113,17 @@ COMPILERS = {
         "functions": f"{B69}/functions.csv",
         "dir": B69,
         "addr_name": r"_b69_([0-9A-Fa-f]{8})$",
+    },
+    "b233": {
+        "label": "mwccps2 2.3.3",
+        "badge": "mwccps2-b233.json",
+        "exe": "orig/PS2_2_3_3/mwccps2.exe",
+        # b69's units with -DMWCCPS2_B233=1 (MWCC_CORE_B233); the name map and
+        # function table come from the sotn-decomp tree's 2.3.3 work
+        "units": f"{B233}/exact_units.json",
+        "functions": f"{B233}/functions.csv",
+        "dir": B233,
+        "addr_name": r"_b233_([0-9A-Fa-f]{8})$",
     },
 }
 HOSTS = ("cw92", "cwpro6", "cwpro53", "cwpro5")

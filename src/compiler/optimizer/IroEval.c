@@ -1343,12 +1343,26 @@ static int checkNode(IRONode* fnode) {
 }
 
 static int checkLabel(CLabel* label, IRONode* fnode) {
+#if MWCC_CORE == MWCC_CORE_B233
+    UInt16 i;
+#endif
     switch (fnode->last->type) {
         case IROLinearIf:
             if (label == fnode->last->u.label.label) {
                 return TRUE;
             }
             break;
+#if MWCC_CORE == MWCC_CORE_B233
+        case IROLinearIfNot:
+            // 2.3.3 (0x4C6E70): an IfNot whose other way, a successor that
+            // starts with the label, is where the run's Ifs go
+            for (i = fnode->numsucc; i; i--) {
+                if (IRO_NodeTable[fnode->succ[i - 1]]->first->u.label.label == label) {
+                    return TRUE;
+                }
+            }
+            break;
+#endif
         default:
             break;
     }
@@ -1955,11 +1969,21 @@ int IRO_SimplifyConditionals(void) {
     int changed = FALSE;
 
     for (fnode = IRO_FirstNode; fnode; fnode = fnode->nextnode) {
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 (0x4C75F0): runs of If or IfNot
+        if (fnode->last->type == IROLinearIf || fnode->last->type == IROLinearIfNot) {
+            start = end = fnode;
+            while (fnode->nextnode &&
+                   (fnode->nextnode->last->type == IROLinearIf ||
+                    fnode->nextnode->last->type == IROLinearIfNot)) {
+                end = fnode = fnode->nextnode;
+            }
+#else
         if (fnode->last->type == IROLinearIf) {
             start = end = fnode;
             while (fnode->nextnode && fnode->nextnode->last->type == IROLinearIf) {
                 end = fnode = fnode->nextnode;
             }
+#endif
             if (start != end && ReduceConsecutiveIf(start, end)) {
                 changed = TRUE;
             }
@@ -1984,7 +2008,11 @@ Boolean IRO_EvaluateDefinitePointers(Object* func) {
     IROListNode* scan;
     IROListNode* list;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (!COPTS_T.opt_pointer_analysis) {
+#else
     if (!copts.opt_pointer_analysis) {
+#endif
         return FALSE;
     }
 

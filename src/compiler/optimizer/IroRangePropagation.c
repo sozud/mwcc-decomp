@@ -72,7 +72,11 @@ static ERecord* ERecordFound(Object* obj) {
     return scan;
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+static BOOL_INT EREandHasNoUse(ERange* range, CInt64 val) {
+#else
 static Boolean EREandHasNoUse(ERange* range, CInt64 val) {
+#endif
     UInt16 i;
     CInt64 mask;
     CInt64 work;
@@ -173,7 +177,11 @@ static void SetRangesForKillsByIndirectAssignment(IROLinear* nd) {
         inner->type == IROLinearOp1Arg &&
         inner->nodetype == EINDIRECT &&
         (analysend = inner->u.monadic) &&
+#if MWCC_CORE == MWCC_CORE_B233
+        COPTS_T.opt_pointer_analysis &&
+#else
         copts.opt_pointer_analysis &&
+#endif
         analysend->pointsToFunction &&
         FunctionName) {
         resultList = NULL;
@@ -271,7 +279,11 @@ static void InvalidateRangesForKillsByFunctionCall(IROLinear* nd) {
     failed = FALSE;
 
     if ((analysend = nd->u.funccall.callee) &&
+#if MWCC_CORE == MWCC_CORE_B233
+        COPTS_T.opt_pointer_analysis &&
+#else
         copts.opt_pointer_analysis &&
+#endif
         analysend->pointsToFunction &&
         FunctionName) {
         resultList = NULL;
@@ -869,12 +881,19 @@ static Boolean ERfoldLinear(IROLinear* nd) {
 #endif
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+extern Boolean IRO_B233RangeResult; // IrOptimizer.c
+#endif
 Boolean IRO_RangePropagateInFNode(void) {
     IRONode* fnode;
     IROLinear* nd;
     Boolean result;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    result = IRO_B233RangeResult;
+#else
     result = FALSE;
+#endif
 
     for (fnode = IRO_FirstNode; fnode; fnode = fnode->nextnode) {
         ERangeFirst = ERangeLast = NULL;

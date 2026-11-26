@@ -10,7 +10,10 @@ can use them instead of running the Windows executables under wibo or Wine.
 | `mwccps2` | PS2 3.0.1 build 210 | Persona 4 | `mwccps2-*` | ![mwccps2 b210](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sozud/mwcc-info/main/mwccps2.json) |
 | `mwccps2` b52 | PS2 3.0 build 52 | [Monster Hunter](https://github.com/itsbigcforme67/mh1-xbox) | `mwccps2-b52-*` | ![mwccps2 b52](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sozud/mwcc-info/main/mwccps2-b52.json) |
 | `mwccps2` b69 | PS2 build 69 (version string 3.0.3) | Silent Hill 3 | `mwccps2-b69-*` | ![mwccps2 b69](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sozud/mwcc-info/main/mwccps2-b69.json) |
+| `mwccps2` 2.3.3 | PS2 2.3.3 | Yu-Gi-Oh! Duelists of the Roses | | ![mwccps2 2.3.3](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sozud/mwcc-info/main/mwccps2-b233.json) |
 | `mwccps2` b198 | PS2 3.0.1 build 198 | | `mwccps2-b198-*` | ![mwccps2 b198](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sozud/mwcc-info/main/mwccps2-b198.json) |
+| `mwccps2` b119 | PS2 3.0.1 build 119 | [Persona 3 FES](https://github.com/snaku/Persona3-FES-Decompilation) (RenderWare) | `mwccps2-b119-*` | ![mwccps2 b119](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/sozud/mwcc-info/main/mwccps2-b119.json) |
+| `mwccps2` 011126 | PS2 3.0 011126 | [Persona 3 FES](https://github.com/snaku/Persona3-FES-Decompilation) (game code) | `mwccps2-011126-*` | |
 
 Each release has `<compiler>-native64-<os>-<arch>.tar.gz` for linux-amd64, darwin-amd64 and darwin-arm64.
 
@@ -88,6 +91,58 @@ The other 885 depend on b198 reading memory it never initialised: 40 the origina
 directory to another, and 845 follow an operand's rclass/flags left over on the stack (`func_004C3C60` never writes
 them; copy propagation tests `flags & 8`). Replaying the words the original reads there into the native makes all 845
 match (`tools/mwccps2/b198/residue/` and `tools/mwccps2/b198/corpus-ub.txt`).
+
+## mwccps2 build 119 (PS2 3.0.1 build 119, 2004-09-14: Persona 3 FES)
+
+```sh
+python3 tools/mwccps2/b119/get_orig.py      # orig/PS2_3_0_1_b119/, from decomp.me's public image, checked by digest
+python3 tools/mwccps2/b119/native_b119.py -o build/PS2_3_0_1_b119/mwccps2
+```
+
+or `docker build -f tools/mwccps2/b119/Dockerfile -t mwccps2-b119 .`. The same sources as b210 with `-DMWCCPS2_BUILD=119`. b119 is older than b145 and shares its paths where the sources
+test `MWCCPS2_BUILD < 198` or `< 210`; where it differs from both, the code is under `MWCCPS2_BUILD == 119`. The largest
+difference is the opcode table: b119 has no `nop.bl` (b145/b210 0xBB), so every opcode above it is one lower, which
+the sources write as `PS2_OP(n)` (include/psp/BE.h). `native_b119.py --gen` regenerates its data tables in
+`src/native/ps2/b119/`, and the build maps names through `config/PS2_3_0_1b119/native/` (generated from the research
+tree's b119 name map).
+
+Its corpus is the Persona 4 corpus replayed through the original b119 (1,007 cases; the P4 project builds its
+RenderWare block with b119) plus every C unit of the [Persona 3 FES decompilation](https://github.com/snaku/Persona3-FES-Decompilation)
+compiled by b119 (111). The native gives identical objects for 884 of 1,118. The other 234 depend on b119 reading
+memory it never initialised, mostly an operand's flags left over on the stack, as in b198
+(`tools/mwccps2/b119/residue/` and `tools/mwccps2/b119/corpus-ub.txt`).
+
+## mwccps2 3.0 011126 (2001-11-26: Persona 3 FES's game code)
+
+```sh
+python3 tools/mwccps2/b011126/get_orig.py   # orig/PS2_3_0_011126/ and orig/PS2_3_0_1_b145/, checked by digest
+python3 tools/mwccps2/b011126/native_b011126.py -o build/PS2_3_0_011126/mwccps2
+```
+
+or `docker build -f tools/mwccps2/b011126/Dockerfile -t mwccps2-b011126 .`. Persona 3 FES builds its game code with
+011126 and its RenderWare units with b119. 011126 is b69's code with its own differences, built from the b69 sources
+with `MWCC_CORE_B011126` (see `tools/mwccps2/b011126/README.md`). Its corpus is every PS2 corpus's inputs replayed
+through the original (6,245 cases); the native gives identical objects for 6,067, Persona 3 FES 110 of 111. The other
+178 depend on b69's arena residue, a constant's `hascall` byte left over from an earlier allocation
+(`tools/mwccps2/b011126/corpus-ub.txt`).
+
+## mwccps2 2.3.3 (2000-09-06: Yu-Gi-Oh! Duelists of the Roses)
+
+```sh
+python3 tools/mwccps2/b233/get_orig.py      # orig/PS2_2_3_3/, from decomp.me's public image, checked by digest
+python3 tools/mwccps2/b233/native_b233.py -o build/PS2_2_3_3/mwccps2
+```
+
+The oldest PS2 line: b69's code (the GameCube 2.x front end and optimizer with the MIPS back end) with 2.3.3's own
+differences under `MWCC_CORE == MWCC_CORE_B233` (include/compiler/mwcc_core.h; it builds with `-DMWCCPS2_B69=1
+-DMWCCPS2_B233=1`, so every b69 path applies to it too). Its opcode numbers come from `src/psp/backend/OpMap233.c`;
+the native reads one operand layout throughout (`MWCCPS2_B233_OPS301`). The exact build compiles b69's units with
+CW Pro 5.3 at 2.3.3's level (`-opt level=4,speed`), and the name map and function table come from the research
+tree's 2.3.3 work (`tools/mwccps2/b233/`).
+
+Its corpus is the Duelists of the Roses decompilation plus the other PS2 corpora replayed through 2.3.3 (1,637
+cases). The cases the native can't match depend on memory 2.3.3 never initialises (`tools/mwccps2/b233/corpus-ub.txt`,
+`tools/mwccps2/b233/residue/`).
 
 ## mwccps2 builds 69 and 52 (Silent Hill 3, Monster Hunter)
 

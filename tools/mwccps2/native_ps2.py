@@ -130,8 +130,8 @@ def gen_compileroptions(addr):
 
 
 def main():
-    if ps2_map.PS2_BUILD not in (210, 198):
-        sys.exit(f"native_ps2.py builds b210 and b198 (MWCCPS2_BUILD={ps2_map.PS2_BUILD})")
+    if ps2_map.PS2_BUILD not in (210, 198, 119):
+        sys.exit(f"native_ps2.py builds b210, b198 and b119 (MWCCPS2_BUILD={ps2_map.PS2_BUILD})")
     ap = argparse.ArgumentParser()
     ap.add_argument("--gen-only", action="store_true")
     ap.add_argument("-j", type=int, default=1)

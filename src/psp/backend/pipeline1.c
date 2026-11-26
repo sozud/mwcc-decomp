@@ -24,6 +24,112 @@ extern void freeoheap(void);
 extern void ps2_peepinit_4BBC10(void); // Peephole.c: the per-class def tables
 extern void func_004AFEB0(MPCodeBlock* block); // Peephole.c: uses learn their defining instruction
 
+#if MWCCPS2_BUILD == 119
+// b119 (0x554B40..0x554DAF): a smaller pass. No per-block census: every
+// block's candidates alternate between the pipelines; only mult/multu and the
+// candidate opcode in ps2_pipeop1 have pipeline-1 forms, and after a move only
+// the first mflo and the first mfhi reading its result follow.
+static int pipeof(MOperand* op) { // 0x554D00
+    MPCode* def;
+    MOperand* a;
+    int i;
+    int r;
+
+    def = (MPCode*)MOP_OBJ(*op);
+    if (def->op == 0xBA) {
+        return -1;
+    }
+    if (def->op == PS2_OP(0x1DB) || def->op == PS2_OP(0x1DC) || def->op == ps2_pipeop1_637322) {
+        return 0;
+    }
+    if (def->op == PS2_OP(0x202) ||
+        def->op == PS2_OP(0x203) ||
+        def->op == PS2_OP(0x1D3) ||
+        def->op == PS2_OP(0x1D4) ||
+        def->op == PS2_OP(0x440)) {
+        return 1;
+    }
+    for (i = 0, a = def->args; i < def->argcount; i++, a++) {
+        if (a->kind == 0 && (a->flags & 1)) {
+            r = pipeof(a);
+            if (r >= 0) {
+                return r;
+            }
+        }
+    }
+    return -1;
+}
+
+static void tohilo1(MPCode* pc) { // the HI/LO operands name pipeline 1's pair
+    int i;
+    MOperand* o;
+
+    for (i = 0, o = pc->args; i < pc->argcount; i++, o++) {
+        if (o->rclass == 2 && o->kind == 0 && (SInt32)o->reg == 0) {
+            o->reg = 1;
+        }
+    }
+}
+
+static void topipe1(MPCode* pc) { // 0x554C80
+    if (pc->op == PS2_OP(0x1DB)) {
+        pc->op = PS2_OP(0x202);
+    } else if (pc->op == PS2_OP(0x1DC)) {
+        pc->op = PS2_OP(0x203);
+    } else if (pc->op == ps2_pipeop1_637322) {
+        pc->op = PS2_OP(0x440);
+    } else {
+        CError_FATAL(88);
+    }
+    tohilo1(pc);
+}
+
+static void pipeline1block(MPCodeBlock* block) {
+    MPCode* pc;
+    MPCode* next;
+    int a;
+    int b;
+    Boolean skip = 0xFF;
+
+    for (pc = block->first; pc; pc = pc->next) {
+        if (pc->op != ps2_pipeop1_637322 &&
+            pc->op != ps2_pipeop2_6371D0 &&
+            pc->op != ps2_pipeop3_63732A) {
+            continue;
+        }
+        if (skip) {
+            skip = 0;
+            continue;
+        }
+        a = pipeof(&pc->args[1]);
+        b = pipeof(&pc->args[2]);
+        if (a == -1 && b == -1) {
+            if (skip) {
+                continue;
+            }
+            topipe1(pc);
+            for (next = pc->next; next; next = next->next) {
+                if (next->op == 0xA8 && (MPCode*)MOP_OBJ(next->args[1]) == pc) {
+                    next->op = PS2_OP(0x1FA);
+                    tohilo1(next);
+                    break;
+                }
+            }
+            for (next = pc->next; next; next = next->next) {
+                if (next->op == 0xA9 && (MPCode*)MOP_OBJ(next->args[1]) == pc) {
+                    next->op = PS2_OP(0x1FB);
+                    tohilo1(next);
+                    break;
+                }
+            }
+            skip = 1;
+        } else if (a == 1 || b == 1) {
+            topipe1(pc);
+            skip = 1;
+        }
+    }
+}
+#else
 // which pipeline the value of a register operand comes from: 0, 1, or -1 if
 // none can be told
 static int pipeof(MOperand* op) {
@@ -64,12 +170,12 @@ static int pipeof(MOperand* op) {
         case 0xB3:
         case 0xB6:
         case 0xB7:
-        case 0x1D5:
-        case 0x1D6:
-        case 0x1DB:
-        case 0x1DC:
-        case 0x43F:
-        case 0x469:
+        case PS2_OP(0x1D5):
+        case PS2_OP(0x1D6):
+        case PS2_OP(0x1DB):
+        case PS2_OP(0x1DC):
+        case PS2_OP(0x43F):
+        case PS2_OP(0x469):
 #endif
             return 0;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -84,16 +190,16 @@ static int pipeof(MOperand* op) {
         case OPC(0x202):
         case OPC(0x203):
 #else
-        case 0x1D3:
-        case 0x1D4:
-        case 0x1D7:
-        case 0x1D8:
-        case 0x1FA:
-        case 0x1FB:
-        case 0x1FD:
-        case 0x1FE:
-        case 0x202:
-        case 0x203:
+        case PS2_OP(0x1D3):
+        case PS2_OP(0x1D4):
+        case PS2_OP(0x1D7):
+        case PS2_OP(0x1D8):
+        case PS2_OP(0x1FA):
+        case PS2_OP(0x1FB):
+        case PS2_OP(0x1FD):
+        case PS2_OP(0x1FE):
+        case PS2_OP(0x202):
+        case PS2_OP(0x203):
 #endif
             return 1;
     }
@@ -117,74 +223,74 @@ static void topipe1(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x1DB):
 #else
-        case 0x1DB:
+        case PS2_OP(0x1DB):
 #endif
-            pc->op = 0x202;
+            pc->op = PS2_OP(0x202);
             break;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x1DC):
 #else
-        case 0x1DC:
+        case PS2_OP(0x1DC):
 #endif
-            pc->op = 0x203;
+            pc->op = PS2_OP(0x203);
             break;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x1D5):
 #else
-        case 0x1D5:
+        case PS2_OP(0x1D5):
 #endif
-            pc->op = 0x1D7;
+            pc->op = PS2_OP(0x1D7);
             break;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x1D6):
 #else
-        case 0x1D6:
+        case PS2_OP(0x1D6):
 #endif
-            pc->op = 0x1D8;
+            pc->op = PS2_OP(0x1D8);
             break;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xA8):
 #else
         case 0xA8:
 #endif
-            pc->op = 0x1FA;
+            pc->op = PS2_OP(0x1FA);
             break;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xA9):
 #else
         case 0xA9:
 #endif
-            pc->op = 0x1FB;
+            pc->op = PS2_OP(0x1FB);
             break;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xB2):
 #else
         case 0xB2:
 #endif
-            pc->op = 0x1FD;
+            pc->op = PS2_OP(0x1FD);
             break;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xB3):
 #else
         case 0xB3:
 #endif
-            pc->op = 0x1FE;
+            pc->op = PS2_OP(0x1FE);
             break;
 #if MWCCPS2_BUILD >= 198
         case 0x7C:
-            pc->op = 0x1D3;
+            pc->op = PS2_OP(0x1D3);
             break;
-        case 0x43F:
-            pc->op = 0x440;
+        case PS2_OP(0x43F):
+            pc->op = PS2_OP(0x440);
             break;
 #else
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x7C):
 #else
         case 0x7C:
-        case 0x43F: // b145 has no 0x440 yet
+        case PS2_OP(0x43F): // b145 has no 0x440 yet
 #endif
-            pc->op = 0x1D3;
+            pc->op = PS2_OP(0x1D3);
             break;
 #endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -195,7 +301,7 @@ static void topipe1(MPCode* pc) {
 #else
         case 0x7D:
 #endif
-            pc->op = 0x1D4;
+            pc->op = PS2_OP(0x1D4);
             break;
         default:
             CError_FATAL(118);
@@ -285,23 +391,23 @@ static void pipeline1block(MPCodeBlock* block) {
             case 0x7D:
             case 0xB6:
             case 0xB7:
-            case 0x1D5:
-            case 0x1D6:
-            case 0x1DB:
-            case 0x1DC:
-            case 0x43F:
-            case 0x469:
+            case PS2_OP(0x1D5):
+            case PS2_OP(0x1D6):
+            case PS2_OP(0x1DB):
+            case PS2_OP(0x1DC):
+            case PS2_OP(0x43F):
+            case PS2_OP(0x469):
                 n0++;
                 break;
-            case 0x1D3:
-            case 0x1D4:
-            case 0x1D7:
-            case 0x1D8:
-            case 0x202:
-            case 0x203:
+            case PS2_OP(0x1D3):
+            case PS2_OP(0x1D4):
+            case PS2_OP(0x1D7):
+            case PS2_OP(0x1D8):
+            case PS2_OP(0x202):
+            case PS2_OP(0x203):
 #endif
 #if MWCCPS2_BUILD >= 198
-            case 0x440:
+            case PS2_OP(0x440):
 #endif
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                 n1++;
@@ -312,16 +418,16 @@ static void pipeline1block(MPCodeBlock* block) {
                     nwait++;
                 }
                 break;
-            case 0x1FA:
-            case 0x1FB:
+            case PS2_OP(0x1FA):
+            case PS2_OP(0x1FB):
                 if (!n1) {
                     nwait++;
                 }
                 break;
             case 0xB2:
             case 0xB3:
-            case 0x1FD:
-            case 0x1FE:
+            case PS2_OP(0x1FD):
+            case PS2_OP(0x1FE):
                 nhilo++;
                 break;
         }
@@ -337,13 +443,36 @@ static void pipeline1block(MPCodeBlock* block) {
 #endif
             continue;
         }
+#if MWCC_CORE == MWCC_CORE_B233
+        // 2.3.3 (0x4A0F30): only the first candidate stays in pipeline 0 for
+        // certain; after a conversion one with inputs from no known pipeline
+        // stays too, one with an input from pipeline 1 still moves
+        if ((signed char)skip < 0) {
+            skip = 0;
+            continue;
+        }
+        a = pipeof69(&pc->args[1]);
+        b = pipeof69(&pc->args[2]);
+        // (no mflo/mfhi follows the conversion: 0x4A0EB0 changes the one
+        // instruction)
+        if (a == -1 && b == -1) {
+            if (!skip) {
+                topipe1(pc);
+                skip = 1;
+            }
+            continue;
+        }
+#else
         if (skip) {
             skip = 0;
             continue;
         }
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B233
         a = pipeof69(&pc->args[1]);
         b = pipeof69(&pc->args[2]);
+#endif
         if (a == -1 && b == -1) {
 #else
         a = pipeof(&pc->args[1]);
@@ -382,21 +511,21 @@ static void pipeline1block(MPCodeBlock* block) {
                                     switch (next->op) {
                                         case 0xA8:
                                             if ((MPCode*)MOP_OBJ(next->args[1]) == pc) {
-                                                op = 0x1FA;
+                                                op = PS2_OP(0x1FA);
 #endif
                                             }
                                             break;
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                                         case 0xA9:
                                             if ((MPCode*)MOP_OBJ(next->args[1]) == pc) {
-                                                op = 0x1FB;
+                                                op = PS2_OP(0x1FB);
 #endif
                                             }
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
                                             break;
-                                        case 0x1D5:
+                                        case PS2_OP(0x1D5):
                                             if ((MPCode*)MOP_OBJ(next->args[3]) == pc) {
-                                                op = 0x1D7;
+                                                op = PS2_OP(0x1D7);
 #endif
                                             }
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -406,9 +535,9 @@ static void pipeline1block(MPCodeBlock* block) {
                                                     next->op = 0x1FB;
 #else
 break;
-case 0x1D6:
+case PS2_OP(0x1D6):
     if ((MPCode*)MOP_OBJ(next->args[3]) == pc) {
-        op = 0x1D8;
+        op = PS2_OP(0x1D8);
     }
     break;
 case 0x7C:
@@ -417,7 +546,7 @@ case 0xB2:
 case 0xB3:
 case 0xB6:
 case 0xB7:
-case 0x43F:
+case PS2_OP(0x43F):
     skip = 0;
     break;
     }
@@ -450,17 +579,18 @@ case 0x43F:
                                     }
                                 }
                             }
+#endif // MWCCPS2_BUILD == 119
 
-                            void pipeline1(Object * func) {
-                                MPCodeBlock* block;
+void pipeline1(Object* func) {
+    MPCodeBlock* block;
 
-                                ps2_peepinit_4BBC10();
-                                for (block = data_00624FD0; block; block = block->next) {
-                                    if (block->pcodecount) {
-                                        func_004AFEB0(block);
-                                        pipeline1block(block);
-                                    }
-                                }
-                                freeoheap();
-                            }
+    ps2_peepinit_4BBC10();
+    for (block = data_00624FD0; block; block = block->next) {
+        if (block->pcodecount) {
+            func_004AFEB0(block);
+            pipeline1block(block);
+        }
+    }
+    freeoheap();
+}
 #endif

@@ -189,10 +189,48 @@ int func_004A4580(VOperand* size) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         emitpcode(OPC(0xDD), 29, 29, v.reg);
 #else
-        emitpcode(0xDD, 29, 29, v.reg);
+        emitpcode(PS2_OP(0xDD), 29, 29, v.reg);
 #endif
     }
     v = func_004C3BA0(29, 0);
     v = func_00479B60(3, &v, 0, 0x11);
     return v.reg;
 }
+
+#if MWCC_CORE == MWCC_CORE_B233 && MWCCPSP_NATIVE
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+// Classification aid (native only), see b233_mayalias (LocalCSE.c,
+// Scheduler.c): the byte 2.3.3 reads past a pooled float constant's Float,
+// replayed from MWCCPS2_B233_FLOATRES ("name byte" lines); -1 when the
+// object is not listed (the native's own test applies).
+int b233_floatres(Object* obj) {
+    static int state;
+    static char names[4096][32];
+    static int bytes[4096];
+    static int n;
+    int i;
+
+    if (!state) {
+        const char* path = getenv("MWCCPS2_B233_FLOATRES");
+        FILE* f;
+        state = 1;
+        if (path && (f = fopen(path, "r"))) {
+            while (n < 4096 && fscanf(f, "%31s %d", names[n], &bytes[n]) == 2) {
+                n++;
+            }
+            fclose(f);
+        }
+    }
+    if (!n || obj->datatype != DDATA || !obj->name) {
+        return -1;
+    }
+    for (i = 0; i < n; i++) {
+        if (!strcmp(names[i], obj->name->name)) {
+            return bytes[i];
+        }
+    }
+    return -1;
+}
+#endif

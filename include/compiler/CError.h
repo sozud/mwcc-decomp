@@ -411,9 +411,15 @@ extern void CError_QualifierCheck(UInt32 qual);
 // b198 (198 <= MWCCPS2_BUILD < 210) has b210's assert lines except where it
 // sets this instead (b145's shifts do not apply to it)
 #define CError_B198_SHIFT 0
+// b119 (MWCCPS2_BUILD == 119) moves some again: CError_B119_SHIFT is added on
+// top of both
+#define CError_B119_SHIFT 0
 // CError_B145_LINE(n) is for direct CError_Internal(file, n) calls (PS2-only
-// code written with b210's number): only the b145 shift applies
-#if MWCCPS2 && defined(MWCCPS2_BUILD) && MWCCPS2_BUILD < 198
+// code written with b210's number): only the b145 (and b119) shifts apply
+#if MWCCPS2 && defined(MWCCPS2_BUILD) && MWCCPS2_BUILD == 119
+#define CError_B145_LINE(line) ((line) + CError_B145_SHIFT + CError_B119_SHIFT)
+#define CError_PS2_LINE(line) ((line) + CError_PS2_SHIFT + CError_B145_SHIFT + CError_B119_SHIFT)
+#elif MWCCPS2 && defined(MWCCPS2_BUILD) && MWCCPS2_BUILD < 198
 #define CError_B145_LINE(line) ((line) + CError_B145_SHIFT)
 #define CError_PS2_LINE(line) ((line) + CError_PS2_SHIFT + CError_B145_SHIFT)
 #elif MWCCPS2 && defined(MWCCPS2_BUILD) && MWCCPS2_BUILD < 210
@@ -767,7 +773,11 @@ enum {
     ERR_NOT_MEMBER_OF_CLASS = 294, // "'%u' is not a member of class '%t'"
     ERR_NOT_MEMBER_OF_NAMESPACE = 306, // "'%u' is not a member of namespace '%u'"
     ERR_ILLEGAL_ACCESS_FROM_TO_QUALIFIED_MEMBER = 313, // "illegal access from '%t' to protected/private member '%t::%u'"
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+    ERR_MAX = 335 // b119 lacks the last message (435, too many virtual registers)
+#else
     ERR_MAX = 336 // 3.0.1 has more messages (CError_GetErrorString's bound)
+#endif
 #else
     ERR_ILLEGAL_CHARACTER_CONSTANT = 100,
     ERR_ILLEGAL_STRING_CONSTANT = 101,

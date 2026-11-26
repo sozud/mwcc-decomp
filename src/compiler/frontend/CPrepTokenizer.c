@@ -306,7 +306,9 @@ loop:
             pos = (char*)p++;
             if (tokenstacklevel <= 0 && in_assembler && copts.asmpoundcomment) {
                 spaceskip = TRUE;
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126
+                // (not 011126: its prepskipnextchar 0x477C60 skips a '#'
+                // comment with CPrep_SkipNewComment, as ';')
                 // b69 0x477AF1: the block comment loop reused (the character
                 // after '#' is skipped like the '*' of a block comment); the
                 // comment ends before a NUL at the end of the text, '"', CR,
@@ -323,7 +325,7 @@ loop:
                 return CPrep_SkipNewCommentChar;
 #endif
                         }
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126
                         p[-1] = ' ';
                     }
                     if (c == '\\') {
@@ -453,7 +455,8 @@ mid_backslash:
                     goto loop;
                 }
             }
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126
+            // (not 011126, 0x477F85)
             // b69 (0x477DB6): in a GCC asm string (the assembler lexing with
             // cprep_nostring) the \n, \r, \t and \v escapes are white space
             if (cprep_nostring && in_assembler) {
@@ -469,7 +472,7 @@ mid_backslash:
 #endif
                 nextcharpos = (char*)p;
                 return c;
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126
             }
             nextcharpos = (char*)p;
             return c;
@@ -1797,7 +1800,7 @@ StringPtr CPrep_SkipNewComment(StringPtr str) {
                 if (copts.multibyteaware && COS_IsMultiByte(str, p - 1)) {
                     continue;
                 }
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126
                 if (InlineAsm_gccmode && *p == 'n') {
                     CPrep_SkipNewCommentChar = *++p;
                     return p;
@@ -1814,7 +1817,8 @@ StringPtr CPrep_SkipNewComment(StringPtr str) {
                 }
                 continue;
 
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126
+            // (neither this nor the \n escape in 011126, 0x4791A0)
             // b69 (0x479010): in a GCC asm string a comment ends at a line
             // feed, the string's end or a \n escape (whose next character
             // becomes the skip character)

@@ -745,7 +745,11 @@ static ENode* CRTTI_UniversalCast(ENode* expr, Type* type, UInt32 qual, UInt8 mo
         return expr;
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (!COPTS_T.old_argmatch) {
+#else
     if (!copts.old_argmatch) {
+#endif
         return CExpr_Convert(expr, type, qual, TRUE, TRUE);
     }
 

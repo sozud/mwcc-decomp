@@ -134,7 +134,8 @@ Alias* make_distinct_virtual_alias(Object* obj) {
     }
 
     if (!(CParser_GetTypeQualifiers(obj->type, obj->qual) & Q_RESTRICT)) {
-#if MWCCPSP // 3.0.1: const pointees count only with #pragma opt_constnonchanging
+#if MWCCPSP && \
+    COPTS_B145_FIELDS // 3.0.1: const pointees count only with #pragma opt_constnonchanging (not in b119)
         if (!copts.opt_constnonchanging) {
             return NULL;
         }
@@ -181,7 +182,11 @@ static inline Boolean is_virtual_or_local_static(Object* obj) {
     if (obj->type == TYPE(&virtual_object_type)) {
         return TRUE;
     }
+#if MWCC_CORE == MWCC_CORE_B233
+    if (obj->datatype == DDATA && OBJ_ISLOCALSTATIC(obj)) {
+#else
     if (obj->datatype == DDATA && obj->u.data.islocalstatic) {
+#endif
         return TRUE;
     }
     return FALSE;

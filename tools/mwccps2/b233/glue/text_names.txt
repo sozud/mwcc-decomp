@@ -1,0 +1,6 @@
+0040CF07 global _Opt_AddAccessPath
+0040D29D global _Opt_FindAndAddFile
+0040D55D global _Opt_PrintVersion
+0040D579 global _Opt_MaybeMoveAccessPaths
+0040D8CD global _Opt_IncreaseVerbosity
+0040DDDC global _Opt_DummyLinkerRoutine

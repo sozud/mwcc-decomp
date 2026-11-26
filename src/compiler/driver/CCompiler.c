@@ -203,11 +203,21 @@ static void initialize_compiler_options(CompilerLinkerParamBlk* params) {
     copts.ecplusplus = pFrontEnd.ecplusplus;
     copts.defer_codegen = pFrontEnd.defer_codegen;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B233
+    COPTS_T.inlinemaxsize = 256;
+    COPTS_T.inlinemaxtotalsize = 10000;
+#else
     copts.inlinemaxsize = 256;
     copts.inlinemaxtotalsize = 10000;
+#endif
+#else
+#if MWCC_CORE == MWCC_CORE_B233
+    COPTS_T.inlinemaxsize = 512;
+    COPTS_T.inlinemaxtotalsize = 7000;
 #else
     copts.inlinemaxsize = 512;
     copts.inlinemaxtotalsize = 7000;
+#endif
 #endif
 
     CWSecretGetNamedPreferences(cparams.context, "C/C++ Warnings", &prefsdata);
@@ -236,7 +246,11 @@ static void initialize_compiler_options(CompilerLinkerParamBlk* params) {
     copts.optimizationlevel = pGlobalOptimizer.optimizationlevel;
     copts.optimizesize = (Boolean)(pGlobalOptimizer.optfor == 1);
 
+#if MWCC_CORE == MWCC_CORE_B233
+    COPTS_T.crippled = crippled;
+#else
     copts.crippled = crippled;
+#endif
     copts.unrollfactor = 8;
     copts.unrollinstrfactor = 100;
     copts.filesyminfo = params->SYMinfo;
@@ -254,6 +268,9 @@ static Boolean IsJapaneseSystem(void) {
 
 static void GetLicense(void) {
     if (!license_cookie) {
+#if MWCC_CORE == MWCC_CORE_B011126
+        crippled = FALSE; // 011126 (0x43A089)
+#endif
         if (IsJapaneseSystem()) {
             CWCheckoutLicense(
                 cparams.context, "Win32_Plugins_MIPS_PS2", "3", 0, NULL, &license_cookie

@@ -21,6 +21,8 @@ void func_004C3B00(void* value) {
     data_00603F88 = value;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 // The VOperand for a register operand.
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
@@ -59,6 +61,8 @@ VOperand func_004C3BA0(SInt16 reg, UInt8 kind) {
     v.reg = reg;
     return v;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 // The operand for a branch to a label (made on first use).
 MOperand func_004C3C00(CLabel* label) {
@@ -74,8 +78,11 @@ MOperand func_004C3C00(CLabel* label) {
 }
 
 // b198 leaves its operands' rclass/flags as stack residue (func_004C3C60 is exact
-// there: 0x4D006F, 0x4D00A4): natively a defined value, or the original's when replaying
-#if MWCCPSP_NATIVE && MWCCPS2 && MWCCPS2_BUILD >= 198 && MWCCPS2_BUILD < 210
+// there: 0x4D006F, 0x4D00A4): natively a defined value, or the original's when replaying;
+// b119 too (0x4CF1C4)
+#if MWCCPSP_NATIVE && \
+    MWCCPS2 && \
+    (MWCCPS2_BUILD == 119 || (MWCCPS2_BUILD >= 198 && MWCCPS2_BUILD < 210))
 #include <stdio.h>
 #include <stdlib.h>
 // Classification aid: MWCCPS2_B119_RESIDUE names a file of the original's
@@ -133,6 +140,8 @@ static void b119_replay_residue(MOperand* op, int kind) {
     b119_residue_file = f;
 }
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 // The instruction operand for a VOperand.
 MOperand func_004C3C60(VOperand* v) {
     MOperand op;
@@ -146,22 +155,36 @@ MOperand func_004C3C60(VOperand* v) {
     memset(&op, 0, sizeof(op));
     memset(&imm, 0, sizeof(imm));
 
+#elif MWCC_CORE == MWCC_CORE_B233 && MWCCPSP_NATIVE
+    // what the original leaves as stack residue (a memory operand's class,
+    // which func_004901D0 tests, and flags; an immediate's class) the native
+    // build took from its own stack, so from ASLR: zero (a memory operand's
+    // class 1 instead loses 21 functions)
+    memset(&op, 0, sizeof(op));
+    memset(&imm, 0, sizeof(imm)); // copied whole into op on the immediate path
 #endif
     switch (v->kind) {
         case 2:
         case 4:
             op.kind = 4;
-#if MWCCPSP_NATIVE && MWCCPS2 && MWCCPS2_BUILD >= 198 && MWCCPS2_BUILD < 210
+#if MWCCPSP_NATIVE && \
+    MWCCPS2 && \
+    (MWCCPS2_BUILD == 119 || (MWCCPS2_BUILD >= 198 && MWCCPS2_BUILD < 210))
             // b198 leaves rclass/flags as stack residue (often the high half of a heap or
-            // code pointer); copypropagatestouse tests flags & 8 on every operand
+            // code pointer); copypropagatestouse tests flags & 8 on every operand. b119
+            // too: no constant reproduces it; 8 passes the most cases (native b119:
+            // 822/1118 with 8, 817 with 0)
             op.rclass = 0;
-            op.flags = mwcc_ub_fill("operand", 0);
+            op.flags = mwcc_ub_fill("operand", MWCCPS2_BUILD == 119 ? 8 : 0);
             b119_replay_residue(&op, 4);
 #endif
             op.value = v->offset;
             MOP_SETOBJ(op, v->object);
             break;
         case 0:
+#if MWCC_CORE == MWCC_CORE_B011126
+        case 6: // 011126 (0x498224): a quadword in a general register
+#endif
             op.kind = 0;
             op.rclass = 0;
             op.reg = v->reg;
@@ -169,14 +192,18 @@ MOperand func_004C3C60(VOperand* v) {
             break;
         case 3:
             imm.kind = 3;
-#if MWCCPSP_NATIVE && MWCCPS2 && MWCCPS2_BUILD >= 198 && MWCCPS2_BUILD < 210
+#if MWCCPSP_NATIVE && \
+    MWCCPS2 && \
+    (MWCCPS2_BUILD == 119 || (MWCCPS2_BUILD >= 198 && MWCCPS2_BUILD < 210))
             // and an immediate's ([esp+0x19..0x1b] at 0x4D00A4)
             imm.rclass = 0;
             imm.flags = mwcc_ub_fill("operand", 0);
 #endif
             *(CInt64*)&imm.value = v->imm;
             op = imm;
-#if MWCCPSP_NATIVE && MWCCPS2 && MWCCPS2_BUILD >= 198 && MWCCPS2_BUILD < 210
+#if MWCCPSP_NATIVE && \
+    MWCCPS2 && \
+    (MWCCPS2_BUILD == 119 || (MWCCPS2_BUILD >= 198 && MWCCPS2_BUILD < 210))
             b119_replay_residue(&op, 3);
 #endif
             break;
@@ -197,6 +224,8 @@ MOperand func_004C3C60(VOperand* v) {
     }
     return op;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 MOperand func_004C3D50(CInt64 value) {
     MOperand op;
@@ -208,11 +237,15 @@ MOperand func_004C3D50(CInt64 value) {
     // native takes 0, the original's usual value
     memset(&op, 0, sizeof(op));
 
+#elif MWCC_CORE == MWCC_CORE_B233 && MWCCPSP_NATIVE // no stack residue (see func_004C3C60)
+    memset(&op, 0, sizeof(op));
 #endif
     op.kind = 3;
     *(CInt64*)&op.value = value;
     return op;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 MOperand func_004C3D90(SInt32 value) {
     MOperand op;
@@ -223,6 +256,8 @@ MOperand func_004C3D90(SInt32 value) {
     // the original differs on 179 corpus cases, forced to 0 on none): the
     // native takes 0, the original's usual value
     memset(&op, 0, sizeof(op));
+#elif MWCC_CORE == MWCC_CORE_B233 && MWCCPSP_NATIVE // no stack residue (see func_004C3C60)
+    memset(&op, 0, sizeof(op));
 #endif
 
     op.kind = 3;
@@ -230,11 +265,16 @@ MOperand func_004C3D90(SInt32 value) {
     return op;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 // A new virtual register of the class, as a definition.
 #if MWCCPS2 && !MWCC_CORE
 // mwccps2 (b198 new_register_arg, b210): an if-chain (the PS2 b198 decompilation's)
 MOperand func_004C3DD0(UInt8 rclass) {
     MOperand op;
+#if MWCC_CORE == MWCC_CORE_B233 && MWCCPSP_NATIVE // no stack residue (see func_004C3C60)
+    memset(&op, 0, sizeof(op));
+#endif
 
     op.kind = 0;
     op.rclass = rclass;
@@ -290,6 +330,9 @@ MOperand func_004C3E70(int reg, int rclass, int flags) {
 #else
 MOperand func_004C3E70(SInt16 reg, UInt8 rclass, UInt16 flags) {
     MOperand op;
+#if MWCC_CORE == MWCC_CORE_B233 && MWCCPSP_NATIVE // no stack residue (see func_004C3C60)
+    memset(&op, 0, sizeof(op));
+#endif
 
     op.kind = 0;
     op.rclass = rclass;

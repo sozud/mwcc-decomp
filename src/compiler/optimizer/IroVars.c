@@ -577,7 +577,13 @@ VarRecord* IRO_FindVar(Object* object, Boolean create, Boolean allowRegister) {
 
     if (var && !allowRegister) {
         var->noregister = TRUE;
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B233
+        // 2.3.3 (0x4B8C55..0x4B8C6F): the local's VarInfo is marked
+        // noregister for good (ResetVars, 0x4B8C80, clears only the
+        // VarRecord), so a local whose address IRO ever saw stays in memory
+        if (object->datatype == DLOCAL && object->u.var.info) {
+            object->u.var.info->noregister = 1;
+#elif MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (object->datatype == DLOCAL && (vi = object->u.var.info) && vi->noregister == 0) {
             vi->noregister = 2;
 #else
@@ -598,6 +604,9 @@ void ResetVars(void) {
 
     for (var = IRO_FirstVar; var; var = var->next) {
         var->noregister = FALSE;
+#if MWCC_CORE == MWCC_CORE_B233
+        continue;
+#endif
         if (var->object && var->object->datatype == DLOCAL && var->object->u.var.info) {
             if (var->object->u.var.info->noregister == 2) {
                 var->object->u.var.info->noregister = FALSE;
@@ -848,7 +857,7 @@ void IRO_FindAllVars(void) {
                 obj->varptr = NULL;
             }
         } else if (linear->type == IROLinearAsm && IRO_GetAsmEffectsHook && linear->u.asm_stmt) {
-            IROAsmEffects effects = IRO_EmptyAsmEffects;
+            IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
             int i;
 
             IRO_GetAsmEffectsHook(linear->u.asm_stmt, &effects);
@@ -1130,10 +1139,13 @@ VarRecord* IRO_FindAssigned(IROLinear* linear) {
         linear = linear->u.monadic;
     }
 
+// 2.3.3's IRO_FindAssigned (0x4B90B0): a bitfield store assigns no variable
+#if MWCC_CORE != MWCC_CORE_B233
     if (IS_LINEAR_MONADIC(linear, EBITFIELD)) {
         IRO_IsBitField = TRUE;
         linear = linear->u.monadic;
     }
+#endif
 
     if (IS_LINEAR_DIADIC(linear, EADD)) {
         if (IS_LINEAR_ENODE(linear->u.diadic.left, EOBJREF) &&
@@ -1160,6 +1172,8 @@ VarRecord* IRO_FindAssigned(IROLinear* linear) {
 }
 
 #if !MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static void GetKillsByIndirectAssignment(IROLinear* linear) {
     IROListNode* resultList;
     IROListNode* scan;
@@ -1180,7 +1194,11 @@ static void GetKillsByIndirectAssignment(IROLinear* linear) {
         linear->type == IROLinearOp1Arg &&
         linear->nodetype == EINDIRECT &&
         (inner = linear->u.monadic) &&
+#if MWCC_CORE == MWCC_CORE_B233
+        COPTS_T.opt_pointer_analysis &&
+#else
         copts.opt_pointer_analysis &&
+#endif
         inner->pointsToFunction &&
         FunctionName) {
         resultList = NULL;
@@ -1244,6 +1262,8 @@ static void GetKillsByIndirectAssignment(IROLinear* linear) {
         Bv_Or(IRO_FuncKills, IRO_VarKills);
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 #if MWCCPSP && !MWCCPS2
 #line 1151 "IroDependsKills.c"
@@ -1263,7 +1283,11 @@ static void GetKillsByFunctionCall(IROLinear* linear) {
     result = FALSE;
 
     if ((inner = linear->u.funccall.callee) &&
+#if MWCC_CORE == MWCC_CORE_B233
+        COPTS_T.opt_pointer_analysis &&
+#else
         copts.opt_pointer_analysis &&
+#endif
         inner->pointsToFunction &&
         FunctionName) {
         resultList = NULL;
@@ -1653,6 +1677,8 @@ static void GetKillsByIndirectAssignment(IROLinear* linear) {
 }
 
 // 0x56A520
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static void GetKillsByFunctionCall(IROLinear* linear) {
     IROListNode* resultList;
     IROListNode* scan;
@@ -1752,6 +1778,8 @@ static void GetKillsByFunctionCall(IROLinear* linear) {
         func_0054FC80(linear->stmt->dobjstack, KillExceptionObject, NULL);
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 #if MWCCPS2
 #line 1595 "IroVars.c"
@@ -1785,7 +1813,7 @@ void IRO_GetKills(IROLinear* linear) {
             break;
         case IROLinearAsm:
             if (IRO_GetAsmEffectsHook && linear->u.asm_stmt) {
-                IROAsmEffects effects = IRO_EmptyAsmEffects;
+                IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
                 IRO_GetAsmEffectsHook(linear->u.asm_stmt, &effects);
                 for (i = 0; i < effects.numoperands; i++) {
                     switch (effects.operands[i].type) {
@@ -1867,7 +1895,7 @@ void IRO_CheckInit(void) {
                     Bv_SetBit(var->index, fnode->gen);
                 }
             } else if (nd->type == IROLinearAsm && IRO_GetAsmEffectsHook && nd->u.asm_stmt) {
-                IROAsmEffects effects = IRO_EmptyAsmEffects;
+                IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
 
                 IRO_GetAsmEffectsHook(nd->u.asm_stmt, &effects);
                 for (i = 0; i < effects.numoperands; i++) {
@@ -2566,7 +2594,7 @@ void IRO_ScalarizeClassDataMembers301(void) {
         if (nd->type == IROLinearOp1Arg && nd->nodetype == EINDIRECT) {
             CheckAddress(nd, &unsafe);
         } else if (nd->type == IROLinearAsm && IRO_GetAsmEffectsHook && nd->u.asm_stmt) {
-            IROAsmEffects effects = IRO_EmptyAsmEffects;
+            IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
             IRO_GetAsmEffectsHook(nd->u.asm_stmt, &effects);
             for (i = 0; i < effects.numoperands; i++) {
                 if ((var = IRO_FindVar(effects.operands[i].object, FALSE, TRUE)) != NULL) {
@@ -3316,6 +3344,8 @@ static void CountRefToObject(Object* object, int depth) {
     object->u.var.info->used = TRUE;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -3 // b119 asserts
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-515)
@@ -3354,9 +3384,11 @@ void IRO_CountDoubleInd(IROLinear* node, int depth) {
         }
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 static void CountAsm(IROLinear* linear, int depth) {
-    IROAsmEffects effects = IRO_EmptyAsmEffects;
+    IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
     int i;
     Object* object;
 
@@ -3544,7 +3576,11 @@ static Boolean FunctionCallMightUseOrKillAnyAddressedVar(IROLinear* funccall) {
     result = FALSE;
 
     funcnd = funccall->u.funccall.callee;
+#if MWCC_CORE == MWCC_CORE_B233
+    if (funcnd && COPTS_T.opt_pointer_analysis && funcnd->pointsToFunction && FunctionName) {
+#else
     if (funcnd && copts.opt_pointer_analysis && funcnd->pointsToFunction && FunctionName) {
+#endif
         resultList = NULL;
         PointerAnalysis_LookupLinearNodePointerExpr(FunctionName, funcnd, &resultList);
 
@@ -3663,7 +3699,11 @@ static Boolean IndirectMightUseOrKillAnyAddressedVar(IROLinear* indirect) {
         indirect->type == IROLinearOp1Arg &&
         indirect->nodetype == EINDIRECT &&
         (indirect = indirect->u.monadic) &&
+#if MWCC_CORE == MWCC_CORE_B233
+        COPTS_T.opt_pointer_analysis &&
+#else
         copts.opt_pointer_analysis &&
+#endif
         indirect->pointsToFunction &&
         FunctionName) {
         resultList = NULL;
@@ -3717,6 +3757,102 @@ static Boolean IndirectMightUseOrKillAnyAddressedVar(IROLinear* indirect) {
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-1)
 #endif
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3's IRO_ScalarizeClassDataMembers (0x4B95A0): CheckAddress over the
+// EINDIRECTs, then one temporary per enabled record; no RewriteIndDec, no
+// call or asm safety scan, no bitfields, and each match is duplicated once
+// (the copy only feeds an argument's initial load)
+void IRO_ScalarizeClassDataMembers(void) {
+    IROLinear* nd;
+    Object* obj;
+    IndirectRecord* irec;
+    IndirectRecordMatch* match;
+    IROLinear* father;
+    IROList list;
+    IROLinear* addr;
+    Boolean unsafe;
+
+    IRO_FirstIndirectRecord = NULL;
+    IRO_LastIndirectRecord = NULL;
+    unsafe = TRUE; // CheckAddress (0x4B9800) has no call-safety scan
+
+    for (nd = IRO_FirstLinear; nd; nd = nd->next) {
+        if (nd->type == IROLinearOp1Arg && nd->nodetype == EINDIRECT) {
+            CheckAddress(nd, &unsafe);
+        }
+    }
+
+    for (irec = IRO_FirstIndirectRecord; irec; irec = irec->next) {
+        if (!(irec->flags & IRF_Disabled)) {
+            obj = create_temp_object(irec->type);
+            IRO_FindVar(obj, TRUE, TRUE);
+            for (match = irec->matches; match; match = match->otherMatches) {
+                IRO_InitList(&list);
+                IRO_DuplicateExpr(match->nd, &list);
+                if (match->nd->type == IROLinearOperand && match->nd->u.node->type == EOBJREF) {
+                    match->nd->u.node = create_objectrefnode(obj);
+                } else {
+                    father = IRO_LocateFather(match->nd);
+                    IRO_NopOut(father->u.monadic);
+                    father->u.monadic = IRO_NewLinear(IROLinearOperand);
+                    father->u.monadic->u.node = create_objectrefnode(obj);
+                    father->u.monadic->rtype = match->nd->rtype;
+                    father->u.monadic->index = ++IRO_NumLinear;
+                    father->u.monadic->flags |= IROLF_Ind | IROLF_Reffed;
+                    IRO_NopOut(match->nd);
+                    IRO_PasteAfter(father->u.monadic, father->u.monadic, match->nd);
+                }
+            }
+
+            if (ObjectIsArg(irec->var->object)) {
+                IROLinear* tempRef;
+                IROLinear* tempInd;
+                IROLinear* valueInd;
+                IROLinear* assign;
+
+                tempRef = IRO_NewLinear(IROLinearOperand);
+                tempRef->u.node = create_objectrefnode(obj);
+                tempRef->rtype = tempRef->u.node->data.objref->type;
+                tempRef->index = ++IRO_NumLinear;
+                tempRef->flags |= IROLF_Ind | IROLF_Assigned;
+
+                addr = list.tail;
+
+                tempInd = IRO_NewLinear(IROLinearOp1Arg);
+                tempInd->nodetype = EINDIRECT;
+                tempInd->rtype = irec->type;
+                tempInd->u.monadic = tempRef;
+                tempInd->index = ++IRO_NumLinear;
+                tempInd->flags |= IROLF_Assigned;
+
+                valueInd = IRO_NewLinear(IROLinearOp1Arg);
+                valueInd->nodetype = EINDIRECT;
+                valueInd->rtype = irec->type;
+                valueInd->u.monadic = addr;
+                valueInd->index = ++IRO_NumLinear;
+                valueInd->flags |= IROLF_Reffed;
+
+                assign = IRO_NewLinear(IROLinearOp2Arg);
+                assign->nodetype = EASS;
+                assign->u.diadic.left = tempInd;
+                assign->u.diadic.right = valueInd;
+                assign->rtype = irec->type;
+                assign->index = ++IRO_NumLinear;
+
+                addr->next = valueInd;
+                valueInd->next = tempRef;
+                tempRef->next = tempInd;
+                tempInd->next = assign;
+
+                IRO_PasteAfter(list.head, assign, IRO_FirstLinear);
+            }
+        }
+    }
+
+    IRO_CheckForUserBreak();
+}
+#endif
+#if MWCC_CORE != MWCC_CORE_B233
 void IRO_ScalarizeClassDataMembers(void) {
     IROLinear* nd;
     Object* obj;
@@ -3854,6 +3990,7 @@ void IRO_ScalarizeClassDataMembers(void) {
 
     IRO_CheckForUserBreak();
 }
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
@@ -3871,9 +4008,11 @@ static int CheckAddress(IROLinear* nd, Boolean* resultFlag) {
     SInt32 hi;
 
     inner = nd->u.monadic;
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3's CheckAddress (0x4B9800) does not look through EBITFIELD
     if (inner->type == IROLinearOp1Arg && inner->nodetype == EBITFIELD) {
         inner = inner->u.monadic;
     }
+#endif
 
     result = FALSE;
 
@@ -3948,7 +4087,11 @@ static int CheckAddressConsistency(IROLinear* nd, VarRecord* var, SInt32 addend,
         end_bit = start_bit + 8 * type->size - 1;
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (var->noregister && !COPTS_T.opt_pointer_analysis) {
+#else
     if (var->noregister && !copts.opt_pointer_analysis) {
+#endif
         return FALSE;
     }
 

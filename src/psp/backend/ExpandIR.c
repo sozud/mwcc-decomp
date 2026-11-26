@@ -108,14 +108,28 @@ ENode* func_004A4260(ENode* expr) {
 // roots and fabsf only under fastmath; the string/abs ones only with
 // inline_intrinsics.
 int func_004A3930(char* name) {
+#if MWCC_CORE == MWCC_CORE_B233
+    if (COPTS_T.fastmath && !strcmp(name, "sqrt")) {
+#else
     if (copts.fastmath && !strcmp(name, "sqrt")) {
+#endif
         return 0x10;
     }
+#if MWCC_CORE != MWCC_CORE_B011126 // 011126 (0x4B92A0): sqrt only
+#if MWCC_CORE == MWCC_CORE_B233
+    if (COPTS_T.fastmath && !strcmp(name, "sqrtf")) {
+#else
     if (copts.fastmath && !strcmp(name, "sqrtf")) {
+#endif
         return 0x10;
     }
+#endif
 #if !MWCCPS2 || MWCCPS2_BUILD >= 210 // b145 has no fabsf intrinsic
+#if MWCC_CORE == MWCC_CORE_B233
+    if (COPTS_T.fastmath && !strcmp(name, "fabsf")) {
+#else
     if (copts.fastmath && !strcmp(name, "fabsf")) {
+#endif
         return 0xC;
     }
 #endif
@@ -532,7 +546,11 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
                 } else if (id == 9) {
                     func_004A3840(expr);
                 } else if (id == 0x10) {
-                    if (target || IS_SINGLE(expr->rtype)) {
+#if MWCC_CORE == MWCC_CORE_B011126
+                    if (target) { // 011126 (0x4B9500): not for a float-typed call itself
+#else
+                            if (target || IS_SINGLE(expr->rtype)) {
+#endif
                         list = expr->data.funccall.args;
                         if (list->node->type == ETYPCON) {
                             list->node->rtype = TYPE(&stfloat);
@@ -610,16 +628,21 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
             for (list = expr->data.funccall.args; list; list = list->next) {
                 n = list->node;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+// 2.3.3 (0x4B2C47) keeps the cast: its selector loads the value first
+#if MWCC_CORE != MWCC_CORE_B233
                 if (n->type == ETYPCON &&
                     n->data.monadic->type == EINDIRECT &&
                     n->rtype == n->data.monadic->rtype) {
+                    list->node = n->data.monadic;
+                }
+#endif
 #else
                         if (n->type == ETYPCON &&
                             n->data.monadic->type == EINDIRECT &&
                             n->rtype == n->data.monadic->rtype) {
+                            list->node = n->data.monadic;
+                        }
 #endif
-                    list->node = n->data.monadic;
-                }
                 func_004A2810(list->node, NULL, 0);
                 expr->cost += list->node->cost;
             }
@@ -671,18 +694,33 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
         case EASS:
             right = expr->data.diadic.right;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3 (0x4B2D93) keeps a cast on the value
             if (right->type == ETYPCON &&
                 right->data.monadic->type == EINDIRECT &&
-#else
-                    if (right->type == ETYPCON &&
-                        right->data.monadic->type == EINDIRECT &&
-#endif
                 right->rtype->type == right->data.monadic->rtype->type &&
                 right->rtype->size == right->data.monadic->rtype->size) {
                 expr->data.diadic.right = right->data.monadic;
             }
+#endif
+#else
+                    if (right->type == ETYPCON &&
+                        right->data.monadic->type == EINDIRECT &&
+                        right->rtype->type == right->data.monadic->rtype->type &&
+                        right->rtype->size == right->data.monadic->rtype->size) {
+                        expr->data.diadic.right = right->data.monadic;
+                    }
+#endif
             func_004A2810(expr->data.diadic.left, NULL, 0);
             func_004A2810(expr->data.diadic.right, NULL, 0);
+#if MWCC_CORE == MWCC_CORE_B011126
+            // 011126 (0x4B9A7A) drops the target's EINDIRECT here, in every
+            // assignment (2.3.3's form), not only a block move's: the
+            // assignment's left is the target's address from here on, and
+            // InstrSelection.c's func_00496D50 generates it whole (0x49FD6B)
+            if (expr->data.diadic.left->type == EINDIRECT) {
+                expr->data.diadic.left = expr->data.diadic.left->data.monadic;
+            }
+#endif
             if (expr->data.diadic.right->type == EFUNCCALL &&
                 (func_00464B40(expr->rtype) || func_00464BE0(expr->rtype))) {
                 break;
@@ -702,15 +740,40 @@ void func_004A2810(ENode* expr, Type* target, int ignored) {
                 if (expr->data.diadic.right->type != EFUNCCALL) {
                     expr->type = EASSBLK;
                     expr->cost += 10;
-                    if (expr->data.diadic.left->type == EINDIRECT) {
-                        expr->data.diadic.left = expr->data.diadic.left->data.monadic;
-                    }
+#if MWCC_CORE == MWCC_CORE_B011126
+                    // 011126 (0x4B9ADB): the left is the address already (above);
+                    // a conditional source's two values become their addresses too
                     if (expr->data.diadic.right->type == EINDIRECT) {
                         expr->data.diadic.right = expr->data.diadic.right->data.monadic;
+                    } else if (expr->data.diadic.right->type == ECOND) {
+                        n = expr->data.diadic.right;
+                        if (n->data.cond.expr1->type == EINDIRECT) {
+                            n->data.cond.expr1 = n->data.cond.expr1->data.monadic;
+                        }
+                        if (n->data.cond.expr2->type == EINDIRECT) {
+                            n->data.cond.expr2 = n->data.cond.expr2->data.monadic;
+                        }
                     }
+#else
+                            if (expr->data.diadic.left->type == EINDIRECT) {
+                                expr->data.diadic.left = expr->data.diadic.left->data.monadic;
+                            }
+                            if (expr->data.diadic.right->type == EINDIRECT) {
+                                expr->data.diadic.right = expr->data.diadic.right->data.monadic;
+                            }
+#endif
                 }
             }
             expr->hascall = expr->data.diadic.left->hascall | expr->data.diadic.right->hascall;
+#if MWCC_CORE == MWCC_CORE_B233
+            // 2.3.3 (0x4B2DB6) has the target's address on the left by now
+            // (it drops the EINDIRECT), so the assignment costs the address
+            if (expr->data.diadic.left->type == EINDIRECT) {
+                expr->cost +=
+                    expr->data.diadic.left->data.monadic->cost + expr->data.diadic.right->cost;
+                break;
+            }
+#endif
             expr->cost += expr->data.diadic.left->cost + expr->data.diadic.right->cost;
             break;
 
@@ -817,10 +880,21 @@ assignop:
                 (sub->rtype->type == TYPEINT || sub->rtype->type == TYPEENUM)) {
                 func_004A2810(sub, type, 0);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B011126
+            } else if (sub->type == EMONMIN && // 011126 (0x4B9500): whatever fastmath says
+                       tt == TYPEFLOAT &&
+                       sub->rtype->type == TYPEFLOAT &&
+#elif MWCC_CORE == MWCC_CORE_B233
+            } else if (COPTS_T.fastmath &&
+                       sub->type == EMONMIN &&
+                       tt == TYPEFLOAT &&
+                       sub->rtype->type == TYPEFLOAT &&
+#else
             } else if (copts.fastmath &&
                        sub->type == EMONMIN &&
                        tt == TYPEFLOAT &&
                        sub->rtype->type == TYPEFLOAT &&
+#endif
 #else
                     } else if (copts.fastmath &&
                                sub->type == EMONMIN &&
@@ -829,7 +903,11 @@ assignop:
 #endif
                        sub->data.monadic->rtype->size >= type->size) {
                 func_004A2810(sub, type, tt == TYPEVOID);
-            } else if (copts.fastmath && IS_SINGLE(type) && sub->rtype->type == TYPEFLOAT) {
+#if MWCC_CORE == MWCC_CORE_B233
+            } else if (COPTS_T.fastmath && IS_SINGLE(type) && sub->rtype->type == TYPEFLOAT) {
+#else
+                    } else if (copts.fastmath && IS_SINGLE(type) && sub->rtype->type == TYPEFLOAT) {
+#endif
                 if (sub->type == EFUNCCALL) {
                     func_004A2810(sub, type, tt == TYPEVOID);
                 } else if (sub->type == EDIV && sub->data.diadic.right->type == EFUNCCALL &&
@@ -905,9 +983,18 @@ assignop:
             expr->hascall = sub->hascall;
             expr->cost = expr->data.monadic->cost + 1;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B011126
+            if (target && // 011126 (0x4B9500): whatever fastmath says
+                expr->data.monadic->type == ETYPCON &&
+#elif MWCC_CORE == MWCC_CORE_B233
+            if (COPTS_T.fastmath &&
+                target &&
+                expr->data.monadic->type == ETYPCON &&
+#else
             if (copts.fastmath &&
                 target &&
                 expr->data.monadic->type == ETYPCON &&
+#endif
 #else
                     if (copts.fastmath &&
                         target &&

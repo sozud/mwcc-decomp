@@ -271,6 +271,8 @@ static void DumpENode(ENode* enode) {
 }
 #endif
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static void DumpLinearNode(IROLinear* linear) {
     int i;
 
@@ -342,10 +344,16 @@ static void DumpLinearNode(IROLinear* linear) {
             fprintf(DumpFile, "Switch %d", linear->u.swtch.cond->index);
             break;
         case IROLinearOp3Arg:
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3's dump says "Cond %d %d %d" (only ECOND makes one)
             fprintf(
                 DumpFile,
-                "%s %d %d %d",
-                nodenames[linear->nodetype],
+                "Cond %d %d %d",
+#else
+                fprintf(
+                    DumpFile,
+                    "%s %d %d %d",
+                    nodenames[linear->nodetype],
+#endif
                 linear->u.args3.a->index,
                 linear->u.args3.b->index,
                 linear->u.args3.c->index
@@ -416,12 +424,14 @@ static void DumpLinearNode(IROLinear* linear) {
     if (linear->flags & IROLF_CounterLoop) {
         fprintf(DumpFile, " <counter loop>");
     }
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3's dump has neither flag name
     if (linear->flags & IROLF_BitfieldIndirect) {
         fprintf(DumpFile, " <bitfield_indirect>");
     }
     if (linear->flags & IROLF_CouldError) {
         fprintf(DumpFile, " <could_error>");
     }
+#endif
 
     if (linear->rtype && CParser_IsVolatile(linear->rtype, linear->nodeflags & ENODE_FLAG_QUALS)) {
         fprintf(DumpFile, " <volatile>");
@@ -436,6 +446,8 @@ static void DumpLinearNode(IROLinear* linear) {
 
     fprintf(DumpFile, "\n");
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 static void DumpAct(IROLinear* linear, Boolean isFirst) {
     if (!isFirst) {

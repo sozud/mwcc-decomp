@@ -280,35 +280,35 @@ UInt8 func_004B0850(MPCode* pc) {
         case 0x90:
         case 0xB8:
         case 0xB9:
-        case 0xBC:
-        case 0xBD:
-        case 0xBE:
-        case 0xBF:
-        case 0xD2:
-        case 0xD3:
-        case 0xD4:
-        case 0xD5:
-        case 0xD6:
-        case 0xD7:
-        case 0xDA:
-        case 0xDB:
-        case 0xDC:
-        case 0xDD:
-        case 0xE4:
-        case 0xE5:
-        case 0x3EE:
-        case 0x3EF:
-        case 0x3F0:
-        case 0x3F1:
-        case 0x3F2:
-        case 0x3F3:
-        case 0x3FB:
-        case 0x3FC:
-        case 0x3FD:
-        case 0x3FE:
-        case 0x3FF:
-        case 0x402:
-        case 0x404:
+        case PS2_OP(0xBC):
+        case PS2_OP(0xBD):
+        case PS2_OP(0xBE):
+        case PS2_OP(0xBF):
+        case PS2_OP(0xD2):
+        case PS2_OP(0xD3):
+        case PS2_OP(0xD4):
+        case PS2_OP(0xD5):
+        case PS2_OP(0xD6):
+        case PS2_OP(0xD7):
+        case PS2_OP(0xDA):
+        case PS2_OP(0xDB):
+        case PS2_OP(0xDC):
+        case PS2_OP(0xDD):
+        case PS2_OP(0xE4):
+        case PS2_OP(0xE5):
+        case PS2_OP(0x3EE):
+        case PS2_OP(0x3EF):
+        case PS2_OP(0x3F0):
+        case PS2_OP(0x3F1):
+        case PS2_OP(0x3F2):
+        case PS2_OP(0x3F3):
+        case PS2_OP(0x3FB):
+        case PS2_OP(0x3FC):
+        case PS2_OP(0x3FD):
+        case PS2_OP(0x3FE):
+        case PS2_OP(0x3FF):
+        case PS2_OP(0x402):
+        case PS2_OP(0x404):
 #endif
             return LIVEOUT(pc->block, pc->args[0].reg) ? 3 : 4;
         default:
@@ -356,7 +356,7 @@ void BE_EarlyConditionalMoves(void) {
 #else
             case 0x28: // bne
 #endif
-                cmpop = 0xE4;
+                cmpop = PS2_OP(0xE4);
                 src = br->args[0].reg;
                 third = br->args[1].reg;
                 break;
@@ -371,7 +371,7 @@ void BE_EarlyConditionalMoves(void) {
 #else
             case 0x24: // bltz
 #endif
-                cmpop = 0xD4;
+                cmpop = PS2_OP(0xD4);
                 third = 0;
                 src = br->args[0].reg;
                 break;
@@ -386,7 +386,7 @@ void BE_EarlyConditionalMoves(void) {
 #else
             case 0x22: // blez
 #endif
-                cmpop = 0xD5;
+                cmpop = PS2_OP(0xD5);
                 src = br->args[0].reg;
                 third = 1;
                 break;
@@ -397,14 +397,14 @@ void BE_EarlyConditionalMoves(void) {
                 if (CInt64_GreaterU(IMM(br->args[1]), lim)) {
                     goto next;
                 }
-                cmpop = 0xE5;
+                cmpop = PS2_OP(0xE5);
                 src = br->args[0].reg;
                 third = br->args[1].value2;
                 break;
             case MACRO_OP(0x05): // bge: slt
                 swap = 1;
             case MACRO_OP(0x1D): // blt
-                cmpop = 0xD4;
+                cmpop = PS2_OP(0xD4);
                 src = br->args[0].reg;
                 third = br->args[1].reg;
                 break;
@@ -414,14 +414,14 @@ void BE_EarlyConditionalMoves(void) {
                 if (!CInt64_IsInRange(IMM(br->args[1]), 2)) {
                     goto next;
                 }
-                cmpop = 0xD5;
+                cmpop = PS2_OP(0xD5);
                 src = br->args[0].reg;
                 third = br->args[1].value2;
                 break;
             case MACRO_OP(0x09): // bgeu: sltu
                 swap = 1;
             case MACRO_OP(0x21): // bltu
-                cmpop = 0xD7;
+                cmpop = PS2_OP(0xD7);
                 src = br->args[0].reg;
                 third = br->args[1].reg;
                 break;
@@ -431,7 +431,7 @@ void BE_EarlyConditionalMoves(void) {
                 if (!CInt64_IsInRange(IMM(br->args[1]), 2)) {
                     goto next;
                 }
-                cmpop = 0xD6;
+                cmpop = PS2_OP(0xD6);
                 src = br->args[0].reg;
                 third = br->args[1].value2;
                 break;
@@ -481,15 +481,15 @@ void BE_EarlyConditionalMoves(void) {
 
         if (join == b) {
             func_004B06E0(a, block);
-            func_004B05D0(a, join, br, newreg, swap ? 0x111 : 0x110);
+            func_004B05D0(a, join, br, newreg, swap ? PS2_OP(0x111) : PS2_OP(0x110));
         } else {
             if (again) {
                 swap = !swap;
             }
             func_004B06E0(a, block);
             func_004B06E0(b, block);
-            func_004B05D0(a, join, br, newreg, swap ? 0x111 : 0x110);
-            func_004B05D0(b, join, br, newreg, swap ? 0x110 : 0x111);
+            func_004B05D0(a, join, br, newreg, swap ? PS2_OP(0x111) : PS2_OP(0x110));
+            func_004B05D0(b, join, br, newreg, swap ? PS2_OP(0x110) : PS2_OP(0x111));
         }
         deletepcode(br);
 
@@ -549,7 +549,7 @@ MPCode* func_004B0C40(MPCode* br, MPCode* pc, Boolean flag) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     isd = pc->op == OPC(0xF8);
 #else
-    isd = pc->op == 0xF8;
+    isd = pc->op == PS2_OP(0xF8);
 #endif
     gpr = pc->args[RESULTIDX(pc)].rclass == 0;
     switch (br->op) {
@@ -562,11 +562,11 @@ MPCode* func_004B0C40(MPCode* br, MPCode* pc, Boolean flag) {
 #endif
             cond = br->args[0].reg;
             if (gpr) {
-                op = flag ? 0x110 : 0x111;
+                op = flag ? PS2_OP(0x110) : PS2_OP(0x111);
             } else if (isd) {
-                op = flag ? 0x118 : 0x11A;
+                op = flag ? PS2_OP(0x118) : PS2_OP(0x11A);
             } else {
-                op = flag ? 0x119 : 0x11B;
+                op = flag ? PS2_OP(0x119) : PS2_OP(0x11B);
             }
             return makepcode(op, dst, src, cond);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -578,29 +578,29 @@ MPCode* func_004B0C40(MPCode* br, MPCode* pc, Boolean flag) {
 #endif
             cond = br->args[0].reg;
             if (gpr) {
-                op = flag ? 0x111 : 0x110;
+                op = flag ? PS2_OP(0x111) : PS2_OP(0x110);
             } else if (isd) {
-                op = flag ? 0x11A : 0x118;
+                op = flag ? PS2_OP(0x11A) : PS2_OP(0x118);
             } else {
-                op = flag ? 0x11B : 0x119;
+                op = flag ? PS2_OP(0x11B) : PS2_OP(0x119);
             }
             return makepcode(op, dst, src, cond);
         case 0x0C: // bc1f
             if (gpr) {
-                op = flag ? 0x113 : 0x112;
+                op = flag ? PS2_OP(0x113) : PS2_OP(0x112);
             } else if (isd) {
-                op = flag ? 0x116 : 0x114;
+                op = flag ? PS2_OP(0x116) : PS2_OP(0x114);
             } else {
-                op = flag ? 0x117 : 0x115;
+                op = flag ? PS2_OP(0x117) : PS2_OP(0x115);
             }
             return makepcode(op, dst, src, 0);
         case 0x0E: // bc1t
             if (gpr) {
-                op = flag ? 0x112 : 0x113;
+                op = flag ? PS2_OP(0x112) : PS2_OP(0x113);
             } else if (isd) {
-                op = flag ? 0x114 : 0x116;
+                op = flag ? PS2_OP(0x114) : PS2_OP(0x116);
             } else {
-                op = flag ? 0x115 : 0x117;
+                op = flag ? PS2_OP(0x115) : PS2_OP(0x117);
             }
             return makepcode(op, dst, src, 0);
         default:
@@ -609,6 +609,51 @@ MPCode* func_004B0C40(MPCode* br, MPCode* pc, Boolean flag) {
     }
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+extern MPBlockLink* data_005EDCE0[0x7CD]; // edges by hash (PCode.c)
+
+// 2.3.3 (0x4A8C70): `other`'s instructions (if any) first, then the
+// conditional move of `arm`'s instruction, then the arm's or other's jump and
+// a branch to `join`. 2.3.3 keeps separate successor and predecessor lists:
+// block's successor list is dropped (its targets keep their predecessor
+// entries), pcbranch (0x4938D0) adds the successor alone, and join's
+// predecessor list becomes block only. No blocks are deleted here.
+void func_004B0AD0(
+    MPCode* br, Boolean flag, MPCodeBlock* arm, MPCodeBlock* other, MPCodeBlock* join
+) {
+    MPCode* first = arm->first;
+    MPCodeBlock* block = br->block;
+    MPBlockLink* e;
+    MPBlockLink** pp;
+    MPCode* pc;
+
+    if (other) {
+        for (pc = other->first; pc; pc = pc->next) {
+            if (pc->op != OPC(0x39) && pc->op != OPC(0x38A) && pc->op != OPC(0x38B)) {
+                appendpcode(block, copypcode(pc));
+            }
+        }
+    }
+    appendpcode(block, func_004B0C40(br, first, flag));
+    if (other && (other->last->flags & 1)) {
+        appendpcode(block, copypcode(other->last));
+    } else if (arm->last->flags & 1) {
+        appendpcode(block, copypcode(arm->last));
+    }
+    for (e = block->successors; e; e = e->next) {
+        // out of the edge hash, so linkblocks makes a new edge
+        for (pp = &data_005EDCE0[e->hash]; *pp && *pp != e; pp = &(*pp)->hashnext) {}
+        if (*pp) {
+            *pp = e->hashnext;
+        }
+    }
+    block->successors = NULL;
+    pcbranch(block, join->labels, 0);
+    deletepcode(br);
+    join->predecessors->from = block;
+    join->predecessors->nextpred = NULL;
+}
+#else
 // Replace the branch `br` by a conditional move of `arm`'s instruction, then
 // `other`'s instructions (if any), then a branch to `join`.
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -648,7 +693,7 @@ void func_004B0AD0(
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (pc->op != OPC(0x39) && pc->op != OPC(0x38A) && pc->op != OPC(0x38B)) {
 #else
-            if (pc->op != 0x39 && pc->op != 0x38A && pc->op != 0x38B) {
+            if (pc->op != 0x39 && pc->op != PS2_OP(0x38A) && pc->op != PS2_OP(0x38B)) {
 #endif
                 appendpcode(block, copypcode(pc));
             }
@@ -669,6 +714,7 @@ void func_004B0AD0(
     deletepcode(br);
     deleteunreachableblocks();
 }
+#endif
 
 // Does block (pc reads its first instruction) end in a jump, or (with one
 // instruction) is that instruction a jump writing `reg`?
@@ -690,7 +736,7 @@ Boolean func_004B1030(MPCodeBlock* block, SInt32 reg) {
     }
     if (block->pcodecount == 1) {
         op = block->last->op;
-        if (op == 0x39 || (UInt16)(op - 0x38A) <= 1) {
+        if (op == 0x39 || (UInt16)(op - PS2_OP(0x38A)) <= 1) {
             if (flags & 0x80000000) {
                 idx = 1;
             } else {
@@ -702,10 +748,33 @@ Boolean func_004B1030(MPCodeBlock* block, SInt32 reg) {
         }
     }
     op = first->op;
-    if (op == 0x39 || (UInt16)(op - 0x38A) <= 1) {
+    if (op == 0x39 || (UInt16)(op - PS2_OP(0x38A)) <= 1) {
         return 1;
     }
     return 0;
+}
+#elif MWCC_CORE == MWCC_CORE_B233
+// 2.3.3 (0x4A87E0): a block of one instruction (or one and a jump) whose
+// result is `reg`, or a block that starts with a jump
+Boolean func_004B1030(MPCodeBlock* block, SInt32 reg) {
+    MPCode* first = block->first;
+    UInt16 op;
+
+    if (!first) {
+        return 0;
+    }
+    if (first->flags & 2) {
+        return 0;
+    }
+    op = block->last->op;
+    if (block->pcodecount == 1 ||
+        (block->pcodecount == 2 && (op == OPC(0x39) || (UInt16)(op - OPC(0x38A)) <= 1))) {
+        if (reg == first->args[RESULTIDX(first)].reg) {
+            return 1;
+        }
+    }
+    op = first->op;
+    return op == OPC(0x39) || (UInt16)(op - OPC(0x38A)) <= 1;
 }
 #else
 Boolean func_004B1030(MPCodeBlock* block, SInt32 reg) {
@@ -723,7 +792,7 @@ Boolean func_004B1030(MPCodeBlock* block, SInt32 reg) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (op == OPC(0x39) || (UInt16)(op - OPC(0x38A)) <= 1) {
 #else
-        if (op == 0x39 || (UInt16)(op - 0x38A) <= 1) {
+        if (op == 0x39 || (UInt16)(op - PS2_OP(0x38A)) <= 1) {
 #endif
             if (reg == first->args[RESULTIDX(first)].reg) {
                 return 1;
@@ -734,7 +803,7 @@ Boolean func_004B1030(MPCodeBlock* block, SInt32 reg) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     return op == OPC(0x39) || (UInt16)(op - OPC(0x38A)) <= 1;
 #else
-    return op == 0x39 || (UInt16)(op - 0x38A) <= 1;
+    return op == 0x39 || (UInt16)(op - PS2_OP(0x38A)) <= 1;
 #endif
 }
 #endif
@@ -754,7 +823,7 @@ Boolean func_004B10D0(MPCodeBlock* block, SInt32 reg) {
 
     first = block->first;
     if (count == 1 ||
-        (count == 2 && ((op = block->last->op) == 0x39 || (UInt16)(op - 0x38A) <= 1))) {
+        (count == 2 && ((op = block->last->op) == 0x39 || (UInt16)(op - PS2_OP(0x38A)) <= 1))) {
         flags = first->flags;
         if (flags & 0x10) {
             bit = flags & 0x80000000;
@@ -792,7 +861,7 @@ Boolean func_004B10D0(MPCodeBlock* block, SInt32 reg) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (op != OPC(0x39) && (UInt16)(op - OPC(0x38A)) > 1) {
 #else
-        if (op != 0x39 && (UInt16)(op - 0x38A) > 1) {
+        if (op != 0x39 && (UInt16)(op - PS2_OP(0x38A)) > 1) {
 #endif
             return 0;
         }
@@ -846,6 +915,9 @@ Boolean func_004B1170(MPCode* pc) {
     return 0;
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+extern void b233_addpredecessors(void); // PCode.c
+#endif
 void BE_LateConditionalMoves(void) {
     MPCodeBlock* block;
     MPCodeBlock* fall;
@@ -902,4 +974,8 @@ void BE_LateConditionalMoves(void) {
         }
     }
     deleteunreachableblocks();
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x4A89E5): the predecessor lists again, not cleared first
+    b233_addpredecessors();
+#endif
 }

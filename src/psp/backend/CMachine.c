@@ -57,7 +57,11 @@ restart:
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     CError_Internal("CMachine.c", 707); // b69's line
 #else
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -4 // b119 asserts
                     CError_Internal("CMachine.c", CError_B145_LINE(957));
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #endif
             }
             break;
@@ -86,7 +90,11 @@ restart:
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             CError_Internal("CMachine.c", 741); // b69's line
 #else
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -10 // b119 asserts
             CError_Internal("CMachine.c", CError_B145_LINE(997));
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #endif
             return 0;
     }
@@ -167,6 +175,8 @@ restart:
 }
 #endif
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -4 // b119 asserts
 // The alignment an __attribute__((aligned)) qualifier asks for, or 0.
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
@@ -303,6 +313,8 @@ SInt16 func_00464E20(Object* obj) {
     }
     return align;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 void CMach_Configure(void) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -370,6 +382,16 @@ Boolean CMach_GetFunctionResultClass(TypeFunc* tfunc) {
     return 0;
 }
 
+#if MWCC_CORE == MWCC_CORE_B011126
+// 011126 0x459100 (b69 0x458EA0): is a value of the type returned through memory? The
+// front end's test for a call result it must copy to a temporary (CExpr_LValue, a '.'
+// on a call, a call through a member function pointer): a quadword class returned in a
+// VU0 register (func_00436B30's 2) is copied
+Boolean b011126_ResultInMemory(Type* type) {
+    return func_00436B30(type) == 1;
+}
+#endif
+
 SInt32 CMach_StructLayoutGetOffset(Type* type, UInt32 qual) {
     SInt32 align;
     SInt32 mask;
@@ -408,6 +430,8 @@ void CMach_StructLayoutInitOffset(SInt32 offset) {
 
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -4 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -10 // b119 asserts
 // 0x464F60: GCC-style bitfield layout. A field never straddles a boundary
 // of its declared type's size; a zero-width field aligns to it. Returns the
 // byte offset of the field's storage unit; tbitfield->offset gets the bit
@@ -510,6 +534,8 @@ SInt32 CMach_StructLayoutBitfield(TypeBitfield* tbitfield, UInt32 qual) {
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 
@@ -620,6 +646,8 @@ SInt16 CMach_GetClassAlign(TypeClass* tclass) {
     return best;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -4 // b119 asserts
 // 2.4.7's, plus the 3.0.1 64-bit conversions and 16-byte check; division
 // by zero is an error here.
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -881,7 +909,11 @@ CInt64 CMach_CalcIntMonadic(Type* type, short op, CInt64 val) {
                 CInt64_ConvertUInt64(&val);
                 break;
             default:
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_FATAL(501);
+#else
                 CError_FATAL(529);
+#endif
         }
 
         switch (op) {
@@ -927,7 +959,11 @@ CInt64 CMach_CalcIntMonadic(Type* type, short op, CInt64 val) {
                 CInt64_ConvertInt64(&val);
                 break;
             default:
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_FATAL(531);
+#else
                 CError_FATAL(567);
+#endif
         }
 
         switch (op) {
@@ -1019,6 +1055,8 @@ CInt64 CMach_CalcIntConvertFromFloat(Type* type, Float fval) {
 
     return result;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 extern void func_00455A20(void* mem, void* src, int len);
 
@@ -1026,6 +1064,8 @@ extern void func_00455A20(void* mem, void* src, int len);
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-234)
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -4 // b119 asserts
 void CMach_InitIntMem(Type* type, CInt64 val, void* mem) {
     UInt32 lg;
 
@@ -1048,7 +1088,11 @@ void CMach_InitIntMem(Type* type, CInt64 val, void* mem) {
                     CTool_EndianConvertWord64(val, mem);
                     break;
                 case 16:
+#if MWCC_CORE == MWCC_CORE_B011126
+                    func_00455A20(mem, &val, 4); // 011126 (0x4587F0): four bytes
+#else
                     func_00455A20(mem, &val, 16);
+#endif
                     break;
                 default:
                     CError_FATAL(704);
@@ -1082,7 +1126,11 @@ Float CMach_CalcFloatConvert(Type* type, Float fval) {
             fval.data.value = (double)fval.data.value;
             break;
         default:
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(771);
+#else
             CError_FATAL(818);
+#endif
     }
     return fval;
 }
@@ -1164,7 +1212,11 @@ Boolean CMach_CalcFloatDiadicBool(Type* type, Float left, short op, Float right)
         case '<':
             return left.data.value < right.data.value;
         default:
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(716);
+#else
             CError_FATAL(763);
+#endif
             return FALSE;
     }
 }
@@ -1176,6 +1228,8 @@ Boolean CMach_CalcFloatDiadicBool(Type* type, Float left, short op, Float right)
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 char* CMach_FloatScan(char* input, Float* result, Boolean* fail) {
     double resultval;
@@ -1205,12 +1259,20 @@ Float CMach_CalcFloatConvertFromInt(Type* type, CInt64 val) {
 
 #if MWCC_CORE != MWCC_CORE_B52
 Boolean CMach_FloatIsZero(Float fval) {
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 loads the argument first (0x45CD30)
+    return 0.0 == fval.data.value;
+#else
     return fval.data.value == 0.0;
+#endif
 }
 #endif
 
 Boolean CMach_FloatIsOne(Float fval) {
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 loads the argument first (0x45CD30)
+    return 1.0 == fval.data.value;
+#else
     return fval.data.value == 1.0;
+#endif
 }
 
 #if MWCC_CORE == MWCC_CORE_B52
@@ -1229,6 +1291,8 @@ Boolean CMach_FloatIsNegOne(Float fval) {
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-234)
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -4 // b119 asserts
 void CMach_InitFloatMem(Type* type, Float val, void* mem) {
     float f;
 
@@ -1242,16 +1306,26 @@ void CMach_InitFloatMem(Type* type, Float val, void* mem) {
                 *(Float*)mem = val;
                 break;
             default:
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_FATAL(589);
+#else
                 CError_FATAL(883);
+#endif
         }
         return;
     }
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_FATAL(594);
+#else
     CError_FATAL(888);
+#endif
 }
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 void CMach_PrintFloat(char* buf, Float val) {
     sprintf(buf, "%g", val.data.value);
@@ -1271,7 +1345,11 @@ void CMach_GetBackEndOptions(struct CInlineBackendOptions* options) {
     options->interrupt = copts.interrupt;
     options->debuglisting = copts.debuglisting;
     options->dumpir = copts.dumpir;
+#if MWCC_CORE == MWCC_CORE_B233
+    options->unknown3D = copts.unknown3D_b233;
+#else
     options->unknown3D = copts.unknown3D[0];
+#endif
     options->optimizationlevel = copts.optimizationlevel;
     options->force_active = copts.force_active;
     options->unsigned_char = copts.unsigned_char;
@@ -1294,11 +1372,13 @@ void CMach_GetBackEndOptions(struct CInlineBackendOptions* options) {
     options->unrollfactor = copts.unrollfactor;
     options->unrollinstrfactor = copts.unrollinstrfactor;
     options->trunc = copts.trunc;
-    options->fast_fptosi = copts.fast_fptosi;
+    options->fast_fptosi = COPTS_T.fast_fptosi;
     options->prefetch = copts.prefetch;
     options->sqrt = copts.sqrt;
     options->mips_option23 = copts.mips_option23;
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3's copts has no unknown66
     options->unknown66 = copts.unknown66[0];
+#endif
     options->asmsemicolcomment = copts.asmsemicolcomment;
     options->asmpoundcomment = copts.asmpoundcomment;
     options->nofpregforblkmv = copts.nofpregforblkmv;
@@ -1311,8 +1391,15 @@ void CMach_GetBackEndOptions(struct CInlineBackendOptions* options) {
     options->nomacro = copts.nomacro;
     options->usefloatacc = copts.usefloatacc;
     options->warn_inlineasm = copts.warn_inlineasm;
-    options->irocseglobaladdresses = copts.irocseglobaladdresses;
-    options->fastmath = copts.fastmath;
+    options->irocseglobaladdresses = COPTS_T.irocseglobaladdresses;
+#if MWCC_CORE == MWCC_CORE_B011126
+    // 011126 (0x459402): the VU0 register options are saved too (+0x31, +0x33)
+    options->unused31 = copts.enable_vu0_registers;
+    options->fastmath = COPTS_T.fastmath;
+    (&options->fastmath)[1] = copts.vu0_register_number;
+#else
+    options->fastmath = COPTS_T.fastmath;
+#endif
 #else
     *(CompilerLinkerOptions*)options->copts = copts;
     options->volatileasm = volatileasm;
@@ -1330,7 +1417,11 @@ void CMach_SetBackEndOptions(struct CInlineBackendOptions* options) {
         copts.interrupt = options->interrupt;
         copts.debuglisting = options->debuglisting;
         copts.dumpir = options->dumpir;
+#if MWCC_CORE == MWCC_CORE_B233
+        copts.unknown3D_b233 = options->unknown3D;
+#else
         copts.unknown3D[0] = options->unknown3D;
+#endif
         copts.optimizationlevel = options->optimizationlevel;
         copts.force_active = options->force_active;
         copts.unsigned_char = options->unsigned_char;
@@ -1353,11 +1444,13 @@ void CMach_SetBackEndOptions(struct CInlineBackendOptions* options) {
         copts.unrollfactor = options->unrollfactor;
         copts.unrollinstrfactor = options->unrollinstrfactor;
         copts.trunc = options->trunc;
-        copts.fast_fptosi = options->fast_fptosi;
+        COPTS_T.fast_fptosi = options->fast_fptosi;
         copts.prefetch = options->prefetch;
         copts.sqrt = options->sqrt;
         copts.mips_option23 = options->mips_option23;
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3's copts has no unknown66
         copts.unknown66[0] = options->unknown66;
+#endif
         copts.asmsemicolcomment = options->asmsemicolcomment;
         copts.asmpoundcomment = options->asmpoundcomment;
         copts.nofpregforblkmv = options->nofpregforblkmv;
@@ -1370,7 +1463,12 @@ void CMach_SetBackEndOptions(struct CInlineBackendOptions* options) {
         copts.nomacro = options->nomacro;
         copts.usefloatacc = options->usefloatacc;
         copts.warn_inlineasm = options->warn_inlineasm;
-        copts.irocseglobaladdresses = options->irocseglobaladdresses;
+        COPTS_T.irocseglobaladdresses = options->irocseglobaladdresses;
+#if MWCC_CORE == MWCC_CORE_B011126
+        // 011126 (0x4595B1): and restored (fastmath still is not)
+        copts.enable_vu0_registers = options->unused31;
+        copts.vu0_register_number = (&options->fastmath)[1];
+#endif
 #else
 oldprefixname = copts.oldprefixname;
 cursegmentname = copts.cursegmentname;

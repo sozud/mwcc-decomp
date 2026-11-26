@@ -76,6 +76,7 @@ extern void IRO_Cleanup(void);
 #else
 extern void IRO_Setup(void);
 #endif
+#define IRO_ASM_EFFECTS_INIT = IRO_EmptyAsmEffects
 #else
 
 extern Statement* IRO_Optimizer(Object* func, Statement* statements);
@@ -132,6 +133,12 @@ extern IROHook IRO_Hook0, IRO_Hook2, IRO_Hook3, IRO_Hook5, IRO_Hook6, IRO_Hook7,
 extern IROHook IRO_Hook9, IRO_Hook10, IRO_Hook11, IRO_Hook12, IRO_Hook14, IRO_Hook15;
 extern IROHook IRO_Hook16, IRO_Hook17, IRO_Hook18, IRO_Hook19, IRO_Hook20;
 extern IROAsmEffects IRO_EmptyAsmEffects;
+// b119 does not clear an asm statement's effects before asking the back end
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+#define IRO_ASM_EFFECTS_INIT
+#else
+#define IRO_ASM_EFFECTS_INIT = IRO_EmptyAsmEffects
+#endif
 extern void (*IRO_GetLogFileNameHook)(char* buf, int size);
 extern void IRO_Setup(IROHooks* hooks);
 #else

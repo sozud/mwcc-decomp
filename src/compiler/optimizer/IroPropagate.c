@@ -354,7 +354,11 @@ static Boolean IsIntGenKillCandidate(IROLinear* linear) {
     return FALSE;
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+static BOOL_INT IsPropagatableExpr(IROLinear* linear, IROList* list) {
+#else
 static Boolean IsPropagatableExpr(IROLinear* linear, IROList* list) {
+#endif
     Object* obj;
     if (IS_LINEAR_DIADIC(linear, EASS) && !(linear->flags & IROLF_Reffed)) {
         if ((obj = IRO_IsVariable(linear->u.diadic.left)) &&
@@ -651,7 +655,7 @@ Boolean IRO_CopyAndConstantPropagation(void) {
                        IRO_Hook5 &&
 #endif
                        linear->u.asm_stmt) {
-                IROAsmEffects effects = IRO_EmptyAsmEffects;
+                IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
                 int i;
 
                 IRO_GetAsmEffectsHook(linear->u.asm_stmt, &effects);
@@ -874,8 +878,14 @@ Boolean IRO_CopyAndConstantPropagation(void) {
                     for (ass2 = IRO_FirstAssign; ass2; ass2 = ass2->next) {
                         if (ass2->varIndex == var->index &&
                             Bv_IsBitSet(ass2->index, IRO_Avail) &&
+#if MWCC_CORE == MWCC_CORE_B233
+                            // 2.3.3 (0x4C8671..0x4C8683): never into a deeper
+                            // loop, constants included
+                            node->loopdepth <= ass2->node->loopdepth &&
+#else
                             (IRO_IsConstant(ass2->linear2) ||
                              node->loopdepth <= ass2->node->loopdepth) &&
+#endif
                             !PropagationHasDefsInUnorderedRegions(linear, ass2->linear2)) {
                             if (ass2->linear2->type == IROLinearOperand &&
                                 IRO_is_CPtypeequal(
@@ -1133,6 +1143,8 @@ static inline Boolean IsPropagatableExpr301(IROLinear* nd) {
     return FALSE;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -2 // b119 asserts
 // 0x5683E0: within each node, uses of a variable assigned an expression
 // take the expression
 void IRO_ExpressionPropagation(void) {
@@ -1365,6 +1377,8 @@ void IRO_ExpressionPropagation(void) {
 
     IRO_CheckForUserBreak();
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #else
 void IRO_ExpressionPropagation(void) {
     IRONode* node;

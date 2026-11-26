@@ -75,7 +75,9 @@ struct DeclInfo {
     TemplClass* pendingClass;
     TemplArg* expltargs;
     TemplParam* templateParameters;
+#if MWCC_CORE != MWCC_CORE_B233
     struct TemplateScopeState* templateScope;
+#endif
     TemplateFunction* templateFunction;
 #if MWCC_CORE == MWCC_CORE_B52
     void* unk44list; // 3.0.1's
@@ -85,7 +87,9 @@ struct DeclInfo {
     void* unk44list; // 3.0.1: a list CDecl_TypedefDeclarator hands to func_00500E90
 #endif
 #endif
+#if MWCC_CORE != MWCC_CORE_B233
     UInt8 requireTemplateClassMember;
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt16 operator_token;
     SInt16 storageclass;
@@ -112,14 +116,27 @@ struct DeclInfo {
     Boolean isFriendDeclaration;
     Boolean is_extern_c;
     Boolean isNewTypeId;
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3: requireTemplateClassMember at +0x4A (0x47D410, the explicit
+    // specialization: set with allowTemplateArguments +0x4C, tested after
+    // scandeclaratorlist); allowZeroLengthArray +0x4B (scandirectdecl1),
+    // has_expltargs +0x4D (CDecl_PackDeclInfo), hasTypename +0x4E
+    // (CParser_GetDeclSpecs), file +0x50; nothing reads +0x4F (GetDeclSpecs
+    // has no isTypeID/allowTemplateName, CDecl_ParseOperatorDecl 0x448030 sets
+    // no isConversionOperator), and 0x5C bytes end at sourceoffset
+    // (CDecl_UnpackDeclInfo memclrw 0x5C)
+    UInt8 requireTemplateClassMember;
+#endif
     Boolean allowZeroLengthArray;
     Boolean allowTemplateArguments;
     Boolean has_expltargs;
     Boolean hasTypename;
+#if MWCC_CORE != MWCC_CORE_B233
     Boolean isConversionOperator;
     Boolean isTypeID;
     Boolean allowTemplateName;
     Boolean isTemplateName;
+#endif
 #if MWCC_CORE == MWCC_CORE_B52
     // b52's six more bytes before file (sizeof 0x78); 3.0.1 has unk64,
     // defines_tag, 2 bytes, unk68 here. Placement unverified
@@ -140,7 +157,15 @@ struct DeclInfo {
     CPrepFileInfo* file;
     CPrepFileInfo* file2;
     SInt32 sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     Boolean firstDeclaration;
+#endif
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3: storage class at +0x3A (CParser_NewLocalDataObject 0x42E8DA), the
+    // export flags at +0x3D (dispmap.py: 0x40/0x43 -> 0x3A/0x3D): one pointer and
+    // the byte before operator_token fewer; which pointer is unverified, these two
+    // are gone (requireTemplateClassMember moved to +0x4A)
+#endif
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     UInt8 interruptflags;
     ObjRegInfo reginfo;
@@ -154,6 +179,23 @@ struct DeclInfo {
 #endif
 #endif
 };
+
+#if MWCC_CORE == MWCC_CORE_B233
+// DeclInfo fields 2.3.3 does not have: reading them gives FALSE/NULL
+#define DI_ISCONVERSIONOPERATOR(d) 0
+#define DI_ISTYPEID(d) 0
+#define DI_ALLOWTEMPLATENAME(d) 0
+#define DI_ISTEMPLATENAME(d) 0
+#define DI_FIRSTDECLARATION(d) 0
+#define DI_TEMPLATESCOPE(d) ((struct TemplateScopeState*)0)
+#else
+#define DI_ISCONVERSIONOPERATOR(d) ((d)->isConversionOperator)
+#define DI_ISTYPEID(d) ((d)->isTypeID)
+#define DI_ALLOWTEMPLATENAME(d) ((d)->allowTemplateName)
+#define DI_ISTEMPLATENAME(d) ((d)->isTemplateName)
+#define DI_FIRSTDECLARATION(d) ((d)->firstDeclaration)
+#define DI_TEMPLATESCOPE(d) ((d)->templateScope)
+#endif
 
 struct BigDeclInfo {
     DeclInfo declinfo;

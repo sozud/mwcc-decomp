@@ -500,7 +500,11 @@ TemplateFunction* CTemplTool_GetFuncTempl(Object* object) {
 #if MWCCPSP
     CError_ASSERT(173, IS_TEMPL_FUNC(object->type));
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(311, IS_TEMPL_FUNC(object->type));
+#else
     CError_ASSERT(416, IS_TEMPL_FUNC(object->type));
+#endif
 #endif
     return object->u.func.u.templ;
 }
@@ -563,7 +567,11 @@ static FuncArg* CTemplTool_GetFirstRealArg(TypeFunc* tfunc) {
 #if MWCCPSP
         CError_ASSERT(835, arg);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(374, arg);
+#else
         CError_ASSERT(502, arg);
+#endif
 #endif
         arg = arg->next;
         if ((tfunc->flags & FUNC_IS_CTOR) &&
@@ -571,7 +579,11 @@ static FuncArg* CTemplTool_GetFirstRealArg(TypeFunc* tfunc) {
 #if MWCCPSP
             CError_ASSERT(840, arg);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(379, arg);
+#else
             CError_ASSERT(507, arg);
+#endif
 #endif
             arg = arg->next;
         }
@@ -595,7 +607,11 @@ void CTemplTool_MergeArgNames(TypeFunc* src, TypeFunc* dest) {
 #if MWCCPSP
     CError_ASSERT(857, IS_TYPE_FUNC(dest) && IS_TYPE_FUNC(src));
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(396, IS_TYPE_FUNC(dest) && IS_TYPE_FUNC(src));
+#else
     CError_ASSERT(524, IS_TYPE_FUNC(dest) && IS_TYPE_FUNC(src));
+#endif
 #endif
 
     srcArg = CTemplTool_GetFirstRealArg(src);
@@ -606,7 +622,11 @@ void CTemplTool_MergeArgNames(TypeFunc* src, TypeFunc* dest) {
 #if MWCCPSP
             CError_ASSERT(864, srcArg == destArg);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(403, srcArg == destArg);
+#else
             CError_ASSERT(531, srcArg == destArg);
+#endif
 #endif
             break;
         }
@@ -620,7 +640,11 @@ void CTemplTool_MergeArgNames(TypeFunc* src, TypeFunc* dest) {
 #if MWCCPSP
         CError_ASSERT(871, destArg = TYPE_FUNC(dest)->args);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(410, destArg = TYPE_FUNC(dest)->args);
+#else
         CError_ASSERT(538, destArg = TYPE_FUNC(dest)->args);
+#endif
 #endif
         if (!destArg->name) {
             destArg->name = this_name_node;
@@ -1866,8 +1890,13 @@ ENode* CTemplTool_DeduceDefaultArg(Object* func, ENode* expr) {
     memclrw(&deduce, sizeof(deduce));
     CError_ASSERT(1747, IS_TYPE_FUNC(func->type));
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (OBJ_FUNC_INST(func)) {
+        deduce.args = ((TemplFuncInstance*)OBJ_FUNC_INST(func))->args;
+#else
     if (func->u.func.inst) {
         deduce.args = ((TemplFuncInstance*)func->u.func.inst)->args;
+#endif
     }
 
     if ((TYPE_FUNC(func->type)->flags & FUNC_METHOD) &&
@@ -1892,7 +1921,11 @@ static TemplClass* CTemplTool_FindNestedTemplateInstance(TypeDeduce* deduce, Tem
         return templ;
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(1472, (dtempl = deduce->tmclass) && (dinst = deduce->inst));
+#else
     CError_ASSERT(1776, (dtempl = deduce->tmclass) && (dinst = deduce->inst));
+#endif
 
     while (1) {
         if (templ->templ_parent == dtempl &&
@@ -1909,7 +1942,11 @@ static TemplClass* CTemplTool_FindNestedTemplateInstance(TypeDeduce* deduce, Tem
         }
 
         dinst = dinst->parent;
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(1486, dinst);
+#else
         CError_ASSERT(1790, dinst);
+#endif
     }
 
     return templ;
@@ -2049,7 +2086,11 @@ static Type* CTemplTool_DeduceClassInstanceCopy(
 static TemplArg* CTemplTool_FindTemplArg(TemplArg* args, TemplParamID pid) {
     while (args) {
         if (args->pid.index == pid.index && args->pid.nindex == pid.nindex) {
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(1654, pid.type == args->pid.type);
+#else
             CError_ASSERT(1984, pid.type == args->pid.type);
+#endif
             return args;
         }
         args = args->next;

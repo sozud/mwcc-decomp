@@ -324,6 +324,13 @@ ArgInfo* func_004A9100(ENode* skip, ENodeList* args, FuncArg* argtypes) {
                 tail->flags |= ArgInfoFlag_GPR;
                 tail->gpr = gpr;
                 gpr++;
+#if MWCC_CORE == MWCC_CORE_B233
+                // 2.3.3 (0x49DEC9 -> 0x49DED6): an aggregate in a register
+                // still takes an outgoing slot and marks stack arguments
+                data_00625EA7 = 1;
+                tail->offset = offset;
+                offset += data_00624788;
+#endif
             }
         }
 
@@ -927,6 +934,89 @@ static inline int is_aggregate(Type* type) {
 // call_function: pass the arguments, call, and give the result's registers.
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -4 // b145 asserts
+#if MWCC_CORE == MWCC_CORE_B233 && MWCCPSP_NATIVE
+#include <stdio.h>
+#include <stdlib.h>
+// Classification aid (native only): 2.3.3's call_function (0x49E830) tests
+// ENode hascall bytes that primary_expression never writes (heap residue).
+// MWCCPS2_B233_HASCALL names a file of the original's values, one
+// "site value" line per test in order (tools/mwccps2/b233/residue/hcrec.py),
+// sites 1..5 = 0x49E925 (arguments), 0x49E94F (funcref), 0x49E97B (this),
+// 0x49EFFB (this, !hascall), 0x49F06C (funcref, !hascall).
+static FILE* b233_hc_file;
+static int b233_hc_state, b233_hc_bad, b233_hc_n, b233_hc_diffconst, b233_hc_diffother;
+static int b233_hc_difftype[256][2];
+static void b233_hc_report(void) {
+    int site, v, left = 0;
+    while (b233_hc_file && fscanf(b233_hc_file, "%d %d", &site, &v) == 2) {
+        left++;
+    }
+    if (getenv("MWCCPS2_B233_HASCALL_DIFF")) {
+        // how many replayed values differ from the native's own, on constant
+        // nodes (lalloc residue) and on any other node
+        FILE* r;
+        char path[4096];
+        snprintf(path, sizeof(path), "%s.diff", getenv("MWCCPS2_B233_HASCALL"));
+        if ((r = fopen(path, "w"))) {
+            int t;
+            fprintf(r, "%d %d\n", b233_hc_diffconst, b233_hc_diffother);
+            for (t = 0; t < 256; t++) {
+                if (b233_hc_difftype[t][0] || b233_hc_difftype[t][1]) {
+                    fprintf(
+                        r,
+                        "type %d native0->orig1 %d native1->orig0 %d\n",
+                        t,
+                        b233_hc_difftype[t][0],
+                        b233_hc_difftype[t][1]
+                    );
+                }
+            }
+            fclose(r);
+        }
+    }
+    if (b233_hc_bad || left) {
+        char path[4096];
+        FILE* r;
+        snprintf(path, sizeof(path), "%s.mis", getenv("MWCCPS2_B233_HASCALL"));
+        if ((r = fopen(path, "w"))) {
+            fprintf(r, "%d tests, %d out of step, %d left over\n", b233_hc_n, b233_hc_bad, left);
+            fclose(r);
+        }
+    }
+}
+static int b233_hascall(ENode* e, int site) {
+    int s, v;
+    if (b233_hc_state == 0) {
+        const char* path = getenv("MWCCPS2_B233_HASCALL");
+        b233_hc_state = 1;
+        if (path && (b233_hc_file = fopen(path, "r"))) {
+            b233_hc_state = 2;
+            atexit(b233_hc_report);
+        }
+    }
+    if (b233_hc_state != 2) {
+        return e->hascall;
+    }
+    b233_hc_n++;
+    if (fscanf(b233_hc_file, "%d %d", &s, &v) != 2 || s != site) {
+        b233_hc_bad++;
+        return e->hascall;
+    }
+    if ((v != 0) != (e->hascall != 0)) {
+        if (e->type == EINTCONST || e->type == EFLOATCONST) {
+            b233_hc_diffconst++;
+        } else {
+            b233_hc_diffother++;
+        }
+        b233_hc_difftype[e->type & 255][e->hascall != 0]++;
+    }
+    return v;
+}
+#define HASCALL(e, site) b233_hascall((e), (site))
+#elif MWCC_CORE == MWCC_CORE_B233
+#define HASCALL(e, site) ((e)->hascall)
+#endif
+
 void func_004A7400(ENode* expr, VOperand* out) {
     UInt32 masks[7];
     VOperand fop;
@@ -988,17 +1078,29 @@ void func_004A7400(ENode* expr, VOperand* out) {
 
     // arguments that call functions first
     for (info = list; info; info = info->next) {
+#if MWCC_CORE == MWCC_CORE_B233
+        if (HASCALL(info->expr, 1)) {
+#else
         if (info->expr->hascall) {
+#endif
             data_005D0140[info->expr->type](info->expr, NULL, &info->opnd);
             info->unk34 = 1;
         }
     }
+#if MWCC_CORE == MWCC_CORE_B233
+    if (HASCALL(funcref, 2)) {
+#else
     if (funcref->hascall) {
+#endif
         data_005D0140[funcref->type](funcref, NULL, &fop);
         if (fop.kind) {
             func_004A64C0(&fop, TYPE(&void_ptr), 0);
         }
+#if MWCC_CORE == MWCC_CORE_B233
+    } else if (thisexpr && HASCALL(thisexpr, 3)) {
+#else
     } else if (thisexpr && thisexpr->hascall) {
+#endif
         data_005D0140[thisexpr->type](thisexpr, NULL, &fop);
         if (fop.kind) {
             func_004A64C0(&fop, TYPE(&void_ptr), 0);
@@ -1039,13 +1141,22 @@ void func_004A7400(ENode* expr, VOperand* out) {
                    (type->type == TYPECLASS ||
                     type->type == TYPESTRUCT ||
 #endif
-                    (type->type == TYPEMEMBERPOINTER && type->size == 12)) &&
-                   info->opnd.kind != 0) {
+                    (type->type == TYPEMEMBERPOINTER && type->size == 12))
+#if MWCC_CORE != MWCC_CORE_B011126
+                   && info->opnd.kind != 0
+#endif
+        ) {
             // a struct in general registers, a word at a time
             if (info->opnd.kind == 2) {
                 info->opnd.kind = 4;
             }
-            if (info->opnd.kind != 4) {
+#if MWCC_CORE == MWCC_CORE_B011126
+            // 011126 (0x4A4C75): a struct in a register is an error, not the plain copy below
+            if (info->opnd.kind == 0) {
+                CError_FATAL(1104);
+            } else
+#endif
+                if (info->opnd.kind != 4) {
                 CError_FATAL(1235);
             } else {
                 words = (type->size >> data_0062504C) + ((type->size & data_00625010) != 0);
@@ -1094,7 +1205,22 @@ void func_004A7400(ENode* expr, VOperand* out) {
                 info->opnd.kind = 4;
             }
             switch (info->opnd.kind) {
+#if MWCC_CORE == MWCC_CORE_B011126
                 case 0:
+                case 6:
+                    // 011126 (0x4A4DEA): operand kind 6 copies with the quadword move,
+                    // and the copy is followed by a second, plain one
+                    emitpcode(
+                        (info->opnd.kind == 6 || type->size > 8) ? data_00625E74 : data_00625E48,
+                        info->gpr,
+                        info->opnd.reg
+                    );
+                    emitpcode(data_00625E48, info->gpr, info->opnd.reg);
+                    masks[0] |= BIT32(info->gpr);
+                    break;
+#else
+                case 0:
+#endif
 #if MWCCPS2 // b210: a long long is in one 64-bit register
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(
@@ -1233,7 +1359,11 @@ void func_004A7400(ENode* expr, VOperand* out) {
         } else if (!thisexpr) {
             func_004A8310(funcref->data.objref, 0, masks);
         } else {
+#if MWCC_CORE == MWCC_CORE_B233
+            if (!HASCALL(thisexpr, 4)) {
+#else
             if (!thisexpr->hascall) {
+#endif
                 data_005D0140[thisexpr->type](thisexpr, NULL, &fop);
                 if (fop.kind) {
                     func_004A64C0(&fop, TYPE(&void_ptr), 0);
@@ -1242,7 +1372,11 @@ void func_004A7400(ENode* expr, VOperand* out) {
             func_004A8310(funcref->data.objref, fop.reg, masks);
         }
     } else {
+#if MWCC_CORE == MWCC_CORE_B233
+        if (!HASCALL(funcref, 5)) {
+#else
         if (!funcref->hascall) {
+#endif
             data_005D0140[funcref->type](funcref, NULL, &fop);
             if (fop.kind) {
                 func_004A64C0(&fop, TYPE(&void_ptr), 0);
@@ -1260,10 +1394,12 @@ void func_004A7400(ENode* expr, VOperand* out) {
             }
             *out = func_0047FAA0(IS_SINGLE(t) ? MACRO_OP(0x99) : MACRO_OP(0x9A), 1, 0);
         } else if ((UInt8)(rc - 2) <= 1) {
-#if MWCCPS2 // b210 tests copts+0x41 (its function_align16 role)
+#if MWCC_CORE == MWCC_CORE_B011126 // 011126 (0x4A5364): always the plain move
+            if (0) {
+#elif MWCCPS2 // b210 tests copts+0x41 (its function_align16 role)
             if (copts.mips_option41) {
 #else
-            if (copts.function_align16) {
+        if (copts.function_align16) {
 #endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 *out = func_0047FAA0(

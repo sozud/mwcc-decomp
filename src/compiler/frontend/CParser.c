@@ -83,6 +83,9 @@ Object* Xicth_func;
 Object* Xecth_func;
 Object* Xunex_func;
 CompilerLinkerOptions copts;
+#if MWCC_CORE == MWCC_CORE_B233
+COptsT233 copts_tail;
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 COptsX coptsx; // fields b69's copts does not have (CParser.h)
 #endif
@@ -1754,7 +1757,11 @@ short CParser_CompareArgLists(FuncArg* a, FuncArg* b) {
                         return 0;
                     }
                 } else {
+#if MWCC_CORE == MWCC_CORE_B233
+                    if (!COPTS_T.old_argmatch) {
+#else
                     if (!copts.old_argmatch) {
+#endif
                         return 0;
                     }
                     if (!is_typesame(TYPE_POINTER(a->type)->target, b->type)) {
@@ -1769,7 +1776,11 @@ short CParser_CompareArgLists(FuncArg* a, FuncArg* b) {
             } else {
                 if (b->type->type == TYPEPOINTER) {
                     if (IS_TYPEPOINTER_REFERENCE(TYPE_POINTER(b->type))) {
+#if MWCC_CORE == MWCC_CORE_B233
+                        if (!COPTS_T.old_argmatch) {
+#else
                         if (!copts.old_argmatch) {
+#endif
                             return 0;
                         }
                         if (!is_typesame(a->type, TYPE_POINTER(b->type)->target)) {
@@ -1799,7 +1810,11 @@ short CParser_CompareArgLists(FuncArg* a, FuncArg* b) {
         } else {
             if (b->type->type == TYPEPOINTER) {
                 if (IS_TYPEPOINTER_REFERENCE(TYPE_POINTER(b->type))) {
+#if MWCC_CORE == MWCC_CORE_B233
+                    if (!COPTS_T.old_argmatch) {
+#else
                     if (!copts.old_argmatch) {
+#endif
                         return 0;
                     }
                     if (!is_typesame(a->type, TYPE_POINTER(b->type)->target)) {
@@ -2296,17 +2311,25 @@ Type* CParser_ParseTypeID(UInt32* qual, Boolean* isTemplateName) {
     CParser_InsertTryBlock(&tryblock);
 
     if (setjmp(tryblock.jmpbuf) == 0) {
+#if MWCC_CORE != MWCC_CORE_B233
         if (copts.cplusplus) {
             di.isTypeID = TRUE;
         }
+#endif
 
         if (isTemplateName) {
+#if MWCC_CORE != MWCC_CORE_B233
             di.allowTemplateName = TRUE;
+#endif
             *isTemplateName = FALSE;
         }
 
         CParser_GetDeclSpecs(&di, FALSE);
+#if MWCC_CORE == MWCC_CORE_B233
+        if (DI_ISTEMPLATENAME(&di) &&
+#else
         if (di.isTemplateName &&
+#endif
             IS_TYPE_CLASS(di.thetype) &&
             (TYPE_CLASS(di.thetype)->flags & CLASS_IS_TEMPL)) {
             CParser_RemoveTryBlock(&tryblock);
@@ -3118,7 +3141,266 @@ static void CParser_ApplyQual52(Type* t, UInt32* qual, UInt32 bits, UInt32 mask)
 
 #endif
 #endif
-#if MWCCPSP
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+// b119 (0x4497E0): no target hook (func_004642D0) and no packed. aligned,
+// nothrow, section, mode (the quadword modes and DI/V2SI, only with
+// copts.mips_option41), noreturn/unused (accepted, no effect) and
+// function_summary are parsed here; anything else is skipped with its
+// parenthesized arguments
+extern SInt32 func_00464210(char* name);
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -9 // b119 asserts
+
+void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
+    CInt64 val64;
+    SInt32 val;
+    UInt32 alignqual;
+    Type* t;
+    int depth;
+    char* name;
+    SInt32 sect;
+
+    do {
+        if ((tk = lex()) != '(') {
+            CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
+            return;
+        }
+        if ((tk = lex()) != '(') {
+            CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
+            return;
+        }
+        do {
+            if ((tk = lex()) != TK_IDENTIFIER) {
+                switch (tk) {
+                    case TK_CONST:
+                        tkidentifier = GetHashNameNodeExport("const");
+                        tk = TK_IDENTIFIER;
+                        break;
+                    default:
+                        CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
+                        return;
+                }
+            }
+
+            name = tkidentifier->name;
+            if (!strcmp(name, "aligned") || !strcmp(name, "__aligned__")) {
+                if ((tk = lex()) != '(') {
+                    CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
+                    return;
+                }
+
+                tk = lex();
+                val64 = CExpr_IntegralConstExpr();
+                switch ((val = CInt64_GetULong(&val64))) {
+                    case 1:
+                    case 2:
+                    case 4:
+                    case 8:
+                    case 0x10:
+                    case 0x20:
+                    case 0x40:
+                    case 0x80:
+                    case 0x100:
+                    case 0x200:
+                    case 0x400:
+                    case 0x800:
+                    case 0x1000:
+                    case 0x2000:
+                        break;
+                    default:
+                        CError_Error(ERR_ILLEGAL_CONSTANT_EXPRESSION);
+                        return;
+                }
+
+                if (type) {
+                    if (IS_TYPE_STRUCT(type)) {
+                        if (val > TYPE_STRUCT(type)->align) {
+                            TYPE_STRUCT(type)->align = val;
+                            type->size += CABI_StructSizeAlignValue(type, type->size);
+                        }
+                    } else if (IS_TYPE_CLASS(type)) {
+                        if (val > TYPE_CLASS(type)->align) {
+                            TYPE_CLASS(type)->align = val;
+                            type->size += CABI_StructSizeAlignValue(type, type->size);
+                        }
+                    } else {
+                        CError_Error(ERR_NOT_STRUCT_UNION_CLASS);
+                    }
+                } else if (declinfo) {
+                    switch (val) {
+                        case 1:
+                            alignqual = Q_ALIGNED_1;
+                            break;
+                        case 2:
+                            alignqual = Q_ALIGNED_2;
+                            break;
+                        case 4:
+                            alignqual = Q_ALIGNED_4;
+                            break;
+                        case 8:
+                            alignqual = Q_ALIGNED_8;
+                            break;
+                        case 16:
+                            alignqual = Q_ALIGNED_16;
+                            break;
+                        case 32:
+                            alignqual = Q_ALIGNED_32;
+                            break;
+                        case 64:
+                            alignqual = Q_ALIGNED_64;
+                            break;
+                        case 128:
+                            alignqual = Q_ALIGNED_128;
+                            break;
+                        case 256:
+                            alignqual = Q_ALIGNED_256;
+                            break;
+                        case 512:
+                            alignqual = Q_ALIGNED_512;
+                            break;
+                        case 1024:
+                            alignqual = Q_ALIGNED_1024;
+                            break;
+                        case 2048:
+                            alignqual = Q_ALIGNED_2048;
+                            break;
+                        case 4096:
+                            alignqual = Q_ALIGNED_4096;
+                            break;
+                        case 8192:
+                            alignqual = Q_ALIGNED_8192;
+                            break;
+                        default:
+                            CError_FATAL(3288);
+                    }
+
+                    t = declinfo->thetype;
+                    while (IS_TYPE_ARRAY(t)) {
+                        t = TPTR_TARGET(t);
+                    }
+                    switch (t->type) {
+                        case TYPEPOINTER:
+                            TPTR_QUAL(t) = (TPTR_QUAL(t) & ~Q_ALIGNED_MASK) | alignqual;
+                            break;
+                        case TYPEMEMBERPOINTER:
+                            TYPE_MEMBER_POINTER(t)->qual =
+                                (TYPE_MEMBER_POINTER(t)->qual & ~Q_ALIGNED_MASK) | alignqual;
+                            break;
+                        default:
+                            declinfo->qual = (declinfo->qual & ~Q_ALIGNED_MASK) | alignqual;
+                            break;
+                    }
+                } else {
+                    CError_Error(0x103);
+                }
+
+                if (tk != ')') {
+                    CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
+                    return;
+                }
+            } else if (!strcmp(name, "nothrow") || !strcmp(name, "__nothrow__")) {
+                if (declinfo && declinfo->thetype && IS_TYPE_FUNC(declinfo->thetype)) {
+                    TYPE_FUNC(declinfo->thetype)->flags |= FUNC_NOTHROW;
+                } else {
+                    CError_Error(0x103);
+                }
+            } else if (!strcmp(name, "section") || !strcmp(name, "__section__")) {
+                if ((tk = lex()) != '(') {
+                    CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
+                    return;
+                }
+                if ((tk = lex()) != TK_STRING) {
+                    CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
+                    return;
+                }
+                if ((sect = func_00464210(tkstring))) {
+                    declinfo->section = sect;
+                } else {
+                    CError_Error(0x4D);
+                }
+                if ((tk = lex()) != ')') {
+                    CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
+                    return;
+                }
+            } else if (!strcmp(name, "mode") || !strcmp(name, "__mode__")) {
+                if ((tk = lex()) != '(') {
+                    CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
+                    return;
+                }
+                if ((tk = lex()) != TK_IDENTIFIER) {
+                    CError_Error(8);
+                    return;
+                }
+                if (copts.mips_option41 &&
+                    (!strcmp(tkidentifier->name, "TI") ||
+                     !strcmp(tkidentifier->name, "V4SF") ||
+                     !strcmp(tkidentifier->name, "V2DI") ||
+                     !strcmp(tkidentifier->name, "V4SI") ||
+                     !strcmp(tkidentifier->name, "V8HI") ||
+                     !strcmp(tkidentifier->name, "V16QI"))) {
+                    declinfo->thetype = TYPE(&stint128);
+                } else if (copts.mips_option41 &&
+                           (!strcmp(tkidentifier->name, "DI") ||
+                            !strcmp(tkidentifier->name, "V2SI"))) {
+                    declinfo->thetype = TYPE(&stsignedlong);
+                } else {
+                    CError_Error(0x4D);
+                }
+                if ((tk = lex()) != ')') {
+                    CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
+                    return;
+                }
+            } else if (!strcmp(name, "noreturn") ||
+                       !strcmp(name, "__noreturn__") ||
+                       !strcmp(name, "unused") ||
+                       !strcmp(name, "__unused__")) {
+                // accepted, ignored
+            } else if (!strcmp("function_summary", name)) {
+                CParser_ParseAttributeFunctionSummary(declinfo);
+            } else {
+                if (copts.warn_illpragma) {
+                    CError_Warning(0x103);
+                }
+                if (lookahead() == '(') {
+                    depth = 1;
+                    tk = lex();
+                    do {
+                        switch ((tk = lex())) {
+                            case '(':
+                                depth++;
+                                break;
+                            case ')':
+                                depth--;
+                                break;
+                            case -7:
+                            case TK_EOF:
+                                CError_Error(ERR_RPAREN_EXPECTED);
+                                depth = 0;
+                                break;
+                        }
+                    } while (depth);
+                }
+            }
+        } while ((tk = lex()) == ',');
+
+        if (tk != ')') {
+            CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
+            return;
+        }
+        if ((tk = lex()) != ')') {
+            CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
+            return;
+        }
+        tk = lex();
+    } while ((int)tk == TK_UU_ATTRIBUTE_UU);
+    if ((int)tk == TK_ASM && declinfo) {
+        CMach_ParseGlobalRegisterVariable(declinfo);
+    }
+}
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
+#endif
+#if MWCCPSP && !(MWCCPS2 && MWCCPS2_BUILD == 119)
 // 3.0.1: the target's attributes first (func_004642D0), then aligned/packed,
 // nothrow, noreturn and unused (accepted, no effect), function_summary;
 // anything else is skipped with its parenthesized arguments. 0x103 is 3.0.1's
@@ -3342,7 +3624,7 @@ void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
     }
 #endif
 }
-#else
+#elif !MWCCPSP
 void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
     CInt64 val64;
     SInt32 val;
@@ -3583,7 +3865,14 @@ void CParser_ParseAttribute(Type* type, DeclInfo* declinfo) {
                 }
             }
 #endif
+#if MWCC_CORE == MWCC_CORE_B011126
+            // 011126 (0x4306A0): one attribute per __attribute__((...)), no
+            // ',' list
+        } while (0);
+        tk = lex();
+#else
         } while ((tk = lex()) == ',');
+#endif
 
         if (tk != ')') {
             CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
@@ -4196,6 +4485,8 @@ static Boolean CParser_IsAltiVecPrefix(void) {
 // name may first be looked up in DeclInfo.unk10.
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -21 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 60 // b119 asserts
 void CParser_GetDeclSpecs(DeclInfo* di, Boolean resolveMembers) {
     short typesize;
     short signedness;
@@ -4423,7 +4714,11 @@ add_volatile:
             di->isFriendDeclaration = TRUE; // +0x59: a class/enum specifier was seen
             scanstruct(di, STRUCT_TYPE_STRUCT);
             if (tk == TK_UU_ATTRIBUTE_UU) {
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+                CParser_ParseAttribute(di->thetype, NULL); // b119
+#else
                 CParser_ParseAttribute(di->thetype, di);
+#endif
             }
             if (!((int)tk != TK_CONST &&
                   (int)tk != TK_VOLATILE &&
@@ -4691,8 +4986,12 @@ bailOut:
     no_declspecs = FALSE;
     goto restart;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #else
     void CParser_GetDeclSpecs(DeclInfo * di, Boolean resolveMembers) {
         short typesize;
@@ -5086,7 +5385,11 @@ some_shared_label:
                                         }
                                         break;
                                     case TEMPLDEP_QUALNAME:
-                                        if (!di->hasTypename && !pr.is_type && di->isTypeID) {
+#if MWCC_CORE == MWCC_CORE_B233
+                                        if (!di->hasTypename && !pr.is_type && DI_ISTYPEID(di)) {
+#else
+                                    if (!di->hasTypename && !pr.is_type && di->isTypeID) {
+#endif
                                             CError_Error(
                                                 ERR_TYPENAME_MISSING_TEMPLATE_ARGUMENT_DEPENDENT_QUALIFIED
                                             );
@@ -5105,12 +5408,18 @@ some_shared_label:
                             if (IS_TYPE_CLASS(pr.type) &&
                                 (TYPE_CLASS(pr.type)->flags & CLASS_IS_TEMPL)) {
                                 if (!CParser_CheckTemplateClassUsage(TEMPL_CLASS(pr.type), FALSE)) {
-                                    if (di->allowTemplateName) {
+#if MWCC_CORE == MWCC_CORE_B233
+                                    if (DI_ALLOWTEMPLATENAME(di)) {
+#else
+                                if (di->allowTemplateName) {
+#endif
                                         if (di->qual) {
                                             CError_Error(ERR_DECLARATION_SYNTAX_ERROR);
                                         }
                                         di->thetype = pr.type;
+#if MWCC_CORE != MWCC_CORE_B233
                                         di->isTemplateName = TRUE;
+#endif
                                         tk = lex();
                                         return;
                                     } else {
@@ -5417,6 +5726,8 @@ void CParser_NewClassAction(TypeClass* tclass) {
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -21 // b145 asserts
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 60 // b119 asserts
 void CParser_CallBackAction(Object* obj) {
     CallbackAction* act;
 
@@ -5429,10 +5740,14 @@ void CParser_CallBackAction(Object* obj) {
 
 #if MWCCPSP
     CError_FATAL(5167);
+#elif MWCC_CORE == MWCC_CORE_B233
+        CError_FATAL(3912);
 #else
-        CError_FATAL(4601);
+    CError_FATAL(4601);
 #endif
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
@@ -5827,7 +6142,11 @@ extern void func_00439EA0(void); // FEInterface.c
 void cparser(void) {
     DeclInfo di;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (COPTS_T.crippled && copts.optimizationlevel > 1) {
+#else
     if (copts.crippled && copts.optimizationlevel > 1) {
+#endif
         CError_Warning(ERR_ILLEGAL_OPTIMIZATION_LEVEL_LIMITED);
         copts.optimizationlevel = 1;
         func_00439EA0();
@@ -5865,7 +6184,7 @@ void cparser(void) {
     void cparser(void) {
         DeclInfo di;
 
-        if (copts.crippled && copts.optimizationlevel > 1) {
+        if (COPTS_T.crippled && copts.optimizationlevel > 1) {
             CError_Warning(ERR_ILLEGAL_OPTIMIZATION_LEVEL_LIMITED);
             copts.optimizationlevel = 1;
             CodeGen_UpdateOptimizerOptions();

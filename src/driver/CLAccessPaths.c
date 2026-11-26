@@ -49,7 +49,11 @@ Boolean Paths_Initialize(Paths* paths) {
 #if MWCCPSP
     OS_ASSERT(54, paths != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(53, paths != NULL);
+#else
     OS_ASSERT(52, paths != NULL);
+#endif
 #endif
 
     memset(paths, 0, sizeof(Paths));
@@ -71,7 +75,11 @@ Boolean Paths_Terminate(Paths* paths) {
 #if MWCCPSP
     OS_ASSERT(65, paths != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(64, paths != NULL);
+#else
     OS_ASSERT(63, paths != NULL);
+#endif
 #endif
 
     if (paths->pathsArray) {
@@ -99,7 +107,11 @@ static Boolean Paths_GrowPaths(Paths* paths, UInt16* index) {
 #if MWCCPSP
     OS_ASSERT(86, paths != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(85, paths != NULL);
+#else
     OS_ASSERT(84, paths != NULL);
+#endif
 #endif
 
     if (paths->pathsCount >= paths->arraySize) {
@@ -177,7 +189,11 @@ Path* Paths_GetPath(Paths* paths, UInt16 pathnum) {
 #if MWCCPSP
     OS_ASSERT(153, paths != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(152, paths != NULL);
+#else
     OS_ASSERT(151, paths != NULL);
+#endif
 #endif
 
     if (pathnum < paths->pathsCount) {
@@ -199,7 +215,11 @@ UInt16 Paths_Count(const Paths* paths) {
 #if MWCCPSP
     OS_ASSERT(163, paths != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(162, paths != NULL);
+#else
     OS_ASSERT(161, paths != NULL);
+#endif
 #endif
 
     return paths->pathsCount;
@@ -234,7 +254,11 @@ Path* Paths_FindPathSpec(const Paths* paths, const OSPathSpec* dir) {
 #if MWCCPSP
     OS_ASSERT(216, paths != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(183, paths != NULL);
+#else
     OS_ASSERT(182, paths != NULL);
+#endif
 #endif
 
     for (idx = 0; idx < paths->pathsCount; idx++) {
@@ -322,7 +346,11 @@ int Paths_CountRecurse(Paths* paths) {
 #if MWCCPSP
         OS_ASSERT(378, path);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        OS_ASSERT(337, path);
+#else
         OS_ASSERT(336, path);
+#endif
 #endif
 
         if (path->recursive) {
@@ -371,9 +399,17 @@ static void CopyRecurseFSS(FSSpec** list, Paths* paths, UInt16* count) {
 
     for (idx = 0; idx < Paths_Count(paths); idx++) {
         path = Paths_GetPath(paths, idx);
+#if MWCC_CORE == MWCC_CORE_B233
+        OS_ASSERT(354, path && *count > 0);
+#else
         OS_ASSERT(353, path && *count > 0);
+#endif
         OS_MakeSpecWithPath(path->spec, NULL, FALSE, &spec);
+#if MWCC_CORE == MWCC_CORE_B233
+        OS_ASSERT(356, OS_OSSpec_To_FSSpec(&spec, *list));
+#else
         OS_ASSERT(355, OS_OSSpec_To_FSSpec(&spec, *list));
+#endif
         (*list)++;
         (*count)--;
         if (path->recursive) {
@@ -384,7 +420,11 @@ static void CopyRecurseFSS(FSSpec** list, Paths* paths, UInt16* count) {
 
 void Paths_CopyRecurseFSS(FSSpec* list, Paths* paths, UInt16 count) {
     CopyRecurseFSS(&list, paths, &count);
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(368, count == 0);
+#else
     OS_ASSERT(367, count == 0);
+#endif
 }
 #endif
 #else

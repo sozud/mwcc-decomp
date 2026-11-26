@@ -559,7 +559,7 @@ void BE_EncodeInstruction(MPCode* pc, SInt32 pass) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     if (pc->op == OPC(0x3EF)) {
 #else
-                    if (pc->op == 0x3EF) {
+                    if (pc->op == PS2_OP(0x3EF)) {
 #endif
                         v = ((pc->word >> 6) & 31) + arg->value;
                     } else {
@@ -918,25 +918,25 @@ void BE_EncodeInstruction(MPCode* pc, SInt32 pass) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (op >= OPC(0x2EF) && op <= OPC(0x32E)) {
 #else
-    if (op >= 0x2EF && op <= 0x32E) {
+    if (op >= PS2_OP(0x2EF) && op <= PS2_OP(0x32E)) {
 #endif
         pc->word |= ((pc->word & 0xF800) >> 11) << 21;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (op >= OPC(0x32F) && op <= OPC(0x337)) {
 #else
-    } else if (op >= 0x32F && op <= 0x337) {
+    } else if (op >= PS2_OP(0x32F) && op <= PS2_OP(0x337)) {
 #endif
         pc->word |= ((pc->word & 0x1F0000) >> 16) << 21;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (op >= OPC(0x338) && op <= OPC(0x353)) {
 #else
-    } else if (op >= 0x338 && op <= 0x353) {
+    } else if (op >= PS2_OP(0x338) && op <= PS2_OP(0x353)) {
 #endif
         pc->word |= ((pc->word & 0xF800) >> 11) << 16;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (op >= OPC(0x354) && op <= OPC(0x37D)) {
 #else
-    } else if (op >= 0x354 && op <= 0x37D) {
+    } else if (op >= PS2_OP(0x354) && op <= PS2_OP(0x37D)) {
 #endif
         pc->word |= ((pc->word & 0x7C0) >> 6) << 11;
     }
@@ -971,7 +971,7 @@ void BE_EncodeFinal(MPCode* pc) {
     } else if (pc->op == 3 && pc->args[2].kind == 6) {
         BE_EncodeInstruction(pc, 2);
 #if !MWCCPS2 || MWCCPS2_BUILD >= 210 // b145 and b198 have no second case
-    } else if (pc->op == 0x2EE && pc->args[0].kind == 6) {
+    } else if (pc->op == PS2_OP(0x2EE) && pc->args[0].kind == 6) {
         BE_EncodeInstruction(pc, 2);
 #endif
     }
@@ -1109,7 +1109,7 @@ void BE_LayoutAndEncode(struct Object* func) {
 #endif
 #if MWCCPS2
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
-                        nop = makepcode(0x2ED, fillvalue);
+                        nop = makepcode(PS2_OP(0x2ED), fillvalue);
 #endif
 #else
                         nop = makepcode(0x2ED, fillvalue[0], fillvalue[1]);
@@ -1192,10 +1192,132 @@ static inline Boolean ps2_isbranch(MPCode* pc) {
         pc->op == OPC(0x38A) ||
         pc->op == OPC(0x38B);
 #else
-    return (pc->flags & 0x10000000) || pc->op == 0x39 || pc->op == 0x38A || pc->op == 0x38B;
+    return (pc->flags & 0x10000000) ||
+        pc->op == 0x39 ||
+        pc->op == PS2_OP(0x38A) ||
+        pc->op == PS2_OP(0x38B);
 #endif
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3 (0x4A8EC0): a branch (flags 0x10000000) back at most two blocks,
+// not forward to one of the next two; the blocks from its target to it are
+// counted, less one for each predecessor on the way whose last instruction
+// has flag 0x100000, and padded to seven before the branch. No delay-slot
+// mark is moved (this runs before the delay slots are filled).
+void ps2_padloop_4C2960(MPCodeBlock* block) {
+    MPCode* last;
+    MPCodeBlock* target;
+    MPCodeBlock* b;
+    int count;
+    int n;
+    int d;
+
+    count = 0;
+    last = block->last;
+    if (!(last->flags & 0x10000000)) {
+        return;
+    }
+    target = ((MPCodeLabel*)func_0048FAE0(last)->ptr)->block;
+    d = target->number - block->number;
+    if (d > 2 || d < -2) {
+        return;
+    }
+    for (b = block->next, n = 0; b; b = b->next) {
+        if (b->number == target->number) {
+            return;
+        }
+        if (++n >= 2) {
+            break;
+        }
+    }
+    b = block;
+    while (target != b) {
+        count += b->pcodecount;
+        b = b->prev;
+        if (!b) {
+            return;
+        }
+        if (b->last && (b->last->flags & 0x100000)) {
+            count--;
+        }
+        if (count > 6) {
+            return;
+        }
+    }
+    count += b->pcodecount;
+    if (count > 6) {
+        return;
+    }
+    while (count <= 6) {
+        insertpcodebefore(last, makepcode(OPC(0xBA)));
+        count++;
+    }
+}
+#elif MWCC_CORE == MWCC_CORE_B011126
+// 011126 (0x4B0820): 2.3.3's search (a branch back at most two blocks, not
+// forward to one of the next two, one less for each predecessor ending in a
+// 0x100000 instruction) after b69's noreorder test, padded to eight; the
+// delay-slot mark moves to the last nop as in b69
+void ps2_padloop_4C2960(MPCodeBlock* block) {
+    MPCode* last;
+    MPCodeBlock* target;
+    MPCodeBlock* b;
+    MPCode* q;
+    int count;
+    int n;
+    int d;
+
+    count = 0;
+    last = block->last;
+    if (block->flags2E & 0x4000) {
+        return;
+    }
+    if (!last || !(last->flags & 0x10000000)) {
+        return;
+    }
+    target = ((MPCodeLabel*)func_0048FAE0(last)->ptr)->block;
+    d = target->number - block->number;
+    if (d > 2 || d < -2) {
+        return;
+    }
+    for (b = block->next, n = 0; b; b = b->next) {
+        if (b->number == target->number) {
+            return;
+        }
+        if (++n >= 2) {
+            break;
+        }
+    }
+    b = block;
+    while (target != b) {
+        count += b->pcodecount;
+        b = b->prev;
+        if (!b) {
+            return;
+        }
+        if (b->last && (b->last->flags & 0x100000)) {
+            count--;
+        }
+        if (count > 7) {
+            return;
+        }
+    }
+    count += b->pcodecount;
+    if (count > 7) {
+        return;
+    }
+    q = last->prev;
+    if (q && (q->flags & 0x40000000)) {
+        q->flags &= ~0x40000000;
+    }
+    while (count <= 7) {
+        insertpcodebefore(last, makepcode(OPC(0xBA)));
+        count++;
+    }
+    last->prev->flags |= 0x40000000;
+}
+#else
 // 0x4C2960
 void ps2_padloop_4C2960(MPCodeBlock* block) {
     MPCode* last;
@@ -1221,8 +1343,8 @@ void ps2_padloop_4C2960(MPCodeBlock* block) {
     if (!last ||
         (!(last->flags & 0x10000000) &&
          last->op != 0x39 &&
-         last->op != 0x38A &&
-         last->op != 0x38B)) {
+         last->op != PS2_OP(0x38A) &&
+         last->op != PS2_OP(0x38B))) {
 #endif
         return;
     }
@@ -1315,6 +1437,7 @@ void ps2_padloop_4C2960(MPCodeBlock* block) {
         }
     }
 }
+#endif
 
 // 0x4C2AA0
 static void ps2_padloop_cb(Loop301* loop) {
@@ -1358,11 +1481,11 @@ static void ps2_dividefix_block(MPCodeBlock* block) {
             pc->op == OPC(0x37A) ||
             pc->op == OPC(0x125)) {
 #else
-        if (pc->op == 0xF3 ||
-            pc->op == 0x366 ||
-            pc->op == 0x101 ||
-            pc->op == 0x37A ||
-            pc->op == 0x125) {
+        if (pc->op == PS2_OP(0xF3) ||
+            pc->op == PS2_OP(0x366) ||
+            pc->op == PS2_OP(0x101) ||
+            pc->op == PS2_OP(0x37A) ||
+            pc->op == PS2_OP(0x125)) {
 #endif
             if (lastmf == i - 1) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -1394,7 +1517,7 @@ static void ps2_dividefix_block(MPCodeBlock* block) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } else if (pc->op == OPC(0xDF)) {
 #else
-        } else if (pc->op == 0xDF) {
+        } else if (pc->op == PS2_OP(0xDF)) {
 #endif
             lastmf = i;
         }

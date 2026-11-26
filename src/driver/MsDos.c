@@ -48,7 +48,9 @@ static char* cygwin_root; // 3.0.1: MW_CYGWIN_ROOT (read here; users not found y
 #endif
 
 int __stdcall OS_InitProgram(int* pArgc, char*** pArgv) {
+#if MWCC_CORE != MWCC_CORE_B233 /* 2.3.3 (0x411F80): xor eax,eax; ret 8 */
     cygdrive_prefix = getenv("MW_CYGDRIVE_PREFIX");
+#endif
 #if MWCCPSP
     cygwin_root = getenv("MW_CYGWIN_ROOT");
 #endif
@@ -1405,7 +1407,11 @@ SInt16 __stdcall OS_RefToMac(int ref) {
 #if MWCCPSP
     OS_ASSERT(1760, (long)ref < 0xffff);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(1586, (long)ref < 0xffff);
+#else
     OS_ASSERT(1642, (long)ref < 0xffff);
+#endif
 #endif
     return ref + 1;
 }

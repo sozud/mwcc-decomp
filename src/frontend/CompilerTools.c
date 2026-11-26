@@ -1404,7 +1404,7 @@ void CTool_EndianConvertWord64(CInt64 ci, char* result) {
     UInt32 lo;
     UInt32 b69_dead;
 
-    hi = ci.mid[1];
+    hi = ci.CI64_MID1;
     b69_dead = hi;
     lo = ci.lo;
     b69_dead = lo;

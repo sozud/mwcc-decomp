@@ -100,6 +100,12 @@ extern SInt32 CMach_StructLayoutGetOffset(Type* type, UInt32 qual);
 extern SInt32 CMach_StructLayoutBitfield(TypeBitfield* tbitfield, UInt32 qual);
 extern UInt8 CMach_GetFunctionResultClass(TypeFunc* functype);
 extern Boolean Type_RequiresMemoryReturn(Type* type);
+#if MWCC_CORE == MWCC_CORE_B011126
+extern Boolean b011126_ResultInMemory(Type* type); // 011126 0x459100
+#define CEXPR_RESULT_IN_MEMORY(t) b011126_ResultInMemory(t)
+#else
+#define CEXPR_RESULT_IN_MEMORY(t) Type_RequiresMemoryReturn(t)
+#endif
 extern Boolean CMach_PassResultInHiddenArg(Type* type);
 extern const char* CMach_GetCPU(void);
 extern Boolean CMach_FloatIsPowerOf2(Float flt);

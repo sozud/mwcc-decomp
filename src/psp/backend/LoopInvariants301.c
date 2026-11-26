@@ -148,6 +148,66 @@ __declspec(noinline) // b210 calls it (0x4BDFC0)
     data_006250A8 = 1;
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+#include "compiler/types.h"
+#include "compiler/CodeGen.h"
+// 2.3.3's memory test for a load (0x4A6058..0x4A6090, 0x4A5FA0): no alias
+// analysis; a pointer load never moves, a load of an object stays when a
+// store in the loop names the object or goes through a pointer while the
+// object may be aliased (0x432F50)
+static Object* b233_li_obj(MPCode* pc) {
+    if (pc->argcount > 1 && pc->args[1].kind == 4) {
+        return (Object*)MOP_OBJ(pc->args[1]);
+    }
+    return NULL;
+}
+
+static Boolean b233_li_mayalias(Object* obj) {
+    VarInfo* info;
+    Type* type;
+
+    if (!obj || (obj->datatype != DDATA && obj->datatype != DLOCAL)) {
+        return FALSE;
+    }
+    info = obj->datatype == DLOCAL ? obj->u.var.info : NULL;
+    if (!info || info->noregister) {
+        return TRUE;
+    }
+    if (!(type = obj->type)) {
+        return FALSE;
+    }
+    return type->type == TYPEARRAY ||
+        type->type == TYPESTRUCT ||
+        type->type == TYPECLASS ||
+        (type->type == TYPEMEMBERPOINTER && type->size == 12);
+}
+
+static int b233_li_loadstays(MPCode* pc, Loop301* loop) {
+    BlockList301* bl;
+    MPCode* q;
+    Object* obj;
+
+    if (pc->flags & 0x20) {
+        return 1;
+    }
+    obj = b233_li_obj(pc);
+    for (bl = loop->blocks; bl; bl = bl->next) {
+        for (q = bl->block->first; q; q = q->next) {
+            if (q->flags & 0x40004) {
+                if (q->flags & 0x20) {
+                    if (b233_li_mayalias(obj)) {
+                        return 1;
+                    }
+                } else if (b233_li_obj(q) == obj) {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+#endif
+
 // 0x4B3130
 static void moveinvariants(Loop301* loop) {
     BlockList301* bl;
@@ -168,6 +228,7 @@ static void moveinvariants(Loop301* loop) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if MWCC_CORE != MWCC_CORE_B52
     // b69 (0x4ABF60): also leaves alone a loop of more than 200 instructions
+    // (2.3.3, 0x4A62C0: more than 100)
     // (those without pcode flag 0x10 counted)
     n = 0;
 #endif
@@ -189,6 +250,8 @@ static void moveinvariants(Loop301* loop) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if MWCC_CORE == MWCC_CORE_B52
     if (hascall) {
+#elif MWCC_CORE == MWCC_CORE_B233
+    if (hascall || n > 100) {
 #else
     if (hascall || n > 200) {
 #endif
@@ -218,7 +281,14 @@ static void moveinvariants(Loop301* loop) {
                         break;
                     }
                 }
+#if MWCC_CORE == MWCC_CORE_B233
+                if (invariant && (pc->flags & 0x20002) && b233_li_loadstays(pc, loop)) {
+                    invariant = 0;
+                }
+                if (0) {
+#else
                 if (invariant && (pc->flags & 0x20002)) {
+#endif
                     for (bl2 = loop->blocks; bl2 && invariant; bl2 = bl2->next) {
                         for (q = bl2->block->first; q; q = q->next) {
                             if ((q->flags & 0x40004) && may_alias((PCode*)pc, (PCode*)q)) {

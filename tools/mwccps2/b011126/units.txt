@@ -1,0 +1,211 @@
+# b69 native units: path, define group, extra defines, include dirs (generated)
+src/backend/ELF_Endian.c	False		src/backend
+src/compiler/backend/BitVectors.c	False		src/compiler/backend include include/libc
+src/compiler/backend/DumpIR.c	False		src/compiler/backend
+src/compiler/backend/InlineAsm.c	False		src/compiler/backend
+src/compiler/backend/InlineAsmMnemonicsPPC.c	False		src/compiler/backend
+src/compiler/backend/InlineAsmRegisters.c	False		src/compiler/backend
+src/compiler/backend/InlineAsmRegistersPPC.c	False		src/compiler/backend
+src/compiler/backend/MachineSimulation603.c	False		
+src/compiler/backend/OpcodeInfo.c	False		src/compiler/backend
+src/compiler/backend/PCodeInfo.c	False		src/compiler/backend
+src/compiler/backend/PCodeListing.c	False		src/compiler/backend
+src/compiler/backend/PPCError.c	False		src/compiler/backend
+src/compiler/backend/Registers.c	False		src/compiler/backend
+src/compiler/backend/ScanFloatX86.c	False		src/compiler/backend
+src/compiler/backend/SpillCode.c	False		src/compiler/backend
+src/compiler/driver/CCompiler.c	False		src/compiler/driver
+src/compiler/driver/OptimizerHelpers.c	False		src/compiler/driver
+src/compiler/driver/ParserHelpers-cc.c	False		src/compiler/driver
+src/compiler/driver/StdTargetWarningHelpers-cc.c	False		src/compiler/driver
+src/compiler/driver/TargetOptimizerHelpers-eabi-ppc.c	False		src/compiler/driver
+src/compiler/driver/ToolHelpers-cc.c	False		src/compiler/driver
+src/compiler/driver/cc-eabi-ppc-mw.c	False		src/compiler/driver
+src/compiler/frontend/CABI.c	False		src/compiler/frontend
+src/compiler/frontend/CBrowse.c	False		src/compiler/frontend
+src/compiler/frontend/CClass.c	False		src/compiler/frontend
+src/compiler/frontend/CDecl.c	False		src/compiler/frontend
+src/compiler/frontend/CError.c	False		src/compiler/frontend
+src/compiler/frontend/CException.c	False		src/compiler/frontend
+src/compiler/frontend/CExpr.c	False		src/compiler/frontend
+src/compiler/frontend/CExpr2.c	False		src/compiler/frontend
+src/compiler/frontend/CExprConvMatch.c	False		src/compiler/frontend
+src/compiler/frontend/CFunc.c	False		src/compiler/frontend
+src/compiler/frontend/CInit.c	False		include src/compiler/frontend
+src/compiler/frontend/CInline.c	False		src/compiler/frontend include
+src/compiler/frontend/CInt64.c	False		src/compiler/frontend
+src/compiler/frontend/CMangler.c	False		src/compiler/frontend
+src/compiler/frontend/CParser.c	False		src/compiler/frontend
+src/compiler/frontend/CPrec.c	False		src/compiler/frontend
+src/compiler/frontend/CPrep.c	False		src/compiler/frontend
+src/compiler/frontend/CPrepTokenizer.c	False		src/compiler/frontend
+src/compiler/frontend/CPreprocess.c	False		src/compiler/frontend
+src/compiler/frontend/CRTTI.c	False		src/compiler/frontend include
+src/compiler/frontend/CSOM.c	False		src/compiler/frontend
+src/compiler/frontend/CScope.c	False		src/compiler/frontend
+src/compiler/frontend/CTemplateClass.c	False		src/compiler/frontend
+src/compiler/frontend/CTemplateFunc.c	False		src/compiler/frontend
+src/compiler/frontend/CTemplateNew.c	False		src/compiler/frontend
+src/compiler/frontend/CTemplateTools.c	False		src/compiler/frontend include
+src/compiler/optimizer/Alias.c	False		src/compiler/optimizer include
+src/compiler/optimizer/CIRTransform.c	False		src/compiler/optimizer
+src/compiler/optimizer/COptimizer.c	False		src/compiler/optimizer
+src/compiler/optimizer/CodeMotion.c	False		src/compiler/optimizer
+src/compiler/optimizer/ConstantPropagation.c	False		src/compiler/optimizer
+src/compiler/optimizer/FunctionCalls.c	False		src/compiler/optimizer
+src/compiler/optimizer/IROUseDef.c	False		src/compiler/optimizer
+src/compiler/optimizer/IrOptimizer.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroBitVect.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroCSE.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroDump.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroEmptyLoop.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroEval.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroExprRegeneration.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroFlowgraph.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroJump.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroLinearForm.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroLoop.c	False		src/compiler/optimizer include
+src/compiler/optimizer/IroMalloc.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroPointerAnalysis.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroPropagate.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroRangePropagation.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroSubable.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroTransform.c	False		src/compiler/optimizer include include/libc
+src/compiler/optimizer/IroUnrollLoop.c	False		src/compiler/optimizer include
+src/compiler/optimizer/IroUtil.c	False		src/compiler/optimizer
+src/compiler/optimizer/IroVars.c	False		src/compiler/optimizer include
+src/compiler/optimizer/LoadDeletion.c	False		src/compiler/optimizer
+src/compiler/optimizer/LoopDetection.c	False		src/compiler/optimizer
+src/compiler/optimizer/StrengthReduction.c	False		src/compiler/optimizer
+src/compiler/optimizer/StructMoves.c	False		src/compiler/optimizer
+src/compiler/optimizer/UseDefChains.c	False		src/compiler/optimizer
+src/compiler/optimizer/VectorArraysToRegs.c	False		
+src/driver/Arguments.c	False		src/driver
+src/driver/CLAccessPaths.c	False		src/driver
+src/driver/CLBrowser.c	False		src/driver
+src/driver/CLCompilerLinkerDropin_V10.cpp	False		src/driver
+src/driver/CLDependencies.c	False		src/driver
+src/driver/CLDropinCallbacks_V10.cpp	False		src/driver
+src/driver/CLErrors.c	False		src/driver
+src/driver/CLFileOps.c	False		src/driver
+src/driver/CLFiles.c	False		src/driver
+src/driver/CLIO.c	False		src/driver
+src/driver/CLIncludeFileCache.c	False		src/driver
+src/driver/CLLicenses.c	False		src/driver include include/libc
+src/driver/CLLoadAndCache.c	False		src/driver
+src/driver/CLMain.c	False		src/driver
+src/driver/CLOverlays.c	False		src/driver
+src/driver/CLParserCallbacks_v1.cpp	False		src/driver
+src/driver/CLPluginRequests.cpp	False		src/driver
+src/driver/CLPlugins.c	False		src/driver
+src/driver/CLPrefs.c	False		src/driver
+src/driver/CLProj.c	False		src/driver include include/libc
+src/driver/CLSegs.c	False		src/driver
+src/driver/CLStaticMain.c	False		src/driver
+src/driver/CLTarg.c	False		src/driver
+src/driver/CLToolExec.c	False		src/driver
+src/driver/CLWriteObjectFile.c	False		src/driver
+src/driver/COSToolsCLT.c	False		src/driver
+src/driver/CWParserPluginsPrivate.cpp	False		src/driver
+src/driver/CWPluginsPrivate.cpp	False		src/driver include include/libc
+src/driver/CWSecretPluginCallbacks.cpp	False		src/driver
+src/driver/ClientGlue.c	False		src/driver
+src/driver/CmdLineBuildDate.c	False		src/driver
+src/driver/DateTimeUtils.c	False		src/driver
+src/driver/DropInCompilerLinkerPrivate.cpp	False		src/driver
+src/driver/ErrMgr.c	False		src/driver
+src/driver/FileHandles.c	False		src/driver
+src/driver/Files.c	False		src/driver
+src/driver/Generic.c	False		src/driver
+src/driver/Help.c	False		src/driver
+src/driver/IO.c	False		src/driver
+src/driver/LicenseImports.c	False		src/driver
+src/driver/LinkErrorsPPC_EABI.c	False		src/driver
+src/driver/LowMem.c	False		src/driver
+src/driver/MacFileTypes.c	False		src/driver
+src/driver/MacSpecs.c	False		src/driver
+src/driver/MemUtils.c	False		src/driver include
+src/driver/Memory.c	False		src/driver
+src/driver/MsDos.c	False		src/driver
+src/driver/Option.c	False		src/driver
+src/driver/Parameter.c	False		src/driver
+src/driver/ParserErrors.c	False		src/driver
+src/driver/ParserFace.c	False		src/driver
+src/driver/ParserHelpers.c	False		src/driver
+src/driver/Projects.c	False		src/driver
+src/driver/ResourceStrings.c	False		src/driver
+src/driver/Resources.c	False		src/driver
+src/driver/StaticParserGlue.c	False		src/driver
+src/driver/StringExtras.c	False		src/driver include
+src/driver/StringUtils.c	False		src/driver
+src/driver/Targets.c	False		src/driver
+src/driver/TextUtils.c	False		src/driver
+src/driver/ToolHelpers.c	False		src/driver
+src/driver/Utils.c	False		src/driver
+src/driver/WarningHelpers.c	False		src/driver
+src/frontend/CompilerTools.c	False		src/frontend
+src/frontend/Unmangle.c	False		src/frontend include
+src/psp/backend/BETrace.c	psp		src/psp/backend
+src/psp/backend/BE_binary.c	psp		src/psp/backend
+src/psp/backend/BE_macro.c	psp		src/psp/backend
+src/psp/backend/BE_schedule.c	psp		src/psp/backend
+src/psp/backend/CMachine.c	psp		src/psp/backend
+src/psp/backend/CodeGen.c	psp		src/psp/backend
+src/psp/backend/Coloring.c	psp		src/psp/backend
+src/psp/backend/ConditionalMoveOptimization.c	psp		src/psp/backend
+src/psp/backend/DIVbyCnst.c	psp		src/psp/backend
+src/psp/backend/DWARF1.c	psp		src/psp/backend
+src/psp/backend/ELFgen.c	psp		src/psp/backend
+src/psp/backend/Exceptions.c	psp		src/psp/backend
+src/psp/backend/ExpandIR.c	psp		src/psp/backend
+src/psp/backend/FuncLevelAsm.c	psp		src/psp/backend
+src/psp/backend/FunctionCalls.c	psp		src/psp/backend
+src/psp/backend/GlobalOptimizer.c	psp		src/psp/backend
+src/psp/backend/InlineAsmMnemonics.c	psp		src/psp/backend
+src/psp/backend/InlineAsmTables.c	psp		src/psp/backend
+src/psp/backend/InstrSelection.c	psp		src/psp/backend
+src/psp/backend/Intrinsics.c	psp		src/psp/backend
+src/psp/backend/Liveness.c	psp		src/psp/backend
+src/psp/backend/LoopDetection69.c	psp		src/psp/backend
+src/psp/backend/MIPSError.c	psp		src/psp/backend
+src/psp/backend/MIPS_Peephole.c	psp		src/psp/backend
+src/psp/backend/MacroExpand.c	psp		src/psp/backend
+src/psp/backend/MultByConst.c	psp		src/psp/backend
+src/psp/backend/ObjGen.c	psp		src/psp/backend
+src/psp/backend/OpcodeTable.c	psp		src/psp/backend
+src/psp/backend/OpcodeTablePS2.c	psp		src/psp/backend
+src/psp/backend/Operands.c	psp		src/psp/backend
+src/psp/backend/OperandsA.c	psp		src/psp/backend
+src/psp/backend/OperandsB.c	psp		src/psp/backend
+src/psp/backend/PCode.c	psp		src/psp/backend
+src/psp/backend/PCodeInfo.c	psp		src/psp/backend
+src/psp/backend/PCodeUtilities.c	psp		src/psp/backend
+src/psp/backend/Peephole.c	psp		src/psp/backend
+src/psp/backend/RegClasses.c	psp		src/psp/backend
+src/psp/backend/RegisterInfo.c	psp		src/psp/backend
+src/psp/backend/SchedMachine.c	psp		src/psp/backend
+src/psp/backend/Scheduler.c	psp		src/psp/backend
+src/psp/backend/StackFrame.c	psp		src/psp/backend
+src/psp/backend/StructMoves.c	psp		src/psp/backend
+src/psp/backend/Switch.c	psp		src/psp/backend
+src/psp/backend/VReg.c	psp		src/psp/backend
+src/psp/backend/mips.c	psp		src/psp/backend
+src/psp/backend/pipeline1.c	psp		src/psp/backend
+src/psp/driver/cc-psp.c	True		src/psp/driver
+src/psp/driver/libimp-psp.c	True		src/psp/driver
+src/psp/driver/ParserGlue-psp.c	True		src/psp/driver
+src/psp/driver/ELFImportGlue.c	True		src/psp/driver
+src/native/b69/psp/AliasOperand.c	True		src/native/b69/psp
+src/native/b69/psp/BackEndEmpty.c	True		src/native/b69/psp
+src/psp/frontend/FEInterfaceB69.c	True	-DINLINEASM_OURS=1	src/native/b69/psp
+src/compiler/backend/GCCInlineAsm.c	True	-DINLINEASM_OURS=1	src/native/b69/psp
+src/psp/backend/InlineAsmMIPS.c	True	-DINLINEASM_OURS=1	src/native/b69/psp
+src/psp/backend/LocalCSE.c	True	-DLOCALCSE_OURS=1	src/native/b69/psp
+src/native/b69/psp/OpcodeMap69.c	True		src/native/b69/psp
+src/psp/backend/LoopInvariants301.c	True		src/psp/backend
+src/native/b69/CMachineTypes.c	False		src/native/b69
+src/native/b69/ExprDispatch.c	False		src/native/b69
+src/native/b69/ObjCStubs.c	False		src/native/b69
+src/native/b69/bsearch.c	False		src/native/b69
+src/native/win32_posix.c	True		
+src/host/ShiftJIS.c	True		

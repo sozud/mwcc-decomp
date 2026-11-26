@@ -50,7 +50,11 @@ void PPCError_Warning(int code, ...) {
 void PPCError_Message(char* format, ...) {
     va_list list;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (trychain || COPTS_T.supress_warnings) {
+#else
     if (trychain || copts.supress_warnings) {
+#endif
         return;
     }
 

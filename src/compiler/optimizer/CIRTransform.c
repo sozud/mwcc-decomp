@@ -139,6 +139,8 @@ static ENode* CIRTrans_CheckRuntimeAssign(ENode* expr) {
 #define CError_PS2_SHIFT 17 // mwccps2: its assert is at line 0x220
 __declspec(noinline) // b210 calls it (0x52E190)
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -7 // b119 asserts
 static void CIRTrans_SetupMultiAccessOperand(MultiAccessOperand* mop, ENode* expr) {
     memclrw(mop, sizeof(MultiAccessOperand));
 
@@ -173,6 +175,8 @@ static void CIRTrans_SetupMultiAccessOperand(MultiAccessOperand* mop, ENode* exp
         mop->ass = makediadicnode(create_objectnode(mop->tempobj), expr, EASS);
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
@@ -216,6 +220,8 @@ static ENode* CIRTrans_InitMultiAccessExpression(MultiAccessOperand* mop, ENode*
 #undef CError_PS2_SHIFT
 #define CError_PS2_SHIFT 27 // mwccps2: 0x28E
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -7 // b119 asserts
 ENode* CIRTrans_TransformOpAss(ENode* expr) {
     ENodeType nt;
     ENode* result;
@@ -282,6 +288,8 @@ ENode* CIRTrans_TransformOpAss(ENode* expr) {
     result = makediadicnode(CIRTrans_GetMultiAccessOperand(&mop), result, EASS);
     return CIRTrans_InitMultiAccessExpression(&mop, result);
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0

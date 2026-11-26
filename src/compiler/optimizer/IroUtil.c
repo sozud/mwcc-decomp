@@ -75,7 +75,11 @@ Object* IRO_IsVariable(IROLinear* linear) {
     return NULL;
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+IRO_BOOL IRO_IsConstant(IROLinear* linear) {
+#else
 Boolean IRO_IsConstant(IROLinear* linear) {
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if MWCC_CORE == MWCC_CORE_B52
     if (linear->type == IROLinearOperand &&
@@ -100,7 +104,11 @@ Boolean IRO_IsConstant(IROLinear* linear) {
 #endif
 #endif
 #endif
+#if MWCC_CORE == MWCC_CORE_B233
+IRO_BOOL IRO_IsPow2(IROLinear* linear, int* powvalue) {
+#else
 Boolean IRO_IsPow2(IROLinear* linear, int* powvalue) {
+#endif
     UInt32 desired;
     UInt32 value;
     UInt32 i;
@@ -171,6 +179,13 @@ Boolean IRO_IsIntConstant(IROLinear* linear) {
     }
     return FALSE;
 }
+#elif MWCC_CORE == MWCC_CORE_B233
+IRO_BOOL IRO_IsIntConstant(IROLinear* linear) {
+    if (linear->type == IROLinearOperand && ENODE_IS(linear->u.node, EINTCONST)) {
+        return TRUE;
+    }
+    return FALSE;
+}
 #else
 Boolean IRO_IsIntConstant(IROLinear* linear) {
     if (linear->type == IROLinearOperand && ENODE_IS(linear->u.node, EINTCONST)) {
@@ -180,7 +195,11 @@ Boolean IRO_IsIntConstant(IROLinear* linear) {
 }
 #endif
 
+#if MWCC_CORE == MWCC_CORE_B233
+IRO_BOOL IRO_IsFloatConstant(IROLinear* linear) {
+#else
 Boolean IRO_IsFloatConstant(IROLinear* linear) {
+#endif
     if (linear->type == IROLinearOperand && ENODE_IS(linear->u.node, EFLOATCONST)) {
         return TRUE;
     }
@@ -194,7 +213,11 @@ Boolean IRO_IsVector128Constant(IROLinear* linear) {
     return FALSE;
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+IRO_BOOL IRO_IsAssignment(IROLinear* linear) {
+#else
 Boolean IRO_IsAssignment(IROLinear* linear) {
+#endif
     if (linear->type == IROLinearOp1Arg || linear->type == IROLinearOp2Arg) {
         if (IRO_IsAssignOp[linear->nodetype]) {
             return TRUE;
@@ -211,7 +234,11 @@ Boolean IRO_IsAssignment(IROLinear* linear) {
 #pragma inline_intrinsics off
 #endif
 #endif
+#if MWCC_CORE == MWCC_CORE_B233
+static IRO_BOOL IRO_OperandsSame(ENode* a, ENode* b) {
+#else
 static Boolean IRO_OperandsSame(ENode* a, ENode* b) {
+#endif
     if (a->type == b->type) {
         switch (a->type) {
             case EINTCONST:
@@ -741,7 +768,15 @@ Boolean IRO_ExprsSame(IROLinear* a, IROLinear* b) {
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (-442)
 #endif
-static IROLinear* FindFirst(IROLinear* linear) {
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3 has no renumbering wrapper: IRO_FindFirst is the walk itself
+// (its walk 0x4B78D0 has one outside caller, 0x4C314E)
+#define FindFirst IRO_FindFirst
+#define FINDFIRST_STATIC
+#else
+#define FINDFIRST_STATIC static
+#endif
+FINDFIRST_STATIC IROLinear* FindFirst(IROLinear* linear) {
     short i;
 
     switch (linear->type) {
@@ -779,8 +814,10 @@ static IROLinear* FindFirst(IROLinear* linear) {
         default:
 #if MWCCPSP
             CError_FATAL(2170);
-#else
+#elif MWCC_CORE != MWCC_CORE_B233
                     CError_FATAL(641);
+#else
+            CError_FATAL(454);
 #endif
             return NULL;
     }
@@ -790,10 +827,15 @@ static IROLinear* FindFirst(IROLinear* linear) {
 #define CError_B52_SHIFT (0)
 #endif
 
+#undef FINDFIRST_STATIC
+#if MWCC_CORE != MWCC_CORE_B233
 IROLinear* IRO_FindFirst(IROLinear* linear) {
     IRO_RenumberInts();
     return FindFirst(linear);
 }
+#else
+#undef FindFirst
+#endif
 
 #if MWCCPSP
 #undef CError_B145_SHIFT
@@ -1495,7 +1537,11 @@ void IRO_PasteAfter(IROLinear* first, IROLinear* last, IROLinear* after) {
         case IROLinearIf:
         case IROLinearIfNot:
         case IROLinearSwitch:
-            CError_FATAL(1069);
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(837);
+#else
+                CError_FATAL(1069);
+#endif
             break;
         default:
             break;
@@ -1866,7 +1912,11 @@ IROLinear* IRO_FindLabelNode(CLabel* label, IROLinear* linear) {
         }
     }
 
-    CError_ASSERT(1253, scan);
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(1025, scan);
+#else
+            CError_ASSERT(1253, scan);
+#endif
     return scan;
 }
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -2736,7 +2786,7 @@ Boolean IRO_FunctionCallMightThrowException(IROLinear* linear) {
             return TRUE;
         }
     } else if (linear->type == IROLinearAsm && IRO_GetAsmEffectsHook && linear->u.asm_stmt) {
-        IROAsmEffects effects = IRO_EmptyAsmEffects;
+        IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
         IRO_GetAsmEffectsHook(linear->u.asm_stmt, &effects);
         if (effects.mayThrow) {
             return TRUE;
@@ -2768,7 +2818,7 @@ Boolean IRO_FunctionCallMightThrowException(IROLinear* linear) {
             return TRUE;
         }
         if (linear->type == IROLinearAsm && IRO_GetAsmEffectsHook && linear->u.asm_stmt) {
-            IROAsmEffects effects = IRO_EmptyAsmEffects;
+            IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
             IRO_GetAsmEffectsHook(linear->u.asm_stmt, &effects);
             if (effects.mayThrow) {
                 return TRUE;
@@ -2851,7 +2901,9 @@ IROLinear* IRO_NewIntConst(CInt64 val, Type* type) {
             node->rtype = type;
 
             linear = IRO_NewLinear(IROLinearOperand);
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3 (0x4B8B30) numbers no new constant (index 0)
             linear->index = ++IRO_NumLinear;
+#endif
             linear->rtype = type;
             linear->u.node = node;
             return linear;
@@ -2997,6 +3049,8 @@ static IROAddressedLabel* NewAddressedLabel(CLabel* label) {
 
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -46 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 void IRO_CollectAddressedLabels(IROLinear* first, IROLinear* last) {
     IROLinear* linear;
     CLabel* label;
@@ -3070,6 +3124,8 @@ void IRO_CollectAddressedLabels(IROLinear* first, IROLinear* last) {
         }
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 
@@ -3091,6 +3147,8 @@ extern void PointerAnalysis_LookupLinearNodePointerExpr(
     );
 #endif
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 IROAddressedLabel* IRO_GetGotoTargets(IROLinear* linear, UInt16* count) {
     IROAddressedLabel* result;
     IROAddressedLabel* al;
@@ -3168,6 +3226,8 @@ IROAddressedLabel* IRO_GetGotoTargets(IROLinear* linear, UInt16* count) {
     }
     return result;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 void IRO_FreeGotoTargets(IROAddressedLabel* list) {
     IROAddressedLabel* next;
@@ -3273,6 +3333,8 @@ extern Statement* IRO_PreLinearize301(Statement* stmt);
 // 3.0.1 also sees through casts and double negations on either side
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -32 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static Boolean ReconcileAssignments(IROLinear* nd1, IROLinear* nd2, IROList* list) {
     IROLinear* copy;
     int i;
@@ -3467,11 +3529,15 @@ static Boolean ReconcileAssignments(IROLinear* nd1, IROLinear* nd2, IROList* lis
 
     return result;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -32 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static IROLinear* FrontendTransformSelfAssignmentToAssignment(IROLinear* expr) {
     IROLinearState save;
     IROList list;
@@ -3510,6 +3576,8 @@ static IROLinear* FrontendTransformSelfAssignmentToAssignment(IROLinear* expr) {
 
     return result;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 

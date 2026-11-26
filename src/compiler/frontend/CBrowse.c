@@ -165,7 +165,11 @@ void CBrowse_Finish(CompilerLinkerParamBlk* params) {
 void CBrowse_Finish(CompilerLinkerParamBlk* params) {
     CWMemHandle hnd;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(149, params != NULL);
+#else
     CError_ASSERT(151, params != NULL);
+#endif
 
     if (gBrowseData.size >= sizeof(BrowseHeader)) {
         RecordUndefinedMemberFunctions();
@@ -204,7 +208,11 @@ static void RecordName(GList* gl, const char* str, SInt32 id) {
 #if MWCCPSP
     CError_ASSERT(189, gl && str && *str);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(188, gl && str && *str);
+#else
     CError_ASSERT(190, gl && str && *str);
+#endif
 #endif
 
     if (id < 0 && gUseNameTable) {
@@ -333,7 +341,11 @@ void CBrowse_BeginClass(DeclInfo* di, GList* gl) {
     char* baseName;
     char* buf;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(225, di && di->thetype && gl);
+#else
     CError_ASSERT(227, di && di->thetype && gl);
+#endif
 
     *gl = gClassData;
 
@@ -357,7 +369,11 @@ void CBrowse_BeginClass(DeclInfo* di, GList* gl) {
     AppendGListWord(&gClassData, di->file->fileID);
     AppendGListWord(&gClassData, di->file2->fileID);
     AppendGListLong(&gClassData, di->sourceoffset - 1);
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(268, gClassData.size == 9);
+#else
     CError_ASSERT(270, gClassData.size == 9);
+#endif
     AppendGListLong(&gClassData, di->sourceoffset - 1);
     AppendGListLong(&gClassData, 0);
     RecordName(
@@ -435,7 +451,11 @@ void CBrowse_AddClassMemberVar(ObjMemberVar* ivar, SInt32 startOffset, SInt32 en
 #if MWCCPSP
     CError_ASSERT(372, ivar);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(358, ivar);
+#else
     CError_ASSERT(360, ivar);
+#endif
 #endif
 
     if (gClassData.data && startOffset > 0 && endOffset >= startOffset) {
@@ -463,7 +483,11 @@ void CBrowse_AddClassMemberFunction(Object* object, SInt32 startOffset, SInt32 e
 #if MWCCPSP
     CError_ASSERT(392, object);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(378, object);
+#else
     CError_ASSERT(380, object);
+#endif
 #endif
 
 #if !(MWCCPS2 && !MWCC_CORE) // mwccps2 (b198, b210): temporaries are recorded too
@@ -477,7 +501,11 @@ void CBrowse_AddClassMemberFunction(Object* object, SInt32 startOffset, SInt32 e
 #if MWCCPSP
         CError_ASSERT(403, object->type && IS_TYPE_FUNC(object->type));
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(389, object->type && IS_TYPE_FUNC(object->type));
+#else
         CError_ASSERT(391, object->type && IS_TYPE_FUNC(object->type));
+#endif
 #endif
         tfunc = TYPE_METHOD(object->type);
 
@@ -524,7 +552,11 @@ void CBrowse_AddClassMemberData(Object* object, SInt32 startOffset, SInt32 endOf
 #if MWCCPSP
     CError_ASSERT(447, object);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(433, object);
+#else
     CError_ASSERT(435, object);
+#endif
 #endif
 
     if (gClassData.data &&
@@ -555,7 +587,11 @@ void CBrowse_EndClass(SInt32 offset, GList* gl) {
 #if MWCCPSP
     CError_ASSERT(465, gl);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(451, gl);
+#else
     CError_ASSERT(453, gl);
+#endif
 #endif
 
     if (gClassData.data) {
@@ -650,7 +686,11 @@ void CBrowse_EndStruct(SInt32 offset, GList* gl) {
 #if MWCCPSP
     CError_ASSERT(570, gl);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(556, gl);
+#else
     CError_ASSERT(558, gl);
+#endif
 #endif
 
     if (gClassData.data) {
@@ -683,7 +723,11 @@ static void EmitStandardData(
 #if MWCCPSP
     CError_ASSERT(596, str);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(582, str);
+#else
     CError_ASSERT(584, str);
+#endif
 #endif
 
     AppendGListByte(&gBrowseData, item);
@@ -1076,7 +1120,11 @@ void CBrowse_NewFunction(
 #if MWCCPSP
     CError_ASSERT(952, file1 && file1->recordbrowseinfo);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(888, file1 && file1->recordbrowseinfo);
+#else
     CError_ASSERT(890, file1 && file1->recordbrowseinfo);
+#endif
 #endif
 
     if (file2 && file2->fileID && startOffset > 0 && (endOffset + 1) >= startOffset) {
@@ -1150,7 +1198,11 @@ void CBrowse_NewMacro(Macro* macro, CPrepFileInfo* file, SInt32 startOffset, SIn
 #if MWCCPSP
     CError_ASSERT(1013, !file || (file->recordbrowseinfo && !macro->is_special));
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(949, !file || (file->recordbrowseinfo && !macro->is_special));
+#else
     CError_ASSERT(951, !file || (file->recordbrowseinfo && !macro->is_special));
+#endif
 #endif
 
     if (file && file->fileID && startOffset > 0 && endOffset >= startOffset) {
@@ -1178,7 +1230,11 @@ void CBrowse_NewTemplateClass(
 #if MWCCPS2 && !MWCC_CORE
     CError_ASSERT(1025, !file || file->recordbrowseinfo);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(963, !file || file->recordbrowseinfo);
+#else
     CError_ASSERT(965, !file || file->recordbrowseinfo);
+#endif
 #endif
 
     if (file && file->fileID && startOffset > 0 && endOffset >= startOffset) {
@@ -1219,7 +1275,11 @@ void CBrowse_NewTemplateFunc(TemplateFunction* tmfunc) {
 #if MWCCPS2 && !MWCC_CORE
     CError_ASSERT(1047, !tmfunc->srcfile || tmfunc->srcfile->recordbrowseinfo);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(977, !tmfunc->srcfile || tmfunc->srcfile->recordbrowseinfo);
+#else
     CError_ASSERT(979, !tmfunc->srcfile || tmfunc->srcfile->recordbrowseinfo);
+#endif
 #endif
 
     if (tmfunc->srcfile &&

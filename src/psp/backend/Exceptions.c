@@ -712,7 +712,7 @@ static inline SInt32 TablePC(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (pc->op >= OPC(0x37E) && pc->op <= OPC(0x3E5)) {
 #else
-    if (pc->op >= 0x37E && pc->op <= 0x3E5) {
+    if (pc->op >= PS2_OP(0x37E) && pc->op <= PS2_OP(0x3E5)) {
 #endif
         return pc->offset + 6;
     }

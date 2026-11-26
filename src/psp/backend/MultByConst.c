@@ -265,7 +265,7 @@ __declspec(noinline) // b210 MultiplyByConstant calls it
 }
 
 #define ADD_OP (IS_64BIT_INT(MultType) ? 0x79 : 4)
-#define SUB_OP (IS_64BIT_INT(MultType) ? 0x8E : 0xDD)
+#define SUB_OP (IS_64BIT_INT(MultType) ? 0x8E : PS2_OP(0xDD))
 
 // emits e's sequence (its sources first); returns e's value
 static SInt32 EmitMult(MultEntry* e) {
