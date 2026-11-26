@@ -276,7 +276,7 @@ next_linear:
                     break;
                 case IROLinearAsm:
                     if (IRO_GetAsmEffectsHook && linear->u.asm_stmt) {
-                        IROAsmEffects effects = IRO_EmptyAsmEffects;
+                        IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
 
                         IRO_GetAsmEffectsHook(linear->u.asm_stmt, &effects);
                         n = !effects.noFallthrough + effects.numlabels;
@@ -711,7 +711,7 @@ void IRO_FindAsmBarriers(void) {
 #endif
                  linear = linear->next) {
                 if (linear->type == IROLinearAsm && IRO_GetAsmEffectsHook && linear->u.asm_stmt) {
-                    IROAsmEffects effects = IRO_EmptyAsmEffects;
+                    IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
                     IRO_GetAsmEffectsHook(linear->u.asm_stmt, &effects);
                     if (effects.reachBarrier) {
                         fnode->hasAsmBarrier = TRUE;
@@ -817,7 +817,7 @@ split:
                     break;
                 case IROLinearAsm:
                     if (IRO_GetAsmEffectsHook && scan->u.asm_stmt) {
-                        IROAsmEffects effects = IRO_EmptyAsmEffects;
+                        IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
                         IRO_GetAsmEffectsHook(scan->u.asm_stmt, &effects);
                         if (effects.numlabels) {
                             endsNode = TRUE;

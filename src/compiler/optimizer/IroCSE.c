@@ -51,7 +51,11 @@ static void GetDependsOfIndirect(IROLinear* nd) {
 
     result = FALSE;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (nd && COPTS_T.opt_pointer_analysis && nd->pointsToFunction && FunctionName) {
+#else
     if (nd && copts.opt_pointer_analysis && nd->pointsToFunction && FunctionName) {
+#endif
         resultList = NULL;
         PointerAnalysis_LookupLinearNodePointerExpr(FunctionName, nd, &resultList);
         if (resultList) {
@@ -154,7 +158,11 @@ static void GetDependsOfFunctionCallForDataFlow(IROLinear* nd) {
     result = FALSE;
     innernd = nd->u.funccall.callee;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (innernd && COPTS_T.opt_pointer_analysis && innernd->pointsToFunction && FunctionName) {
+#else
     if (innernd && copts.opt_pointer_analysis && innernd->pointsToFunction && FunctionName) {
+#endif
         resultList = NULL;
         PointerAnalysis_LookupLinearNodePointerExpr(FunctionName, innernd, &resultList);
         if (resultList) {
@@ -290,6 +298,28 @@ static void IRO_DependsOn(IROLinear* linear, Boolean isIndirect) {
                 return;
             }
             inner = linear->u.monadic;
+#if MWCC_CORE == MWCC_CORE_B233
+            // 2.3.3 (0x4C1810..0x4C189C): no EBITFIELD look-through, and an
+            // address could fault only when it does not have exactly one
+            // object base (no test of the other terms, no pointer analysis)
+            if (linear->nodetype == EINDIRECT &&
+                (inner->type != IROLinearOperand || inner->u.node->type != EOBJREF)) {
+                if (inner->type == IROLinearOp2Arg && inner->nodetype == EADD) {
+                    IRO_BaseTerms = 0;
+                    IRO_VarTerms = 0;
+                    IRO_DecomposeAddressExpression_Cheap(inner);
+                    if (IRO_BaseTerms != 1) {
+                        IRO_CouldError = TRUE;
+                        Bv_SetBit(0, IRO_Depends);
+                        Bv_Or(IRO_FuncKills, IRO_Depends);
+                    }
+                } else {
+                    IRO_CouldError = TRUE;
+                    Bv_SetBit(0, IRO_Depends);
+                    Bv_Or(IRO_FuncKills, IRO_Depends);
+                }
+            }
+#else
             if (linear->nodetype == EINDIRECT) {
                 if (inner->type == IROLinearOp1Arg && inner->nodetype == EBITFIELD) {
                     inner = inner->u.monadic;
@@ -298,6 +328,7 @@ static void IRO_DependsOn(IROLinear* linear, Boolean isIndirect) {
                     GetDependsOfIndirect(linear);
                 }
             }
+#endif
 
             IRO_DependsOn(inner, linear->nodetype == EINDIRECT);
             break;
@@ -829,7 +860,7 @@ static void DependsOn(IROLinear* linear, Boolean stop, Boolean recurse) {
             break;
         case IROLinearAsm:
             if (IRO_GetAsmEffectsHook && linear->u.asm_stmt) {
-                IROAsmEffects effects = IRO_EmptyAsmEffects;
+                IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
                 IRO_GetAsmEffectsHook(linear->u.asm_stmt, &effects);
                 for (i = 0; i < effects.numoperands; i++) {
                     var = IRO_FindVar(effects.operands[i].object, FALSE, TRUE);
@@ -1961,7 +1992,11 @@ static void GetExprKillsByIndirectAssignment(IROLinear* linear) {
         linear->type == IROLinearOp1Arg &&
         linear->nodetype == EINDIRECT &&
         (inner = linear->u.monadic) &&
+#if MWCC_CORE == MWCC_CORE_B233
+        COPTS_T.opt_pointer_analysis &&
+#else
         copts.opt_pointer_analysis &&
+#endif
         inner->pointsToFunction &&
         FunctionName) {
         resultList = NULL;
@@ -2049,7 +2084,11 @@ static void GetExprKillsByFunctionCall(IROLinear* funccall) {
     result = FALSE;
     innernd = funccall->u.funccall.callee;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (innernd && COPTS_T.opt_pointer_analysis && innernd->pointsToFunction && FunctionName) {
+#else
     if (innernd && copts.opt_pointer_analysis && innernd->pointsToFunction && FunctionName) {
+#endif
         resultList = NULL;
         PointerAnalysis_LookupLinearNodePointerExpr(FunctionName, innernd, &resultList);
         if (resultList) {
@@ -2473,7 +2512,13 @@ void IRO_CommonSubs(void) {
 
     for (node = IRO_FirstNode; node; node = node->nextnode) {
         for (linear = node->first; linear; linear = linear->next) {
+#if MWCC_CORE == MWCC_CORE_B233
+            // 2.3.3 (0x4C2B70..0x4C2B81): no side-effect test, so an address
+            // of a volatile object (s + 4) is replaced like any other
+            if (linear->expr && (linear->flags & IROLF_ReplaceCSE)) {
+#else
             if (linear->expr && (linear->flags & IROLF_ReplaceCSE) && !IRO_HasSideEffect(linear)) {
+#endif
                 ReplaceCommonSub(linear);
             }
             if (linear == node->last) {

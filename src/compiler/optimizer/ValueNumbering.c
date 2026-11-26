@@ -465,14 +465,14 @@ static inline void killstoresof(int opcode, MPCode* pcode) {
 static void killstores(MPCode* pcode) {
     int opcode;
 
-    for (opcode = 0xC3; opcode <= 0xD1; opcode++) {
+    for (opcode = PS2_OP(0xC3); opcode <= PS2_OP(0xD1); opcode++) {
         killstoresof(opcode, pcode);
     }
     for (opcode = MACRO_OP(0x6C); opcode <= MACRO_OP(0x80); opcode++) {
         killstoresof(opcode, pcode);
     }
-    killstoresof(0x1D2, pcode);
-    killstoresof(0x268, pcode);
+    killstoresof(PS2_OP(0x1D2), pcode);
+    killstoresof(PS2_OP(0x268), pcode);
     if (pcode->flags & 0x20002) {
         return;
     }
@@ -482,8 +482,8 @@ static void killstores(MPCode* pcode) {
     for (opcode = MACRO_OP(0x48); opcode <= MACRO_OP(0x5E); opcode++) {
         killstoresof(opcode, pcode);
     }
-    killstoresof(0x1D1, pcode);
-    killstoresof(0x264, pcode);
+    killstoresof(PS2_OP(0x1D1), pcode);
+    killstoresof(PS2_OP(0x264), pcode);
 }
 
 // b145 0x4BD3E0: the store pcode repeats, or whose value the load pcode reads.
@@ -731,7 +731,7 @@ static void functioncall(MPCode* pcode) {
 }
 
 #if MWCCPS2
-#define VN_VU0OP(op) ((op) > 0x21E && (op) <= 0x2E7)
+#define VN_VU0OP(op) ((op) > PS2_OP(0x21E) && (op) <= PS2_OP(0x2E7))
 #define VN_MOVE_DST(pc) (VN_VU0OP((pc)->op) ? &(pc)->args[1] : &(pc)->args[0])
 #define VN_MOVE_SRC(pc) (VN_VU0OP((pc)->op) ? &(pc)->args[2] : &(pc)->args[1])
 #endif

@@ -392,7 +392,13 @@ void SetVarUsage(Object* obj, Boolean noregister) {
 
     vi = obj->u.var.info;
     vi->used = TRUE;
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x4B1C84..0x4B1CA5): the statement-weighted count is taken
+    // with the global optimizer on too, on top of the IRO's own count
+    if (1) {
+#else
     if (!copts.globaloptimizer) {
+#endif
         if (copts.optimizesize) {
             vi->usage++;
         } else {

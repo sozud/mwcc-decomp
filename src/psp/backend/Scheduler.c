@@ -11,6 +11,10 @@
 #include "compiler/CError.h"
 #include "compiler/CompilerTools.h"
 #include "psp/BE.h"
+#if MWCC_CORE == MWCC_CORE_B233
+#include "compiler/objects.h"
+#include "compiler/types.h"
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,6 +62,9 @@ typedef struct DGSuccessor {
 typedef struct DGNodeList {
     struct DGNodeList* next;
     DGNode* node;
+#if MWCC_CORE == MWCC_CORE_B233
+    void* obj; // +0x8: a memory instruction's object (2.3.3's MPCode +0x10)
+#endif
 } DGNodeList;
 
 typedef struct MachineInfo {
@@ -126,6 +133,9 @@ static int func_004B5F30(MPCode* instr);
 static void func_004B60F0(MPCode* instr);
 static void func_004B61E0(MPCodeBlock* block);
 static void scheduleblock(MPCodeBlock* block);
+#if MWCC_CORE == MWCC_CORE_B233
+static Object* b233_memobject(MPCode* instr);
+#endif
 
 void func_004B5210(void) {
     MPCodeBlock* block;
@@ -206,6 +216,23 @@ static void scheduleblock(MPCodeBlock* block) {
         node->earliest = 0;
         node->latest = 0;
         node->predCount = 0;
+#if MWCCPSP_NATIVE && MWCC_CORE == MWCC_CORE_B233
+        if (getenv("MWCCPS2_SCHEDCMP")) {
+            // as /work/b233tmp/me3/sched.gdb prints 2.3.3's (0x4A7C60)
+            extern const UInt16 op233_of[];
+            Object* o = b233_memobject(instr);
+            if (instr == block->last) {
+                fprintf(stderr, "BLOCK\n");
+            }
+            fprintf(
+                stderr,
+                "op %x f %x obj %s\n",
+                op233_of[instr->op],
+                (unsigned)(instr->flags & ~0x2000000),
+                (instr->flags & 0x60006) && o && o->name ? o->name->name : "0"
+            );
+        }
+#endif
         findsuccessors(node);
         if (instr->flags & 1) {
             defaultsuccessor = node;
@@ -264,7 +291,23 @@ static void scheduleblock(MPCodeBlock* block) {
             }
             if (n->instr->flags & 0x60006) {
                 DumpAlias* al = (DumpAlias*)n->instr->alias;
+#if MWCC_CORE == MWCC_CORE_B233
+                if (n->instr->argcount > 1) {
+                    Object* o =
+                        n->instr->args[1].kind == 4 ? (Object*)MOP_OBJ(n->instr->args[1]) : NULL;
+                    fprintf(
+                        stderr,
+                        " K%d:%s",
+                        n->instr->args[1].kind,
+                        o && o->name ? o->name->name : "-"
+                    );
+                }
+#endif
                 if (al) {
+#if MWCC_CORE == MWCC_CORE_B233
+                    Object* ao = (Object*)al->object;
+                    fprintf(stderr, " ao:%s", ao && ao->name ? ao->name->name : "-");
+#endif
                     fprintf(
                         stderr,
                         " A%d/%d/%d/%d",
@@ -442,9 +485,140 @@ static DGNode* selectinstruction(DGNode* nodes, UInt16 counter) {
 static inline void addtolist(DGNodeList** list, DGNode* node) {
     DGNodeList* entry = oalloc(sizeof(DGNodeList));
     entry->node = node;
+#if MWCC_CORE == MWCC_CORE_B233
+    entry->obj = NULL;
+#endif
     entry->next = *list;
     *list = entry;
 }
+
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3's memory dependences (0x4A7F30, 0x4A8020): no alias analysis, only
+// the instruction's object. Two plain accesses conflict when they name the
+// same object (or neither names one); an access through a pointer (flag
+// 0x20) conflicts with every access to no object or to an object that may
+// be aliased (0x432F50)
+// 2.3.3's MPCode +0x10: the object of the memory operand the instruction
+// was made from (the 3.0.1 alias analysis may have widened our alias to a
+// set without one: rgb[i] = ...)
+static Object* b233_memobject(MPCode* instr) {
+    if (instr->argcount > 1 && instr->args[1].kind == 4) {
+        return (Object*)MOP_OBJ(instr->args[1]);
+    }
+    return NULL;
+}
+
+// 0x432F50
+static Boolean b233_mayalias(Object* obj) {
+    Type* type;
+    VarInfo* info;
+
+    if (!obj || (obj->datatype != DDATA && obj->datatype != DLOCAL)) {
+        return FALSE;
+    }
+    // +0x24: a local's VarInfo (a data object's first value word, 0 here)
+    info = obj->datatype == DLOCAL ? obj->u.var.info : NULL;
+#if MWCCPSP_NATIVE
+    {
+        // Classification aid (native only): 2.3.3 (0x432F6E..0x432F80) reads
+        // +0x24 of a data object too; for a pooled float constant that is
+        // its Float pointer, and the byte it tests (+0x22) lies past the
+        // 8-byte Float, in whatever was allocated next (heap residue).
+        // MWCCPS2_B233_FLOATRES names a file of "constant byte" lines
+        // recorded from the original; a listed constant takes that byte.
+        extern int b233_floatres(Object * obj);
+        int b = b233_floatres(obj);
+        if (b == 0) {
+            goto typetest;
+        }
+        if (b > 0) {
+            return TRUE;
+        }
+    }
+#endif
+    if (!info || info->noregister) {
+        return TRUE;
+    }
+#if MWCCPSP_NATIVE
+typetest:
+#endif
+    if (!(type = obj->type)) {
+        return FALSE;
+    }
+    return type->type == TYPEARRAY ||
+        type->type == TYPESTRUCT ||
+        type->type == TYPECLASS ||
+        (type->type == TYPEMEMBERPOINTER && type->size == 12);
+}
+
+static inline void addtolist_obj(DGNodeList** list, DGNode* node, void* obj) {
+    DGNodeList* entry = oalloc(sizeof(DGNodeList));
+    entry->node = node;
+    entry->obj = obj;
+    entry->next = *list;
+    *list = entry;
+}
+
+static void b233_serializememory(DGNode* node) {
+    MPCode* instr = node->instr;
+    DGNodeList* list;
+    Object* obj;
+
+    if (instr->flags & 0x20) {
+        // 0x4A8020
+        if (instr->flags & 0x40004) {
+            for (list = memory_uses; list; list = list->next) {
+                if (!list->obj || b233_mayalias(list->obj)) {
+                    addsuccessor(node, list->node, TRUE);
+                }
+            }
+            for (list = memory_defs; list; list = list->next) {
+                if (!list->obj || b233_mayalias(list->obj)) {
+                    addsuccessor(node, list->node, TRUE);
+                }
+            }
+            addtolist_obj(&memory_defs, node, NULL);
+            if (instr->flags & 0x40000) {
+                addtolist_obj(&memory_uses, node, NULL);
+            }
+        } else {
+            for (list = memory_defs; list; list = list->next) {
+                if (!list->obj || b233_mayalias(list->obj)) {
+                    addsuccessor(node, list->node, TRUE);
+                }
+            }
+            addtolist_obj(&memory_uses, node, NULL);
+        }
+        return;
+    }
+
+    // 0x4A7F30
+    obj = b233_memobject(instr);
+    if (instr->flags & 0x40004) {
+        for (list = memory_uses; list; list = list->next) {
+            if (list->obj == obj || (!list->obj && b233_mayalias(obj))) {
+                addsuccessor(node, list->node, TRUE);
+            }
+        }
+        for (list = memory_defs; list; list = list->next) {
+            if (list->obj == obj || (!list->obj && b233_mayalias(obj))) {
+                addsuccessor(node, list->node, TRUE);
+            }
+        }
+        addtolist_obj(&memory_defs, node, obj);
+        if (instr->flags & 0x40000) {
+            addtolist_obj(&memory_uses, node, obj);
+        }
+    } else {
+        for (list = memory_defs; list; list = list->next) {
+            if (list->obj == obj || (!list->obj && b233_mayalias(obj))) {
+                addsuccessor(node, list->node, TRUE);
+            }
+        }
+        addtolist_obj(&memory_uses, node, obj);
+    }
+}
+#endif
 
 static inline void serializelist(DGNode* node, DGNodeList* list) {
     while (list) {
@@ -474,36 +648,25 @@ static void findsuccessors(DGNode* node) {
     DGNode* n;
 
     instr = node->instr;
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x4A8100): one pass over the operands, uses and definitions alike
     for (i = 0, op = instr->args; i < instr->argcount; i++, op++) {
         switch (op->kind) {
             case 0:
-                if (op->flags & 2) {
+                if (op->flags & 3) {
                     serializeregister(
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                         0,
                         node,
                         &register_defs[op->rclass][op->reg],
                         &register_uses[op->rclass][op->reg],
-#else
-                        0,
-                        node,
-                        &register_defs[op->rclass][op->reg],
-                        &register_uses[op->rclass][op->reg],
-#endif
                         op->flags & 2
                     );
                 }
                 break;
             case 1:
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 serializeregister(
                     1, node, &special_defs[op->reg], &special_uses[op->reg], op->flags & 2
                 );
-#else
-                serializeregister(
-                    1, node, &special_defs[op->reg], &special_uses[op->reg], op->flags & 2
-                );
-#endif
                 break;
             case 2:
             case 3:
@@ -513,62 +676,112 @@ static void findsuccessors(DGNode* node) {
             case 7:
                 break;
             default:
-                CError_FATAL(771);
+                CError_FATAL(704);
         }
     }
-    for (i = 0, op = instr->args; i < instr->argcount; i++, op++) {
-        switch (op->kind) {
-            case 0:
-                if (op->flags & 1) {
+    if (instr->flags & 0x60006) {
+        b233_serializememory(node);
+    }
+    if (0) {
+#endif
+        for (i = 0, op = instr->args; i < instr->argcount; i++, op++) {
+            switch (op->kind) {
+                case 0:
+                    if (op->flags & 2) {
+                        serializeregister(
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+                            0,
+                            node,
+                            &register_defs[op->rclass][op->reg],
+                            &register_uses[op->rclass][op->reg],
+#else
+                        0,
+                        node,
+                        &register_defs[op->rclass][op->reg],
+                        &register_uses[op->rclass][op->reg],
+#endif
+                            op->flags & 2
+                        );
+                    }
+                    break;
+                case 1:
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     serializeregister(
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-                        0,
-                        node,
-                        &register_defs[op->rclass][op->reg],
-                        &register_uses[op->rclass][op->reg],
-#else
-                        0,
-                        node,
-                        &register_defs[op->rclass][op->reg],
-                        &register_uses[op->rclass][op->reg],
-#endif
-                        op->flags & 2
+                        1, node, &special_defs[op->reg], &special_uses[op->reg], op->flags & 2
                     );
-                }
-                break;
-            case 1:
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-                serializeregister(
-                    1, node, &special_defs[op->reg], &special_uses[op->reg], op->flags & 2
-                );
 #else
                 serializeregister(
                     1, node, &special_defs[op->reg], &special_uses[op->reg], op->flags & 2
                 );
 #endif
-                break;
-            case 2:
-            case 3:
-            case 4:
-            case 5:
-            case 6:
-            case 7:
-                break;
-            default:
-                CError_FATAL(794);
-        }
-    }
-
-    if (instr->flags & 0x20002) {
-        for (list = memory_defs; list; list = list->next) {
-            if (may_alias(node->instr, list->node->instr)) {
-                addsuccessor(node, list->node, TRUE);
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                    break;
+                default:
+                    CError_FATAL(771);
             }
         }
-        addtolist(&memory_uses, node);
-    } else if (instr->flags & 0x40004) {
-        serialize_store(node);
+        for (i = 0, op = instr->args; i < instr->argcount; i++, op++) {
+            switch (op->kind) {
+                case 0:
+                    if (op->flags & 1) {
+                        serializeregister(
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+                            0,
+                            node,
+                            &register_defs[op->rclass][op->reg],
+                            &register_uses[op->rclass][op->reg],
+#else
+                        0,
+                        node,
+                        &register_defs[op->rclass][op->reg],
+                        &register_uses[op->rclass][op->reg],
+#endif
+                            op->flags & 2
+                        );
+                    }
+                    break;
+                case 1:
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+                    serializeregister(
+                        1, node, &special_defs[op->reg], &special_uses[op->reg], op->flags & 2
+                    );
+#else
+                serializeregister(
+                    1, node, &special_defs[op->reg], &special_uses[op->reg], op->flags & 2
+                );
+#endif
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                case 5:
+                case 6:
+                case 7:
+                    break;
+                default:
+                    CError_FATAL(794);
+            }
+        }
+
+        if (instr->flags & 0x20002) {
+            for (list = memory_defs; list; list = list->next) {
+                if (may_alias(node->instr, list->node->instr)) {
+                    addsuccessor(node, list->node, TRUE);
+                }
+            }
+            addtolist(&memory_uses, node);
+        } else if (instr->flags & 0x40004) {
+            serialize_store(node);
+        }
+#if MWCC_CORE == MWCC_CORE_B233
     }
+#endif
 
     if (instr->flags & 0x80) {
         serializelist(node, volatile_refs);
@@ -644,12 +857,18 @@ static void serializeregister(
                 addsuccessor(node, list->node, special || !MI->renames_registers);
             }
         }
+#if MWCC_CORE == MWCC_CORE_B233
+        // 2.3.3 (0x4A7E50): the definition joins the list, which (like the
+        // uses) is never cut back
+        addtolist(defs, node);
+#else
         if (*defs) {
             (*defs)->node = node;
         } else {
             addtolist(defs, node);
         }
         *uses = NULL;
+#endif
     } else {
         for (list = *defs; list; list = list->next) {
             if (list->node != node) {
@@ -748,6 +967,39 @@ static int func_004B5F30(MPCode* instr) {
     int prio;
     SInt32 d;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x4A7880): one point per register freed or made live, no
+    // register-pressure weighting
+    prio = 0;
+    for (op = instr->args, n = instr->argcount; n--; op++) {
+        if (op->kind == 0 && (op->flags & 1)) {
+            refcount[op->rclass][op->reg]--;
+        }
+    }
+    count = instr->argcount;
+    for (op = instr->args, n = count; n--; op++) {
+        if (op->kind == 0 &&
+            (op->flags & 1) &&
+            !DEDICATED(op->rclass, op->reg) &&
+            refcount[op->rclass][op->reg] == 0) {
+            prio--;
+        }
+    }
+    for (op = instr->args, n = count; n--; op++) {
+        if (op->kind == 0 &&
+            (op->flags & 2) &&
+            !DEDICATED(op->rclass, op->reg) &&
+            refcount[op->rclass][op->reg]) {
+            prio++;
+        }
+    }
+    for (op = instr->args, n = count; n--; op++) {
+        if (op->kind == 0 && (op->flags & 1)) {
+            refcount[op->rclass][op->reg]++;
+        }
+    }
+    return prio;
+#endif
     prio = 0x10;
     for (op = instr->args, n = instr->argcount; n--; op++) {
         if (op->kind == 0 && (op->flags & 1)) {
@@ -823,7 +1075,12 @@ static void func_004B60F0(MPCode* instr) {
         }
     }
     for (op = instr->args, n = instr->argcount; n--; op++) {
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 (0x4A7770) counts a use-and-def operand too
+        if (op->kind == 0 &&
+            (op->flags & 2) &&
+            !DEDICATED(op->rclass, op->reg) &&
+            refcount[op->rclass][op->reg]) {
+#elif MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (op->kind == 0 &&
             (op->flags & 2) &&
             !DEDICATED(op->rclass, op->reg) &&
@@ -834,55 +1091,57 @@ static void func_004B60F0(MPCode* instr) {
             !DEDICATED(op->rclass, op->reg) &&
             refcount[op->rclass][op->reg] &&
 #endif
+#if MWCC_CORE != MWCC_CORE_B233
             !(op->flags & 1)) {
-            live[op->rclass]++;
+#endif
+                live[op->rclass]++;
+            }
         }
     }
-}
 
-// the pressure at the block's start, and how often each register is used
-static void func_004B61E0(MPCodeBlock* block) {
-    RegClass301 rclass;
-    int i;
-    MPCode* pc;
-    MOperand* op;
-    int n;
+    // the pressure at the block's start, and how often each register is used
+    static void func_004B61E0(MPCodeBlock * block) {
+        RegClass301 rclass;
+        int i;
+        MPCode* pc;
+        MOperand* op;
+        int n;
 
-    for (rclass = 0; rclass < 7; rclass++) {
-        avail[rclass] = func_00462160(rclass);
-        live[rclass] = 0;
-        for (i = 0; i < data_00625A98[rclass]; i++) {
+        for (rclass = 0; rclass < 7; rclass++) {
+            avail[rclass] = func_00462160(rclass);
+            live[rclass] = 0;
+            for (i = 0; i < data_00625A98[rclass]; i++) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-            if (BITSET(data_0062541C[rclass].blocks[block->number].livein, i) &&
-                !DEDICATED(rclass, i)) {
+                if (BITSET(data_0062541C[rclass].blocks[block->number].livein, i) &&
+                    !DEDICATED(rclass, i)) {
 #else
             if (BITSET(data_0062541C[rclass].blocks[block->number].livein, i) &&
                 !DEDICATED(rclass, i)) {
 #endif
-                live[rclass]++;
+                    live[rclass]++;
+                }
             }
         }
-    }
-    for (rclass = 0; rclass < 7; rclass++) {
-        refcount[rclass] = oalloc(sizeof(SInt32) * data_00625A98[rclass]);
-        for (i = 0; i < data_00625A98[rclass]; i++) {
+        for (rclass = 0; rclass < 7; rclass++) {
+            refcount[rclass] = oalloc(sizeof(SInt32) * data_00625A98[rclass]);
+            for (i = 0; i < data_00625A98[rclass]; i++) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-            refcount[rclass][i] =
-                BITSET(data_0062541C[rclass].blocks[block->number].liveout, i) ? 1 : 0;
+                refcount[rclass][i] =
+                    BITSET(data_0062541C[rclass].blocks[block->number].liveout, i) ? 1 : 0;
 #else
             refcount[rclass][i] =
                 BITSET(data_0062541C[rclass].blocks[block->number].liveout, i) ? 1 : 0;
 #endif
+            }
         }
-    }
-    for (pc = block->first; pc; pc = pc->next) {
-        for (op = pc->args, n = pc->argcount; n--; op++) {
-            if (op->kind == 0 && (op->flags & 1)) {
-                refcount[op->rclass][op->reg]++;
+        for (pc = block->first; pc; pc = pc->next) {
+            for (op = pc->args, n = pc->argcount; n--; op++) {
+                if (op->kind == 0 && (op->flags & 1)) {
+                    refcount[op->rclass][op->reg]++;
+                }
             }
         }
     }
-}
 #if MWCC_CORE == MWCC_CORE_B52
 
 #pragma pack(2) // see the statics above

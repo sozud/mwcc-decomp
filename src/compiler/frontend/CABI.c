@@ -102,7 +102,11 @@ void CABI_ReverseBitField(TypeBitfield* tbitfield) {
 #if MWCCPSP
             CError_FATAL(175);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(168);
+#else
             CError_FATAL(172);
+#endif
 #endif
     }
 
@@ -209,7 +213,11 @@ static SInt32 CABI_GetMemberOffset(TypeClass* tclass, HashNameNode* name) {
         }
 
         if (!(ivar = ivar->next)) {
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(358);
+#else
             CError_FATAL(362);
+#endif
         }
     }
 }
@@ -259,7 +267,11 @@ static void CABI_AllocateMembers(ClassLayout* layout, TypeClass* tclass) {
 
                 unionClass = NULL;
             } else {
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_ASSERT(408, unionClass);
+#else
                 CError_ASSERT(412, unionClass);
+#endif
                 ivar->offset = unionStart + CABI_GetMemberOffset(unionClass, ivar->name);
                 if (!inAnonUnion) {
                     ivar->anonunion = TRUE;
@@ -271,7 +283,11 @@ static void CABI_AllocateMembers(ClassLayout* layout, TypeClass* tclass) {
                 removeNoNameIvars = TRUE;
             }
         } else {
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(418, IS_TYPE_CLASS(ivar->type));
+#else
             CError_ASSERT(422, IS_TYPE_CLASS(ivar->type));
+#endif
 
             if (tclass->mode == CLASS_MODE_UNION) {
                 CMach_StructLayoutInitOffset(initialSize);
@@ -464,7 +480,11 @@ static void CABI_AllocateVTable(ClassLayout* layout, TypeClass* tclass) {
                 break;
             }
 
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(662, layout->objlist[i]);
+#else
             CError_ASSERT(666, layout->objlist[i]);
+#endif
 
             if (layout->objlist[i]->otype == OT_MEMBERVAR) {
                 ivar->next = OBJ_MEMBER_VAR(layout->objlist[i])->next;
@@ -499,7 +519,11 @@ static void CABI_AllocateVTable(ClassLayout* layout, TypeClass* tclass) {
     }
 
     for (i = 0; i < layout->lex_order_count; i++) {
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(710, objbase = OBJ_BASE(layout->objlist[i]));
+#else
         CError_ASSERT(714, objbase = OBJ_BASE(layout->objlist[i]));
+#endif
 
         if (objbase->otype == OT_OBJECT && OBJECT(objbase)->datatype == DVFUNC) {
             TypeMemberFunc* tmethod = TYPE_METHOD(OBJECT(objbase)->type);
@@ -683,7 +707,11 @@ static Object* CABI_ThisArg(void) {
 #if MWCCPSP
     CError_ASSERT(1110, arguments && IS_TYPE_POINTER_ONLY(arguments->object->type));
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(925, arguments && IS_TYPE_POINTER_ONLY(arguments->object->type));
+#else
     CError_ASSERT(931, arguments && IS_TYPE_POINTER_ONLY(arguments->object->type));
+#endif
 #endif
     return arguments->object;
 }
@@ -729,7 +757,11 @@ ENode* CABI_MakeThisExpr(TypeClass* tclass, SInt32 offset) {
 #define CError_B52_SHIFT (179)
 #endif
 static Object* CABI_VArg(void) {
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(970, arguments && arguments->next && IS_TYPE_INT(arguments->next->object->type));
+#else
     CError_ASSERT(976, arguments && arguments->next && IS_TYPE_INT(arguments->next->object->type));
+#endif
     return arguments->next->object;
 }
 #if MWCC_CORE == MWCC_CORE_B52
@@ -748,12 +780,25 @@ static ENode* CABI_MakeVArgExpr(void) {
 static ENode* CABI_MakeCopyConArgExpr(TypeClass* tclass, Boolean isCopyCtor) {
     ObjectList* args;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(994, args = arguments);
+    CError_ASSERT(995, args = args->next);
+#else
     CError_ASSERT(1000, args = arguments);
     CError_ASSERT(1001, args = args->next);
+#endif
     if (isCopyCtor && (tclass->flags & CLASS_HAS_VBASES)) {
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(996, args = args->next);
+#else
         CError_ASSERT(1002, args = args->next);
+#endif
     }
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(997, IS_TYPE_POINTER_ONLY(args->object->type));
+#else
     CError_ASSERT(1003, IS_TYPE_POINTER_ONLY(args->object->type));
+#endif
 
     return create_objectnode(args->object);
 }
@@ -884,7 +929,11 @@ static ENode* CABI_GetVBasePtr(TypeClass* tclass, TypeClass* baseclass) {
     OffsetList* path;
     ENode* expr;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(1121, path = CABI_GetVBasePath(tclass, baseclass));
+#else
     CError_ASSERT(1127, path = CABI_GetVBasePath(tclass, baseclass));
+#endif
 
     expr = makemonadicnode(CABI_MakeThisExpr(NULL, path->offset), EINDIRECT);
 
@@ -943,7 +992,11 @@ SInt32 CABI_GetCtorOffsetOffset(TypeClass* tclass, TypeClass* baseclass) {
 #if MWCCPSP
         CError_ASSERT(1357, baseSize >= 0);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(1172, baseSize >= 0);
+#else
         CError_ASSERT(1178, baseSize >= 0);
+#endif
 #endif
         size -= baseSize;
     }
@@ -1002,7 +1055,11 @@ static Statement* CABI_InitVBaseCtorOffsets(Statement* stmt, TypeClass* tclass) 
 
             vboffset = CClass_VirtualBaseOffset(tclass, vbase->base);
             ctorOffsetOffset = CABI_GetCtorOffsetOffset(vbase->base, NULL);
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(1209, vbaseptr = CABI_GetVBasePtr(tclass, vbase->base));
+#else
             CError_ASSERT(1215, vbaseptr = CABI_GetVBasePtr(tclass, vbase->base));
+#endif
 
             expr = makediadicnode(create_objectnode(tempObj), vbaseptr, EASS);
             stmt = CFunc_InsertStatement(ST_EXPRESSION, stmt);
@@ -1986,7 +2043,11 @@ void CABI_MakeDefaultAssignmentOperator(TypeClass* tclass, Object* func) {
     stmt = curstmt;
 
     if (tclass->mode == CLASS_MODE_UNION ||
+#if MWCC_CORE == MWCC_CORE_B233
+        (COPTS_T.block_assign && CClass_IsTrivialCopyAssignClass(tclass))) {
+#else
         (copts.block_assign && CClass_IsTrivialCopyAssignClass(tclass))) {
+#endif
         expr1 = makemonadicnode(CABI_MakeThisExpr(tclass, 0), EINDIRECT);
         expr1->rtype = TYPE(tclass);
 
@@ -2434,7 +2495,11 @@ ENode* CABI_DestroyObject(
 #if MWCCPS2
             CError_FATAL(2977);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(2754);
+#else
             CError_FATAL(2791);
+#endif
 #endif
     }
 

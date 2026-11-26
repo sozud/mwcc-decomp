@@ -147,11 +147,13 @@ void CodeGen_GetAsmEffects(Statement* stmt, IAEffects* effects) {
                                 op->u.reg.object->type->size;
                             effects->operands[effects->numoperands].offset = 0;
                             effects->numoperands++;
+#if MWCC_CORE != MWCC_CORE_B011126 // 011126 (0x43A290) has no 0x1A8/0x1A9 pointer test
                             if (i == 2 &&
                                 (instr->opcode == 0x1A9 || instr->opcode == 0x1A8) &&
                                 op->u.reg.object->type->type == TYPEPOINTER) {
                                 effects->writesMemory = TRUE;
                             }
+#endif
                         }
                     } else {
                         effects->readsMemory = TRUE;
@@ -173,11 +175,13 @@ void CodeGen_GetAsmEffects(Statement* stmt, IAEffects* effects) {
                             effects->operands[effects->numoperands].size =
                                 op->u.reg.object->type->size;
                             effects->numoperands++;
+#if MWCC_CORE != MWCC_CORE_B011126 // 011126 (0x43A290) has no 0x1A8/0x1A9 pointer test
                             if (i == 2 &&
                                 (instr->opcode == 0x1A9 || instr->opcode == 0x1A8) &&
                                 op->u.reg.object->type->type == TYPEPOINTER) {
                                 effects->writesMemory = TRUE;
                             }
+#endif
                         }
                     } else {
                         effects->writesMemory = TRUE;
@@ -249,6 +253,13 @@ Boolean ps2_IsQuadwordClass(Type* type) {
     }
     if (IS_TYPE_CLASS(type) && TYPE_CLASS(type)->vtable == NULL) {
         tclass = TYPE_CLASS(type);
+#if MWCC_CORE == MWCC_CORE_B011126
+        // 011126 (0x499140): no single base class: one member only
+        ivar = tclass->ivars;
+        if (ivar == NULL || ivar->next != NULL) {
+            return FALSE;
+        }
+#else
         if ((ivar = tclass->ivars) != NULL) {
             if (ivar->next != NULL) {
                 return FALSE;
@@ -262,6 +273,7 @@ Boolean ps2_IsQuadwordClass(Type* type) {
             }
             return FALSE;
         }
+#endif
         if (ivar != NULL && (ivar->type->type != TYPEINT || ivar->type->size != 16)) {
             return FALSE;
         }
@@ -352,3 +364,28 @@ Boolean gcc_IsQuadwordArg_b69_0050C420(Object* obj) {
     }
     return FALSE;
 }
+
+#if MWCC_CORE == MWCC_CORE_B011126
+// 011126 0x4992F0 (after the quadword unit's functions, 0x499140..0x49935A):
+// is obj one of the function's arguments (the test written twice, as b198's
+// func_004C5A00)
+Boolean ps2_IsArgument_b011126_004992F0(Object* obj) {
+    ObjectList* list;
+
+    for (list = arguments; list; list = list->next) {
+        if (list->object == obj && list->object == obj) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+#endif
+
+#if MWCC_CORE == MWCC_CORE_B011126
+// 011126 0x499360: the VU0 register the code generator gave a quadword-class
+// variable (its list at 0x57AB9C is CodeGen.c's b011126_quadlocals)
+extern SInt16 b011126_QuadLocalReg(Object* obj);
+SInt16 ps2_QuadwordReg_b011126_00499360(Object* obj) {
+    return b011126_QuadLocalReg(obj);
+}
+#endif

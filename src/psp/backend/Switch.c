@@ -194,7 +194,7 @@ void func_004A4A40(ENode* expr, SwitchInfo* info) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         emitpcode(OPC(0xD2), r1, data_006247C4.reg, 2);
 #else
-        emitpcode(0xD2, r1, data_006247C4.reg, 2);
+        emitpcode(PS2_OP(0xD2), r1, data_006247C4.reg, 2);
 #endif
         r2 = data_00625A98[0]++;
         emitpcode(4, r2, r1, t.reg);

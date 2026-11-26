@@ -1031,11 +1031,19 @@ static void CMangler_MangleFunction(Object* obj, NameSpace* nspace) {
     FuncArg* arg = tfunc->args;
 
     AppendGListName(&name_mangle_list, obj->name->name);
+#if MWCC_CORE == MWCC_CORE_B233
+    if (OBJ_FUNC_INST(obj)) {
+#else
     if (obj->u.func.inst) {
+#endif
         if (tfunc->flags & FUNC_CONVERSION) {
             CMangler_MangleTypeAppend(tfunc->functype, tfunc->qual);
         }
+#if MWCC_CORE == MWCC_CORE_B233
+        CMangler_AppendTemplateArgumentList(OBJ_FUNC_INST(obj)->args);
+#else
         CMangler_AppendTemplateArgumentList(obj->u.func.inst->args);
+#endif
     }
     AppendGListName(&name_mangle_list, "__");
     while (nspace && nspace->name == NULL) {
@@ -1067,7 +1075,11 @@ static void CMangler_MangleFunction(Object* obj, NameSpace* nspace) {
 
     AppendGListByte(&name_mangle_list, 'F');
     CMangler_MangleArgs(arg);
+#if MWCC_CORE == MWCC_CORE_B233
+    if (OBJ_FUNC_INST(obj) && COPTS_T.new_mangler) {
+#else
     if (obj->u.func.inst && copts.new_mangler) {
+#endif
         AppendGListByte(&name_mangle_list, '_');
         CMangler_MangleTypeAppend(tfunc->functype, tfunc->qual);
     }
@@ -1110,8 +1122,13 @@ static HashNameNode* CMangler_FunctionLinkName(Object* obj) {
     HashNameNode* name;
     NameSpace* nspace;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (OBJ_FUNC_INST(obj)) {
+        CMangler_CheckTemplateArguments(OBJ_FUNC_INST(obj)->args);
+#else
     if (obj->u.func.inst) {
         CMangler_CheckTemplateArguments(obj->u.func.inst->args);
+#endif
     }
 
     for (nspace = obj->nspace; nspace; nspace = nspace->parent) {
@@ -1228,7 +1245,11 @@ HashNameNode* CMangler_GetLinkName(Object* obj) {
 #if MWCCPSP
             CError_FATAL(1141);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(1012);
+#else
             CError_FATAL(1110);
+#endif
 #endif
             return NULL;
     }

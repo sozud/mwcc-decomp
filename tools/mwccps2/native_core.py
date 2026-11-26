@@ -57,6 +57,19 @@ EXE145 = os.path.join(REPO, "orig", "PS2_3_0_1_b145", "mwccps2.exe")
 BUILDS = {
     "b52": {"orig": "PS2_3_0_b52", "define": "-DMWCCPS2_B52=1", "name": "mwccps2 b52"},
     "b69": {"orig": "PS2_3_0_3_b69", "define": "-DMWCCPS2_B69=1", "name": "mwccps2 b69"},
+    # 3.0 011126 (Persona 3 FES's game code): b69's code with MWCC_CORE_B011126
+    "b011126": {
+        "orig": "PS2_3_0_011126",
+        "define": ["-DMWCCPS2_B69=1", "-DMWCCPS2_B011126=1"],
+        "name": "mwccps2 3.0 011126",
+    },
+    # 2.3.3: b69's code with MWCC_CORE_B233; the native reads the copied back end's
+    # one operand layout (MWCCPS2_B233_OPS301)
+    "b233": {
+        "orig": "PS2_2_3_3",
+        "define": ["-DMWCCPS2_B69=1", "-DMWCCPS2_B233=1", "-DMWCCPS2_B233_OPS301=1"],
+        "name": "mwccps2 2.3.3",
+    },
 }
 TAG = HERE = GLUE = EXE = BUILD_NAME = None
 
@@ -68,7 +81,8 @@ def configure(build):
     GLUE = os.path.join(HERE, "glue")
     EXE = os.path.join(REPO, "orig", BUILDS[build]["orig"], "mwccps2.exe")
     BUILD_NAME = BUILDS[build]["name"]
-    FLAGS.append(BUILDS[build]["define"])
+    d = BUILDS[build]["define"]
+    FLAGS.extend(d if isinstance(d, list) else [d])
 
 
 FLAGS = [
@@ -484,7 +498,8 @@ def main(build):
     )
     errs = [l for l in p.stderr.splitlines() if "error" in l]
     if errs or p.returncode:
-        print("\n".join(errs[:30]))
+        # ld64 reports undefined symbols without the word "error"
+        print(p.stderr[-3000:])
         sys.exit(f"link failed (rc={p.returncode})")
     if a.output:
         os.makedirs(os.path.dirname(os.path.abspath(a.output)), exist_ok=True)

@@ -92,7 +92,7 @@ typedef struct PCmdLineCompiler {
     Boolean canonicalIncludes;
     Boolean keepObjects;
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
-#if MWCCPSP
+#if MWCCPSP && !(MWCCPS2 && MWCCPS2_BUILD == 119) // b119 has no -gccdep
     Boolean gccDepends; // +0x2D2: -gccdep: the dependency file goes with the object (GetOutputFile)
 #endif
 #endif

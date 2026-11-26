@@ -143,7 +143,7 @@ CW_CALLBACK UCBLoadObjectData(CWPluginContext context, SInt32 whichfile, CWMemHa
 }
 #endif
 
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (25)
 #endif
@@ -320,7 +320,7 @@ CW_CALLBACK UCBStoreObjectData(CWPluginContext context, SInt32 whichfile, CWObje
 
     return cwNoErr;
 }
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -391,7 +391,7 @@ CW_CALLBACK UCBDisplayLines(CWPluginContext context, SInt32 nlines) {
     }
 }
 
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (35)
 #endif
@@ -405,16 +405,20 @@ CW_CALLBACK UCBBeginSubCompile(
 #if MWCCPSP
     DO_INTERNAL_ERROR(427, "UCBBeginSubCompile not implemented");
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    DO_INTERNAL_ERROR(337, "UCBBeginSubCompile not implemented");
+#else
     DO_INTERNAL_ERROR(372, "UCBBeginSubCompile not implemented");
+#endif
 #endif
     return cwErrRequestFailed;
 }
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (35)
 #endif
@@ -426,11 +430,15 @@ CW_CALLBACK UCBEndSubCompile(CWPluginContext subContext) {
 #if MWCCPSP
     DO_INTERNAL_ERROR(439, "UCBEndSubCompile not implemented");
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    DO_INTERNAL_ERROR(349, "UCBEndSubCompile not implemented");
+#else
     DO_INTERNAL_ERROR(384, "UCBEndSubCompile not implemented");
+#endif
 #endif
     return cwErrRequestFailed;
 }
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -459,8 +467,14 @@ CW_CALLBACK UCBGetPrecompiledHeaderSpec(
 #if MWCCPSP
     OS_ASSERT(475, file != NULL);
 #else
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && \
+    MWCC_CORE <= MWCC_CORE_B52 && \
+    MWCC_CORE != MWCC_CORE_B011126 // 011126 0x427030: 420
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(420, file != NULL);
+#else
     OS_ASSERT(455, file != NULL);
+#endif
 #else
     OS_ASSERT(420, file != NULL);
 #endif
@@ -540,7 +554,7 @@ CW_CALLBACK UCBGetPrecompiledHeaderSpec(
     return cwNoErr;
 }
 
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (35)
 #endif
@@ -552,16 +566,20 @@ CW_CALLBACK UCBGetResourceFile(CWPluginContext context, CWFileSpec* filespec) {
 #if MWCCPSP
     DO_INTERNAL_ERROR(569, "UCBGetResourceFile not implemented");
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    DO_INTERNAL_ERROR(479, "UCBGetResourceFile not implemented");
+#else
     DO_INTERNAL_ERROR(514, "UCBGetResourceFile not implemented");
+#endif
 #endif
     return cwErrRequestFailed;
 }
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
 
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (35)
 #endif
@@ -575,11 +593,15 @@ CW_CALLBACK UCBPutResourceFile(
 #if MWCCPSP
     DO_INTERNAL_ERROR(584, "UCBPutResourceFile not implemented");
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    DO_INTERNAL_ERROR(494, "UCBPutResourceFile not implemented");
+#else
     DO_INTERNAL_ERROR(529, "UCBPutResourceFile not implemented");
+#endif
 #endif
     return cwErrRequestFailed;
 }
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -815,8 +837,14 @@ CW_CALLBACK UCBStoreUnit(
 #if MWCCPSP
         OS_ASSERT(845, srcfile != NULL);
 #else
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && \
+    MWCC_CORE <= MWCC_CORE_B52 && \
+    MWCC_CORE != MWCC_CORE_B011126 // 011126 0x427930: 791
+#if MWCC_CORE == MWCC_CORE_B233
+        OS_ASSERT(791, srcfile != NULL);
+#else
         OS_ASSERT(826, srcfile != NULL);
+#endif
 #else
         OS_ASSERT(791, srcfile != NULL);
 #endif
@@ -963,7 +991,7 @@ CW_CALLBACK UCBOSErrorMessage(CWPluginContext context, const char* message, OSEr
     return cwNoErr;
 }
 
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (35)
 #endif
@@ -978,11 +1006,15 @@ CW_CALLBACK UCBGetModifiedFiles(
 #if MWCCPSP
     DO_INTERNAL_ERROR(1002, "CWGetModifiedFiles not implemented!\n");
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    DO_INTERNAL_ERROR(914, "CWGetModifiedFiles not implemented!\n");
+#else
     DO_INTERNAL_ERROR(949, "CWGetModifiedFiles not implemented!\n");
+#endif
 #endif
     return cwNoErr;
 }
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif
@@ -1019,7 +1051,7 @@ CW_CALLBACK UCBGetSuggestedObjectFileSpec(
     return cwNoErr;
 }
 
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (35)
 #endif
@@ -1038,7 +1070,11 @@ CW_CALLBACK UCBGetStoredObjectFileSpec(
 #if MWCCPSP
         DO_INTERNAL_ERROR(1046, "Lost stored object file spec for '%s'\n", file->srcfilename);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        DO_INTERNAL_ERROR(958, "Lost stored object file spec for '%s'\n", file->srcfilename);
+#else
         DO_INTERNAL_ERROR(993, "Lost stored object file spec for '%s'\n", file->srcfilename);
+#endif
 #endif
         return cwErrRequestFailed;
     } else {
@@ -1054,7 +1090,7 @@ CW_CALLBACK UCBGetStoredObjectFileSpec(
         return cwNoErr;
     }
 }
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126 // 011126: no shift
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
 #endif

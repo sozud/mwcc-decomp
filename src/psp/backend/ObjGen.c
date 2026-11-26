@@ -208,6 +208,10 @@ void ObjGen_Setup(void) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if MWCC_CORE == MWCC_CORE_B52
     ELF_AddString(ELF_NewSection(".comment", SHT_PROGBITS, 0), "MW MIPS C Compiler (3.0.0)");
+#elif MWCC_CORE == MWCC_CORE_B233
+    ELF_AddString(
+        ELF_NewSection(".comment", SHT_PROGBITS, 0), "MW MIPS C Compiler (2.3.1.01)"
+    ); // 2.3.3's string
 #else
     ELF_AddString(
         ELF_NewSection(".comment", SHT_PROGBITS, 0), "MW MIPS C Compiler (2.4.1.01)"
@@ -508,7 +512,9 @@ void ObjGen_GetObjectAddress(Object* obj, ObjAddress* addr) {
     // b210 (0x46EE20): a global bound to a register (its register-variable
     // record at +0x3C: class at +0x2E, register at +0x32) has no address
     if (obj->datatype == DDATA) {
-#if MWCCPSP_NATIVE
+#if MWCC_CORE == MWCC_CORE_B233
+        char* rv = (char*)OBJ_DATA_INFO(obj); // 2.3.3: Object is 0x30 bytes
+#elif MWCCPSP_NATIVE
         char* rv = (char*)obj->u.data.info;
 #else
         char* rv = *(char**)((char*)obj + 0x3C);
@@ -1103,7 +1109,10 @@ void ObjGen_EmitCode(Object* obj, void* code, SInt32 size, ObjCodeReloc* relocs)
                     piccount++;
                 }
             }
-            if (r->target) {
+#if MWCC_CORE != MWCC_CORE_B011126 // 011126 (0x48A41F): every relocation has a target
+            if (r->target)
+#endif
+            {
                 ELF_AddReloc(r->type, elfsym, r->offset, ObjGen_GetELFSymbol(r->target), 0);
             }
         }

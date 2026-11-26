@@ -308,7 +308,9 @@ CompilerOption compileroptions[] = {
     "opt_decomposeaggregates", OPT_OFFSET(opt_decomposeaggregates),
     "opt_recomposeaggregates", OPT_OFFSET(opt_recomposeaggregates),
     "opt_scalarizeliveranges", OPT_OFFSET(opt_scalarizeliveranges),
+#if COPTS_B145_FIELDS // not in b119
     "opt_constnonchanging", OPT_OFFSET(opt_constnonchanging),
+#endif
     "exceptions", OPT_OFFSET(exceptions),
     "dont_inline", OPT_OFFSET(dontinline),
     "always_inline", OPT_OFFSET(alwaysinline),
@@ -377,11 +379,13 @@ CompilerOption compileroptions[] = {
     "usefloatacc", OPT_OFFSET(usefloatacc),
     "padloop", OPT_OFFSET(padloop),
     "dividefix", OPT_OFFSET(dividefix),
+#if MWCC_CORE != MWCC_CORE_B233 // not in 2.3.3's copts (0xD2 bytes)
     "fast_fptosi", OPT_OFFSET(fast_fptosi),
     "irocseglobaladdresses", OPT_OFFSET(irocseglobaladdresses),
     "fastmath", OPT_OFFSET(fastmath),
     "enable_vu0_registers", OPT_OFFSET(enable_vu0_registers),
     "vu0_register_number", 0x4000 | OPT_OFFSET(vu0_register_number),
+#endif
 #else
     "force_cats", OPT_OFFSET(force_cats),
     "gecko_float_typecons", OPT_OFFSET(gecko_float_typecons),
@@ -425,7 +429,9 @@ CompilerOption compileroptions[] = {
     "multibyteaware", OPT_OFFSET(multibyteaware),
     "unsigned_char", OPT_OFFSET(unsigned_char),
     "auto_inline", OPT_OFFSET(auto_inline),
+#if MWCC_CORE != MWCC_CORE_B233 // not in 2.3.3's copts (0xD2 bytes)
     "inline_bottom_up", OPT_OFFSET(inline_bottom_up),
+#endif
 #if MWCC_CORE == MWCC_CORE_B52
     "inline_bottom_up_once", OPT_OFFSET(inline_bottom_up_once),
 #endif
@@ -479,10 +485,12 @@ CompilerOption compileroptions[] = {
     "stdc_fp_contract", OPT_OFFSET(stdc_fp_contract),
     "stdc_fenv_access", OPT_OFFSET(stdc_fenv_access),
     "stdc_cx_limitedr", OPT_OFFSET(stdc_cx_limitedr),
+#if MWCC_CORE != MWCC_CORE_B233 // not in 2.3.3's copts (0xD2 bytes)
     "old_argmatch", OPT_OFFSET(old_argmatch),
     "optEH", OPT_OFFSET(optEH),
     "optEH2", OPT_OFFSET(optEH2),
     "new_mangler", OPT_OFFSET(new_mangler),
+#endif
 #if MWCC_CORE == MWCC_CORE_B52
     "parse_func_templ", OPT_OFFSET(parse_func_templ),
     "parse_mfunc_templ", OPT_OFFSET(parse_mfunc_templ),
@@ -493,7 +501,9 @@ CompilerOption compileroptions[] = {
     "old_pragma_once", OPT_OFFSET(old_pragma_once),
     "new_calldeduction", OPT_OFFSET(new_calldeduction),
 #endif
+#if MWCC_CORE != MWCC_CORE_B233 && MWCC_CORE != MWCC_CORE_B011126 // not in 2.3.3's copts (0xD2 bytes) nor 011126's (0x534248)
     "fullpath_file", OPT_OFFSET(fullpath_file),
+#endif
 #if MWCC_CORE == MWCC_CORE_B52
     "opt_classresults", OPT_OFFSET(opt_classresults),
     "ushort_wchar_t", 0x8000 | OPT_OFFSET(ushort_wchar_t),
@@ -504,13 +514,17 @@ CompilerOption compileroptions[] = {
     "microsoft_RTTI", OPT_OFFSET(microsoft_EH),
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if MWCC_CORE != MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B233 && MWCC_CORE != MWCC_CORE_B011126 // not in 2.3.3's copts (0xD2 bytes) nor 011126's (0x534248)
     "stdc_libfuncname_redefined", 0x8000 | OPT_OFFSET(no_ansi_lib_builtin),
+#endif
 #endif
 #else
     "stdc_libfuncname_redefined", (short)(OPT_FLAG_RECONFIGURE | OPT_OFFSET(no_ansi_lib_builtin)),
 #endif
 #if MWCC_CORE != MWCC_CORE_B52
+#if MWCC_CORE != MWCC_CORE_B233 && MWCC_CORE != MWCC_CORE_B011126 // not in 2.3.3's copts (0xD2 bytes) nor 011126's (0x534248)
     "no-ansi-lib-builtin", OPT_OFFSET(no_ansi_lib_builtin),
+#endif
 #endif
     "warning_errors", OPT_OFFSET(warningerrors),
 #if MWCC_CORE == MWCC_CORE_B52
@@ -521,7 +535,9 @@ CompilerOption compileroptions[] = {
 #if MWCC_CORE == MWCC_CORE_B52
     "suppress_warnings", OPT_OFFSET(supress_warnings),
 #else
+#if MWCC_CORE != MWCC_CORE_B233 // not in 2.3.3's copts (0xD2 bytes)
     "supress_warnings", OPT_OFFSET(supress_warnings),
+#endif
 #endif
     "warn_illpragma", OPT_OFFSET(warn_illpragma),
     "warn_emptydecl", OPT_OFFSET(warn_emptydecl),
@@ -542,7 +558,9 @@ CompilerOption compileroptions[] = {
     "warn_padding", OPT_OFFSET(warn_padding),
     "warn_no_side_effect", OPT_OFFSET(warn_no_side_effect),
     "warn_resultnotused", OPT_OFFSET(warn_resultnotused),
+#if MWCC_CORE != MWCC_CORE_B233 // not in 2.3.3's copts (0xD2 bytes)
     "warn_ptr_int_conv", OPT_OFFSET(warn_ptr_int_conv),
+#endif
 #if MWCC_CORE == MWCC_CORE_B52
     "warn_no_typename", OPT_OFFSET(warn_no_typename),
     "warn_filenamecaps", OPT_OFFSET(warn_filenamecaps),
@@ -550,7 +568,9 @@ CompilerOption compileroptions[] = {
     "warn_no_explicit_virtual", OPT_OFFSET(warn_no_explicit_virtual),
     "warn_pch_portability", OPT_OFFSET(warn_pch_portability),
 #endif
+#if MWCC_CORE != MWCC_CORE_B233 && MWCC_CORE != MWCC_CORE_B011126 // not in 2.3.3's copts (0xD2 bytes) nor 011126's (0x534248)
     "warn_uninitializedvar", OPT_OFFSET(warn_uninitializedvar),
+#endif
 #if MWCC_CORE == MWCC_CORE_B52
     "warn_illunionmembers", OPT_OFFSET(warn_illunionmembers),
     "warn_undefmacro", OPT_OFFSET(warn_undefmacro),
@@ -573,7 +593,9 @@ CompilerOption compileroptions[] = {
     "opt_dead_code", OPT_OFFSET(deadcode),
     "opt_dead_assignments", OPT_OFFSET(deadstore),
     "opt_vectorize_loops", OPT_OFFSET(vectorizeloops),
+#if MWCC_CORE != MWCC_CORE_B233 // not in 2.3.3's copts (0xD2 bytes)
     "opt_pointer_analysis", OPT_OFFSET(opt_pointer_analysis),
+#endif
 #if MWCC_CORE == MWCC_CORE_B52
     "opt_scalarize", OPT_OFFSET(opt_scalarize),
     "opt_prelinearize", OPT_OFFSET(opt_prelinearize),
@@ -649,7 +671,9 @@ CompilerOption compileroptions[] = {
 #endif
     "nosyminline", OPT_OFFSET(nosyminline),
     "force_active", OPT_OFFSET(force_active),
+#if MWCC_CORE != MWCC_CORE_B233 // not in 2.3.3's copts (0xD2 bytes)
     "block_assign", OPT_OFFSET(block_assign),
+#endif
     "has8bytebitfields", OPT_OFFSET(has8bytebitfields),
     "sym", OPT_OFFSET(filesyminfo),
 #if MWCC_CORE == MWCC_CORE_B52
@@ -1611,6 +1635,8 @@ void CPrep_TokenStreamSetState(SInt32* state) {
 #if MWCCPSP
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -4 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -21 // b119 asserts
 #endif
 void CPrep_UnLex(void) {
     ++ts_preread_elements;
@@ -1618,7 +1644,11 @@ void CPrep_UnLex(void) {
 #if MWCCPSP
     CError_ASSERT(1384, ts_current >= ts_first);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(1269, ts_current >= ts_first);
+#else
     CError_ASSERT(909, ts_current >= ts_first);
+#endif
 #endif
 }
 #if MWCC_CORE == MWCC_CORE_B52
@@ -1630,6 +1660,8 @@ void CPrep_UnLex(void) {
 #define CError_B69_SHIFT 0
 #endif
 #if MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #endif
@@ -2115,6 +2147,8 @@ TStreamElement* CPrep_CurStreamElement(void) {
 #if MWCCPSP
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -6 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -21 // b119 asserts
 #endif
 void CPrep_GetTokenContext(
     TStreamElement* token,
@@ -2287,6 +2321,8 @@ void CPrep_GetTokenContext(
     was_prep_error = FALSE;
 }
 #if MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #endif
@@ -2535,20 +2571,26 @@ void CPrep_NewFileOffsetInfo(FileOffsetInfo* foi, TStreamElement* ts) {
         if (ts_first < ts_current) {
             foi->file = ts_current[-1].tokenfile;
             foi->tokenline = ts_current[-1].tokenline;
+#if MWCC_CORE != MWCC_CORE_B233
             foi->tokenoffset = ts_current[-1].tokenoffset;
+#endif
         } else {
             foi->file = filestack[filesp];
             foi->tokenline = linenumber;
+#if MWCC_CORE != MWCC_CORE_B233
             if (tokenstacklevel) {
                 foi->tokenoffset = tokenstack[0].pos - filestack[filesp]->textbuffer;
             } else {
                 foi->tokenoffset = pos - filestack[filesp]->textbuffer;
             }
+#endif
         }
     } else {
         foi->file = ts->tokenfile;
         foi->tokenline = ts->tokenline;
+#if MWCC_CORE != MWCC_CORE_B233
         foi->tokenoffset = ts->tokenoffset;
+#endif
     }
     foi->is_inline = FALSE;
 }
@@ -2569,14 +2611,17 @@ SInt32 CPrep_GetFileOffsetInfo(FileOffsetInfo* foi) {
             foi->tokenline = p;
 #endif
         }
+#if MWCC_CORE != MWCC_CORE_B233
         off = ts_current[-1].tokenoffset;
         if (off > foi->tokenoffset) {
             foi->tokenoffset = off;
         }
+#endif
     } else if (foi->file == filestack[filesp]) {
         if (linenumber > foi->tokenline) {
             foi->tokenline = linenumber;
         }
+#if MWCC_CORE != MWCC_CORE_B233
         if (tokenstacklevel) {
             p = tokenstack[0].pos - filestack[filesp]->textbuffer;
         } else {
@@ -2585,15 +2630,18 @@ SInt32 CPrep_GetFileOffsetInfo(FileOffsetInfo* foi) {
         if (p > foi->tokenoffset) {
             foi->tokenoffset = p;
         }
+#endif
     } else {
         for (i = filesp - 1; i >= 0; i--) {
             if (foi->file == filestack[i]) {
                 if (filestack[i]->linenumber > foi->tokenline) {
                     foi->tokenline = filestack[i]->linenumber;
                 }
+#if MWCC_CORE != MWCC_CORE_B233
                 if (filestack[i]->pos > foi->tokenoffset) {
                     foi->tokenoffset = filestack[i]->pos;
                 }
+#endif
                 break;
             }
         }
@@ -2613,6 +2661,8 @@ SInt32 CPrep_GetFileOffsetInfo(FileOffsetInfo* foi) {
 #if MWCCPSP
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -6 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -21 // b119 asserts
 #endif
 void CPrep_GetFileOffsetInfo2(FileOffsetInfo* foi, SInt32* pLine, HashNameNode** pName) {
     SInt32 p;
@@ -2635,7 +2685,7 @@ void CPrep_GetFileOffsetInfo2(FileOffsetInfo* foi, SInt32* pLine, HashNameNode**
         if (p > foi->tokenoffset) {
             foi->tokenoffset = p;
         }
-#else
+#elif MWCC_CORE != MWCC_CORE_B233
         off = ts_current[-1].tokenoffset;
         if (off > foi->tokenoffset) {
             foi->tokenoffset = off;
@@ -2645,6 +2695,7 @@ void CPrep_GetFileOffsetInfo2(FileOffsetInfo* foi, SInt32* pLine, HashNameNode**
         if (linenumber > foi->tokenline) {
             foi->tokenline = linenumber;
         }
+#if MWCC_CORE != MWCC_CORE_B233
         if (tokenstacklevel) {
             p = tokenstack[0].pos - filestack[filesp]->textbuffer;
         } else {
@@ -2653,15 +2704,18 @@ void CPrep_GetFileOffsetInfo2(FileOffsetInfo* foi, SInt32* pLine, HashNameNode**
         if (p > foi->tokenoffset) {
             foi->tokenoffset = p;
         }
+#endif
     } else {
         for (i = filesp - 1; i >= 0; i--) {
             if (foi->file == filestack[i]) {
                 if (filestack[i]->linenumber > foi->tokenline) {
                     foi->tokenline = filestack[i]->linenumber;
                 }
+#if MWCC_CORE != MWCC_CORE_B233
                 if (filestack[i]->pos > foi->tokenoffset) {
                     foi->tokenoffset = filestack[i]->pos;
                 }
+#endif
                 break;
             }
         }
@@ -2702,6 +2756,8 @@ void CPrep_GetFileOffsetInfo2(FileOffsetInfo* foi, SInt32* pLine, HashNameNode**
 #define CError_B69_SHIFT 0
 #endif
 #if MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #endif
@@ -2938,17 +2994,36 @@ UInt8 C_Compiler(CompilerLinkerParamBlk* param) {
     copts.array_new_delete = TRUE;
     copts.syspath_once = TRUE;
     copts.arg_dep_lookup = TRUE;
+#if MWCC_CORE == MWCC_CORE_B233
+    COPTS_T.warn_uninitializedvar = TRUE;
+#else
+    // 011126 has no warn_uninitializedvar (C_Compiler 0x43CDA0 doesn't store
+    // it; IRO_Optimizer 0x43A910 calls IRO_CheckInit unconditionally). Its
+    // pragma is gone, so here it stays TRUE: the same thing.
     copts.warn_uninitializedvar = TRUE;
+#endif
     copts.longlong_prepeval = copts.longlong = TRUE;
     copts.vbase_ctor_offset = TRUE;
     copts.vbase_abi_v2 = TRUE;
+#if MWCC_CORE == MWCC_CORE_B233
+    COPTS_T.optEH = TRUE;
+    COPTS_T.optEH2 = FALSE;
+#else
     copts.optEH = TRUE;
     copts.optEH2 = FALSE;
+#endif
     if (copts.cplusplus) {
         copts.const_strings = TRUE;
     }
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     copts.inline_bottom_up = TRUE;
+#endif
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 has only the old argument matching: its CExpr_AssignmentPromotion
+    // (0x46F220) is oldassignmentpromotion (assign_check, then assign_node),
+    // its argument lists always pointer_generation (0x46F500), and it has no
+    // #pragma old_argmatch
+    COPTS_T.old_argmatch = TRUE;
 #endif
 
     if (initheaps(&CError_NoMem)) {
@@ -3425,6 +3500,8 @@ static char* CPrep_CopyQuoted(char* p, signed char quote);
 
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -10 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -21 // b119 asserts
 #endif
 static void CPrep_Define(void) {
     Macro* existing_macro;
@@ -3731,6 +3808,8 @@ innerLoop:
     }
 }
 #if MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #endif
@@ -4509,16 +4588,21 @@ allocateResult:
         return (char*)start;
     }
 
+#if MWCC_CORE != MWCC_CORE_B011126 // 011126 has none (XpandSpecialMacro)
     static void CPrep_GetQuotedFileName(char* buffer) {
 #if MWCCPS2
         char filename[260]; // b210: MAX_PATH, the name read as a C string
 #else
-    char filename[256];
+        char filename[256];
 #endif
         char* src;
         int len;
 
+#if MWCC_CORE == MWCC_CORE_B233
+        if (COPTS_T.fullpath_file) {
+#else
         if (copts.fullpath_file) {
+#endif
             COS_FileGetPathName(filename, &filestack[filesp]->textfile, NULL);
         } else {
 #if MWCCPS2
@@ -4526,7 +4610,7 @@ allocateResult:
                 &filestack[filesp]->textfile, NULL, 0, filename, sizeof(filename)
             );
 #elif MWCCPSP
-        COS_FileGetPascalName(&filestack[filesp]->textfile, filename);
+            COS_FileGetPascalName(&filestack[filesp]->textfile, filename);
 #else
         COS_FileGetFSSpecInfo(&filestack[filesp]->textfile, NULL, NULL, (StringPtr)filename);
 #endif
@@ -4547,6 +4631,7 @@ allocateResult:
         *buffer = '"';
         buffer[1] = 0;
     }
+#endif
 
 #if MWCC_CORE == MWCC_CORE_B52
     static char cprep_mwerks_version[16]; // 3.0.1's; b52 0x5844B4
@@ -4595,7 +4680,13 @@ do_string:
             strcpy(strptr, buf);
             return strptr;
         } else if (macro == &fileM) {
-            CPrep_GetQuotedFileName(buf);
+#if MWCC_CORE == MWCC_CORE_B011126
+            // 011126 (0x43E6E0): the plain quoted name (CPrep_GetFileName
+            // 0x43E650), no fullpath_file, no escapes
+            CPrep_GetFileName(buf, FALSE, TRUE);
+#else
+        CPrep_GetQuotedFileName(buf);
+#endif
             goto do_string;
         } else if (macro == &dateM) {
             tm = localtime(&now_time);
@@ -4665,6 +4756,8 @@ do_string:
 #if MWCCPSP
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -10 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -21 // b119 asserts
 #endif
     static char* XpandMacro(Macro * macro) {
         char* text;
@@ -5016,6 +5109,8 @@ argumentFinished:
         return XpandString(macro, result);
     }
 #if MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #endif
@@ -5168,6 +5263,8 @@ argumentFinished:
 #if MWCCPSP
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -10 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -21 // b119 asserts
 #endif
     static void pragma_on_off_reset(int bits) {
 #if MWCCPSP
@@ -5234,6 +5331,8 @@ argumentFinished:
 #define CError_B69_SHIFT 0
 #endif
 #if MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #endif
@@ -5709,7 +5808,11 @@ restart:
         if (notendofline() && plex() == '(' && notendofline()) {
             switch (plex()) {
                 case TK_INTCONST:
-                    copts.inlinemaxsize = CInt64_GetULong(&tkintconst);
+#if MWCC_CORE == MWCC_CORE_B233
+                    COPTS_T.inlinemaxsize = CInt64_GetULong(&tkintconst);
+#else
+                copts.inlinemaxsize = CInt64_GetULong(&tkintconst);
+#endif
                     break;
                 default:
                     CPrep_Warning(ERR_ILLEGAL_PRAGMA);
@@ -5741,7 +5844,11 @@ restart:
         if (notendofline() && plex() == '(' && notendofline()) {
             switch (plex()) {
                 case TK_INTCONST:
-                    copts.inlinemaxtotalsize = CInt64_GetULong(&tkintconst);
+#if MWCC_CORE == MWCC_CORE_B233
+                    COPTS_T.inlinemaxtotalsize = CInt64_GetULong(&tkintconst);
+#else
+                copts.inlinemaxtotalsize = CInt64_GetULong(&tkintconst);
+#endif
                     break;
                 default:
                     CPrep_Warning(ERR_ILLEGAL_PRAGMA);
@@ -5915,7 +6022,11 @@ done:
             if (t == TK_INTCONST) {
                 lv = CInt64_GetULong(&tkintconst);
                 if (lv >= 0 && lv <= 4) {
-                    if (copts.crippled && lv > 1) {
+#if MWCC_CORE == MWCC_CORE_B233
+                    if (COPTS_T.crippled && lv > 1) {
+#else
+                if (copts.crippled && lv > 1) {
+#endif
                         CPrep_Warning(ERR_ILLEGAL_OPTIMIZATION_LEVEL_LIMITED);
                         lv = 1;
                     }
@@ -7355,6 +7466,8 @@ static void prepifndef(void) {
 #if MWCCPSP
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -10 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -21 // b119 asserts
 #endif
 static void prepelif(void) {
 #if MWCCPSP
@@ -7398,7 +7511,11 @@ static void prepelif(void) {
 #if MWCCPSP
             CError_FATAL(7219);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_FATAL(5833);
+#else
                 CError_FATAL(5787);
+#endif
 #endif
     }
 }
@@ -7411,6 +7528,8 @@ static void prepelif(void) {
 #define CError_B69_SHIFT 0
 #endif
 #if MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #endif
@@ -7426,6 +7545,8 @@ static void prepelif(void) {
 #if MWCCPSP
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -10 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -21 // b119 asserts
 #endif
 static void prepelse(void) {
     if (iflevel <= 0 ||
@@ -7462,7 +7583,11 @@ static void prepelse(void) {
 #if MWCCPSP
             CError_FATAL(7257);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_FATAL(5871);
+#else
                 CError_FATAL(5825);
+#endif
 #endif
     }
 }
@@ -7475,6 +7600,8 @@ static void prepelse(void) {
 #define CError_B69_SHIFT 0
 #endif
 #if MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #endif
@@ -7588,11 +7715,11 @@ void preprocessor(void) {
     switch (t) {
         case 0:
             CPrep_Error(ERR_UNEXPECTED_END_FILE);
-#if MWCCPSP
-            return; // 3.0.1: case 13 handles the newline now
+#if MWCCPSP && !(MWCCPS2 && MWCCPS2_BUILD == 119)
+            return; // 3.0.1: case 13 handles the newline now (not yet in b119)
 #endif
         case 13:
-#if MWCCPSP
+#if MWCCPSP && !(MWCCPS2 && MWCCPS2_BUILD == 119)
             newline();
 #endif
             return;
@@ -7711,7 +7838,11 @@ void preprocessor(void) {
 }
 
 SInt32 CPrep_BrowserTokenOffset(FileOffsetInfo* foi) {
-    return foi->tokenoffset;
+#if MWCC_CORE == MWCC_CORE_B233 // no token offset in 2.3.3's FileOffsetInfo
+    return 0;
+#else
+        return foi->tokenoffset;
+#endif
 }
 
 SInt32 CPrep_BrowserFileOffset(void) {

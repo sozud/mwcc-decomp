@@ -25,7 +25,11 @@ void __stdcall OS_AddFileTypeMappingList(
     }
 
     *scan = malloc(sizeof(OSFileTypeMappings));
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(43, *scan != NULL);
+#else
     OS_ASSERT(40, *scan != NULL);
+#endif
     (*scan)->mappingList = entry;
     (*scan)->next = 0;
 }

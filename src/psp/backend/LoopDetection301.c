@@ -8,6 +8,9 @@
 #include "compiler/CompilerTools.h"
 #include "psp/BE.h"
 #include "psp/Loop301.h"
+#if MWCC_CORE == MWCC_CORE_B233
+#include <string.h>
+#endif
 
 extern SInt32 data_00624D40; // pcblockcount
 extern SInt32 func_00462160(char rclass);
@@ -267,6 +270,13 @@ static void computedominators(void) {
     data_00607678 = oalloc(n * sizeof(UInt32*));
     for (i = 0; i < data_00624D40; i++) {
         data_00607678[i] = oalloc(VECBYTES(n));
+#if MWCC_CORE == MWCC_CORE_B233 && MWCCPSP_NATIVE
+        // a deleted block can stay in a predecessor list (2.3.3 keeps stale
+        // predecessors); its vector, never initialized, is old oheap content
+        // in the original and was ASLR-dependent here. All ones (no
+        // constraint) measures best: 5 functions more than zero
+        memset(data_00607678[i], 0xFF, VECBYTES(n));
+#endif
     }
     vec = oalloc(VECBYTES(n));
     bitvectorinitialize(data_00607678[data_00624FD0->number], n, 0);

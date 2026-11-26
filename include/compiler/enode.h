@@ -402,7 +402,13 @@ struct ENode {
     UInt8 unk06[4];
     Type* rtype;
     struct PointsToFunction* pointsTo;
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3: 0x24 bytes (makemonadicnode 0x4BA040: lalloc(0x24)); rtype at
+    // +0x0A, the operand at +0x14
+    UInt8 unk12[2];
+#else
     UInt8 unk12[6];
+#endif
     ENodeUnion data;
 };
 #pragma pack(pop)

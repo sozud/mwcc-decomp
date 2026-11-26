@@ -361,7 +361,11 @@ static ENode* CTempl_ParseTemplArgExpr(Type* type, UInt32 qual) {
     ENode* copy;
 
     disallowgreaterthan = TRUE;
+#if MWCC_CORE == MWCC_CORE_B233
+    if (!COPTS_T.old_argmatch) {
+#else
     if (!copts.old_argmatch) {
+#endif
         expr = assignment_expression();
     } else {
         expr = conv_assignment_expression();
@@ -383,7 +387,11 @@ static ENode* CTempl_ParseTemplArgExpr(Type* type, UInt32 qual) {
     }
 
     if (!IS_TYPE_TEMPLDEPEXPR(expr->rtype)) {
+#if MWCC_CORE == MWCC_CORE_B233
+        if (!COPTS_T.old_argmatch) {
+#else
         if (!copts.old_argmatch) {
+#endif
             expr = pointer_generation(expr);
         }
 
@@ -1034,6 +1042,8 @@ Boolean CTempl_IsQualifiedMember(DeclInfo* di, Type* type, NameSpace** resultnsp
         (templ =
              TEMPL_CLASS(CTemplTool_GetSelfRefTemplate(TYPE(TYPE_TEMPLATE(type)->u.qual.type))))) {
         *resultnspace = templ->theclass.nspace;
+#if MWCC_CORE != \
+    MWCC_CORE_B233 // 2.3.3's DeclInfo has no templateScope (unverified which pointer it lacks)
 #if MWCCPSP
         CError_ASSERT(1048, di->templateScope && (*resultnspace)->theclass);
 #else
@@ -1042,6 +1052,7 @@ Boolean CTempl_IsQualifiedMember(DeclInfo* di, Type* type, NameSpace** resultnsp
 
         CTempl_SetupClassParamNameSpace(di->templateScope, (*resultnspace)->theclass);
         di->templateScope = NULL;
+#endif
         return TRUE;
     }
 
@@ -1626,7 +1637,9 @@ static void CTempl_ParseFunctionOrMemberTemplate(
     }
 
     di.templateParameters = params;
+#if MWCC_CORE != MWCC_CORE_B233
     di.templateScope = templateScope;
+#endif
     scandeclarator(&di);
     ctempl_scanfuncparams = FALSE;
 
@@ -1774,12 +1787,24 @@ static void CTempl_ExplicitInstantiation(void) {
         IS_TYPE_FUNC(di.thetype) &&
         (object = CDecl_GetFunctionObject(&di, di.nspace, NULL, TRUE)) &&
         IS_TYPE_FUNC(object->type) &&
+#if MWCC_CORE == MWCC_CORE_B233
+        OBJ_FUNC_INST(object) &&
+#else
         object->u.func.inst &&
+#endif
         di.templateFunction) {
         if (!instantiate) {
+#if MWCC_CORE == MWCC_CORE_B233
+            OBJ_FUNC_INST(object)->is_extern = TRUE;
+#else
             object->u.func.inst->is_extern = TRUE;
+#endif
         } else {
+#if MWCC_CORE == MWCC_CORE_B233
+            CTempl_GenFuncInstance(di.templateFunction, OBJ_FUNC_INST(object), TRUE);
+#else
             CTempl_GenFuncInstance(di.templateFunction, object->u.func.inst, TRUE);
+#endif
         }
     } else {
         CError_Error(ERR_ILLEGAL_EXPLICIT_TEMPLATE_INSTANTIATION);
@@ -2214,7 +2239,11 @@ void CTempl_InstantiateMember(
             break;
 
         default:
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(1796);
+#else
             CError_FATAL(2227);
+#endif
     }
 
 #if MWCCPSP
@@ -2365,7 +2394,11 @@ Boolean CTempl_InlineFunctionCheck(Object* funcobj) {
     TemplateMember* member;
     Object* parent;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(1981, IS_TYPE_FUNC(funcobj->type) && (funcobj->qual & Q_IS_TEMPLATED));
+#else
     CError_ASSERT(2422, IS_TYPE_FUNC(funcobj->type) && (funcobj->qual & Q_IS_TEMPLATED));
+#endif
 
     if (!(TYPE_FUNC(funcobj->type)->flags & FUNC_DEFINED)) {
         inst = TEMPL_CLASS_INST(TYPE_METHOD(funcobj->type)->theclass);

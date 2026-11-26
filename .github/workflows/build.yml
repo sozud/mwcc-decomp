@@ -147,7 +147,9 @@ jobs:
   difftest-psp:
     runs-on: ubuntu-24.04
     env:
-      BASE: origin/mwccpsp
+      # a pull request compares against its base, a push against the commit
+      # it replaced; a new branch or tag (no previous commit) against its parent
+      BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -167,7 +169,9 @@ jobs:
 
       - name: Build the base and this commit
         run: |
-          git worktree add ../base "$BASE"
+          if ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then BASE=$(git rev-parse HEAD^); fi
+          echo "base: $(git log -1 --oneline "$BASE")"
+          git worktree add --detach ../base "$BASE"
           mkdir -p ../base/orig && cp -r orig/PSP_3_0_1 ../base/orig/
           (cd ../base && python3 tools/mwccpsp/native_build.py -j 4 -o build/mwccpsp)
           python3 tools/mwccpsp/native_build.py -j 4 -o build/mwccpsp

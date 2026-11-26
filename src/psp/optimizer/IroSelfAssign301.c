@@ -19,6 +19,9 @@ typedef Boolean (*AssignmentFoldingFunc)(
     CInt64 a, CInt64 b, Type* type, Type* type2, CInt64* result
 );
 extern AssignmentFoldingFunc data_006078C8[IRO_MAXEXPR]; // IROUseDef.c's AssignmentFoldingFunction
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+typedef CInt64 (*B119FoldFunc)(CInt64 a, CInt64 b); // b119's table: plain CInt64 operations
+#endif
 
 extern CInt64 func_0055A670(Type* type); // largest value of the type (IroRange301.c)
 extern CInt64 func_0055A710(Type* type); // smallest value of the type (IroRange301.c)
@@ -181,6 +184,127 @@ void UpdateUseForOtherSelfAssignment(IROLinear* a, IROLinear* b, Type* type) {
     IROLinear* newdiadic;
     IROList list;
 
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+    // b119 (0x578820) folds as the older IROUseDef.c: the table holds plain
+    // CInt64 operations, nothing is range-checked or truncated to a type
+    val = IRO_GetSelfAssignmentVal(b);
+    if ((father = IRO_LocateFather(a)) &&
+        father->type == IROLinearOp2Arg &&
+        IRO_IsIntConstant(father->u.diadic.right)) {
+        fatherval = father->u.diadic.right->u.node->data.intval;
+        if (data_006078C8[b->nodetype] &&
+            (father->nodetype == b->nodetype ||
+             father->nodetype == IRO_NonAssignmentOp[b->nodetype])) {
+            CInt64_SetLong(&v, b->rtype->size * 8);
+            folded = ((B119FoldFunc)data_006078C8[b->nodetype])(fatherval, val);
+            if (b->nodetype == ESHRASS && !is_unsigned(b->rtype)) {
+                if (CInt64_LessU(fatherval, v) && CInt64_LessU(val, v)) {
+                    if (CInt64_GreaterEqualU(folded, v)) {
+                        folded = CInt64_Sub(v, cint64_one);
+                    }
+                    father->u.diadic.right->u.node->data.intval = folded;
+                    return;
+                }
+            } else {
+                father->u.diadic.right->u.node->data.intval = folded;
+                return;
+            }
+        } else {
+            switch (b->nodetype) {
+                case EMULASS:
+                    if (father->nodetype == ESHL || father->nodetype == ESHLASS) {
+                        if (func_00555B60(b->u.diadic.right, &powvalue)) {
+                            if (powvalue > 0) {
+                                CInt64_SetLong(&v, powvalue);
+                                father->u.diadic.right->u.node->data.intval =
+                                    CInt64_Add(v, fatherval);
+                            }
+                        } else {
+                            father->nodetype = (father->nodetype == ESHL) ? EMUL : EMULASS;
+                            fatherval = CInt64_Shl(cint64_one, fatherval);
+                            father->u.diadic.right->u.node->data.intval =
+                                CInt64_Mul(fatherval, val);
+                        }
+                        return;
+                    }
+                    break;
+                case EDIVASS:
+                    if ((father->nodetype == ESHR || father->nodetype == ESHRASS) &&
+                        is_unsigned(father->rtype)) {
+                        if (func_00555B60(b->u.diadic.right, &powvalue)) {
+                            if (powvalue > 0) {
+                                CInt64_SetLong(&v, powvalue);
+                                father->u.diadic.right->u.node->data.intval =
+                                    CInt64_Add(v, fatherval);
+                            }
+                        } else {
+                            father->nodetype = (father->nodetype == ESHR) ? EDIV : EDIVASS;
+                            fatherval = CInt64_Shl(cint64_one, fatherval);
+                            father->u.diadic.right->u.node->data.intval =
+                                CInt64_Mul(fatherval, val);
+                        }
+                        return;
+                    }
+                    break;
+                case ESHLASS:
+                    if (father->nodetype == EMUL || father->nodetype == EMULASS) {
+                        if (func_00555B60(father->u.diadic.right, &powvalue)) {
+                            if (powvalue > 0) {
+                                father->nodetype = (father->nodetype == EMUL) ? ESHL : ESHLASS;
+                                CInt64_SetLong(&v, powvalue);
+                                father->u.diadic.right->u.node->data.intval = CInt64_Add(v, val);
+                            }
+                        } else {
+                            val = CInt64_Shl(cint64_one, val);
+                            father->u.diadic.right->u.node->data.intval =
+                                CInt64_Mul(fatherval, val);
+                        }
+                        return;
+                    } else if (father->nodetype == ESHR || father->nodetype == ESHRASS) {
+                        if (CInt64_Equal(fatherval, val) && is_unsigned(father->rtype)) {
+                            father->nodetype = (father->nodetype == ESHR) ? EAND : EANDASS;
+                            if (father->rtype->size < 8) {
+                                CInt64_SetLong(&v, 64 - father->rtype->size * 8);
+                                val = CInt64_Add(val, v);
+                            }
+                            // the 64-bit form's mask: with the 128-bit CInt64 a
+                            // long long keeps all of its 64 bits (and more)
+                            father->u.diadic.right->u.node->data.intval =
+                                CInt64_ShrU(cint64_negone, val);
+                            return;
+                        }
+                    }
+                    break;
+                case ESHRASS:
+                    if ((father->nodetype == EDIV || father->nodetype == EDIVASS) &&
+                        is_unsigned(father->rtype)) {
+                        if (func_00555B60(father->u.diadic.right, &powvalue)) {
+                            if (powvalue > 0) {
+                                father->nodetype = (father->nodetype == EDIV) ? ESHR : ESHRASS;
+                                CInt64_SetLong(&v, powvalue);
+                                father->u.diadic.right->u.node->data.intval = CInt64_Add(v, val);
+                            }
+                        } else {
+                            val = CInt64_Shl(cint64_one, val);
+                            father->u.diadic.right->u.node->data.intval =
+                                CInt64_Mul(fatherval, val);
+                        }
+                        return;
+                    } else if (father->nodetype == ESHL || father->nodetype == ESHLASS) {
+                        if (CInt64_Equal(fatherval, val)) {
+                            father->nodetype = (father->nodetype == ESHL) ? EAND : EANDASS;
+                            father->u.diadic.right->u.node->data.intval =
+                                CInt64_Shl(cint64_negone, val);
+                            return;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+#else
     val = IRO_GetSelfAssignmentVal(b);
     if ((father = IRO_LocateFather(a)) &&
         father->type == IROLinearOp2Arg &&
@@ -312,6 +436,8 @@ void UpdateUseForOtherSelfAssignment(IROLinear* a, IROLinear* b, Type* type) {
                 break;
         }
     }
+
+#endif
 
     IRO_InitList(&list);
     promoted = type;

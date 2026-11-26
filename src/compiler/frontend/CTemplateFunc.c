@@ -287,7 +287,9 @@ static TemplFuncInstance* CTempl_GetCreateFuncInstance(
         instobj->sclass = funcobj->sclass;
         instobj->qual = funcobj->qual | Q_MANGLE_NAME;
         instobj->name = templ->name;
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3: no instance link in the object
         instobj->u.func.inst = inst;
+#endif
 
         CTemplFunc_SetupTypeDeduce(&deduce, templ, inst->args);
         if (funcobj->nspace->theclass && (funcobj->nspace->theclass->flags & CLASS_IS_TEMPL_INST)) {
@@ -725,7 +727,11 @@ static Boolean CTempl_DeduceTemplateTypeBase(
     return FALSE;
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+static BOOL_INT CTempl_DeduceQualTemplate(
+#else
 static Boolean CTempl_DeduceQualTemplate(
+#endif
     TypeTemplDep* type1, TemplArg* args1, Type* type2, TemplArg* argArray
 ) {
     int index;
@@ -1469,7 +1475,11 @@ static Boolean CTempl_TypeNeedsDeduction(Type* type) {
 #if MWCCPSP
                         CError_FATAL(1479);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+                        CError_FATAL(906);
+#else
                         CError_FATAL(1359);
+#endif
 #endif
                 }
 
@@ -1513,7 +1523,11 @@ static Boolean CTempl_TypeNeedsDeduction(Type* type) {
 #if MWCCPSP
                 CError_FATAL(1514);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_FATAL(938);
+#else
                 CError_FATAL(1391);
+#endif
 #endif
         }
     }
@@ -1643,7 +1657,11 @@ static Boolean CTempl_MatchTemplFunc(
                 }
             }
         } else {
+#if MWCC_CORE == MWCC_CORE_B233
+            if (COPTS_T.old_argmatch &&
+#else
             if (copts.old_argmatch &&
+#endif
                 !CExpr_MatchAssign(args->type, args->qual, exprs->node, &match)) {
                 return FALSE;
             }

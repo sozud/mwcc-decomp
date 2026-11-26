@@ -1,0 +1,201 @@
+00409a70	416	CLPlugins.c?	CLPlugins.c/SupportedPlugin
+0040a8d0	288	CLPlugins.c	Plugins_GetPluginList
+00417f30	816		SendCompilerRequest
+00418350	432	CLPluginRequests.cpp	SendTargetInfoRequest
+00419d70	544		OS_SpecToStringRelative
+0041a270	112		OS_AppendHandle
+0041a9b0	224		?
+0041aa90	112		CLFileOps.c/RecordBrowseInfo
+0041ab00	432		?
+0041b440	176		RecordBrowseInfo
+0041b4f0	144	CLFileOps.c	RecordObjectData
+0041b580	192	CLFileOps.c	StoreObjectFile
+0041b640	512	CLFileOps.c?	CLFileOps.c/CompileFile
+0041b8d0	640	CLFileOps.c?	CLFileOps.c/DisassembleFile
+0041bb50	656	CLFileOps.c	CLFileOps.c/CompileEntry
+0041be00	912	CLFileOps.c	CLFileOps.c/DumpFileAndPathInfo
+00420100	816		CCompiler.c/initialize_compiler_options
+00423c80	48		File_New
+004248d0	480		UCBGetFileInfo
+00424b60	320		CLDropinCallbacks_V10.cpp/FindAndLoad_AccessPathFile
+00424ca0	304	CLDropinCallbacks_V10.cpp	CLDropinCallbacks_V10.cpp/FindAndLoad_MissingFile
+00425b50	1920	CLDropinCallbacks_V10.cpp?	UCBAddProjectEntry
+00427070	160		UCBLoadObjectData
+00427110	544	CLCompilerLinkerDropin_V10.cpp	UCBStoreObjectData
+00427330	96	CLCompilerLinkerDropin_V10.cpp?	UCBFreeObjectData
+004273d0	64	CLCompilerLinkerDropin_V10.cpp	UCBBeginSubCompile
+00427410	64	CLCompilerLinkerDropin_V10.cpp	UCBEndSubCompile
+00427450	736	CLCompilerLinkerDropin_V10.cpp	UCBGetPrecompiledHeaderSpec
+00427730	64	CLCompilerLinkerDropin_V10.cpp	UCBGetResourceFile
+00427770	64	CLCompilerLinkerDropin_V10.cpp	UCBPutResourceFile
+004277b0	1408	CLCompilerLinkerDropin_V10.cpp	CLCompilerLinkerDropin_V10.cpp/UnitNameToSBMName
+00427d50	688	CLCompilerLinkerDropin_V10.cpp	UCBStoreUnit
+00428210	80	CLCompilerLinkerDropin_V10.cpp	UCBGetModifiedFiles
+004282d0	144	CLCompilerLinkerDropin_V10.cpp	UCBGetStoredObjectFileSpec
+004298a0	752		Deps_ListDependencies
+00430ac0	1648	CParser.c	CParser_ParseAttribute
+00431370	2992	CParser.c	CParser_GetDeclSpecs
+00432280	64	CParser.c	CParser_CallBackAction
+00434160	128	CodeGen.c	func_00438680
+00434410	496	CodeGen.c?	func_00438160
+00434a30	2416	CodeGen.c	?
+004355d0	688	CodeGen.c	?
+00435950	320	CodeGen.c	CodeGen.c/func_00436DA0
+00435b50	336	CodeGen.c?	func_00436B30
+00435cc0	112	CodeGen.c	?
+00435e80	2208	CodeGen.c	?
+00436740	64	CodeGen.c	?
+00436a60	880	CodeGen.c	?
+00436dd0	544	CodeGen.c?	CodeGen_InitBackEndOptions
+004370f0	1248	CodeGen.c	CodeGen_Generator
+004375d0	112	CodeGen.c	?
+00437640	528	CodeGen.c	CodeGen_GenVDispatchThunk
+00437850	496	CodeGen.c	CodeGen_UpdateObject
+00438170	176	CodeGen.c?	?
+00439f50	960	CodeGen.c	CodeGen_ExpandSpecialMacro
+0043a310	32		CCompiler.c/IsJapaneseSystem
+0043a330	128		CCompiler.c/GetLicense
+0043a660	1584	IrOptimizer.c	IRO_Optimizer
+0043b950	48	CPrep.c	CPrep_UnLex
+0043c230	704	CPrep.c	CPrep_GetTokenContext
+0043c9a0	304	CPrep.c	CPrep_GetFileOffsetInfo2
+0043cb00	864	CPrep.c?	C_Compiler
+0043d470	1872	CPrep.c	CPrep_Define
+0043e3c0	32	CPrep.c?	CToLowercase
+0043e3e0	176	CPrep.c?	CPrep.c/CPrep_GetQuotedFileName
+0043e490	640	CPrep.c?	XpandSpecialMacro
+0043e710	1552	CPrep.c	CPrep.c/XpandMacro
+0043ef40	384	CPrep.c	pragma_on_off_reset
+0043f6c0	192	CPrep.c?	CPrep.c/CPrep_CheckTarget
+0043f780	48	CPrep.c?	CPrep.c/pragma_push
+0043f7b0	80	CPrep.c?	CPrep.c/pragma_pop
+0043f8a0	224	CPrep.c?	?
+0043f980	192	CPrep.c?	?
+0043fa40	192	CPrep.c?	?
+00440e50	160	CPrep.c	CPrep.c/prepelif
+00440f80	32	CPrep.c	?
+00442b10	80		FixTextHandle
+0044ca20	224	CScope.c?	CScope.c/CScope_CheckDtorName
+004584f0	208	CMachine.c	CMach_InitIntMem
+00459010	416		CMach_GetBackEndOptions
+004591b0	416		CMach_SetBackEndOptions
+004756d0	864	CTemplateNew.c	CTemplateNew.c/CTempl_ParseTemplArgs
+00477300	560	CTemplateNew.c	CTempl_GenFuncInstance
+00477700	96	CTemplateNew.c?	CTemplateNew.c/CTempl_GenMemberInstance
+004779e0	1392		prepskipnextchar
+00477f50	800		prepnextchar
+004783d0	384		CPrep_MatchChar
+00478550	368		?
+00479010	240		CPrep_SkipNewComment
+00479200	640		skipendofline
+004794b0	752	CPrepTokenizer.c	CPrepTokenizer.c/tapos
+0047bae0	816	CPrepTokenizer.c	lex
+0047d150	80	CTemplateTools.c?	CTemplTool_CheckTemplArgType
+0047e970	1184	CTemplateTools.c	CTemplTool_DeduceTypeCopy
+0048a1e0	1072		?
+0048bf00	304	mips.c?	?
+0048dde0	112	mips.c	func_00479C30
+0048e010	384	mips.c?	?
+0048e190	304	mips.c?	?
+0048e5d0	96	mips.c	func_004792B0
+0048e660	48	mips.c	?
+0048e690	432	mips.c	func_00479040
+0048ea60	36256		?
+00497800	448		?
+004979c0	272		?
+00497b50	224		?
+00497c30	224		?
+004981c0	176	VReg.c	func_004C3E70
+00498310	128	VReg.c	func_004C3B10
+00498a10	176	PCode.c?	linkblocks
+00499130	80		?
+00499180	208		?
+00499460	1456		func_004A64C0
+00499a10	832		?
+0049a3c0	992	PCodeInfo.c	func_00490400
+0049a830	256	PCodeInfo.c	mips_makecopyinstruction
+0049aa80	480	PCodeInfo.c	func_0048FBE0
+0049ac60	48	PCodeInfo.c?	mips_is128bitop
+0049ac90	64	PCodeInfo.c	func_0048FAE0
+0049b010	160	InstrSelection.c	?
+0049b0b0	288	InstrSelection.c	func_0049D530
+0049b1d0	304	InstrSelection.c	func_0049D400
+0049b300	256	InstrSelection.c?	func_0049C250
+0049b400	2160	InstrSelection.c	func_0049C250
+0049c8d0	1600	InstrSelection.c?	?
+0049dc60	2240	InstrSelection.c?	?
+0049ea20	1184	InstrSelection.c	?
+0049eec0	656	InstrSelection.c	?
+0049f710	736	InstrSelection.c?	?
+0049f9f0	224	InstrSelection.c?	?
+0049fad0	176	InstrSelection.c?	func_00496CB0
+0049fbc0	5744	InstrSelection.c?	?
+004a14b0	32	InstrSelection.c	func_00493F90
+004a15d0	32	InstrSelection.c	?
+004a1b10	176	InstrSelection.c?	func_004949B0
+004a1c00	32	InstrSelection.c	func_00494940
+004a2310	304	InstrSelection.c	binary_immediate
+004a3390	816	FunctionCalls.c	?
+004a3fa0	2720	FunctionCalls.c	func_004A7400
+004a7810	304		LocalCSE.c/simpleload
+004a7960	192		LocalCSE.c/pointerload
+004a7a40	176		LocalCSE.c/arithmeticop
+004a7b20	208		LocalCSE.c/operatefrommemory
+004a8fa0	8912	BE_macro.c	?
+004afe10	304		ps2_padloop_4C2960
+004b1280	128		?
+004b1320	336		func_004B8240
+004b1510	176	BE_schedule.c	?
+004b15c0	960		func_004B7E20
+004b2e70	304		?
+004b2fa0	208		?
+004b3070	112	RegisterInfo.c	?
+004b3150	720		func_0048AA50
+004b34b0	496		func_00489410
+004b36a0	1472		func_004890B0
+004b3c60	480		func_00488EB0
+004b40f0	1024	InlineAsmMIPS.c	func_00488180
+004b44f0	416	InlineAsmMIPS.c?	func_00487F60
+004b68e0	912	InlineAsmMIPS.c	func_00482330
+004b6c70	112	InlineAsmMIPS.c?	?
+004b6ce0	1664	InlineAsmMIPS.c	?
+004b7360	736	InlineAsmMIPS.c?	func_00482000
+004b7660	256	InlineAsmMIPS.c?	func_00481EE0
+004b7760	256	InlineAsmMIPS.c?	ps2_gcc_quadmove
+004b7860	528	InlineAsmMIPS.c	InlineAsm_GCCLookupSymbol
+004b7a70	112		InlineAsm_GCCLookupMember
+004b8aa0	192		?
+004b8d20	3168		?
+004bab00	6608		func_004585B0
+004c09c0	128		FEInterface.c/func_0043A4E0
+004c0a40	192		CodeGen_PropagateIntoAsm
+004c0b00	1136	FEInterface.c	CodeGen_GetAsmEffects
+004d7880	1712	IroUnrollLoop.c?	UnrollForLoop
+004f8a80	48		InlineAsm_SyntaxError
+004f8b40	320	InlineAsm.c	InlineAsm_LookupSymbolMIPS
+004f94a0	656		ScanStatements
+004fc2a0	160	CExprConvMatch.c?	CExpr_AssignmentPromotion
+00502100	1536	DWARF.c	?
+005052b0	176		?
+00505360	192		?
+00505420	5488		?
+00506ac0	480		?
+005072b0	704		?
+00507570	1312		?
+00507a90	1184		?
+005093b0	2848		?
+0050aa50	64		PPCError.c/PPCError_GetErrorString
+0050aa90	96		PPCError.c/PPCError_VAErrorMessage
+0050aaf0	96		func_004C5940
+0050ab50	80		func_004C5890
+0050acc0	512		GCCInlineAsm.c/gcc_parse_attribute
+0050aef0	2160	GCCInlineAsm.c	GCCInlineAsm.c/gcc_parse_name
+0050b760	96	GCCInlineAsm.c?	GCCInlineAsm.c/gcc_parse_expression
+0050b920	1760	GCCInlineAsm.c	GCCInlineAsm.c/gcc_replace_arg_st_asm
+0050c080	304	GCCInlineAsm.c	GCCInlineAsm.c/gcc_copy_expression
+0050c2b0	112		ps2_IsQuadwordClass
+0050c320	80		?
+0050c370	48		ps2_IsQuadwordClassPointer
+0050c3a0	48		?
+0050c3d0	80		ps2_IsQuadwordClassLocal
+0050c420	96		?

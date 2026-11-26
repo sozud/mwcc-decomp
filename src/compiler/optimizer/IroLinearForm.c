@@ -659,7 +659,9 @@ static void MakeLeftChildAsAssignment(ENode* enode) {
     stmt->expr = enode->data.diadic.left;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -695,7 +697,9 @@ static void AssignCommaRToTemp(ENode* enode, Boolean discardResult) {
         stmt->expr->rtype = enode->rtype;
         stmt->dobjstack = CurrStmt->dobjstack;
         stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
         stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
         stmt->value = CurrStmt->value;
         stmt->flags = CurrStmt->flags;
 
@@ -717,7 +721,9 @@ static void AssignCommaRToTemp(ENode* enode, Boolean discardResult) {
         stmt->expr = enode->data.diadic.right;
         stmt->dobjstack = CurrStmt->dobjstack;
         stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
         stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
         stmt->value = CurrStmt->value;
         stmt->flags = CurrStmt->flags;
 
@@ -762,7 +768,9 @@ static void AssignDangerousArgumentToTemp(ENode* enode) {
     stmt->expr->rtype = enode->rtype;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -805,7 +813,9 @@ static void CreateTempAssignmentToZero(ENode* enode, Object** objptr) {
     stmt->expr->rtype = enode->rtype;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -850,7 +860,9 @@ static void CreateTempAssignmentToOne(ENode* enode, Object** objptr) {
     stmt->expr->rtype = enode->rtype;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -879,7 +891,9 @@ static void GenerateCondExpression(ENode* enode, CLabel** label) {
     stmt->label = *label;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -903,7 +917,9 @@ static void GenerateGoToStmt(ENode* enode, CLabel** label) {
     stmt->label = *label;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -976,7 +992,9 @@ static void GenerateNullcheckExprTempAssignment(ENode* enode, Object** objptr) {
 
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1015,7 +1033,9 @@ static void GenerateExpr1TempAssignment(ENode* enode, Object** objptr) {
 
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1060,7 +1080,9 @@ static void GenerateExpr2TempAssignment(ENode* enode, Object** objptr) {
 
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1103,7 +1125,9 @@ static void GenerateForceLoadTempAssignment(ENode* enode, Object** objptr) {
 
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1126,7 +1150,9 @@ static void GenerateLabel(CLabel** labelptr) {
     stmt->label->stmt = stmt;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1165,7 +1191,9 @@ static void GenerateIfNotTemp(ENode* enode, Object** objptr, CLabel** labelptr) 
     stmt->label = *labelptr;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1203,7 +1231,9 @@ static void GenerateNullcheckCondExpr(ENode* enode, Object** objptr) {
     }
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1228,7 +1258,9 @@ static void TransformLogicalAndLHS(ENode* enode, Object** objptr, CLabel** label
     stmt->label = *labelptr;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1253,7 +1285,9 @@ static void TransformLogicalAndRHS(ENode* enode, Object** objptr, CLabel** label
     stmt->label = *labelptr;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1286,7 +1320,9 @@ static void TransformLogicalAndRHS(ENode* enode, Object** objptr, CLabel** label
     stmt->expr->rtype = enode->rtype;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1305,7 +1341,9 @@ static void TransformLogicalAndRHS(ENode* enode, Object** objptr, CLabel** label
     stmt->label->stmt = stmt;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1334,7 +1372,9 @@ static void TransformLogicalOrLHS(ENode* enode, Object** objptr, CLabel** labelp
     stmt->label = *labelptr;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1359,7 +1399,9 @@ static void TransformLogicalOrRHS(ENode* enode, Object** objptr, CLabel** labelp
     stmt->label = *labelptr;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1392,7 +1434,9 @@ static void TransformLogicalOrRHS(ENode* enode, Object** objptr, CLabel** labelp
     stmt->expr->rtype = enode->rtype;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -1411,7 +1455,9 @@ static void TransformLogicalOrRHS(ENode* enode, Object** objptr, CLabel** labelp
     stmt->label->stmt = stmt;
     stmt->dobjstack = CurrStmt->dobjstack;
     stmt->sourceoffset = CurrStmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = CurrStmt->sourcefilepath;
+#endif
     stmt->value = CurrStmt->value;
     stmt->flags = CurrStmt->flags;
 
@@ -3177,7 +3223,7 @@ void IRO_Linearize(Statement* stmt) {
                 linear = IRO_NewLinear(IROLinearAsm);
                 linear->u.asm_stmt = stmt;
                 if (copts.optimizewithasm && IRO_GetAsmEffectsHook) {
-                    IROAsmEffects effects = IRO_EmptyAsmEffects;
+                    IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
                     IRO_GetAsmEffectsHook(stmt, &effects);
                     if (effects.optimizationBarrier || effects.unmodeledControlFlow) {
                         DisableDueToAsm = TRUE;
@@ -3285,7 +3331,14 @@ void IRO_Linearize(Statement* stmt) {
             case ST_ASM:
                 linear = IRO_NewLinear(IROLinearAsm);
                 linear->u.asm_stmt = stmt;
+#if MWCC_CORE == MWCC_CORE_B233
+                // 2.3.3 (0x43B690): any asm statement turns the optimizer off
+                // for the function
+                DisableDueToAsm = TRUE;
+                if (0) {
+#else
                 if (copts.optimizewithasm) {
+#endif
                     IAEffects effects;
                     CodeGen_GetAsmEffects(stmt, &effects);
                     if (effects.optimizationBarrier || effects.unmodeledControlFlow) {
@@ -3326,12 +3379,16 @@ static Statement* NewStatement(IROLinear* linear, StatementType sttype) {
     if (linear->stmt) {
         stmt->dobjstack = linear->stmt->dobjstack;
         stmt->sourceoffset = linear->stmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
         stmt->sourcefilepath = linear->stmt->sourcefilepath;
+#endif
         stmt->value = linear->stmt->value;
         stmt->flags = linear->stmt->flags;
     } else {
         stmt->sourceoffset = -1;
+#if MWCC_CORE != MWCC_CORE_B233
         stmt->sourcefilepath = NULL;
+#endif
     }
     return stmt;
 }
@@ -3361,6 +3418,8 @@ extern IROLinear* IRO_MakeTypeConversion(IROLinear* linear, Type* type, IROList*
 
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 17 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static ENode* BuildExpr(IROLinear* linear) {
     ENode* enode;
     CatchObjectCopy* copy;
@@ -3507,6 +3566,8 @@ static ENode* BuildExpr(IROLinear* linear) {
     enode->pointsTo = linear->pointsToFunction;
     return enode;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #else
@@ -3655,6 +3716,8 @@ static Statement* NewDelinStatement(IROLinear* linear, int type) {
 
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 17 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 Statement* IRO_Delinearize(IRONode* node, IROLinear* linear) {
     IROLinear* scanlin;
     IROLinear* endlin;
@@ -3889,6 +3952,8 @@ gotos:
     }
     return firstStmt;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #else
@@ -4038,6 +4103,8 @@ void IRO_RenumberInts(void) {
 #if MWCCPSP
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 17 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 static void TravExprToUpdateFlags(IROLinear* linear) {
     int i;
 
@@ -4090,6 +4157,8 @@ static void TravExprToUpdateFlags(IROLinear* linear) {
 #endif
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #else
@@ -4156,6 +4225,8 @@ static void TravExprToUpdateFlags(IROLinear* linear) {
 #if MWCCPSP
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 17 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 void IRO_UpdateFlagsOnInts(IROLinear* first) {
     IROLinear* linear;
 
@@ -4210,6 +4281,8 @@ void IRO_UpdateFlagsOnInts(IROLinear* first) {
         }
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #else

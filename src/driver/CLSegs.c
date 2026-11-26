@@ -22,18 +22,30 @@ Boolean Segments_Initialize(Segments* segs) {
     Segment* main;
     UInt16 idx;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(34, segs != NULL);
+#else
     OS_ASSERT(36, segs != NULL);
+#endif
 
     memset(segs, 0, sizeof(Segments));
     segs->segsArray = NULL;
 
     jump = Segment_New("Jump Table", 0x28);
     Segments_AddSegment(segs, jump, &idx);
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(42, idx==0);
+#else
     OS_ASSERT(44, idx==0);
+#endif
 
     main = Segment_New("Main", 0xFFFF);
     Segments_AddSegment(segs, main, &idx);
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(47, idx==1);
+#else
     OS_ASSERT(49, idx==1);
+#endif
 
     return TRUE;
 }
@@ -41,7 +53,11 @@ Boolean Segments_Initialize(Segments* segs) {
 Boolean Segments_Terminate(Segments* segs) {
     UInt16 index;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(55, segs != NULL);
+#else
     OS_ASSERT(57, segs != NULL);
+#endif
 
     if (segs->segsArray) {
         for (index = 0; index < segs->segsCount; index++) {
@@ -57,7 +73,11 @@ Boolean Segments_Terminate(Segments* segs) {
 static Boolean Segments_GrowSegments(Segments* segs, UInt16* index) {
     Segment** newArray;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(76, segs != NULL);
+#else
     OS_ASSERT(78, segs != NULL);
+#endif
 
     if (segs->segsCount >= segs->arraySize) {
         segs->arraySize += 20;
@@ -116,7 +136,11 @@ Boolean Segments_DeleteSegment(Segments* segs, UInt16 index) {
 }
 
 Segment* Segments_GetSegment(Segments* segs, UInt16 segnum) {
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(135, segs != NULL);
+#else
     OS_ASSERT(137, segs != NULL);
+#endif
 
     if (segnum < segs->segsCount) {
         return segs->segsArray[segnum];
@@ -126,7 +150,11 @@ Segment* Segments_GetSegment(Segments* segs, UInt16 segnum) {
 }
 
 UInt16 Segments_Count(const Segments* segs) {
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(145, segs != NULL);
+#else
     OS_ASSERT(147, segs != NULL);
+#endif
 
     return segs->segsCount;
 }

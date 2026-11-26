@@ -104,8 +104,10 @@ struct TokenStack {
 };
 struct CPrepFileInfo {
     CWFileSpec textfile;
+#if MWCC_CORE != MWCC_CORE_B233
     struct HashNameNode* nameNode;
     SInt32 fileModDate;
+#endif
 #else
     Boolean macrocheck;
 };
@@ -135,6 +137,13 @@ struct CPrepFileInfo {
     Boolean unkfield125;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     Boolean isSystemInclude;
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3: fileID at +0x58, recordbrowseinfo at +0x5A (CBrowse_NewEnumConstant
+    // 0x4D5F30; b69 +0x60/+0x62): 8 bytes fewer after textfile; which fields are
+    // missing is unverified, these two are ours alone
+    struct HashNameNode* nameNode;
+    SInt32 fileModDate;
+#endif
 };
 #pragma pack(pop)
 #else

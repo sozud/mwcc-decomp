@@ -796,7 +796,9 @@ Statement* CFunc_AppendStatement(StatementType sttype) {
     stmt->flags = 0;
 #endif
     stmt->sourceoffset = sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = sourcefilepath;
+#endif
     stmt->dobjstack = cexcept_dobjstack;
 
     curstmt->next = stmt;
@@ -821,7 +823,9 @@ Statement* CFunc_InsertStatement(StatementType sttype, Statement* after) {
     stmt->flags = 0;
 #endif
     stmt->sourceoffset = after->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = after->sourcefilepath;
+#endif
     stmt->dobjstack = after->dobjstack;
 
     return stmt;
@@ -1071,7 +1075,9 @@ static void DestructorReturnTransform(Statement* stmt1, Statement* stmt2) {
             stmt = CFunc_InsertStatement(ST_EXPRESSION, stmt1);
             stmt->expr = makediadicnode(create_objectnode(tempobj), stmt2->expr, EASS);
             stmt->sourceoffset = stmt2->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
             stmt->sourcefilepath = stmt2->sourcefilepath;
+#endif
             DestructLocals(stmt, stmt2->dobjstack, NULL);
             stmt2->expr = create_objectnode(tempobj);
 #if MWCCPS2
@@ -1081,7 +1087,9 @@ static void DestructorReturnTransform(Statement* stmt1, Statement* stmt2) {
             stmt = CFunc_InsertStatement(ST_EXPRESSION, stmt1);
             stmt->expr = stmt2->expr;
             stmt->sourceoffset = stmt2->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
             stmt->sourcefilepath = stmt2->sourcefilepath;
+#endif
             DestructLocals(stmt, stmt2->dobjstack, NULL);
             stmt2->expr = nullnode();
 #if MWCCPS2
@@ -3405,7 +3413,11 @@ static void statement(DeclThing* thing) {
                 return;
             }
 
+#if MWCC_CORE == MWCC_CORE_B233
+            if (!COPTS_T.old_argmatch) {
+#else
             if (!copts.old_argmatch) {
+#endif
                 expr = s_expression();
             } else {
                 expr = expression();
@@ -5310,7 +5322,7 @@ void CFunc_SetupNewFuncArgs(Object* func, FuncArg* args) {
             }
 #else
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-            // b69 0x4738B7: only a class passed by reference becomes a pointer here; a
+            // b69 0x4738B7 (2.3.3 0x47A70A): only a class passed by reference becomes a pointer here; a
             // struct passed by address is copied in by SetupFunctionArguments
             if (IS_TYPE_CLASS(obj->type) && CClass_ReferenceArgument(TYPE_CLASS(obj->type))) {
 #else
@@ -6674,7 +6686,11 @@ void CFunc_ParseFuncDef(
     CPrep_ResetFileInfo(cparser_fileoffset.file);
     CPrep_GetFileOffsetInfo2(&cparser_fileoffset, &sourceoffset, &sourcefilepath);
     firstStmt.sourceoffset = functionbodyoffset = sourceoffset;
+#if MWCC_CORE == MWCC_CORE_B233 /* 2.3.3's Statement has no sourcefilepath */
+    functionbodypath = sourcefilepath;
+#else
     firstStmt.sourcefilepath = functionbodypath = sourcefilepath;
+#endif
 
     if (di->oldStyleParameters) {
         CFunc_AdjustOldStyleArgs();
@@ -6709,7 +6725,13 @@ void CFunc_ParseFuncDef(
             has_try = FALSE;
         }
 
+#if MWCC_CORE == MWCC_CORE_B233
+        // 2.3.3 has no __func__, __FUNCTION__ or __PRETTY_FUNCTION__ (no such
+        // strings; the unique names they take shift every later @N)
+        if (0) {
+#else
         if (func->name) {
+#endif
             nameobj_func = CFunc_DeclareFuncName(func->name->name, GetHashNameNode("__func__"));
             nameobj_FUNCTION =
                 CFunc_DeclareFuncName(func->name->name, GetHashNameNode("__FUNCTION__"));

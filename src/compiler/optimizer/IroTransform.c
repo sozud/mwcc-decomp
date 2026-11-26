@@ -1095,13 +1095,30 @@ static void DoTransformations(IROLinear* nd) {
                 break;
 
             case EMUL:
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 (0x4C2CE1): a power-of-two multiply, divide or modulo
+                // becomes a shift or a mask only up to 4 bytes
+                if (nd->rtype->size <= 4 &&
+                    IS_TYPE_INT(nd->rtype) &&
+                    IRO_IsPow2(nd->u.diadic.right, &value)) {
+#else
                 if (IS_TYPE_INT(nd->rtype) && IRO_IsPow2(nd->u.diadic.right, &value)) {
+#endif
                     nd->nodetype = ESHL;
                     CInt64_SetLong(&nd->u.diadic.right->u.node->data.intval, value);
                 }
                 break;
 
             case EDIV:
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 (0x4C2D30)
+                if (IS_TYPE_INT(nd->rtype) &&
+                    is_unsigned(nd->rtype) &&
+                    nd->rtype->size <= 4 &&
+                    IRO_IsPow2(nd->u.diadic.right, &value)) {
+                    nd->nodetype = ESHR;
+                    CInt64_SetLong(&nd->u.diadic.right->u.node->data.intval, value);
+                }
+                break;
+#endif
                 if (IS_TYPE_INT(nd->rtype) && IRO_IsPow2(nd->u.diadic.right, &value)) {
                     if (is_unsigned(nd->rtype)) {
                         nd->nodetype = ESHR;
@@ -1144,6 +1161,9 @@ static void DoTransformations(IROLinear* nd) {
             case EMODULO:
                 if (IS_TYPE_INT(nd->rtype) &&
                     is_unsigned(nd->rtype) &&
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 (0x4C2D91)
+                    nd->rtype->size <= 4 &&
+#endif
                     IRO_IsPow2(nd->u.diadic.right, &value)) {
                     nd->nodetype = EAND;
                     nd->u.diadic.right->u.node->data.intval =
@@ -1431,6 +1451,9 @@ static void ReplaceExprWithLeftChild(IROLinear* expr) {
         expr->u.monadic = left;
         IRO_NopOut(right);
     }
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 (0x4C2F40) dumps the node
+    IRO_Dump("ReplaceExprWithLeftChild: expr= %d\n", expr->index);
+#endif
 }
 
 static void ReplaceExprWithRightChild(IROLinear* expr) {
@@ -3173,7 +3196,7 @@ static void DoTransformations22(IROLinear* nd) {
 // skipped; the two shift counts must be equal constants with the same node
 // flags (bar 0x200); the unsigned mask always adds 64 - bits; the mask is
 // converted with IRO_MakeTypeConversion when the types differ.
-#if MWCCPS2 && !MWCC_CORE // b210/b198 (0x5868F0)
+#if MWCCPS2 && !MWCC_CORE && MWCCPS2_BUILD != 119 // b210/b198 (0x5868F0)
 static void DoTransformations23(IROLinear* nd) {
     Boolean changed;
     Boolean isCompare;
@@ -3693,7 +3716,15 @@ done:
                     } else if (is_unsigned(nd->rtype)) {
                         ReplaceExprWithLeftChild301(left);
                         nd->nodetype = (nd->nodetype == ESHR) ? EAND : EANDASS;
-#if MWCCPS2
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+                        // b119 (0x5841BB) keeps the 64-bit form: no assert, and
+                        // a long long's mask is shifted from the 128-bit -1
+                        // (so it keeps all of its 64 bits)
+                        if (nd->rtype->size < 8) {
+                            CInt64_SetLong(&size, 64 - nd->rtype->size * 8);
+                            val = CInt64_Add(val, size);
+                        }
+#elif MWCCPS2
                         // b210's CInt64 is 128 bits wide (b145's assert is 13 lines earlier)
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -13
@@ -3701,11 +3732,12 @@ done:
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
                         CInt64_SetLong(&size, 128 - nd->rtype->size * 8);
-#else
-                        CError_ASSERT(2341, nd->rtype->size * 8 <= 64);
-                        CInt64_SetLong(&size, 64 - nd->rtype->size * 8);
-#endif
                         val = CInt64_Add(val, size);
+#else
+                    CError_ASSERT(2341, nd->rtype->size * 8 <= 64);
+                    CInt64_SetLong(&size, 64 - nd->rtype->size * 8);
+                    val = CInt64_Add(val, size);
+#endif
                         right->u.node->data.intval = CInt64_ShrU(cint64_negone, val);
                         if (!IRO_TypesEqual(nd->rtype, right->rtype)) {
                             nd->u.diadic.right = IRO_MakeTypeConversion(right, nd->rtype, NULL);
@@ -3965,6 +3997,8 @@ done:
             }
 
             switch (nd->nodetype) {
+// 2.3.3's DoTransformations23 (0x4C3C60) folds no shift pair into a mask
+#if MWCC_CORE != MWCC_CORE_B233
                 case ESHL:
                 case ESHR:
                 case ESHLASS:
@@ -4005,6 +4039,7 @@ done:
                         }
                     }
                     break;
+#endif
                 default:
                     break;
             }
@@ -5710,8 +5745,33 @@ static void ReverseOpForMonmin(IROLinear* nd) {
     }
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3 (0x4C4920): an unreffed monadic node goes only when it reads a
+// non-volatile variable (through non-volatile pointer indirections)
+static void B233_RemoveUnreffedMonadic(IROLinear* nd) {
+    IROLinear* p;
+    Object* obj;
+
+    if (nd->type != IROLinearOp1Arg || (nd->flags & IROLF_Reffed)) {
+        return;
+    }
+    p = nd;
+    while (p->nodetype == EINDIRECT && p->u.monadic->nodetype == EINDIRECT && p->rtype) {
+        if (p->nodeflags & Q_VOLATILE) {
+            return;
+        }
+        p = p->u.monadic;
+    }
+    if ((obj = IRO_IsVariable(p)) && !is_volatile_object(obj) && !(obj->qual & Q_VOLATILE)) {
+        IRO_NopOut(nd);
+    }
+}
+#endif
+
 static void DoDiadic(IROLinear* nd) {
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3's DoDiadic (0x4C4B90) removes nothing first
     RemoveUnreffed(nd);
+#endif
     DoTransformations(nd);
     DoTransformations11(nd);
     DoTransformations12(nd);
@@ -5732,7 +5792,11 @@ void IRO_DoTransformations(void) {
                 DoDiadic(nd);
                 break;
             case IROLinearOp1Arg:
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 (0x4C4C00)
+                B233_RemoveUnreffedMonadic(nd);
+#else
                 RemoveUnreffed(nd);
+#endif
                 RemoveRedundantMonadicOp(nd);
                 ReverseOpForMonmin(nd);
                 break;
@@ -7624,18 +7688,26 @@ static void LiftPostIncrements(Statement* stmt, ENode** pexpr) {
             expr = *pexpr;
             if (expr->type == EPOSTINC || expr->type == EPOSTDEC) {
                 ind = expr->data.monadic;
+#if MWCC_CORE == MWCC_CORE_B233
+                // 2.3.3 (0x4C55F5..0x4C560F): any plain variable, volatile
+                // too (so `v++;` on a volatile v keeps a read of its own)
+                if (ind->type == EINDIRECT && ind->data.monadic->type == EOBJREF) {
+#else
                 if (ind->type == EINDIRECT &&
                     ind->rtype &&
                     !CParser_IsVolatile(ind->rtype, ENODE_QUALS(ind)) &&
                     ind->data.monadic->type == EOBJREF &&
                     !is_volatile_object(ind->data.monadic->data.objref)) {
+#endif
                     newstmt = lalloc(sizeof(Statement));
                     memset(newstmt, 0, sizeof(Statement));
                     newstmt->type = ST_EXPRESSION;
                     newstmt->expr = *pexpr;
                     newstmt->dobjstack = stmt->dobjstack;
                     newstmt->sourceoffset = stmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
                     newstmt->sourcefilepath = stmt->sourcefilepath;
+#endif
                     newstmt->value = stmt->value;
                     newstmt->flags = stmt->flags;
                     newstmt->next = stmt->next;
@@ -7706,6 +7778,9 @@ static void LiftPostIncrements(Statement* stmt, ENode** pexpr) {
 #endif
 #endif
 #if !MWCCPSP // 3.0.1's (opt_movepostops, ...) is in src/psp/optimizer/IroTransformTree301.c
+#if MWCC_CORE == MWCC_CORE_B233
+void IRO_NarrowExpressions(Statement* statements);
+#endif
 void IRO_TransformTree(Statement* statements) {
     Statement* stmt;
     Statement* next;
@@ -7734,6 +7809,11 @@ void IRO_TransformTree(Statement* statements) {
         }
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x4C5733): the narrowing pass runs here, on the trees before
+    // linearization (so only at optimization levels above 0)
+    IRO_NarrowExpressions(statements);
+#endif
     IRO_CheckForUserBreak();
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 }
@@ -7776,6 +7856,12 @@ static void NarrowSetType(ENode* expr, Type* type) {
     Boolean exprSigned;
     Boolean typeSigned;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (NarrowExpr 0x4C5770) stores the type as it is: no signedness
+    // is kept, so `u16 x = x + 1` stays unsigned (lhu)
+    expr->rtype = type;
+    return;
+#endif
     exprSigned = FALSE;
     if (!is_unsigned(expr->rtype)) {
         exprSigned = TRUE;

@@ -62,7 +62,11 @@ void CExcept_Setup(void) {
 }
 
 Boolean CExcept_CanThrowException(Object* object, Boolean isVirtualCall) {
+#if MWCC_CORE == MWCC_CORE_B233
+    if (COPTS_T.optEH && IS_TYPE_FUNC(object->type)) {
+#else
     if (copts.optEH && IS_TYPE_FUNC(object->type)) {
+#endif
         if (isVirtualCall) {
             return TRUE;
         }
@@ -80,7 +84,11 @@ Boolean CExcept_CanThrowException(Object* object, Boolean isVirtualCall) {
             return FALSE;
         }
 
+#if MWCC_CORE == MWCC_CORE_B233
+        if (COPTS_T.optEH2 &&
+#else
         if (copts.optEH2 &&
+#endif
             !(object->qual & Q_MANGLE_NAME) &&
             object != rt_ptmf_call &&
             object != rt_ptmf_scall &&
@@ -398,7 +406,11 @@ Boolean CExcept_ActionNeedsDestruction(ExceptionAction* action) {
         case EAT_DESTROYBASE:
             break;
         default:
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(307);
+#else
             CError_FATAL(363);
+#endif
     }
 
     return FALSE;
@@ -631,7 +643,11 @@ static Object* CExcept_FindLocalObject(char* name) {
         return OBJECT(list->object);
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_FATAL(507);
+#else
     CError_FATAL(580);
+#endif
     return NULL;
 }
 #endif
@@ -682,7 +698,11 @@ void CExcept_RegisterMember(
 #if MWCCPSP
         CError_ASSERT(689, cond->type == TYPE(&stsignedshort));
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(559, cond->type == TYPE(&stsignedshort));
+#else
         CError_ASSERT(632, cond->type == TYPE(&stsignedshort));
+#endif
 #endif
         action->type = EAT_DESTROYMEMBERCOND;
         action->data.destroy_member_cond.objectptr = objectptr;
@@ -918,7 +938,11 @@ Statement* CExcept_ActionCleanup(ExceptionAction* ea, Statement* stmt) {
 #if MWCCPS2
             CError_FATAL(917);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(754);
+#else
             CError_FATAL(827);
+#endif
 #endif
     }
 
@@ -965,7 +989,11 @@ static void CExcept_MangleClassName(TypeClass* tclass) {
 #if MWCCPSP
             CError_ASSERT(971, cscope_currentfunc != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(795, cscope_currentfunc != NULL);
+#else
             CError_ASSERT(868, cscope_currentfunc != NULL);
+#endif
 #endif
 
             sprintf(buf, "*%lx*%lx*", ORIGINAL_ADDRESS(&cscope_currentfunc), (UInt32)&nspace);
@@ -1134,7 +1162,11 @@ static ENode* CExcept_GetTypeID(Type* type, UInt32 qual, Boolean isThrow) {
 #endif
 static Object* CExcept_TypeID(Type* type, UInt32 qual) {
     ENode* expr = CExcept_GetTypeID(type, qual, FALSE);
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(1014, expr->type == ESTRINGCONST);
+#else
     CError_ASSERT(1086, expr->type == ESTRINGCONST);
+#endif
     return CInit_DeclareString(expr->data.string.data, expr->data.string.size, FALSE, FALSE);
 }
 #if MWCC_CORE == MWCC_CORE_B52
@@ -1743,7 +1775,9 @@ void CExcept_ScanTryBlock(DeclThing* dt, Boolean isCtorOrDtor) {
 static Statement* CExcept_InsertPrevStatement(StatementType sttype) {
     Statement* stmt = CFunc_InsertStatement(sttype, cexcept_prevstmt);
     stmt->sourceoffset = stmt->next->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
     stmt->sourcefilepath = stmt->next->sourcefilepath;
+#endif
     stmt->dobjstack = cexcept_eabefore;
     return stmt;
 }
@@ -1791,7 +1825,11 @@ static ENode* CExcept_TempTrans_ETEMP(ENode* expr) {
 #if MWCCPSP
             CError_FATAL(2229);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(1648);
+#else
             CError_FATAL(1749);
+#endif
 #endif
         }
 
@@ -2454,7 +2492,11 @@ static Statement* CExcept_DtorTransform(Statement* stmt) {
 #if MWCCPSP
             CError_FATAL(2900);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(2156);
+#else
             CError_FATAL(2374);
+#endif
 #endif
         }
 

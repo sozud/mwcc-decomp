@@ -134,7 +134,12 @@ typedef struct OSPathSpec {
 } OSPathSpec;
 
 typedef struct OSNameSpec {
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3: OSSpec is 0x144 bytes (dispmap.py: 0x204 -> 0x144 in CLIO.c, FileHandles.c)
+    char s[64];
+#else
     char s[256];
+#endif
 } OSNameSpec;
 
 typedef struct OSSpec {

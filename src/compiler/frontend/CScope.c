@@ -334,7 +334,11 @@ static NameSpaceObjectList* CScope_AppendName(NameSpace* nspace, HashNameNode* n
 #if MWCCPSP
     CError_ASSERT(537, !nspace->is_hash);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(369, !nspace->is_hash);
+#else
     CError_ASSERT(387, !nspace->is_hash);
+#endif
 #endif
 
     if (nspace->is_global) {
@@ -434,7 +438,11 @@ restart:
             list = CScope_AddNameSpaceToList(list, TYPE_CLASS(type)->nspace);
             break;
         default:
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(476);
+#else
             CError_FATAL(494);
+#endif
     }
 
     return list;
@@ -565,7 +573,11 @@ Boolean CScope_IsEmptyNameSpace(NameSpace* nspace) {
 #if MWCCPSP
     CError_ASSERT(866, !nspace->is_hash);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(646, !nspace->is_hash);
+#else
     CError_ASSERT(664, !nspace->is_hash);
+#endif
 #endif
     return nspace->data.list == NULL;
 }
@@ -584,7 +596,11 @@ void CScope_MergeNameSpace(NameSpace* dst, NameSpace* src) {
 #if MWCCPSP
     CError_ASSERT(880, !dst->is_hash && !src->is_hash);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(660, !dst->is_hash && !src->is_hash);
+#else
     CError_ASSERT(678, !dst->is_hash && !src->is_hash);
+#endif
 #endif
 
     if ((nsname = dst->data.list)) {
@@ -768,7 +784,11 @@ NameSpaceLookupList* CScope_BuildNameSpaceLookupList(NameSpace* nspace) {
 #if MWCCPSP
             CError_FATAL(138);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(835);
+#else
             CError_FATAL(853);
+#endif
 #endif
 foundIt:
             for (current2 = currentL->namespaces; current2; current2 = current2->next) {
@@ -930,7 +950,11 @@ restart:
 #if MWCCPSP
             CError_FATAL(1143);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(1032);
+#else
             CError_FATAL(1052);
+#endif
 #endif
             break;
         case OT_ENUMCONST:
@@ -1101,7 +1125,11 @@ static BClassList* CScope_RecFindClassMember(NameResult* result, TypeClass* tcla
                 break;
 #endif
             default:
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_FATAL(1182);
+#else
                 CError_FATAL(1202);
+#endif
         }
     }
 
@@ -3116,7 +3144,11 @@ BClassList* CScope_GetClassAccessPath(BClassList* list, TypeClass* tclass) {
 #endif
             }
         }
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_FATAL(3053);
+#else
         CError_FATAL(3217);
+#endif
     }
 
     return NULL;
@@ -3434,7 +3466,11 @@ void CScope_ParseUsingDeclaration(NameSpace* nspace, AccessType access, Boolean 
         if (result.type &&
             IS_TYPE_TEMPLATE(result.type) &&
             TYPE_TEMPLATE(result.type)->dtype == TEMPLDEP_QUALNAME) {
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(3390, isTemplate);
+#else
             CError_ASSERT(3578, isTemplate);
+#endif
 
             if (isTypename) {
                 ObjType* objtype = galloc(sizeof(ObjType));

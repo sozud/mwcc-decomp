@@ -45,6 +45,20 @@ extern MPCode* func_00480420(int op, SInt16 nargs);
 
 // the instruction defining a register use
 #define DEF(o) ((MPCode*)MOP_OBJ(o))
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+// b119 asks this (b119 0x55C0B0, always 0) before a pattern looks at the
+// instruction defining operand k; a nonzero answer would count as a change
+int b119_peep_55C0B0(MPCode* pc, int k);
+#define B119_DEF_CHECK(pc, k) \
+    if (b119_peep_55C0B0(pc, k)) \
+    return 1
+#define B119_DEF_CHECK2(pc, k1, k2) \
+    if (b119_peep_55C0B0(pc, k1) || b119_peep_55C0B0(pc, k2)) \
+    return 1
+#else
+#define B119_DEF_CHECK(pc, k) (void)0
+#define B119_DEF_CHECK2(pc, k1, k2) (void)0
+#endif
 #define COPY_OP(d, s) \
     ((d).value2 = (s).value2, (d) = (s)) // the struct copy carries the native fields
 #if MWCCPS2
@@ -129,7 +143,11 @@ static inline void NOP_OUT(MPCode* pc) {
 }
 
 // is the register defined after def (up to pc), or by def itself?
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+static inline int Redefined(MPCode* pc, MPCode* def, MOperand* reg) { // b119: an int answer
+#else
 static inline Boolean Redefined(MPCode* pc, MPCode* def, MOperand* reg) {
+#endif
     MOperand* op;
     int n;
 
@@ -145,7 +163,11 @@ static inline Boolean Redefined(MPCode* pc, MPCode* def, MOperand* reg) {
 }
 
 // is the register used or defined by an instruction between a and b?
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+static inline int TouchedBetween(MPCode* a, MPCode* b, MOperand* reg) { // b119: an int answer
+#else
 static inline Boolean TouchedBetween(MPCode* a, MPCode* b, MOperand* reg) {
+#endif
     MPCode* pc;
     MOperand* op;
     int n;
@@ -253,59 +275,59 @@ void func_005469C0(void) {
     func_004AFD20(data_00625B58, func_00549B40);
     func_004AFD20(data_00625AD0, func_00549A40);
     func_004AFD20(0x96, func_005486E0);
-    func_004AFD20(0x455, func_005486E0);
-    func_004AFD20(0x460, func_005486E0);
+    func_004AFD20(PS2_OP(0x455), func_005486E0);
+    func_004AFD20(PS2_OP(0x460), func_005486E0);
     func_004AFD20(0xa1, func_005486E0);
 #if !MWCCPS2 || MWCCPS2_BUILD >= 198 // b145 has no func_00548510 patterns
-    func_004AFD20(0xcb, func_00548510);
-    func_004AFD20(0x481, func_00548510);
-    func_004AFD20(0xca, func_00548510);
-    func_004AFD20(0x480, func_00548510);
-    func_004AFD20(0xc3, func_00548510);
-    func_004AFD20(0x47f, func_00548510);
+    func_004AFD20(PS2_OP(0xCB), func_00548510);
+    func_004AFD20(PS2_OP(0x481), func_00548510);
+    func_004AFD20(PS2_OP(0xCA), func_00548510);
+    func_004AFD20(PS2_OP(0x480), func_00548510);
+    func_004AFD20(PS2_OP(0xC3), func_00548510);
+    func_004AFD20(PS2_OP(0x47F), func_00548510);
 #endif
     if (data_0062482C) {
-        func_004AFD20(0x48b, func_00549400);
-        func_004AFD20(0x48b, func_00549DA0);
-        func_004AFD20(0x48b, func_0054A5F0);
-        func_004AFD20(0x48c, func_00549400);
-        func_004AFD20(0x48c, func_00549DA0);
-        func_004AFD20(0x48c, func_0054A690);
-        func_004AFD20(0x48c, func_00549D50);
-        func_004AFD20(0xd2, func_0054A910);
-        func_004AFD20(0xd2, func_0054A560);
-        func_004AFD20(0xd8, func_0054A800);
+        func_004AFD20(PS2_OP(0x48B), func_00549400);
+        func_004AFD20(PS2_OP(0x48B), func_00549DA0);
+        func_004AFD20(PS2_OP(0x48B), func_0054A5F0);
+        func_004AFD20(PS2_OP(0x48C), func_00549400);
+        func_004AFD20(PS2_OP(0x48C), func_00549DA0);
+        func_004AFD20(PS2_OP(0x48C), func_0054A690);
+        func_004AFD20(PS2_OP(0x48C), func_00549D50);
+        func_004AFD20(PS2_OP(0xD2), func_0054A910);
+        func_004AFD20(PS2_OP(0xD2), func_0054A560);
+        func_004AFD20(PS2_OP(0xD8), func_0054A800);
         func_004AFD20(7, func_0054A760);
-        func_004AFD20(0x40c, func_0054A760);
-        func_004AFD20(0x47f, func_005499A0);
-        func_004AFD20(0xc3, func_005499A0);
-        func_004AFD20(0x47f, func_00549910);
-        func_004AFD20(0xc3, func_00549910);
-        func_004AFD20(0x480, func_00549870);
-        func_004AFD20(0xca, func_00549870);
-        func_004AFD20(0x480, func_005497E0);
-        func_004AFD20(0xca, func_005497E0);
-        func_004AFD20(0xbe, func_005494B0);
-        func_004AFD20(0xbc, func_005494E0);
-        func_004AFD20(0xe5, func_00549C40);
-        func_004AFD20(0x4a1, func_00549C40);
-        func_004AFD20(0x45a, func_005496A0);
-        func_004AFD20(0x453, func_005496A0);
-        func_004AFD20(0x45b, func_005496A0);
-        func_004AFD20(0x45c, func_005496A0);
-        func_004AFD20(0x45f, func_005496A0);
-        func_004AFD20(0x466, func_005496A0);
-        func_004AFD20(0x454, func_005496A0);
-        func_004AFD20(0x460, func_005496A0);
-        func_004AFD20(0x455, func_005496A0);
-        func_004AFD20(0x452, func_005496A0);
-        func_004AFD20(0x47f, func_005496A0);
-        func_004AFD20(0x480, func_005496A0);
-        func_004AFD20(0x481, func_005496A0);
-        func_004AFD20(0x479, func_005496A0);
-        func_004AFD20(0x483, func_005496A0);
-        func_004AFD20(0x47a, func_005496A0);
-        func_004AFD20(0x476, func_005496A0);
+        func_004AFD20(PS2_OP(0x40C), func_0054A760);
+        func_004AFD20(PS2_OP(0x47F), func_005499A0);
+        func_004AFD20(PS2_OP(0xC3), func_005499A0);
+        func_004AFD20(PS2_OP(0x47F), func_00549910);
+        func_004AFD20(PS2_OP(0xC3), func_00549910);
+        func_004AFD20(PS2_OP(0x480), func_00549870);
+        func_004AFD20(PS2_OP(0xCA), func_00549870);
+        func_004AFD20(PS2_OP(0x480), func_005497E0);
+        func_004AFD20(PS2_OP(0xCA), func_005497E0);
+        func_004AFD20(PS2_OP(0xBE), func_005494B0);
+        func_004AFD20(PS2_OP(0xBC), func_005494E0);
+        func_004AFD20(PS2_OP(0xE5), func_00549C40);
+        func_004AFD20(PS2_OP(0x4A1), func_00549C40);
+        func_004AFD20(PS2_OP(0x45A), func_005496A0);
+        func_004AFD20(PS2_OP(0x453), func_005496A0);
+        func_004AFD20(PS2_OP(0x45B), func_005496A0);
+        func_004AFD20(PS2_OP(0x45C), func_005496A0);
+        func_004AFD20(PS2_OP(0x45F), func_005496A0);
+        func_004AFD20(PS2_OP(0x466), func_005496A0);
+        func_004AFD20(PS2_OP(0x454), func_005496A0);
+        func_004AFD20(PS2_OP(0x460), func_005496A0);
+        func_004AFD20(PS2_OP(0x455), func_005496A0);
+        func_004AFD20(PS2_OP(0x452), func_005496A0);
+        func_004AFD20(PS2_OP(0x47F), func_005496A0);
+        func_004AFD20(PS2_OP(0x480), func_005496A0);
+        func_004AFD20(PS2_OP(0x481), func_005496A0);
+        func_004AFD20(PS2_OP(0x479), func_005496A0);
+        func_004AFD20(PS2_OP(0x483), func_005496A0);
+        func_004AFD20(PS2_OP(0x47A), func_005496A0);
+        func_004AFD20(PS2_OP(0x476), func_005496A0);
         func_004AFD20(0x91, func_005496A0);
         func_004AFD20(0x92, func_005496A0);
         func_004AFD20(0x94, func_005496A0);
@@ -315,40 +337,40 @@ void func_005469C0(void) {
         func_004AFD20(0x93, func_005496A0);
         func_004AFD20(0xa1, func_005496A0);
         func_004AFD20(0x96, func_005496A0);
-        func_004AFD20(0xc3, func_005496A0);
-        func_004AFD20(0xca, func_005496A0);
-        func_004AFD20(0xcb, func_005496A0);
-        func_004AFD20(0xc4, func_005496A0);
-        func_004AFD20(0xcd, func_005496A0);
-        func_004AFD20(0xc5, func_005496A0);
-        func_004AFD20(0x45a, func_00549640);
-        func_004AFD20(0x453, func_00549640);
-        func_004AFD20(0x45b, func_00549640);
-        func_004AFD20(0x45c, func_00549640);
-        func_004AFD20(0x45f, func_00549640);
-        func_004AFD20(0x466, func_00549640);
-        func_004AFD20(0x454, func_00549640);
-        func_004AFD20(0x460, func_00549640);
-        func_004AFD20(0x455, func_00549640);
-        func_004AFD20(0x452, func_00549640);
-        func_004AFD20(0x47f, func_00549640);
-        func_004AFD20(0x480, func_00549640);
-        func_004AFD20(0x481, func_00549640);
-        func_004AFD20(0x479, func_00549640);
-        func_004AFD20(0x483, func_00549640);
-        func_004AFD20(0x47a, func_00549640);
-        func_004AFD20(0x476, func_00549640);
-        func_004AFD20(0x483, func_00547FC0);
-        func_004AFD20(0xcd, func_00547F50);
-        func_004AFD20(0x47f, func_00548BC0);
-        func_004AFD20(0xc3, func_00548BC0);
-        func_004AFD20(0x480, func_00548BC0);
-        func_004AFD20(0xca, func_00548BC0);
-        func_004AFD20(0x481, func_00548BC0);
-        func_004AFD20(0xcb, func_00548BC0);
-        func_004AFD20(0x479, func_00548BC0);
-        func_004AFD20(0xc4, func_00548BC0);
-        func_004AFD20(0x48b, func_00549440);
+        func_004AFD20(PS2_OP(0xC3), func_005496A0);
+        func_004AFD20(PS2_OP(0xCA), func_005496A0);
+        func_004AFD20(PS2_OP(0xCB), func_005496A0);
+        func_004AFD20(PS2_OP(0xC4), func_005496A0);
+        func_004AFD20(PS2_OP(0xCD), func_005496A0);
+        func_004AFD20(PS2_OP(0xC5), func_005496A0);
+        func_004AFD20(PS2_OP(0x45A), func_00549640);
+        func_004AFD20(PS2_OP(0x453), func_00549640);
+        func_004AFD20(PS2_OP(0x45B), func_00549640);
+        func_004AFD20(PS2_OP(0x45C), func_00549640);
+        func_004AFD20(PS2_OP(0x45F), func_00549640);
+        func_004AFD20(PS2_OP(0x466), func_00549640);
+        func_004AFD20(PS2_OP(0x454), func_00549640);
+        func_004AFD20(PS2_OP(0x460), func_00549640);
+        func_004AFD20(PS2_OP(0x455), func_00549640);
+        func_004AFD20(PS2_OP(0x452), func_00549640);
+        func_004AFD20(PS2_OP(0x47F), func_00549640);
+        func_004AFD20(PS2_OP(0x480), func_00549640);
+        func_004AFD20(PS2_OP(0x481), func_00549640);
+        func_004AFD20(PS2_OP(0x479), func_00549640);
+        func_004AFD20(PS2_OP(0x483), func_00549640);
+        func_004AFD20(PS2_OP(0x47A), func_00549640);
+        func_004AFD20(PS2_OP(0x476), func_00549640);
+        func_004AFD20(PS2_OP(0x483), func_00547FC0);
+        func_004AFD20(PS2_OP(0xCD), func_00547F50);
+        func_004AFD20(PS2_OP(0x47F), func_00548BC0);
+        func_004AFD20(PS2_OP(0xC3), func_00548BC0);
+        func_004AFD20(PS2_OP(0x480), func_00548BC0);
+        func_004AFD20(PS2_OP(0xCA), func_00548BC0);
+        func_004AFD20(PS2_OP(0x481), func_00548BC0);
+        func_004AFD20(PS2_OP(0xCB), func_00548BC0);
+        func_004AFD20(PS2_OP(0x479), func_00548BC0);
+        func_004AFD20(PS2_OP(0xC4), func_00548BC0);
+        func_004AFD20(PS2_OP(0x48B), func_00549440);
         func_004AFD20(0xa5, func_00547AE0);
         func_004AFD20(0xad, func_00547A40);
         func_004AFD20(0xad, func_00548060);
@@ -363,56 +385,60 @@ void func_005469C0(void) {
         func_004AFD20(4, ps2_peep_55A2F0);
         func_004AFD20(1, ps2_peep_55ADA0);
         func_004AFD20(4, ps2_peep_55AD70);
-        func_004AFD20(0x1d2, func_00548BC0);
-        func_004AFD20(0x489, func_00548BC0);
-        func_004AFD20(0x266, ps2_peep_55A8C0);
-        func_004AFD20(0x268, ps2_peep_55A670);
-        func_004AFD20(0x1d2, ps2_peep_55A5B0);
-#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
-        func_004AFD20(0x489, ps2_peep_55A5B0);
+        func_004AFD20(PS2_OP(0x1D2), func_00548BC0);
+        func_004AFD20(PS2_OP(0x489), func_00548BC0);
+        func_004AFD20(PS2_OP(0x266), ps2_peep_55A8C0);
+#if MWCC_CORE != MWCC_CORE_B011126 // 011126 (0x5093F0) registers neither (b69 0x5093B0 does)
+        func_004AFD20(PS2_OP(0x268), ps2_peep_55A670);
+        func_004AFD20(PS2_OP(0x1D2), ps2_peep_55A5B0);
 #endif
-        func_004AFD20(0x268, func_00548BC0);
-        func_004AFD20(0x48a, func_00548BC0);
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
-        func_004AFD20(0x266, ps2_peep_55A810);
+        func_004AFD20(PS2_OP(0x489), ps2_peep_55A5B0);
 #endif
-        func_004AFD20(0x264, ps2_peep_55A770);
+        func_004AFD20(PS2_OP(0x268), func_00548BC0);
+        func_004AFD20(PS2_OP(0x48A), func_00548BC0);
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+        func_004AFD20(PS2_OP(0x266), ps2_peep_55A810);
+#endif
+#if MWCC_CORE != MWCC_CORE_B011126 // nor this one
+        func_004AFD20(PS2_OP(0x264), ps2_peep_55A770);
+#endif
         if (copts.usefloatacc) {
-            func_004AFD20(0xed, ps2_peep_55AD50);
-            func_004AFD20(0xed, ps2_peep_55A590);
-            func_004AFD20(0xed, ps2_peep_55A550);
-            func_004AFD20(0xed, ps2_peep_55AD10);
-            func_004AFD20(0xed, ps2_peep_55ACF0);
-            func_004AFD20(0x103, ps2_peep_55AD30);
-            func_004AFD20(0x103, ps2_peep_55A570);
-            func_004AFD20(0x103, ps2_peep_55A530);
-            func_004AFD20(0x103, ps2_peep_55ACD0);
-            func_004AFD20(0x103, ps2_peep_55ACB0);
+            func_004AFD20(PS2_OP(0xED), ps2_peep_55AD50);
+            func_004AFD20(PS2_OP(0xED), ps2_peep_55A590);
+            func_004AFD20(PS2_OP(0xED), ps2_peep_55A550);
+            func_004AFD20(PS2_OP(0xED), ps2_peep_55AD10);
+            func_004AFD20(PS2_OP(0xED), ps2_peep_55ACF0);
+            func_004AFD20(PS2_OP(0x103), ps2_peep_55AD30);
+            func_004AFD20(PS2_OP(0x103), ps2_peep_55A570);
+            func_004AFD20(PS2_OP(0x103), ps2_peep_55A530);
+            func_004AFD20(PS2_OP(0x103), ps2_peep_55ACD0);
+            func_004AFD20(PS2_OP(0x103), ps2_peep_55ACB0);
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
-            func_004AFD20(0x1dd, ps2_peep_558520);
-            func_004AFD20(0x1dd, ps2_peep_558180);
+            func_004AFD20(PS2_OP(0x1DD), ps2_peep_558520);
+            func_004AFD20(PS2_OP(0x1DD), ps2_peep_558180);
 #endif
         }
-        func_004AFD20(0x1d1, func_005486E0);
-        func_004AFD20(0x467, func_005486E0);
-        func_004AFD20(0x467, func_005496A0);
-        func_004AFD20(0x489, func_005496A0);
-        func_004AFD20(0x1d1, func_005496A0);
-        func_004AFD20(0x1d2, func_005496A0);
+        func_004AFD20(PS2_OP(0x1D1), func_005486E0);
+        func_004AFD20(PS2_OP(0x467), func_005486E0);
+        func_004AFD20(PS2_OP(0x467), func_005496A0);
+        func_004AFD20(PS2_OP(0x489), func_005496A0);
+        func_004AFD20(PS2_OP(0x1D1), func_005496A0);
+        func_004AFD20(PS2_OP(0x1D2), func_005496A0);
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
-        func_004AFD20(0x468, func_005496A0);
-        func_004AFD20(0x48a, func_005496A0);
-        func_004AFD20(0x263, func_005496A0);
-        func_004AFD20(0x268, func_005496A0);
+        func_004AFD20(PS2_OP(0x468), func_005496A0);
+        func_004AFD20(PS2_OP(0x48A), func_005496A0);
+        func_004AFD20(PS2_OP(0x263), func_005496A0);
+        func_004AFD20(PS2_OP(0x268), func_005496A0);
 #endif
-        func_004AFD20(0x263, ps2_peep_55AB80);
-        func_004AFD20(0x268, ps2_peep_55AA20);
+        func_004AFD20(PS2_OP(0x263), ps2_peep_55AB80);
+        func_004AFD20(PS2_OP(0x268), ps2_peep_55AA20);
         if (copts.mips_isa < 3) {
             return;
         }
-        func_004AFD20(0x47a, func_00547EE0);
-        func_004AFD20(0x476, func_00547EE0);
-        func_004AFD20(0xc5, func_00547E70);
+        func_004AFD20(PS2_OP(0x47A), func_00547EE0);
+        func_004AFD20(PS2_OP(0x476), func_00547EE0);
+        func_004AFD20(PS2_OP(0xC5), func_00547E70);
         func_004AFD20(0x7f, func_00547D60);
         func_004AFD20(0x7f, func_00547BF0);
         func_004AFD20(0xb1, func_00547B60);
@@ -421,42 +447,42 @@ void func_005469C0(void) {
             return;
         }
         if (copts.mips_option11) {
-            func_004AFD20(0xfb, func_00547820);
-            func_004AFD20(0xfa, func_00547600);
-            func_004AFD20(0xed, func_005473F0);
-            func_004AFD20(0xec, func_005473D0);
-            func_004AFD20(0x103, func_00547360);
-            func_004AFD20(0x102, func_00547340);
+            func_004AFD20(PS2_OP(0xFB), func_00547820);
+            func_004AFD20(PS2_OP(0xFA), func_00547600);
+            func_004AFD20(PS2_OP(0xED), func_005473F0);
+            func_004AFD20(PS2_OP(0xEC), func_005473D0);
+            func_004AFD20(PS2_OP(0x103), func_00547360);
+            func_004AFD20(PS2_OP(0x102), func_00547340);
         }
-        func_004AFD20(0x460, func_00548D70);
+        func_004AFD20(PS2_OP(0x460), func_00548D70);
         func_004AFD20(0xa1, func_00548D70);
-        func_004AFD20(0x452, func_00548D30);
-        func_004AFD20(0x455, func_00548D30);
+        func_004AFD20(PS2_OP(0x452), func_00548D30);
+        func_004AFD20(PS2_OP(0x455), func_00548D30);
         func_004AFD20(0x96, func_00548D30);
-        func_004AFD20(0x483, func_00548D50);
-        func_004AFD20(0xcd, func_00548D50);
-        func_004AFD20(0x476, func_00548D10);
-        func_004AFD20(0x47a, func_00548D10);
+        func_004AFD20(PS2_OP(0x483), func_00548D50);
+        func_004AFD20(PS2_OP(0xCD), func_00548D50);
+        func_004AFD20(PS2_OP(0x476), func_00548D10);
+        func_004AFD20(PS2_OP(0x47A), func_00548D10);
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
-        func_004AFD20(0xc5, func_00548D10);
+        func_004AFD20(PS2_OP(0xC5), func_00548D10);
 #endif
     } else {
-        func_004AFD20(0x47f, func_00548A60);
-        func_004AFD20(0xc3, func_00548A60);
-        func_004AFD20(0x47f, func_00548B00);
-        func_004AFD20(0xc3, func_00548B00);
-        func_004AFD20(0x480, func_00548900);
-        func_004AFD20(0xca, func_00548900);
-        func_004AFD20(0x480, func_005489A0);
-        func_004AFD20(0xca, func_005489A0);
-        func_004AFD20(0x48c, func_00549DA0);
-        func_004AFD20(0x48b, func_00549DA0);
-        func_004AFD20(0x1d1, func_005486E0);
-        func_004AFD20(0x467, func_005486E0);
+        func_004AFD20(PS2_OP(0x47F), func_00548A60);
+        func_004AFD20(PS2_OP(0xC3), func_00548A60);
+        func_004AFD20(PS2_OP(0x47F), func_00548B00);
+        func_004AFD20(PS2_OP(0xC3), func_00548B00);
+        func_004AFD20(PS2_OP(0x480), func_00548900);
+        func_004AFD20(PS2_OP(0xCA), func_00548900);
+        func_004AFD20(PS2_OP(0x480), func_005489A0);
+        func_004AFD20(PS2_OP(0xCA), func_005489A0);
+        func_004AFD20(PS2_OP(0x48C), func_00549DA0);
+        func_004AFD20(PS2_OP(0x48B), func_00549DA0);
+        func_004AFD20(PS2_OP(0x1D1), func_005486E0);
+        func_004AFD20(PS2_OP(0x467), func_005486E0);
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
-        func_004AFD20(0x26e, ps2_peep_55A4F0);
-        func_004AFD20(0x26f, ps2_peep_55A4F0);
-        func_004AFD20(0x270, ps2_peep_55A4F0);
+        func_004AFD20(PS2_OP(0x26E), ps2_peep_55A4F0);
+        func_004AFD20(PS2_OP(0x26F), ps2_peep_55A4F0);
+        func_004AFD20(PS2_OP(0x270), ps2_peep_55A4F0);
 #endif
     }
 }
@@ -468,11 +494,11 @@ void func_005469C0(void) {
     func_004AFD20(MACRO_OP(0x4B), func_005486E0);
     func_004AFD20(MACRO_OP(0x56), func_005486E0);
     func_004AFD20(0xA1, func_005486E0);
-    func_004AFD20(0xCB, func_00548510);
+    func_004AFD20(PS2_OP(0xCB), func_00548510);
     func_004AFD20(MACRO_OP(0x77), func_00548510);
-    func_004AFD20(0xCA, func_00548510);
+    func_004AFD20(PS2_OP(0xCA), func_00548510);
     func_004AFD20(MACRO_OP(0x76), func_00548510);
-    func_004AFD20(0xC3, func_00548510);
+    func_004AFD20(PS2_OP(0xC3), func_00548510);
     func_004AFD20(MACRO_OP(0x75), func_00548510);
     if (data_0062482C) {
         func_004AFD20(MACRO_OP(0x81), func_00549400);
@@ -482,22 +508,22 @@ void func_005469C0(void) {
         func_004AFD20(MACRO_OP(0x82), func_00549DA0);
         func_004AFD20(MACRO_OP(0x82), func_0054A690);
         func_004AFD20(MACRO_OP(0x82), func_00549D50);
-        func_004AFD20(0xD2, func_0054A910);
-        func_004AFD20(0xD2, func_0054A560);
-        func_004AFD20(0xD8, func_0054A800);
+        func_004AFD20(PS2_OP(0xD2), func_0054A910);
+        func_004AFD20(PS2_OP(0xD2), func_0054A560);
+        func_004AFD20(PS2_OP(0xD8), func_0054A800);
         func_004AFD20(0x7, func_0054A760);
         func_004AFD20(MACRO_OP(0x02), func_0054A760);
         func_004AFD20(MACRO_OP(0x75), func_005499A0);
-        func_004AFD20(0xC3, func_005499A0);
+        func_004AFD20(PS2_OP(0xC3), func_005499A0);
         func_004AFD20(MACRO_OP(0x75), func_00549910);
-        func_004AFD20(0xC3, func_00549910);
+        func_004AFD20(PS2_OP(0xC3), func_00549910);
         func_004AFD20(MACRO_OP(0x76), func_00549870);
-        func_004AFD20(0xCA, func_00549870);
+        func_004AFD20(PS2_OP(0xCA), func_00549870);
         func_004AFD20(MACRO_OP(0x76), func_005497E0);
-        func_004AFD20(0xCA, func_005497E0);
-        func_004AFD20(0xBE, func_005494B0);
-        func_004AFD20(0xBC, func_005494E0);
-        func_004AFD20(0xE5, func_00549C40);
+        func_004AFD20(PS2_OP(0xCA), func_005497E0);
+        func_004AFD20(PS2_OP(0xBE), func_005494B0);
+        func_004AFD20(PS2_OP(0xBC), func_005494E0);
+        func_004AFD20(PS2_OP(0xE5), func_00549C40);
         func_004AFD20(MACRO_OP(0x97), func_00549C40);
         func_004AFD20(MACRO_OP(0x50), func_005496A0);
         func_004AFD20(MACRO_OP(0x49), func_005496A0);
@@ -525,12 +551,12 @@ void func_005469C0(void) {
         func_004AFD20(0x93, func_005496A0);
         func_004AFD20(0xA1, func_005496A0);
         func_004AFD20(0x96, func_005496A0);
-        func_004AFD20(0xC3, func_005496A0);
-        func_004AFD20(0xCA, func_005496A0);
-        func_004AFD20(0xCB, func_005496A0);
-        func_004AFD20(0xC4, func_005496A0);
-        func_004AFD20(0xCD, func_005496A0);
-        func_004AFD20(0xC5, func_005496A0);
+        func_004AFD20(PS2_OP(0xC3), func_005496A0);
+        func_004AFD20(PS2_OP(0xCA), func_005496A0);
+        func_004AFD20(PS2_OP(0xCB), func_005496A0);
+        func_004AFD20(PS2_OP(0xC4), func_005496A0);
+        func_004AFD20(PS2_OP(0xCD), func_005496A0);
+        func_004AFD20(PS2_OP(0xC5), func_005496A0);
         func_004AFD20(MACRO_OP(0x50), func_00549640);
         func_004AFD20(MACRO_OP(0x49), func_00549640);
         func_004AFD20(MACRO_OP(0x51), func_00549640);
@@ -549,15 +575,15 @@ void func_005469C0(void) {
         func_004AFD20(MACRO_OP(0x70), func_00549640);
         func_004AFD20(MACRO_OP(0x6C), func_00549640);
         func_004AFD20(MACRO_OP(0x79), func_00547FC0);
-        func_004AFD20(0xCD, func_00547F50);
+        func_004AFD20(PS2_OP(0xCD), func_00547F50);
         func_004AFD20(MACRO_OP(0x75), func_00548BC0);
-        func_004AFD20(0xC3, func_00548BC0);
+        func_004AFD20(PS2_OP(0xC3), func_00548BC0);
         func_004AFD20(MACRO_OP(0x76), func_00548BC0);
-        func_004AFD20(0xCA, func_00548BC0);
+        func_004AFD20(PS2_OP(0xCA), func_00548BC0);
         func_004AFD20(MACRO_OP(0x77), func_00548BC0);
-        func_004AFD20(0xCB, func_00548BC0);
+        func_004AFD20(PS2_OP(0xCB), func_00548BC0);
         func_004AFD20(MACRO_OP(0x6F), func_00548BC0);
-        func_004AFD20(0xC4, func_00548BC0);
+        func_004AFD20(PS2_OP(0xC4), func_00548BC0);
         func_004AFD20(MACRO_OP(0x81), func_00549440);
         func_004AFD20(0xA5, func_00547AE0);
         func_004AFD20(0xAD, func_00547A40);
@@ -565,8 +591,8 @@ void func_005469C0(void) {
         func_004AFD20(0xA5, func_00547C60);
         func_004AFD20(0x1, func_00548F60);
         func_004AFD20(0x4, func_00548F60);
-        func_004AFD20(0xDC, func_00548F60);
-        func_004AFD20(0xDD, func_00548F60);
+        func_004AFD20(PS2_OP(0xDC), func_00548F60);
+        func_004AFD20(PS2_OP(0xDD), func_00548F60);
         func_004AFD20(MACRO_OP(0x82), func_00548230);
         func_004AFD20(MACRO_OP(0x02), func_005483A0);
         func_004AFD20(0x7, func_005483A0);
@@ -575,7 +601,7 @@ void func_005469C0(void) {
         }
         func_004AFD20(MACRO_OP(0x70), func_00547EE0);
         func_004AFD20(MACRO_OP(0x6C), func_00547EE0);
-        func_004AFD20(0xC5, func_00547E70);
+        func_004AFD20(PS2_OP(0xC5), func_00547E70);
         func_004AFD20(0x7F, func_00547D60);
         func_004AFD20(0x7F, func_00547BF0);
         func_004AFD20(0xB1, func_00547B60);
@@ -584,12 +610,12 @@ void func_005469C0(void) {
             return;
         }
         if (copts.mips_option11) {
-            func_004AFD20(0xFB, func_00547820);
-            func_004AFD20(0xFA, func_00547600);
-            func_004AFD20(0xED, func_005473F0);
-            func_004AFD20(0xEC, func_005473D0);
-            func_004AFD20(0x103, func_00547360);
-            func_004AFD20(0x102, func_00547340);
+            func_004AFD20(PS2_OP(0xFB), func_00547820);
+            func_004AFD20(PS2_OP(0xFA), func_00547600);
+            func_004AFD20(PS2_OP(0xED), func_005473F0);
+            func_004AFD20(PS2_OP(0xEC), func_005473D0);
+            func_004AFD20(PS2_OP(0x103), func_00547360);
+            func_004AFD20(PS2_OP(0x102), func_00547340);
         }
         func_004AFD20(MACRO_OP(0x56), func_00548D70);
         func_004AFD20(0xA1, func_00548D70);
@@ -597,19 +623,19 @@ void func_005469C0(void) {
         func_004AFD20(MACRO_OP(0x4B), func_00548D30);
         func_004AFD20(0x96, func_00548D30);
         func_004AFD20(MACRO_OP(0x79), func_00548D50);
-        func_004AFD20(0xCD, func_00548D50);
+        func_004AFD20(PS2_OP(0xCD), func_00548D50);
         func_004AFD20(MACRO_OP(0x6C), func_00548D10);
         func_004AFD20(MACRO_OP(0x70), func_00548D10);
-        func_004AFD20(0xC5, func_00548D10);
+        func_004AFD20(PS2_OP(0xC5), func_00548D10);
     } else {
         func_004AFD20(MACRO_OP(0x75), func_00548A60);
-        func_004AFD20(0xC3, func_00548A60);
+        func_004AFD20(PS2_OP(0xC3), func_00548A60);
         func_004AFD20(MACRO_OP(0x75), func_00548B00);
-        func_004AFD20(0xC3, func_00548B00);
+        func_004AFD20(PS2_OP(0xC3), func_00548B00);
         func_004AFD20(MACRO_OP(0x76), func_00548900);
-        func_004AFD20(0xCA, func_00548900);
+        func_004AFD20(PS2_OP(0xCA), func_00548900);
         func_004AFD20(MACRO_OP(0x76), func_005489A0);
-        func_004AFD20(0xCA, func_005489A0);
+        func_004AFD20(PS2_OP(0xCA), func_005489A0);
         func_004AFD20(MACRO_OP(0x82), func_00549DA0);
         func_004AFD20(MACRO_OP(0x81), func_00549DA0);
     }
@@ -620,11 +646,11 @@ static int func_00547380(MPCode* pc, UInt16 op, UInt16 newop1, UInt16 newop2);
 static int func_00547410(MPCode* pc, UInt16 op, UInt16 newop);
 
 int func_00547340(MPCode* pc) {
-    return func_00547380(pc, 0xB4, 0x11C, 0x120);
+    return func_00547380(pc, 0xB4, PS2_OP(0x11C), PS2_OP(0x120));
 }
 
 int func_00547360(MPCode* pc) {
-    return func_00547380(pc, 0xB5, 0x11D, 0x121);
+    return func_00547380(pc, 0xB5, PS2_OP(0x11D), PS2_OP(0x121));
 }
 
 static int func_00547470(MPCode* pc, UInt16 op, int k, MPCode* def);
@@ -634,6 +660,7 @@ static int func_00547380(MPCode* pc, UInt16 op, UInt16 newop1, UInt16 newop2) {
     MPCode* def1;
     MPCode* def2;
 
+    B119_DEF_CHECK2(pc, 1, 2);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP2(pc);
 #endif
@@ -649,17 +676,18 @@ static int func_00547380(MPCode* pc, UInt16 op, UInt16 newop1, UInt16 newop2) {
 }
 
 int func_005473D0(MPCode* pc) {
-    return func_00547410(pc, 0xB4, 0x10E);
+    return func_00547410(pc, 0xB4, PS2_OP(0x10E));
 }
 
 int func_005473F0(MPCode* pc) {
-    return func_00547410(pc, 0xB5, 0x10F);
+    return func_00547410(pc, 0xB5, PS2_OP(0x10F));
 }
 
 static int func_00547410(MPCode* pc, UInt16 op, UInt16 newop) {
     MPCode* def1;
     MPCode* def2;
 
+    B119_DEF_CHECK2(pc, 1, 2);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP2(pc);
 #endif
@@ -710,6 +738,7 @@ static inline int MergeInto(MPCode* pc, MPCode* def, UInt16 op) {
 int func_00547600(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -717,27 +746,27 @@ int func_00547600(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (def->op == OPC(0x10E)) {
 #else
-    if (def->op == 0x10E) {
+    if (def->op == PS2_OP(0x10E)) {
 #endif
-        return MergeInto(pc, def, 0x11E);
+        return MergeInto(pc, def, PS2_OP(0x11E));
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (def->op == OPC(0x11C)) {
 #else
-    } else if (def->op == 0x11C) {
+    } else if (def->op == PS2_OP(0x11C)) {
 #endif
-        return MergeInto(pc, def, 0x120);
+        return MergeInto(pc, def, PS2_OP(0x120));
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (def->op == OPC(0x11E)) {
 #else
-    } else if (def->op == 0x11E) {
+    } else if (def->op == PS2_OP(0x11E)) {
 #endif
-        return MergeInto(pc, def, 0x10E);
+        return MergeInto(pc, def, PS2_OP(0x10E));
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (def->op == OPC(0x120)) {
 #else
-    } else if (def->op == 0x120) {
+    } else if (def->op == PS2_OP(0x120)) {
 #endif
-        return MergeInto(pc, def, 0x11C);
+        return MergeInto(pc, def, PS2_OP(0x11C));
     }
     return 0;
 }
@@ -745,6 +774,7 @@ int func_00547600(MPCode* pc) {
 int func_00547820(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -752,27 +782,27 @@ int func_00547820(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (def->op == OPC(0x10F)) {
 #else
-    if (def->op == 0x10F) {
+    if (def->op == PS2_OP(0x10F)) {
 #endif
-        return MergeInto(pc, def, 0x11F);
+        return MergeInto(pc, def, PS2_OP(0x11F));
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (def->op == OPC(0x11D)) {
 #else
-    } else if (def->op == 0x11D) {
+    } else if (def->op == PS2_OP(0x11D)) {
 #endif
-        return MergeInto(pc, def, 0x121);
+        return MergeInto(pc, def, PS2_OP(0x121));
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (def->op == OPC(0x11F)) {
 #else
-    } else if (def->op == 0x11F) {
+    } else if (def->op == PS2_OP(0x11F)) {
 #endif
-        return MergeInto(pc, def, 0x10F);
+        return MergeInto(pc, def, PS2_OP(0x10F));
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (def->op == OPC(0x121)) {
 #else
-    } else if (def->op == 0x121) {
+    } else if (def->op == PS2_OP(0x121)) {
 #endif
-        return MergeInto(pc, def, 0x11D);
+        return MergeInto(pc, def, PS2_OP(0x11D));
     }
     return 0;
 }
@@ -783,6 +813,7 @@ int func_00547A40(MPCode* pc) {
     if (pc->flags & 0x100) {
         return 0;
     }
+    B119_DEF_CHECK(pc, 0);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 0);
 #endif
@@ -811,6 +842,7 @@ int func_00547AE0(MPCode* pc) {
     if (pc->flags & 0x100) {
         return 0;
     }
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
     if (def->op != OPC(0xAD)) {
@@ -830,6 +862,7 @@ int func_00547AE0(MPCode* pc) {
 int func_00547B60(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 0);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 0);
 #endif
@@ -854,6 +887,7 @@ int func_00547B60(MPCode* pc) {
 int func_00547BF0(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -877,6 +911,7 @@ int func_00547C60(MPCode* pc) {
     MPCode* def;
     UInt16 op;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -911,6 +946,7 @@ int func_00547D60(MPCode* pc) {
     MPCode* def;
     UInt16 op;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -945,6 +981,7 @@ int func_00547D60(MPCode* pc) {
 static inline int StoreOfLoad(MPCode* pc, UInt16 defop, UInt16 op) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 0);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 0);
 #endif
@@ -961,7 +998,7 @@ static inline int StoreOfLoad(MPCode* pc, UInt16 defop, UInt16 op) {
 }
 
 int func_00547E70(MPCode* pc) {
-    return StoreOfLoad(pc, 0xB1, 0xC4);
+    return StoreOfLoad(pc, 0xB1, PS2_OP(0xC4));
 }
 
 int func_00547EE0(MPCode* pc) {
@@ -969,7 +1006,7 @@ int func_00547EE0(MPCode* pc) {
 }
 
 int func_00547F50(MPCode* pc) {
-    return StoreOfLoad(pc, 0xAD, 0xCB);
+    return StoreOfLoad(pc, 0xAD, PS2_OP(0xCB));
 }
 
 int func_00547FC0(MPCode* pc) {
@@ -1013,12 +1050,15 @@ static int func_00548090(MPCode* pc, UInt16 op1, UInt16 op2, UInt16 newop1, UInt
     def->op = newop;
     def->args[0] = pc->args[1];
     MOP_SETOBJ(def->args[0], def);
+#if !MWCCPS2 || MWCCPS2_BUILD != 119 // b119 does not carry the flag over
     def->flags |= pc->flags & 0x100;
+#endif
     deletepcode(pc);
     return 1;
 }
 
 int func_00549400(MPCode* pc) {
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -1029,10 +1069,10 @@ int func_00549400(MPCode* pc) {
         case OPC(0xD6):
         case OPC(0xD7):
 #else
-        case 0xD4:
-        case 0xD5:
-        case 0xD6:
-        case 0xD7:
+        case PS2_OP(0xD4):
+        case PS2_OP(0xD5):
+        case PS2_OP(0xD6):
+        case PS2_OP(0xD7):
 #endif
         case MACRO_OP(0x83):
         case MACRO_OP(0x84):
@@ -1061,6 +1101,7 @@ int func_00549400(MPCode* pc) {
 int func_00549440(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -1086,12 +1127,12 @@ int func_00549440(MPCode* pc) {
         case OPC(0x18D):
         case OPC(0x18E):
 #else
-        case 0xD2:
-        case 0xD3:
-        case 0x189:
-        case 0x18A:
-        case 0x18D:
-        case 0x18E:
+        case PS2_OP(0xD2):
+        case PS2_OP(0xD3):
+        case PS2_OP(0x189):
+        case PS2_OP(0x18A):
+        case PS2_OP(0x18D):
+        case PS2_OP(0x18E):
 #endif
             break;
         default:
@@ -1112,6 +1153,7 @@ int func_005494B0(MPCode* pc) {
 int func_005494E0(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -1119,7 +1161,7 @@ int func_005494E0(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (def->op != OPC(0xBE)) {
 #else
-    if (def->op != 0xBE) {
+    if (def->op != PS2_OP(0xBE)) {
 #endif
         return 0;
     }
@@ -1163,7 +1205,7 @@ int func_00548230(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (def->op != OPC(0xD8) && def->op != OPC(0xDA)) {
 #else
-    if (def->op != 0xD8 && def->op != 0xDA) {
+    if (def->op != PS2_OP(0xD8) && def->op != PS2_OP(0xDA)) {
 #endif
         return 0;
     }
@@ -1184,7 +1226,7 @@ int func_00548230(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     p = makepcode(OPC(0x3EE), pc->args[0].reg, def->args[1].reg, shift, size);
 #else
-    p = makepcode(0x3EE, pc->args[0].reg, def->args[1].reg, shift, size);
+    p = makepcode(PS2_OP(0x3EE), pc->args[0].reg, def->args[1].reg, shift, size);
 #endif
     COPY_OP(p->args[1], def->args[1]);
     SET_LIVE(p->args[1]);
@@ -1204,7 +1246,7 @@ int func_005483A0(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (def->op != OPC(0xD8) && def->op != OPC(0xDA)) {
 #else
-    if (def->op != 0xD8 && def->op != 0xDA) {
+    if (def->op != PS2_OP(0xD8) && def->op != PS2_OP(0xDA)) {
 #endif
         return 0;
     }
@@ -1225,7 +1267,7 @@ int func_005483A0(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     p = makepcode(OPC(0x3EE), pc->args[0].reg, def->args[1].reg, shift, size);
 #else
-    p = makepcode(0x3EE, pc->args[0].reg, def->args[1].reg, shift, size);
+    p = makepcode(PS2_OP(0x3EE), pc->args[0].reg, def->args[1].reg, shift, size);
 #endif
     COPY_OP(p->args[1], def->args[1]);
     SET_LIVE(p->args[1]);
@@ -1370,7 +1412,7 @@ static int func_005487E0(MPCode* store, MPCode* load) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (store->op == OPC(0x1D2) && load->op == OPC(0x1D1)) {
 #else
-    if (store->op == 0x1D2 && load->op == 0x1D1) {
+    if (store->op == PS2_OP(0x1D2) && load->op == PS2_OP(0x1D1)) {
 #endif
         return 2;
     }
@@ -1380,7 +1422,7 @@ static int func_005487E0(MPCode* store, MPCode* load) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (store->op == OPC(0xC4) && load->op == OPC(0x93)) {
 #else
-    if (store->op == 0xC4 && load->op == 0x93) {
+    if (store->op == PS2_OP(0xC4) && load->op == 0x93) {
 #endif
         return 1;
     }
@@ -1388,21 +1430,21 @@ static int func_005487E0(MPCode* store, MPCode* load) {
     if (store->op == MACRO_OP(0x77) && load->op == MACRO_OP(0x55)) {
         return 1;
     }
-    if (store->op == 0xCB && load->op == 0x9D) {
+    if (store->op == PS2_OP(0xCB) && load->op == 0x9D) {
         return 1;
     }
 #endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (store->op == OPC(0xC5) && load->op == OPC(0x96)) {
 #else
-    if (store->op == 0xC5 && load->op == 0x96) {
+    if (store->op == PS2_OP(0xC5) && load->op == 0x96) {
 #endif
         return 4;
     }
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (store->op == OPC(0xCD) && load->op == OPC(0xA1)) {
 #else
-    if (store->op == 0xCD && load->op == 0xA1) {
+    if (store->op == PS2_OP(0xCD) && load->op == 0xA1) {
 #endif
         return 3;
     }
@@ -1438,7 +1480,9 @@ int func_00548900(MPCode* pc) {
     if (REG_LIVE(pc->args[0])) {
         return 0;
     }
+#if !MWCCPS2 || MWCCPS2_BUILD != 119 // b119 does not carry the flag over
     pc->flags |= def->flags & 0x100;
+#endif
     deletepcode(def);
     return 1;
 }
@@ -1462,7 +1506,9 @@ int func_005489A0(MPCode* pc) {
     if (REG_LIVE(pc->args[0])) {
         return 0;
     }
+#if !MWCCPS2 || MWCCPS2_BUILD != 119 // b119 does not carry the flag over
     pc->flags |= def->flags & 0x100;
+#endif
     deletepcode(def);
     return 1;
 }
@@ -1486,7 +1532,9 @@ int func_00548A60(MPCode* pc) {
     if (REG_LIVE(pc->args[0])) {
         return 0;
     }
+#if !MWCCPS2 || MWCCPS2_BUILD != 119 // b119 does not carry the flag over
     pc->flags |= def->flags & 0x100;
+#endif
     deletepcode(def);
     return 1;
 }
@@ -1510,7 +1558,9 @@ int func_00548B00(MPCode* pc) {
     if (REG_LIVE(pc->args[0])) {
         return 0;
     }
+#if !MWCCPS2 || MWCCPS2_BUILD != 119 // b119 does not carry the flag over
     pc->flags |= def->flags & 0x100;
+#endif
     deletepcode(def);
     return 1;
 }
@@ -1565,7 +1615,9 @@ int func_00548BC0(MPCode* pc) {
     if (func_0048FBE0(p->op) > func_0048FBE0(pc->op)) {
         return 0;
     }
+#if !MWCCPS2 || MWCCPS2_BUILD != 119 // b119 does not carry the flag over
     pc->flags |= p->flags & 0x100;
+#endif
     deletepcode(p);
     return 1;
 }
@@ -1573,25 +1625,26 @@ int func_00548BC0(MPCode* pc) {
 static int func_00548D90(MPCode* pc, UInt16 op);
 
 int func_00548D10(MPCode* pc) {
-    return func_00548D90(pc, 0x10C);
+    return func_00548D90(pc, PS2_OP(0x10C));
 }
 
 int func_00548D30(MPCode* pc) {
-    return func_00548D90(pc, 0x10A);
+    return func_00548D90(pc, PS2_OP(0x10A));
 }
 
 int func_00548D50(MPCode* pc) {
-    return func_00548D90(pc, 0x10D);
+    return func_00548D90(pc, PS2_OP(0x10D));
 }
 
 int func_00548D70(MPCode* pc) {
-    return func_00548D90(pc, 0x10B);
+    return func_00548D90(pc, PS2_OP(0x10B));
 }
 
 // a memory access at offset 0 from a sum (4): the indexed form
 static int func_00548D90(MPCode* pc, UInt16 op) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 2);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 2);
 #endif
@@ -1726,19 +1779,19 @@ int func_00548F60(MPCode* pc) {
     }
     if (pc->op == 1 || pc->op == 4) {
         if (d2->op == MACRO_OP(0x5F)) {
-            op = 0x400;
+            op = PS2_OP(0x400);
         } else {
-            op = 0x401;
+            op = PS2_OP(0x401);
         }
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (pc->op == OPC(0xDC) || pc->op == OPC(0xDD)) {
 #else
-    } else if (pc->op == 0xDC || pc->op == 0xDD) {
+    } else if (pc->op == PS2_OP(0xDC) || pc->op == PS2_OP(0xDD)) {
 #endif
         if (d2->op == MACRO_OP(0x5F)) {
-            op = 0x405;
+            op = PS2_OP(0x405);
         } else {
-            op = 0x406;
+            op = PS2_OP(0x406);
         }
     } else {
         return 0;
@@ -1830,6 +1883,7 @@ int func_005496A0(MPCode* pc) {
     PEEP69_PROP(pc, 2);
 #endif
     def = DEF(pc->args[2]);
+    B119_DEF_CHECK(pc, 2);
     if (def->op != 3) {
         return 0;
     }
@@ -1861,6 +1915,7 @@ int func_005496A0(MPCode* pc) {
 int func_005497E0(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 0);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 0);
 #endif
@@ -1881,6 +1936,7 @@ int func_005497E0(MPCode* pc) {
 int func_00549870(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 0);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 0);
 #endif
@@ -1905,6 +1961,7 @@ int func_00549870(MPCode* pc) {
 int func_00549910(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 0);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 0);
 #endif
@@ -1925,6 +1982,7 @@ int func_00549910(MPCode* pc) {
 int func_005499A0(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 0);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 0);
 #endif
@@ -1950,6 +2008,7 @@ int func_005499A0(MPCode* pc) {
 int func_00549A40(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -1971,6 +2030,7 @@ int func_00549A40(MPCode* pc) {
 int func_00549B40(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -1996,6 +2056,7 @@ int func_00549B40(MPCode* pc) {
 int func_00549C40(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -2003,7 +2064,7 @@ int func_00549C40(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (def->op != OPC(0xE5) && def->op != MACRO_OP(0x97)) {
 #else
-    if (def->op != 0xE5 && def->op != MACRO_OP(0x97)) {
+    if (def->op != PS2_OP(0xE5) && def->op != MACRO_OP(0x97)) {
 #endif
         return 0;
     }
@@ -2023,6 +2084,7 @@ int func_00549D50(MPCode* pc) {
     MPCode* def;
     int bits;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -2071,6 +2133,7 @@ int func_00549DA0(MPCode* pc) {
     UInt16 b;
     int live;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -2230,6 +2293,7 @@ int func_0054A560(MPCode* pc) {
     CInt64 value;
     CInt64 shift;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -2253,6 +2317,7 @@ int func_0054A5F0(MPCode* pc) {
     MPCode* def;
     CInt64 value;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -2284,6 +2349,7 @@ int func_0054A690(MPCode* pc) {
     CInt64 value;
     CInt64 bits;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -2317,6 +2383,7 @@ int func_0054A760(MPCode* pc) {
     MPCode* def;
     CInt64 value;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -2344,6 +2411,7 @@ int func_0054A760(MPCode* pc) {
 int func_0054A800(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -2351,7 +2419,7 @@ int func_0054A800(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (def->op != OPC(0xD2)) {
 #else
-    if (def->op != 0xD2) {
+    if (def->op != PS2_OP(0xD2)) {
 #endif
         return 0;
     }
@@ -2373,6 +2441,7 @@ int func_0054A910(MPCode* pc) {
     MPCode* def;
     SInt32 shift;
 
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -2380,7 +2449,7 @@ int func_0054A910(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (def->op != OPC(0xD2)) {
 #else
-    if (def->op != 0xD2) {
+    if (def->op != PS2_OP(0xD2)) {
 #endif
         return 0;
     }
@@ -2418,11 +2487,21 @@ static int ps2_peep_55BB70(MPCode* pc, UInt16 newop, UInt16 op1, UInt16 op2, int
 static int ps2_peep_55BEC0(MPCode* pc, UInt16 newop, UInt16 op1, UInt16 op2, int reg);
 
 int ps2_peep_55A2F0(MPCode* pc) {
-    return ps2_peep_55A350(pc, 0x1D7, 0x1D8, 0x202, 0x203, 0x1D8, 1);
+#if MWCCPS2 && MWCCPS2_BUILD == 119 // b119 checks register 0 here too
+    return ps2_peep_55A350(
+        pc, PS2_OP(0x1D7), PS2_OP(0x1D8), PS2_OP(0x202), PS2_OP(0x203), PS2_OP(0x1D8), 0
+    );
+#else
+    return ps2_peep_55A350(
+        pc, PS2_OP(0x1D7), PS2_OP(0x1D8), PS2_OP(0x202), PS2_OP(0x203), PS2_OP(0x1D8), 1
+    );
+#endif
 }
 
 int ps2_peep_55A320(MPCode* pc) {
-    return ps2_peep_55A350(pc, 0x1D5, 0x1D6, 0x1DB, 0x1DC, 0x1D6, 0);
+    return ps2_peep_55A350(
+        pc, PS2_OP(0x1D5), PS2_OP(0x1D6), PS2_OP(0x1DB), PS2_OP(0x1DC), PS2_OP(0x1D6), 0
+    );
 }
 
 // does p define general register reg?
@@ -2466,6 +2545,7 @@ static int ps2_peep_55A350(
     MPCode* d2;
     MPCode* d1;
 
+    B119_DEF_CHECK2(pc, 1, 2);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP2(pc);
 #endif
@@ -2492,9 +2572,11 @@ static int ps2_peep_55A350(
 }
 
 int ps2_peep_55A4F0(MPCode* pc) {
+#if !MWCCPS2 || MWCCPS2_BUILD != 119 // b119 has no flags test here
     if (pc->flags & 0x100) {
         return 0;
     }
+#endif
     if (pc->args[3].reg != 0 || pc->args[1].reg != pc->args[2].reg) {
         return 0;
     }
@@ -2503,27 +2585,28 @@ int ps2_peep_55A4F0(MPCode* pc) {
 }
 
 int ps2_peep_55A530(MPCode* pc) {
-    return ps2_peep_55AE20(pc, 0x1E2, 0x1E3, 0x1E2);
+    return ps2_peep_55AE20(pc, PS2_OP(0x1E2), PS2_OP(0x1E3), PS2_OP(0x1E2));
 }
 
 int ps2_peep_55A550(MPCode* pc) {
-    return ps2_peep_55AE20(pc, 0x1E2, 0x1E3, 0x1DE);
+    return ps2_peep_55AE20(pc, PS2_OP(0x1E2), PS2_OP(0x1E3), PS2_OP(0x1DE));
 }
 
 int ps2_peep_55A570(MPCode* pc) {
-    return ps2_peep_55AE20(pc, 0x1DE, 0x1DF, 0x1E2);
+    return ps2_peep_55AE20(pc, PS2_OP(0x1DE), PS2_OP(0x1DF), PS2_OP(0x1E2));
 }
 
 int ps2_peep_55A590(MPCode* pc) {
-    return ps2_peep_55AE20(pc, 0x1DE, 0x1DF, 0x1DE);
+    return ps2_peep_55AE20(pc, PS2_OP(0x1DE), PS2_OP(0x1DF), PS2_OP(0x1DE));
 }
 
 int ps2_peep_55A5B0(MPCode* pc) {
     MPCode* def;
 
+    B119_DEF_CHECK(pc, 0);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 0);
-#else
+#elif !MWCCPS2 || MWCCPS2_BUILD != 119 // b119 has no flags test here
     if (pc->flags & 0x100) {
         return 0;
     }
@@ -2532,7 +2615,7 @@ int ps2_peep_55A5B0(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!def || def->op != OPC(0x264)) {
 #else
-    if (!def || def->op != 0x264) {
+    if (!def || def->op != PS2_OP(0x264)) {
 #endif
         return 0;
     }
@@ -2542,16 +2625,16 @@ int ps2_peep_55A5B0(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (pc->op == OPC(0x1D2)) {
 #else
-    if (pc->op == 0x1D2) {
+    if (pc->op == PS2_OP(0x1D2)) {
 #endif
-        SET_OP2(pc, 0x268);
+        SET_OP2(pc, PS2_OP(0x268));
     }
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (pc->op == OPC(0x489)) {
 #else
-    if (pc->op == 0x489) {
+    if (pc->op == PS2_OP(0x489)) {
 #endif
-        SET_OP2(pc, 0x48A);
+        SET_OP2(pc, PS2_OP(0x48A));
     }
     COPY_OP(pc->args[0], def->args[1]);
     return 1;
@@ -2562,16 +2645,17 @@ int ps2_peep_55A670(MPCode* pc) {
 
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 0);
-#else
+#elif !MWCCPS2 || MWCCPS2_BUILD != 119 // b119 has no flags test here
     if (pc->flags & 0x100) {
         return 0;
     }
 #endif
+    B119_DEF_CHECK(pc, 0);
     def = DEF(pc->args[0]);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!def || def->op != OPC(0x266)) {
 #else
-    if (!def || def->op != 0x266) {
+    if (!def || def->op != PS2_OP(0x266)) {
 #endif
         return 0;
     }
@@ -2587,16 +2671,16 @@ int ps2_peep_55A670(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (pc->op == OPC(0x268)) {
 #else
-    if (pc->op == 0x268) {
+    if (pc->op == PS2_OP(0x268)) {
 #endif
-        SET_OP2(pc, 0x1D2);
+        SET_OP2(pc, PS2_OP(0x1D2));
     }
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (pc->op == OPC(0x48A)) {
 #else
-    if (pc->op == 0x48A) {
+    if (pc->op == PS2_OP(0x48A)) {
 #endif
-        SET_OP2(pc, 0x489);
+        SET_OP2(pc, PS2_OP(0x489));
     }
     COPY_OP(pc->args[0], def->args[0]);
     pc->args[0].flags &= 1;
@@ -2609,6 +2693,7 @@ int ps2_peep_55A770(MPCode* pc) {
     if (pc->flags & 0x100) {
         return 0;
     }
+    B119_DEF_CHECK(pc, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP(pc, 1);
 #endif
@@ -2616,7 +2701,7 @@ int ps2_peep_55A770(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!def || def->op != OPC(0x266)) {
 #else
-    if (!def || def->op != 0x266) {
+    if (!def || def->op != PS2_OP(0x266)) {
 #endif
         return 0;
     }
@@ -2633,11 +2718,17 @@ int ps2_peep_55A810(MPCode* pc) {
     MPCode* def;
     MPCode* p;
 
+#if MWCCPS2 && MWCCPS2_BUILD == 119 // b119 tests the flags first
+    if (pc->flags & 0x100) {
+        return 0;
+    }
+#endif
+    B119_DEF_CHECK(pc, 0);
     def = DEF(pc->args[0]);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!def || def->op != OPC(0x264)) {
 #else
-    if (!def || def->op != 0x264) {
+    if (!def || def->op != PS2_OP(0x264)) {
 #endif
         return 0;
     }
@@ -2650,19 +2741,91 @@ int ps2_peep_55A810(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     p = makepcode(OPC(0x2AF), 0xF, pc->args[1].reg, def->args[1].reg);
 #else
-    p = makepcode(0x2AF, 0xF, pc->args[1].reg, def->args[1].reg);
+    p = makepcode(PS2_OP(0x2AF), 0xF, pc->args[1].reg, def->args[1].reg);
 #endif
     p->args[1].flags &= 2;
     insertpcodebefore(pc, p);
+#if !MWCCPS2 || MWCCPS2_BUILD != 119 // b119 does not carry the flag over
     p->flags |= pc->flags & 0x100;
+#endif
     deletepcode(pc);
     return 1;
 }
 
+#if MWCC_CORE == MWCC_CORE_B011126
+extern struct Alias* make_alias(Object* obj, SInt32 offset, SInt32 size);
+extern SInt16 data_00625E3E; // frame register
+
+// makepcode(lqc2, reg, obj, offset, base): vformatpcode's 'o' (011126 0x49AC9B) for an
+// object, written out, as vformatpcode reads the object as a 32-bit int natively
+static MPCode* b011126_makelqc2(SInt16 reg, Object* obj, SInt32 offset, SInt16 base) {
+    MPCode* p = makepcode(0x263, reg, 0, offset, base);
+
+    if (obj) {
+        p->flags &= ~0x20;
+        p->args[1].kind = 4;
+        MOP_SETOBJ(p->args[1], obj);
+        p->args[1].value = offset;
+        if (p->flags & 0x60006) {
+            if (obj->datatype == DLOCAL && base != data_00625E3E) {
+                p->alias = make_alias(obj, 0, 0);
+            } else if (obj->datatype == DLOCAL) {
+                p->alias = make_alias(obj, offset, func_0048FBE0(p->op));
+            } else if (obj->datatype == DDATA) {
+                p->alias = make_alias(obj, 0, 0);
+            } else {
+                CError_Internal("PCodeInfo.c", 386);
+            }
+            if (is_volatile_object(obj)) {
+                p->flags |= 0x80;
+            }
+            if (is_const_object(obj)) {
+                p->flags |= 0x40;
+            }
+        }
+    }
+    return p;
+}
+
+// 011126 (0x507BE0): a qmtc2 of an lq's result becomes an lqc2 put before the lq (the
+// lq stays, for dead-code removal); no live test, no macro load, no alias copied
+int ps2_peep_55A8C0(MPCode* pc) {
+    MPCode* def;
+    MPCode* p;
+
+    if (copts.inlinelevel < 0 || !copts.enable_vu0_registers) {
+        return 0;
+    }
+    def = DEF(pc->args[0]);
+    if (!(def->flags & 0x40002)) {
+        return 0;
+    }
+    if (def->op != OPC(0x1D1)) {
+        return 0;
+    }
+    if (func_004AFE40(pc, def, &pc->args[1])) {
+        return 0;
+    }
+    p = b011126_makelqc2(
+        pc->args[1].reg,
+        def->args[1].kind == 4 ? (Object*)MOP_OBJ(def->args[1]) : NULL,
+        def->args[1].value,
+        def->args[2].reg
+    );
+    p->args[0].flags &= 2;
+    insertpcodebefore(def, p);
+    deletepcode(pc);
+    return 1;
+}
+#else
 int ps2_peep_55A8C0(MPCode* pc) {
     MPCode* def;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (copts.inlinelevel < 0 || !COPTS_T.enable_vu0_registers) {
+#else
     if (copts.inlinelevel < 0 || !copts.enable_vu0_registers) {
+#endif
         return 0;
     }
     def = DEF(pc->args[0]);
@@ -2672,7 +2835,7 @@ int ps2_peep_55A8C0(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (def->op != OPC(0x1D1) && def->op != OPC(0x467)) {
 #else
-    if (def->op != 0x1D1 && def->op != 0x467) {
+    if (def->op != PS2_OP(0x1D1) && def->op != PS2_OP(0x467)) {
 #endif
         return 0;
     }
@@ -2691,15 +2854,15 @@ int ps2_peep_55A8C0(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (def->op == OPC(0x1D1)) {
 #else
-    if (def->op == 0x1D1) {
+    if (def->op == PS2_OP(0x1D1)) {
 #endif
-        SET_OP2(def, 0x263);
+        SET_OP2(def, PS2_OP(0x263));
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (def->op == OPC(0x467)) {
 #else
-    } else if (def->op == 0x467) {
+    } else if (def->op == PS2_OP(0x467)) {
 #endif
-        SET_OP2(def, 0x468);
+        SET_OP2(def, PS2_OP(0x468));
     } else {
         return 0;
     }
@@ -2709,17 +2872,29 @@ int ps2_peep_55A8C0(MPCode* pc) {
     deletepcode(pc);
     return 1;
 }
+#endif
 
 // a quadword store (0x268) over an earlier one to the same place: the
 // earlier store's value moves into the later one's register
+#if MWCC_CORE == MWCC_CORE_B011126
+#define VMOVE_ALL \
+    0xFF // 011126 (its lqc2 and sqc2 patterns, 0x5078F0 and 0x507A30): the vmove field is 0xFF
+#else
+#define VMOVE_ALL 0xF
+#endif
 int ps2_peep_55AA20(MPCode* pc) {
     MPCode* q;
     MPCode* p;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (copts.inlinelevel < 0 || !COPTS_T.enable_vu0_registers) {
+#else
     if (copts.inlinelevel < 0 || !copts.enable_vu0_registers) {
+#endif
         return 0;
     }
-#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+#if (!MWCC_CORE || MWCC_CORE > MWCC_CORE_B52) && \
+    (!MWCCPS2 || MWCCPS2_BUILD != 119) // b119 has no flags test here
     if (pc->flags & 0x100) {
         return 0;
     }
@@ -2728,7 +2903,7 @@ int ps2_peep_55AA20(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if ((p->flags & 0x40004) && p->op == OPC(0x268)) {
 #else
-        if ((p->flags & 0x40004) && p->op == 0x268) {
+        if ((p->flags & 0x40004) && p->op == PS2_OP(0x268)) {
 #endif
             if (p->args[1].value != pc->args[1].value) {
                 return 0;
@@ -2745,7 +2920,10 @@ int ps2_peep_55AA20(MPCode* pc) {
                      q->op == OPC(0x467))) {
                     if (q->args[2].kind == 0 && q->args[2].reg == 29) {
 #else
-                    (q->op == 0x263 || q->op == 0x468 || q->op == 0x1D1 || q->op == 0x467) &&
+                    (q->op == PS2_OP(0x263) ||
+                     q->op == PS2_OP(0x468) ||
+                     q->op == PS2_OP(0x1D1) ||
+                     q->op == PS2_OP(0x467)) &&
                     may_alias(pc, q)) {
 #endif
                         return 0;
@@ -2771,9 +2949,9 @@ int ps2_peep_55AA20(MPCode* pc) {
                 return 0;
             }
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-            insertpcodebefore(p, makepcode(OPC(0x2AF), 0xF, pc->args[0].reg, p->args[0].reg));
+            insertpcodebefore(p, makepcode(OPC(0x2AF), VMOVE_ALL, pc->args[0].reg, p->args[0].reg));
 #else
-            insertpcodebefore(p, makepcode(0x2AF, 0xF, pc->args[0].reg, p->args[0].reg));
+            insertpcodebefore(p, makepcode(PS2_OP(0x2AF), 0xF, pc->args[0].reg, p->args[0].reg));
 #endif
             ps2_peep_55AA20(p);
             break;
@@ -2793,10 +2971,15 @@ int ps2_peep_55AB80(MPCode* pc) {
     MPCode* q;
     MPCode* p;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (copts.inlinelevel < 0 || !COPTS_T.enable_vu0_registers) {
+#else
     if (copts.inlinelevel < 0 || !copts.enable_vu0_registers) {
+#endif
         return 0;
     }
-#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+#if (!MWCC_CORE || MWCC_CORE > MWCC_CORE_B52) && \
+    (!MWCCPS2 || MWCCPS2_BUILD != 119) // b119 has no flags test here
     if (pc->flags & 0x100) {
         return 0;
     }
@@ -2805,7 +2988,7 @@ int ps2_peep_55AB80(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if ((p->flags & 0x40024) && p->op == OPC(0x268)) {
 #else
-        if ((p->flags & 0x40024) && p->op == 0x268) {
+        if ((p->flags & 0x40024) && p->op == PS2_OP(0x268)) {
 #endif
             if (p->args[1].value != pc->args[1].value) {
                 return 0;
@@ -2832,9 +3015,11 @@ int ps2_peep_55AB80(MPCode* pc) {
                 return 0;
             }
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-            insertpcodebefore(pc, makepcode(OPC(0x2AF), 0xF, pc->args[0].reg, p->args[0].reg));
+            insertpcodebefore(
+                pc, makepcode(OPC(0x2AF), VMOVE_ALL, pc->args[0].reg, p->args[0].reg)
+            );
 #else
-            insertpcodebefore(pc, makepcode(0x2AF, 0xF, pc->args[0].reg, p->args[0].reg));
+            insertpcodebefore(pc, makepcode(PS2_OP(0x2AF), 0xF, pc->args[0].reg, p->args[0].reg));
 #endif
             deletepcode(pc);
             break;
@@ -2912,6 +3097,7 @@ static int ps2_peep_55B240(MPCode* pc, UInt16 op1, UInt16 op2, UInt16 op3) {
     MPCode* d2;
     MOperand acc;
 
+    B119_DEF_CHECK2(pc, 1, 2);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP2(pc);
 #endif
@@ -2961,7 +3147,9 @@ static int ps2_peep_55B240(MPCode* pc, UInt16 op1, UInt16 op2, UInt16 op3) {
     d1->args[2].flags = 2;
     SET_LIVE(acc);
     insertpcodeafter(pc, makepcode(op3, pc->args[0].reg, d2->args[1].reg, d2->args[2].reg));
+#if MWCC_CORE != MWCC_CORE_B011126 // 011126 (0x5077D9): the add is kept
     deletepcode(pc);
+#endif
     SET_FPR_LIVE(d2->args[1].reg);
     SET_FPR_LIVE(d2->args[2].reg);
     return 1;
@@ -2973,6 +3161,7 @@ static int ps2_peep_55B6A0(MPCode* pc, UInt16 op1, UInt16 op2, UInt16 op3) {
     MPCode* d2;
     MOperand acc;
 
+    B119_DEF_CHECK2(pc, 1, 2);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP2(pc);
 #endif
@@ -2981,9 +3170,12 @@ static int ps2_peep_55B6A0(MPCode* pc, UInt16 op1, UInt16 op2, UInt16 op3) {
     if (d1->op != op1 || d2->op != op1) {
         return 0;
     }
+#if MWCC_CORE != \
+    MWCC_CORE_B233 // 2.3.3 (0x4E9020) tests neither one product twice nor the sum's register
     if (d1 == d2) {
         return 0;
     }
+#endif
     if (!func_005493A0(&d1, &d2, pc->flags & 0x2000)) {
         return 0;
     }
@@ -2993,12 +3185,14 @@ static int ps2_peep_55B6A0(MPCode* pc, UInt16 op1, UInt16 op2, UInt16 op3) {
     if (d2->args[0].reg == d2->args[1].reg || d2->args[0].reg == d2->args[2].reg) {
         return 0;
     }
+#if MWCC_CORE != MWCC_CORE_B233
     if (pc->args[0].reg == d1->args[1].reg || pc->args[0].reg == d1->args[2].reg) {
         return 0;
     }
     if (pc->args[0].reg == d2->args[1].reg || pc->args[0].reg == d2->args[2].reg) {
         return 0;
     }
+#endif
     SET_ACC(acc);
     if (REG_LIVE(acc)) {
         return 0;
@@ -3040,7 +3234,7 @@ static inline Boolean ps2_IsMulLo(UInt16 op) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     return op == OPC(0x1DB) || op == OPC(0x1DC);
 #else
-    return op == 0x1DB || op == 0x1DC;
+    return op == PS2_OP(0x1DB) || op == PS2_OP(0x1DC);
 #endif
 }
 
@@ -3048,7 +3242,7 @@ static inline Boolean ps2_IsMoveLo(UInt16 op) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     return op == OPC(0x202) || op == OPC(0x203);
 #else
-    return op == 0x202 || op == 0x203;
+    return op == PS2_OP(0x202) || op == PS2_OP(0x203);
 #endif
 }
 
@@ -3063,6 +3257,7 @@ static int ps2_peep_55BB70(MPCode* pc, UInt16 newop, UInt16 op1, UInt16 op2, int
     MPCode* n;
     MPCode* t;
 
+    B119_DEF_CHECK2(pc, 1, 2);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP2(pc);
 #endif
@@ -3132,6 +3327,7 @@ static int ps2_peep_55BEC0(MPCode* pc, UInt16 newop, UInt16 op1, UInt16 op2, int
     MPCode* d1;
     MPCode* d2;
 
+    B119_DEF_CHECK2(pc, 1, 2);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     PEEP69_PROP2(pc);
 #endif
@@ -3152,6 +3348,8 @@ static int ps2_peep_55BEC0(MPCode* pc, UInt16 newop, UInt16 op1, UInt16 op2, int
     if (ps2_GPRDefinedBetween(d1, d2, reg)) {
         return 0;
     }
+#if MWCC_CORE != MWCC_CORE_B011126 // 011126 (0x506E20): no test that the multiply's
+    // register is read after the add or between the two
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (pc->args[0].reg != d2->args[0].reg &&
         pc->next &&
@@ -3166,6 +3364,20 @@ static int ps2_peep_55BEC0(MPCode* pc, UInt16 newop, UInt16 op1, UInt16 op2, int
     if (pc->prev != d2 && func_0054A9E0(d2->next, pc->prev, &d2->args[0])) {
         return 0;
     }
+#endif
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x4E8B60..0x4E8BE5): the first multiply becomes the two-operand
+    // mult s,t (0xB6), whose result is LO alone: its operands move down one
+    // and the third becomes the HI/LO register, marked live
+    SET_OP(d1, 0xB6);
+    COPY_OP(d1->args[0], d1->args[1]);
+    COPY_OP(d1->args[1], d1->args[2]);
+    d1->args[2].kind = 0;
+    d1->args[2].rclass = 2;
+    d1->args[2].reg = 0;
+    d1->args[2].flags = 2;
+    SET_LIVE(d1->args[2]);
+#endif
     SET_OP(d2, newop);
     d2->args[d2->argcount - 1].flags |= 3;
     pc->args[1] = d2->args[0];
@@ -3199,25 +3411,25 @@ int ps2_peep_558180(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (a->op == OPC(0x1DE)) {
 #else
-    if (a->op == 0x1DE) {
+    if (a->op == PS2_OP(0x1DE)) {
 #endif
         x = a;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (b->op == OPC(0x1DE)) {
 #else
-    } else if (b->op == 0x1DE) {
+    } else if (b->op == PS2_OP(0x1DE)) {
 #endif
         x = b;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (a->op == OPC(0x1E2)) {
 #else
-    } else if (a->op == 0x1E2) {
+    } else if (a->op == PS2_OP(0x1E2)) {
 #endif
         x = a;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     } else if (b->op == OPC(0x1E2)) {
 #else
-    } else if (b->op == 0x1E2) {
+    } else if (b->op == PS2_OP(0x1E2)) {
 #endif
         x = b;
     }
@@ -3264,7 +3476,7 @@ int ps2_peep_558180(MPCode* pc) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SET_OP2(x, x->op == OPC(0x1DE) ? 0x1DF : 0x1E3);
 #else
-    SET_OP2(x, x->op == 0x1DE ? 0x1DF : 0x1E3);
+    SET_OP2(x, x->op == PS2_OP(0x1DE) ? PS2_OP(0x1DF) : PS2_OP(0x1E3));
 #endif
     COPY_OP(x->args[0], x->args[1]);
     COPY_OP(x->args[1], x->args[2]);
@@ -3352,7 +3564,7 @@ int ps2_peep_558520(MPCode* pc) {
     if (TouchedBetween(pc, x, &acc)) {
         return 0;
     }
-    SET_OP2(x, 0x1E4);
+    SET_OP2(x, PS2_OP(0x1E4));
     COPY_OP(x->args[0], x->args[1]);
     COPY_OP(x->args[1], x->args[2]);
     x->args[2].kind = 0;
@@ -3365,42 +3577,48 @@ int ps2_peep_558520(MPCode* pc) {
 }
 
 int ps2_peep_55ACB0(MPCode* pc) {
-    return ps2_peep_55B240(pc, 0x103, 0x1E5, 0x1E2);
+    return ps2_peep_55B240(pc, PS2_OP(0x103), PS2_OP(0x1E5), PS2_OP(0x1E2));
 }
 
 int ps2_peep_55ACD0(MPCode* pc) {
-    return ps2_peep_55B240(pc, 0xED, 0x1DD, 0x1E2);
+    return ps2_peep_55B240(pc, PS2_OP(0xED), PS2_OP(0x1DD), PS2_OP(0x1E2));
 }
 
 int ps2_peep_55ACF0(MPCode* pc) {
-    return ps2_peep_55B240(pc, 0x103, 0x1E5, 0x1DE);
+    return ps2_peep_55B240(pc, PS2_OP(0x103), PS2_OP(0x1E5), PS2_OP(0x1DE));
 }
 
 int ps2_peep_55AD10(MPCode* pc) {
-    return ps2_peep_55B240(pc, 0xED, 0x1DD, 0x1DE);
+    return ps2_peep_55B240(pc, PS2_OP(0xED), PS2_OP(0x1DD), PS2_OP(0x1DE));
 }
 
 int ps2_peep_55AD30(MPCode* pc) {
-    return ps2_peep_55B6A0(pc, 0xB5, 0x1E4, 0x1E2);
+    return ps2_peep_55B6A0(pc, 0xB5, PS2_OP(0x1E4), PS2_OP(0x1E2));
 }
 
 int ps2_peep_55AD50(MPCode* pc) {
-    return ps2_peep_55B6A0(pc, 0xB5, 0x1E4, 0x1DE);
+    return ps2_peep_55B6A0(pc, 0xB5, PS2_OP(0x1E4), PS2_OP(0x1DE));
 }
 
 int ps2_peep_55AD70(MPCode* pc) {
-    return ps2_peep_55BB70(pc, 0x1D6, data_00625CE0, data_00625E4A, 0);
+    return ps2_peep_55BB70(pc, PS2_OP(0x1D6), data_00625CE0, data_00625E4A, 0);
 }
 
 int ps2_peep_55ADA0(MPCode* pc) {
-    return ps2_peep_55BB70(pc, 0x1D6, data_00625CE0, data_00625E4A, 0);
+    return ps2_peep_55BB70(pc, PS2_OP(0x1D6), data_00625CE0, data_00625E4A, 0);
 }
 
 int ps2_peep_55ADD0(MPCode* pc) {
-    return ps2_peep_55BEC0(pc, 0x1D8, 0x202, 0x203, 1);
+    return ps2_peep_55BEC0(pc, PS2_OP(0x1D8), PS2_OP(0x202), PS2_OP(0x203), 1);
 }
 
 int ps2_peep_55ADF0(MPCode* pc) {
-    return ps2_peep_55BEC0(pc, 0x1D6, data_00625CE0, data_00625E4A, 0);
+    return ps2_peep_55BEC0(pc, PS2_OP(0x1D6), data_00625CE0, data_00625E4A, 0);
+}
+#endif
+
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+int b119_peep_55C0B0(MPCode* pc, int k) {
+    return 0;
 }
 #endif

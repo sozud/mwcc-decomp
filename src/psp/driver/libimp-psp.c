@@ -35,8 +35,14 @@ static CWPLUGIN_ENTRY(LibImport_GetFileTypeMappings)(const OSFileTypeMappingList
 
 static CWPLUGIN_ENTRY(LibImport_GetObjectFlags)(const CWObjectFlags** objectFlags) {
     // clang-format off
+#if MWCC_CORE == MWCC_CORE_B011126
+    // 011126 0x40C410 -> 0x52321C: no flags (its driver rejects 0x40000000)
+    static const CWObjectFlags myFlags = {2, 0, NULL, NULL, NULL, "s", NULL, NULL, 0, 0, 0, 0, 0, 0,
+                                          'CWIE', 'TEXT', 0, 0};
+#else
     static const CWObjectFlags myFlags = {2, 0x40000000, NULL, NULL, NULL, "s", NULL, NULL, 0, 0, 0, 0, 0, 0,
                                           'CWIE', 'TEXT', 0, 0};
+#endif
     // clang-format on
 
     *objectFlags = &myFlags;

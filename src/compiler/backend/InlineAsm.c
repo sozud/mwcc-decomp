@@ -66,6 +66,12 @@ void InlineAsm_SyntaxError(short code) {
     if (backtracking) {
         longjmp(backtrack, 1);
     }
+#if MWCC_CORE == MWCC_CORE_B011126
+    // 011126 (0x4F8DF0): the GameCube compilers' end-of-line message
+    if (tk == TK_EOL || tk == ';') {
+        code = ERR_UNEXPECTED_END_LINE;
+    }
+#endif
     CError_Error(code);
 }
 #else
@@ -777,6 +783,92 @@ extern void func_00483B20(void); // an instruction
 #endif
 extern void func_0053D790(void); // GCC-style operands after ':'
 
+// 011126's ScanStatements goes with its preprocessor (CPrep.c's 011126
+// prepskipnextchar/CPrep_SkipNewComment): there a "\n" in a GCC-style string
+// reaches the assembler as '\' and an identifier, which 011126's ScanStatements
+// doesn't take as an instruction's end (b69's does). With both, "nop\n\tnop" is
+// rejected with 011126's "unknown assembler instruction mnemonic".
+#ifndef B011126_SCANSTATEMENTS
+#define B011126_SCANSTATEMENTS 1
+#endif
+#if MWCC_CORE == MWCC_CORE_B011126 && B011126_SCANSTATEMENTS
+// 011126 (0x4F9830): a GCC-style string's closing quote is taken after the
+// instruction too; the operands start at anything but a second string (no
+// ':' test), no line ends are skipped inside the strings, and a "\" ends the
+// instruction (with the token after it)
+void ScanStatements(volatile short endToken) {
+    func_00483F30();
+    InlineAsm_gccmode = FALSE;
+    if (setjmp(InlineAsm_assemblererror)) {
+        while (tk != ';' && tk != TK_EOL && tk != endToken && tk != '}' && tk) {
+            tk = lex();
+        }
+        if (tk == ';' || tk == TK_EOL) {
+            tk = lex();
+        }
+    }
+
+    while (tk && tk != endToken) {
+        backtracking = FALSE;
+        sourceoffset = CPrep_GetFileOffsetInfo(&cparser_fileoffset);
+        if (tk == '"') {
+            if (InlineAsm_gccmode) {
+                tk = lex();
+                if (tk == '"') {
+                    tk = lex();
+                } else {
+                    func_0053D790();
+                    InlineAsm_gccmode = FALSE;
+                }
+            } else {
+                InlineAsm_gccmode = TRUE;
+                copts.cplusplus = FALSE;
+#if MWCCPS2 && MWCCPS2_BUILD < 198
+                copts.asmpoundcomment = TRUE;
+#endif
+                tk = lex();
+            }
+        }
+
+        if (tk == '.') {
+            func_00483C40();
+        } else {
+            if (tk == TK_IDENTIFIER) {
+                ScanOptionalLabel();
+            } else if (tk == TK_INTCONST) {
+                ScanOptionalLabel();
+            }
+            if (tk != TK_EOL) {
+                func_00483B20();
+            }
+        }
+
+        if (InlineAsm_gccmode && tk == '"') {
+            tk = lex();
+            if (tk == '"') {
+                tk = lex();
+            } else {
+                func_0053D790();
+                InlineAsm_gccmode = FALSE;
+            }
+        }
+        if (tk == ';' || tk == TK_EOL) {
+            CPrep_TokenStreamFlush();
+            tk = lex();
+        } else if (tk == '\\') {
+            tk = lex();
+            CPrep_TokenStreamFlush();
+            tk = lex();
+        } else if (tk != endToken) {
+            if (endToken == ')') {
+                CError_Error(ERR_RPAREN_EXPECTED);
+            } else {
+                CError_Error(ERR_END_LINE_EXPECTED);
+            }
+        }
+    }
+}
+#else
 // 3.0.1 (0x52B660): asm statements up to endToken, for asm functions and
 // asm blocks; GCC-style "..." strings switch to GCC mode
 void ScanStatements(volatile short endToken) {
@@ -873,6 +965,7 @@ void ScanStatements(volatile short endToken) {
         }
     }
 }
+#endif // MWCC_CORE_B011126
 #else
 static void ScanStatements(volatile short endToken, AssemblerType mode) {
     if (setjmp(InlineAsm_assemblererror)) {

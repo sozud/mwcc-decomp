@@ -662,7 +662,11 @@ void CLPrintDispatch(int unused, SInt16 msgtype, const char* message) {
 #if MWCCPSP
         OS_ASSERT(898, 0);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        OS_ASSERT(846, 0);
+#else
         OS_ASSERT(847, 0);
+#endif
 #endif
     }
 

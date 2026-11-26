@@ -64,10 +64,19 @@ typedef SInt32 PtrInt;
 
 // number of back-end opcodes (data_006115F8[]): mwccps2 b210 has fewer
 // (no VFPU); BE_EncodeAll compares against 0x40A where mwccpsp has 0x518
-#if MWCCPS2
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+#define BE_NUM_OPCODES 0x409 // b119 has no nop.bl (0xBB)
+#elif MWCCPS2
 #define BE_NUM_OPCODES 0x40A
 #else
 #define BE_NUM_OPCODES 0x518
+#endif
+// b119 has no nop.bl (b145/b210 0xBB): every real opcode above it is one
+// lower; tools/mwccps2/re/b119_ops.py writes such literals as PS2_OP(n)
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+#define PS2_OP(n) ((n) > 0xBB ? (n) - 1 : (n))
+#else
+#define PS2_OP(n) (n)
 #endif
 // macro opcodes are numbered right after the real ones (mwccpsp's 0x518+k is
 // mwccps2's 0x40A+k); tools/mwccps2/re/macro_ops.py writes them this way
@@ -83,7 +92,9 @@ typedef SInt32 PtrInt;
 #endif
 // entries in the opcode table (real + macro): b210 0x4AF, mwccpsp 0x5C5
 // (regressvaluestate's bound); the last macros count from the end
-#if MWCCPS2
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+#define BE_NUM_OPDEFS 0x4AE
+#elif MWCCPS2
 #define BE_NUM_OPDEFS 0x4AF
 #else
 #define BE_NUM_OPDEFS 0x5C5
@@ -104,6 +115,37 @@ typedef SInt32 PtrInt;
 // native build gives the pointers their own fields (value/value2 keep a
 // truncated copy, so tests and comparisons behave as before); use the MOP_
 // macros, which are the old accesses in the matching build.
+// MWCCPS2_B233_OPS301: a side build with 3.0.1's operand (source-only tests)
+#if MWCC_CORE == MWCC_CORE_B233 && !MWCCPS2_B233_OPS301
+// 2.3.3 (as b69, whose LocalCSE.c reads it so): kind, class, then a union at
+// +2 (a register's flags +2 and number +4, an immediate or label word +2, a
+// memory operand's offset +2 and object +6, a 64-bit constant {hi, lo} +2)
+// and a word at +0xA: 0xE bytes (func_00461E40 0x494280 steps by 0xE and
+// reads kind +0, class +1, flags +2, reg +4). value/value2 are the word and
+// the constant's low half / the object, so 3.0.1's names still apply; flags
+// overlap value
+#pragma pack(push, 2)
+typedef struct MOperand {
+    UInt8 kind;
+    char rclass;
+    union {
+        struct {
+            UInt16 flags;
+            SInt16 reg;
+        };
+        struct {
+            SInt32 value;
+            union {
+                SInt32 value2;
+                SInt32 value_mid[1]; // b210's 128-bit low word: the low half here
+            };
+        };
+        void* ptr;
+    };
+    SInt32 unk0C; // +0xA
+} MOperand;
+#pragma pack(pop)
+#else
 typedef struct MOperand {
     UInt8 kind; // 0 register, 2 immediate, 4, 6 label
     char rclass; // register operands: class (signed in 3.0.1)
@@ -115,9 +157,21 @@ typedef struct MOperand {
         void* ptr; // kind 6: the label (MPCodeLabel*)
 #endif
     };
+#if MWCC_CORE == MWCC_CORE_B233
+    // OPS301 side build: 2.3.3's CInt64 is 64-bit, so a constant's low word
+    // is value2 (value_mid[0], as in the 0xE layout; value_mid[1] is unk0C)
+    union {
+        struct {
+            SInt32 value2;
+            SInt32 unk0C;
+        };
+        SInt32 value_mid[2];
+    };
+#else
     SInt32 value2; // a constant's low word; memory operands: the object
     SInt32 unk0C;
-#if MWCCPS2
+#endif
+#if MWCCPS2 && MWCC_CORE != MWCC_CORE_B233
     // mwccps2 b210: 128-bit constants; the operand is 0x18 bytes (a block's
     // operands step by 0x18: func_0048FAE0) and value2 stays at +8
     // (func_00490400). What the two extra words hold is unverified.
@@ -128,6 +182,7 @@ typedef struct MOperand {
     void* obj; // the object (kind 4) or defining instruction
 #endif
 } MOperand; // 0x10
+#endif
 
 #if MWCCPSP_NATIVE
 #define MOP_OBJ(op) ((op).obj)
@@ -283,5 +338,18 @@ typedef struct ClassLiveness {
 } ClassLiveness; // 0x0C
 
 extern ClassLiveness data_0062541C[7];
+
+#if MWCC_CORE == MWCC_CORE_B011126
+// 011126 0x57AB9C (CodeGen.c): the quadword-class locals and quadword-class pointer locals
+// that func_00438160 gives a VU0 (class 5) register, each with its own VarInfo
+typedef struct B011126QuadLocal {
+    struct B011126QuadLocal* next;
+    VarInfo* vi;
+    Object* obj;
+} B011126QuadLocal;
+extern B011126QuadLocal* b011126_quadlocals;
+extern SInt16 b011126_QuadLocalReg(Object* obj); // 011126 0x499360
+extern Boolean b011126_IsQuadwordClassPointerLocal(Object* obj); // 011126 0x499320
+#endif
 
 #endif

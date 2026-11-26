@@ -716,19 +716,31 @@ HEADER_INLINE void ExtendedParam_Delete(ExtendedParam* ep) {
 HEADER_INLINE void ExtendedParam_Init(ExtendedParam* ep, Object* obj) {
     IRO_ASSERT(777, ep != NULL);
     IRO_ASSERT(778, obj != NULL);
+#if MWCC_CORE == MWCC_CORE_B233
+    IRO_ASSERT(779, OBJ_EXTPARAM(obj) == NULL);
+#else
     IRO_ASSERT(779, obj->extParam == NULL);
+#endif
     IRO_ASSERT(780, stExtendedParamNum < ((uint32) -1) / 2 - 1);
 
     ep->objectSet = ObjectSet_New();
     ObjectSet_Init(ep->objectSet);
     ObjectSet_Add(ep->objectSet, obj);
+#if MWCC_CORE == MWCC_CORE_B233
+    OBJ_EXTPARAM(obj) = ep;
+#else
     obj->extParam = ep;
+#endif
 
     ep->num = stExtendedParamNum++;
 }
 
 HEADER_INLINE void ExtendedParam_TermAction(Object* obj, void* refcon) {
+#if MWCC_CORE == MWCC_CORE_B233
+    OBJ_EXTPARAM(obj) = NULL;
+#else
     obj->extParam = NULL;
+#endif
 }
 
 HEADER_INLINE void ExtendedParam_Term(ExtendedParam* ep) {
@@ -755,7 +767,11 @@ HEADER_INLINE Boolean ExtendedParams_Equal(ExtendedParam* ep1, ExtendedParam* ep
 HEADER_INLINE ExtendedParam* ExtendedParam_FindByObject(Object* obj) {
     IRO_ASSERT(856, obj != NULL);
 
+#if MWCC_CORE == MWCC_CORE_B233
+    return OBJ_EXTPARAM(obj);
+#else
     return obj->extParam;
+#endif
 }
 
 HEADER_INLINE void ExtendedParam_AddObject(ExtendedParam* ep, Object* obj) {
@@ -764,7 +780,11 @@ HEADER_INLINE void ExtendedParam_AddObject(ExtendedParam* ep, Object* obj) {
     IRO_ASSERT(865, obj != NULL);
 
     ObjectSet_Add(ep->objectSet, obj);
+#if MWCC_CORE == MWCC_CORE_B233
+    OBJ_EXTPARAM(obj) = ep;
+#else
     obj->extParam = ep;
+#endif
 }
 
 HEADER_INLINE void ExtendedParam_RemoveObjects(ExtendedParam* ep, ObjectSet* objSet) {
@@ -2547,8 +2567,13 @@ HEADER_INLINE void PointsToFunction_SortByExtendedParamNum(PointsToFunction* poi
             if (block->kind == PAMEMORYBLOCKKIND_EXTENDEDPARAM && block->u.ep) {
                 value1 = 2 * (block->u.ep->num) + 1;
             } else if (block->kind == PAMEMORYBLOCKKIND_LOCALVAR && block->u.localvar) {
+#if MWCC_CORE == MWCC_CORE_B233
+                if (block->u.localvar->obj && OBJ_EXTPARAM(block->u.localvar->obj)) {
+                    value1 = 2 * OBJ_EXTPARAM(block->u.localvar->obj)->num;
+#else
                 if (block->u.localvar->obj && block->u.localvar->obj->extParam) {
                     value1 = 2 * block->u.localvar->obj->extParam->num;
+#endif
                 }
             }
         }
@@ -2560,8 +2585,13 @@ HEADER_INLINE void PointsToFunction_SortByExtendedParamNum(PointsToFunction* poi
                 if (block->kind == PAMEMORYBLOCKKIND_EXTENDEDPARAM && block->u.ep) {
                     value2 = 2 * (block->u.ep->num) + 1;
                 } else if (block->kind == PAMEMORYBLOCKKIND_LOCALVAR && block->u.localvar) {
+#if MWCC_CORE == MWCC_CORE_B233
+                    if (block->u.localvar->obj && OBJ_EXTPARAM(block->u.localvar->obj)) {
+                        value2 = 2 * OBJ_EXTPARAM(block->u.localvar->obj)->num;
+#else
                     if (block->u.localvar->obj && block->u.localvar->obj->extParam) {
                         value2 = 2 * block->u.localvar->obj->extParam->num;
+#endif
                     }
                 }
             }

@@ -29,6 +29,12 @@
 #include "compiler/CompilerTools.h"
 #include "compiler/CInt64.h"
 #include "psp/BE.h"
+#if MWCC_CORE == MWCC_CORE_B233
+#include <string.h>
+#include "compiler/objects.h"
+#include "compiler/types.h"
+#include "compiler/CodeGen.h"
+#endif
 
 typedef MOperand CSEOperand;
 #define OP_FLAGS(op) ((op)->flags)
@@ -104,7 +110,12 @@ extern SInt32 func_0048FFA0(MPCode* store, MPCode* load);
 
 static MPCode* mips_makecopyinstruction(CSEOperand* src, CSEOperand* dst, char wide) {
     if (src->kind == 0) {
+#if MWCC_CORE == MWCC_CORE_B011126
+        (void)wide; // 011126 (0x49AF50): no 128-bit copy
+        if (0) {
+#else
         if (copts.mips_option41 && src->rclass == 0 && wide) {
+#endif
             return makepcode(data_00625E74, dst->reg, src->reg);
         }
         if (src->rclass == 0) {
@@ -124,6 +135,10 @@ static MPCode* mips_makecopyinstruction(CSEOperand* src, CSEOperand* dst, char w
 }
 
 static char mips_is128bitop(MPCode* pcode) {
+#if MWCC_CORE == MWCC_CORE_B011126
+    // 011126 has no mips_is128bitop (b69 0x49AC60): its callers take a plain copy
+    return 0;
+#endif
     if (copts.mips_option41) {
         return func_0048FBE0(pcode->op) == 16;
     }
@@ -135,10 +150,23 @@ static char mips_is128bitop(MPCode* pcode) {
 static int mips_can_reuse_stored_value(MPCode* store, MPCode* load) {
     SInt32 size;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x495E30): the size of the store's object's type
+    {
+        Object* obj = (store->argcount > 1 && ARGS(store)[1].kind == 4)
+            ? (Object*)MOP_OBJ(ARGS(store)[1])
+            : NULL;
+        if (!obj) {
+            return 0;
+        }
+        size = obj->type->size;
+    }
+#else
     if (!store->alias) {
         return 0;
     }
     size = store->alias->size;
+#endif
     if (copts.mips_option41) {
         if (size > 16) {
             return 0;
@@ -160,6 +188,140 @@ static int mips_can_reuse_stored_value(MPCode* store, MPCode* load) {
 
 #define RESULT_OP(pc) (&ARGS(pc)[((pc)->flags & 0x80000000) ? 1 : 0])
 #define REGVALUE(op) (&regvalue[(op)->rclass][OP_REG(op)])
+
+#if MWCC_CORE == MWCC_CORE_B233 && LOCALCSE_OURS
+// 2.3.3's CSE has no alias analysis: memory values are kept per object (the
+// instruction's object, MPCode +0x10 in 2.3.3), in a tree of entries made at
+// the start (0x4A4930: one for every object a non-pointer access names, and
+// a dummy object, 0x5410C8, whose value stands for "memory through a
+// pointer"). Entries are this tree's Alias records (only object, valuenumber
+// and valuepcode used), so the value stacking is unchanged.
+static Alias* b233_memlist;
+static Alias* b233_memhash[1024];
+static Object b233_pointerobj;
+
+static Object* b233_obj(MPCode* pcode) {
+    if (pcode->argcount > 1 && ARGS(pcode)[1].kind == 4) {
+        return (Object*)MOP_OBJ(ARGS(pcode)[1]);
+    }
+    return NULL;
+}
+
+// 0x4A4870 / 0x4A48C0
+static Alias* b233_mem(Object* obj) {
+    unsigned h = (unsigned)(((unsigned long)obj >> 4) & 1023);
+    Alias* a;
+
+    for (a = b233_memhash[h]; a; a = a->hashNext) {
+        if (a->object == obj) {
+            return a;
+        }
+    }
+    a = oalloc(sizeof(Alias));
+    memset(a, 0, sizeof(Alias));
+    a->object = obj;
+    a->valuenumber = nextvaluenumber++;
+    a->valuepcode = NULL;
+    a->hashNext = b233_memhash[h];
+    b233_memhash[h] = a;
+    a->next = b233_memlist;
+    b233_memlist = a;
+    return a;
+}
+
+// the entry a load's available value is tied to (0x4A5168, 0x4A537E)
+static Alias* b233_loadmem(MPCode* pcode) {
+    return b233_mem((pcode->flags & 0x20) ? &b233_pointerobj : b233_obj(pcode));
+}
+
+// 0x432F50
+static Boolean b233_mayalias(Object* obj) {
+    VarInfo* info;
+    Type* type;
+
+    if (!obj || (obj->datatype != DDATA && obj->datatype != DLOCAL)) {
+        return FALSE;
+    }
+    info = obj->datatype == DLOCAL ? obj->u.var.info : NULL;
+#if MWCCPSP_NATIVE
+    {
+        // Classification aid (native only): 2.3.3 (0x432F6E..0x432F80) reads
+        // +0x24 of a data object too; for a pooled float constant that is
+        // its Float pointer, and the byte it tests (+0x22) lies past the
+        // 8-byte Float, in whatever was allocated next (heap residue).
+        // MWCCPS2_B233_FLOATRES names a file of "constant byte" lines
+        // recorded from the original; a listed constant takes that byte.
+        extern int b233_floatres(Object * obj);
+        int b = b233_floatres(obj);
+        if (b == 0) {
+            goto typetest;
+        }
+        if (b > 0) {
+            return TRUE;
+        }
+    }
+#endif
+    if (!info || info->noregister) {
+        return TRUE;
+    }
+#if MWCCPSP_NATIVE
+typetest:
+#endif
+    if (!(type = obj->type)) {
+        return FALSE;
+    }
+    return type->type == TYPEARRAY ||
+        type->type == TYPESTRUCT ||
+        type->type == TYPECLASS ||
+        (type->type == TYPEMEMBERPOINTER && type->size == 12);
+}
+
+// 0x4A5400 / 0x4A5460: an access to an aggregate object
+static int b233_aggregate(MPCode* pcode) {
+    Object* obj = b233_obj(pcode);
+    Type* type;
+
+    if (!obj || !(type = obj->type)) {
+        return 0;
+    }
+    return type->type == TYPEARRAY ||
+        type->type == TYPESTRUCT ||
+        type->type == TYPECLASS ||
+        (type->type == TYPEMEMBERPOINTER && type->size == 12);
+}
+
+void killmemory(Alias* alias, MPCode* newValue);
+
+// 0x4A4D90: the pointer entry always; with all, every entry for an object
+// that may be aliased
+static void b233_killmemory(Boolean all) {
+    Alias* a;
+
+    for (a = b233_memlist; a; a = a->next) {
+        if (a->object == &b233_pointerobj || (all && b233_mayalias(a->object))) {
+            killmemory(a, NULL);
+        }
+    }
+}
+
+// 0x4A4930
+static void b233_gathermemory(void) {
+    MPCodeBlock* block;
+    MPCode* pcode;
+
+    b233_memlist = NULL;
+    memset(b233_memhash, 0, sizeof(b233_memhash));
+    memset(&b233_pointerobj, 0, sizeof(b233_pointerobj));
+    b233_mem(&b233_pointerobj);
+    for (block = data_00624FD0; block; block = block->next) {
+        for (pcode = block->first; pcode; pcode = pcode->next) {
+            if ((pcode->flags & 0x60006) && !(pcode->flags & 0x20)) {
+                b233_mem(b233_obj(pcode));
+            }
+        }
+    }
+}
+#endif
 
 // 0x4A6D20
 static void allocatecsedatastructures(void) {
@@ -187,7 +349,18 @@ static void initializecsedatastructures(void) {
             rv->available = NULL;
         }
     }
+#if MWCC_CORE == MWCC_CORE_B233 && LOCALCSE_OURS
+    {
+        // 0x4A4AAF
+        Alias* a;
+        for (a = b233_memlist; a; a = a->next) {
+            a->valuenumber = nextvaluenumber++;
+            a->valuepcode = NULL;
+        }
+    }
+#else
     initialize_alias_values();
+#endif
     stackedvalues = NULL;
     valueceiling = 0x7FFFFFFF;
 }
@@ -346,9 +519,25 @@ static int matchvalues(AvailableValue* av, MPCode* match) {
     int base = (match->flags & 0x80000000) ? 1 : 0;
     int i;
 
+#if MWCC_CORE == MWCC_CORE_B233 && LOCALCSE_OURS
+    // 2.3.3 (0x4A4FA8): the instruction's object, not an alias
+    if (((match->flags & 0x60006) ? b233_obj(match) : NULL) !=
+            ((avpc->flags & 0x60006) ? b233_obj(avpc) : NULL) ||
+        match->unk38 != avpc->unk38) {
+        return FALSE;
+    }
+#else
     if (match->alias != avpc->alias || match->unk38 != avpc->unk38) {
         return FALSE;
     }
+#endif
+#if MWCC_CORE == MWCC_CORE_B233 && MWCCPS2_B233_OPS301
+    // 2.3.3 keeps a relocation's object in the instruction's +0x10 (0x487AC4:
+    // addiu r, $gp, sym), the word compared above; ours has it apart
+    if (match->relobj != avpc->relobj) {
+        return FALSE;
+    }
+#endif
     for (i = 0; i < match->argcount; i++, avOp++, ++matchOp) {
         if (i != base) {
             // b69's case order (code layout); each test returns on its own
@@ -410,9 +599,17 @@ static int matchvalues(AvailableValue* av, MPCode* match) {
             }
         }
     }
+#if MWCC_CORE == MWCC_CORE_B233 && LOCALCSE_OURS
+    // 0x4A5150: a load's value is the memory entry's (the pointer entry for
+    // a pointer load)
+    if ((match->flags & 0x20002) && b233_loadmem(match)->valuenumber != av->aliasnumber) {
+        return FALSE;
+    }
+#else
     if ((match->flags & 0x20002) && match->alias->valuenumber != av->aliasnumber) {
         return FALSE;
     }
+#endif
     return TRUE;
 }
 
@@ -475,9 +672,17 @@ static void addavailablevalue(MPCode* pcode) {
             av->opnumbers[i] = REGVALUE(op)->number;
         }
     }
+#if MWCC_CORE == MWCC_CORE_B233 && LOCALCSE_OURS
+    // 0x4A536A: loads only
+    av->aliasnumber = 0;
+    if (pcode->flags & 2) {
+        av->aliasnumber = b233_loadmem(pcode)->valuenumber;
+    }
+#else
     if (pcode->flags & 0x20002) {
         av->aliasnumber = pcode->alias->valuenumber;
     }
+#endif
     op = RESULT_OP(pcode);
     av->killedregister = killregister(op);
     labelvalue(av, op);
@@ -568,8 +773,17 @@ static void simpleload(MPCode* pcode) {
         }
         deletepcode(pcode);
         removedcommonsubexpressions = TRUE;
+#if MWCC_CORE == MWCC_CORE_B233 && LOCALCSE_OURS
+        // 2.3.3 (0x4A5400 -> 0x4A5770): a load from an aggregate (struct,
+        // class, array, 12-byte member pointer) takes no stored value;
+        // otherwise the object's entry (0x4A55C0)
+    } else if (!b233_aggregate(pcode) &&
+               (rs = recentlystored(b233_mem(b233_obj(pcode)), &op)) &&
+               mips_can_reuse_stored_value(rs, pcode)) {
+#else
     } else if (CSE_DOIT(rs = recentlystored(pcode->alias, &op)) &&
                mips_can_reuse_stored_value(rs, pcode)) {
+#endif
         if (!samevalue(origOp, &op)) {
             insertpcodebefore(pcode, mips_makecopyinstruction(&op, origOp, mips_is128bitop(pcode)));
             copyregister(&op, origOp);
@@ -583,8 +797,19 @@ static void simpleload(MPCode* pcode) {
 
 // 0x4A7940
 static void simplestore(MPCode* pcode) {
+#if MWCC_CORE == MWCC_CORE_B233 && LOCALCSE_OURS
+    // 0x4A5730 (0x4A5820 for an aggregate: no stored value kept): a store to
+    // an object that may be aliased ends what pointer loads hold
+    Object* obj = b233_obj(pcode);
+    if (b233_mayalias(obj)) {
+        b233_killmemory(FALSE);
+    }
+    killmemory(b233_mem(obj), b233_aggregate(pcode) ? NULL : pcode);
+    killregisters(pcode);
+#else
     update_alias_value(pcode->alias, (PCode*)pcode);
     killregisters(pcode);
+#endif
 }
 
 // 0x4A7960
@@ -609,8 +834,14 @@ static void pointerload(MPCode* pcode) {
 
 // 0x4A7A20
 static void pointerstore(MPCode* pcode) {
+#if MWCC_CORE == MWCC_CORE_B233 && LOCALCSE_OURS
+    // 0x4A5910
+    b233_killmemory(TRUE);
+    killregisters(pcode);
+#else
     update_alias_value(pcode->alias, NULL);
     killregisters(pcode);
+#endif
 }
 
 // 0x4A7A40
@@ -634,6 +865,21 @@ static void arithmeticop(MPCode* pcode) {
 // 0x4A7AF0
 static void functioncall(MPCode* pcode) {
     killregisters(pcode);
+#if MWCC_CORE == MWCC_CORE_B233 && LOCALCSE_OURS
+    // 0x4A59C0: only memory that may be aliased; after coloring every
+    // available value and stored value goes
+    b233_killmemory(TRUE);
+    if (coloring) {
+        killallCSEs();
+    }
+    if (coloring) {
+        Alias* a;
+        for (a = b233_memlist; a; a = a->next) {
+            a->valuepcode = NULL;
+        }
+    }
+    return;
+#endif
     if (coloring) {
         update_all_alias_values();
         killallCSEs();
@@ -664,8 +910,22 @@ static void operatefrommemory(MPCode* pcode) {
 
 // 0x4A7BF0
 static void operatetomemory(MPCode* pcode) {
+#if MWCC_CORE == MWCC_CORE_B233 && LOCALCSE_OURS
+    // 0x4A5AE0
+    if (pcode->flags & 0x20) {
+        b233_killmemory(TRUE);
+    } else {
+        Object* obj = b233_obj(pcode);
+        if (b233_mayalias(obj)) {
+            b233_killmemory(FALSE);
+        }
+        killmemory(b233_mem(obj), NULL);
+    }
+    killregisters(pcode);
+#else
     update_alias_value(pcode->alias, NULL);
     killregisters(pcode);
+#endif
 }
 
 // 0x4A7C10
@@ -814,7 +1074,12 @@ void BE_RemoveCommonSubexpressions(void) {
 
     removedcommonsubexpressions = FALSE;
     gather_alias_info();
+#if MWCC_CORE == MWCC_CORE_B233 && LOCALCSE_OURS
     allocatecsedatastructures();
+    b233_gathermemory();
+#else
+    allocatecsedatastructures();
+#endif
     for (block = data_00624FD0; block; block = block->next) {
         block->flags2E &= ~4;
     }

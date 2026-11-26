@@ -503,6 +503,15 @@ MPBlockLink* linkblocks(MPCodeBlock* from, MPCodeBlock* to) {
 
     for (e = data_005EDCE0[h]; e; e = e->hashnext) {
         if (e->from == from && e->block == to) {
+#if MWCC_CORE == MWCC_CORE_B233 && MWCCPSP_NATIVE
+            // made again: 2.3.3's pcbranch (0x4938D0) adds a successor link
+            // each time (case labels sharing a block, a branch to the next
+            // block); the count goes in the flags' high byte (pcbranch's
+            // flags are 0 or 2) for the predecessor lists CodeGen makes
+            if ((e->flags >> 8) < 0xFF) {
+                e->flags += 0x100;
+            }
+#endif
             return e;
         }
     }
@@ -520,6 +529,31 @@ MPBlockLink* linkblocks(MPCodeBlock* from, MPCodeBlock* to) {
     to->predecessors = e;
     return e;
 }
+
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3 (0x493950): every successor link gets a predecessor entry pushed on
+// its block's list, whatever the lists already hold. 2.3.3 builds the
+// predecessor lists only here (pcbranch 0x4938D0 links successors alone), so
+// a second call without clearing them (after the late conditional moves)
+// leaves every predecessor twice. The entries are fresh links, in no
+// successor list or hash chain.
+void b233_addpredecessors(void) {
+    MPCodeBlock* block;
+    MPBlockLink* succ;
+    MPBlockLink* e;
+
+    for (block = data_00624FD0; block; block = block->next) {
+        for (succ = block->successors; succ; succ = succ->next) {
+            e = lalloc(sizeof(MPBlockLink));
+            memclrw(e, sizeof(MPBlockLink));
+            e->from = block;
+            e->block = succ->block;
+            e->nextpred = succ->block->predecessors;
+            succ->block->predecessors = e;
+        }
+    }
+}
+#endif
 
 static MPBlockLink* findlink(MPCodeBlock* from, MPCodeBlock* to) {
     MPBlockLink* e;

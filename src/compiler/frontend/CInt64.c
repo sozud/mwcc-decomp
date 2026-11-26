@@ -1,5 +1,14 @@
 #include "compiler/mwcc_core.h"
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B233
+#undef MWCCPSP
+#undef MWCCPS2
+#define MWCCPSP 0
+#define MWCCPS2 0
+// 2.3.3 has 64-bit integers (CInt64_Or 0x4B6B60 takes two 8-byte values,
+// returns edx:eax): its CInt64 is the GameCube tree's two-word one, so this
+// unit is this file's generic paths, plus the helpers below that 2.3.3 calls
+// as real functions.
+#elif MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef MWCCPSP
 #undef MWCCPS2
 #define MWCCPSP 1
@@ -27,6 +36,24 @@ const CInt64 cint64_zero = {0, 0};
 const CInt64 cint64_one = {0, 1};
 const CInt64 cint64_max = {0x7FFFFFFF, 0xFFFFFFFF};
 const CInt64 cint64_min = {0x80000000, 0};
+#endif
+
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3: real functions (one copy each, called; the GC header's inline bodies)
+void CInt64_SetLong(CInt64* pN, SInt32 n) {
+    pN->lo = n;
+    pN->hi = (n < 0) ? 0xFFFFFFFF : 0;
+}
+void CInt64_SetULong(CInt64* pN, UInt32 n) {
+    pN->lo = n;
+    pN->hi = 0;
+}
+Boolean CInt64_IsZero(CInt64* n) {
+    return n->hi == 0 && n->lo == 0;
+}
+Boolean CInt64_IsOne(CInt64* n) {
+    return n->hi == 0 && n->lo == 1;
+}
 #endif
 
 #define SHIFT_LEFT_ONE(a, b) \

@@ -85,7 +85,11 @@ restart:
 #if MWCCPSP
                     CError_FATAL(128);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+                    CError_FATAL(94);
+#else
                     CError_FATAL(105);
+#endif
 #endif
             }
         }
@@ -1160,7 +1164,7 @@ ENode* argumentpromotion(ENode* expr, Type* type, short qual, Boolean checkAcces
 
         expr = CExpr_AssignmentPromotion(expr, type, qual, FALSE);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-        // b69 0x467CFC: an lvalue argument is passed by its address, without a copy
+        // b69 0x467CFC, 2.3.3 0x46F3FC: an lvalue argument is passed by its address, without a copy
         if (ENODE_IS(expr, EINDIRECT)) {
             expr->data.monadic->rtype = CDecl_NewPointerType(expr->rtype);
             expr->data.monadic->flags = expr->flags;
@@ -1221,7 +1225,11 @@ ENodeList* CExpr_ScanExpressionList(Boolean is_parens) {
     while (1) {
         current->next = NULL;
         current->node = assignment_expression();
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 (0x46F500) has no old_argmatch
+        if (!ENODE_IS(current->node, EMEMBER)) {
+#else
         if (copts.old_argmatch && !ENODE_IS(current->node, EMEMBER)) {
+#endif
             current->node = pointer_generation(current->node);
         }
 
@@ -2108,7 +2116,11 @@ static SInt32 CExpr_AtomTypeID(UInt8 integral) {
         case IT_24:
             return 39;
         default:
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(1856);
+#else
             CError_FATAL(1976);
+#endif
             return 0;
     }
 }
@@ -2362,6 +2374,8 @@ inline static ENode* s_expression301(void);
 static ENode* CExpr_NameResultExpr(NameResult* pr, ENode* expr, Boolean isAddressOf);
 ENode* CExpr_ObjAccessExpr(EObjAccess* acc, Boolean isAddressOf);
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 // 0x516530
 static ENode* primary_expression(Boolean isAddressOf) {
     NameResult pr;
@@ -2497,6 +2511,8 @@ static ENode* primary_expression(Boolean isAddressOf) {
     CError_ErrorSkip(ERR_EXPRESSION_SYNTAX_ERROR);
     return nullnode();
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #else
 static ENode* primary_expression(Boolean isAddressOf) {
     NameResult pr;
@@ -3743,7 +3759,7 @@ static ENode* call_ptmf(ENode* expr) {
         return nullnode();
     }
 
-    if (Type_RequiresMemoryReturn(rettype)) {
+    if (CEXPR_RESULT_IN_MEMORY(rettype)) {
         callobj = rt_ptmf_scall4;
     } else {
         callobj = rt_ptmf_scall;
@@ -3758,7 +3774,11 @@ static ENode* call_ptmf(ENode* expr) {
     list->next = args;
     list->node = expr->data.mfpointer.mfpointer->data.monadic;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (!COPTS_T.old_argmatch) {
+#else
     if (!copts.old_argmatch) {
+#endif
         CError_ASSERT(2570, IS_TYPE_POINTER_ONLY(list->node->rtype));
         list->node->rtype = TYPE(&void_ptr);
     }
@@ -3945,6 +3965,8 @@ static ENode* CExpr_PostIncrement301(ENode* expr) {
 }
 #pragma auto_inline reset
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 // 0x514990
 static ENode* postfix_expression(Boolean isAddressOf) {
     DeclInfo di;
@@ -4082,6 +4104,8 @@ static ENode* postfix_expression(Boolean isAddressOf) {
         }
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 // 3.0.1: a member name parsed ahead (templates): qualifiers then the name
 struct CExprMemberQual {
@@ -4458,7 +4482,7 @@ dont_do_indirect:
             expr = pointer_generation(expr);
             if (ENODE_IS(expr, EFUNCCALL) &&
                 (IS_TYPE_CLASS(expr->rtype) || IS_TYPE_STRUCT(expr->rtype)) &&
-                !Type_RequiresMemoryReturn(expr->rtype)) {
+                !CEXPR_RESULT_IN_MEMORY(expr->rtype)) {
                 temp = CExpr_NewETEMPNode(expr->rtype, TRUE);
 #if MWCC_CORE == MWCC_CORE_B52
                 copy = CExpr_CopyENode(temp);
@@ -6219,7 +6243,11 @@ ENode* do_typecast(ENode* expr, Type* type, UInt32 qual) {
     ENode* tmp;
     short flags;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (!COPTS_T.old_argmatch) {
+#else
     if (!copts.old_argmatch) {
+#endif
         expr = CExpr_Convert(expr, type, qual, TRUE, FALSE);
         return expr;
     }
@@ -6781,8 +6809,13 @@ ENode* CExpr_New_EMUL_Node(ENode* left, ENode* right) {
         CError_ASSERT(5828, left = conv.left);
         CError_ASSERT(5829, right = conv.right);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(4127, left = conv.left);
+        CError_ASSERT(4128, right = conv.right);
+#else
         CError_ASSERT(4573, left = conv.left);
         CError_ASSERT(4574, right = conv.right);
+#endif
 #endif
     }
 
@@ -6797,6 +6830,8 @@ ENode* CExpr_New_EMUL_Node(ENode* left, ENode* right) {
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT (-7)
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts (inlined into CExpr_ParseDyadicExpression)
 ENode* CExpr_New_EDIV_Node(ENode* left, ENode* right, Boolean no_warning) {
     Conversion conv;
 
@@ -6818,8 +6853,13 @@ ENode* CExpr_New_EDIV_Node(ENode* left, ENode* right, Boolean no_warning) {
         CError_ASSERT(5854, left = conv.left);
         CError_ASSERT(5855, right = conv.right);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(4153, left = conv.left);
+        CError_ASSERT(4154, right = conv.right);
+#else
         CError_ASSERT(4599, left = conv.left);
         CError_ASSERT(4600, right = conv.right);
+#endif
 #endif
     }
 
@@ -6838,6 +6878,8 @@ ENode* CExpr_New_EDIV_Node(ENode* left, ENode* right, Boolean no_warning) {
 #define CError_B52_SHIFT (1241)
 #endif
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 ENode* CExpr_New_EMODULO_Node(ENode* left, ENode* right, Boolean no_warning) {
     Conversion conv;
 
@@ -6859,8 +6901,13 @@ ENode* CExpr_New_EMODULO_Node(ENode* left, ENode* right, Boolean no_warning) {
         CError_ASSERT(5880, left = conv.left);
         CError_ASSERT(5881, right = conv.right);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(4179, left = conv.left);
+        CError_ASSERT(4180, right = conv.right);
+#else
         CError_ASSERT(4625, left = conv.left);
         CError_ASSERT(4626, right = conv.right);
+#endif
 #endif
     }
 
@@ -6897,6 +6944,8 @@ ENode* CExpr_New_EMODULO_Node(ENode* left, ENode* right, Boolean no_warning) {
 
     return makediadicnode(left, right, EMODULO);
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
@@ -6931,8 +6980,13 @@ ENode* CExpr_New_EADD_Node(ENode* left, ENode* right) {
         CError_ASSERT(5927, left = conv.left);
         CError_ASSERT(5928, right = conv.right);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(4226, left = conv.left);
+        CError_ASSERT(4227, right = conv.right);
+#else
         CError_ASSERT(4672, left = conv.left);
         CError_ASSERT(4673, right = conv.right);
+#endif
 #endif
     }
 
@@ -6968,8 +7022,13 @@ ENode* CExpr_New_ESUB_Node(ENode* left, ENode* right) {
         CError_ASSERT(5952, left = conv.left);
         CError_ASSERT(5953, right = conv.right);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(4251, left = conv.left);
+        CError_ASSERT(4252, right = conv.right);
+#else
         CError_ASSERT(4697, left = conv.left);
         CError_ASSERT(4698, right = conv.right);
+#endif
 #endif
     }
 
@@ -6993,6 +7052,8 @@ static Boolean CExpr_IsIntOrEnumOperand(ENode* expr) {
 #if MWCCPSP
 
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 ENode* CExpr_New_ESHL_Node(ENode* left, ENode* right) {
     Conversion conv;
 
@@ -7275,6 +7336,8 @@ static ENode* pointercompare(ENodeType nt, ENode* left, ENode* right) {
 
     return logicalexpression(makediadicnode(left, right, nt));
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
@@ -7315,6 +7378,8 @@ static ENode* unsigncheck(ENode* expr, Boolean isLess, Boolean orEqual) {
 #define CError_B52_SHIFT (1276)
 #endif
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 ENode* CExpr_New_ELESS_Node(ENode* left, ENode* right) {
     Conversion conv;
 
@@ -7567,6 +7632,8 @@ ENode* CExpr_New_EGREATEREQU_Node(ENode* left, ENode* right) {
     left = CodeGen_CheckExpr(left);
     return left;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
@@ -7666,6 +7733,8 @@ ENode* memberpointercompare(ENodeType nt, ENode* left, ENode* right) {
 #define CError_B52_SHIFT (1275)
 #endif
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 ENode* CExpr_New_EEQU_Node(ENode* left, ENode* right) {
     Conversion conv;
 
@@ -7812,6 +7881,8 @@ ENode* CExpr_New_ENOTEQU_Node(ENode* left, ENode* right) {
     left = CodeGen_CheckExpr(left);
     return logicalexpression(left);
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
@@ -7821,6 +7892,8 @@ ENode* CExpr_New_ENOTEQU_Node(ENode* left, ENode* right) {
 #define CError_B69_SHIFT 0
 #endif
 #if MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 // 3.0.1: GCC's <? (minimum, #pragma gcc_extensions)
 ENode* CExpr_New_EMIN_Node(ENode* left, ENode* right) {
     Conversion conv;
@@ -7902,6 +7975,8 @@ ENode* CExpr_New_EMAX_Node(ENode* left, ENode* right) {
     left = CodeGen_CheckExpr(left);
     return left;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #endif
 
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -7956,6 +8031,8 @@ static ENode* CExpr_New_EMINMAX_Node(
 
 #endif
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 ENode* CExpr_New_EAND_Node(ENode* left, ENode* right) {
     Conversion conv;
 
@@ -8476,6 +8553,8 @@ illegal:
 #endif
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #undef CError_B69_SHIFT
 #define CError_B69_SHIFT 0
@@ -8490,6 +8569,8 @@ illegal:
 #endif
 #endif
 #if MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 // 0x5127B0: left->*right and left.*right
 ENode* func_005127B0(ENode* left, ENode* right, Boolean isPointer) {
     Conversion conv;
@@ -8589,14 +8670,22 @@ ENode* func_005127B0(ENode* left, ENode* right, Boolean isPointer) {
     }
     return left;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 ENode* CExpr_NewDyadicNode(ENode* left, ENodeType nt, ENode* right) {
     switch (nt) {
         default:
 #if MWCCPSP
             CError_FATAL(7035);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(5126);
+#else
             CError_FATAL(5649);
+#endif
 #endif
         case EADD:
             return CExpr_New_EADD_Node(left, right);
@@ -8652,6 +8741,8 @@ ENode* CExpr_NewDyadicNode(ENode* left, ENodeType nt, ENode* right) {
             return CExpr_New_ELOR_Node(left, right);
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)
@@ -8885,6 +8976,8 @@ static Boolean CExpr_GetDyadicInfo(short token, DyadicInfo* info) {
 }
 #endif
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 static ENode* CExpr_ParseDyadicExpression(ENode* left, UInt8 prec, Boolean no_warning) {
     ENode* right;
     Boolean is_eland_or_elor;
@@ -8958,6 +9051,8 @@ inner_loop:
 
     return left;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 static Boolean CExpr_IsBlockMoveType(Type* type) {
     switch (type->type) {
@@ -8998,6 +9093,8 @@ inline ENode* CExpr_CondClassConvert(ENode* expr, Type* type, UInt32 qual) {
     return NULL;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 ENode* CExpr_New_ECOND_Node(ENode* cond, ENode* expr1, ENode* expr2) {
     ENode* result;
     ENode* conv1;
@@ -9254,6 +9351,8 @@ failed:
     }
     return CodeGen_CheckExpr(result);
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #else
 ENode* CExpr_New_ECOND_Node(ENode* cond, ENode* expr1, ENode* expr2) {
     ENode* result;
@@ -9330,7 +9429,11 @@ ENode* CExpr_New_ECOND_Node(ENode* cond, ENode* expr1, ENode* expr2) {
 
     if ((IS_TYPE_CLASS(expr1->rtype) || IS_TYPE_CLASS(expr2->rtype)) &&
         !is_typesame(expr1->rtype, expr2->rtype)) {
+#if MWCC_CORE == MWCC_CORE_B233
+        if (!COPTS_T.old_argmatch) {
+#else
         if (!copts.old_argmatch) {
+#endif
             if (CExpr_CondOperatorMatch(expr1, expr2, &conv)) {
                 CError_ASSERT(6253, !conv.expression);
                 expr1 = conv.left;
@@ -9505,6 +9608,8 @@ failed:
 #endif
 #endif
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 static ENode* conditional_expression(void) {
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
     ENode* cond;
@@ -9572,6 +9677,8 @@ static ENode* conditional_expression(void) {
 
     return CExpr_New_ECOND_Node(cond, expr1, expr2);
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 static ENode* CExpr_MakeOpAssNode(ENode* left, ENode* right, ENodeType nt) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -9671,6 +9778,8 @@ static inline char* CExpr_AssignString(ENodeType nt) {
     }
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 static ENode* makeassignmentnode301(ENode* left, ENodeType nt, ENode* right) {
     ENode* result;
     ENodeList* args;
@@ -9949,6 +10058,8 @@ illegal:
     );
     return nullnode();
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #endif
 
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -9966,7 +10077,11 @@ static ENode* makeassignmentnode(ENode* left, ENodeType nt, short token) {
     tk = lex();
     right = assignment_expression();
     if (copts.cplusplus) {
+#if MWCC_CORE == MWCC_CORE_B233
+        if (COPTS_T.old_argmatch && !ENODE_IS(right, EMEMBER)) {
+#else
         if (copts.old_argmatch && !ENODE_IS(right, EMEMBER)) {
+#endif
             right = pointer_generation(right);
         }
         if (CExpr_CheckOperator(token, left, right, &conv)) {
@@ -10111,7 +10226,11 @@ static ENode* makepassignmentnode(ENode* left, ENodeType nt, short token) {
         tk = lex();
         right = pointer_generation(assignment_expression());
         if (CExpr_CheckOperator(token, left, right, &conv)) {
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(6132, conv.expression);
+#else
             CError_ASSERT(6676, conv.expression);
+#endif
             return conv.expression;
         }
         left = CExpr_LValue(left, TRUE, TRUE);
@@ -10311,6 +10430,8 @@ static inline ENode* CExpr_TransformOpAssign301(ENode* expr) {
     return expr;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 ENode* CExpr_MakeAssignment(ENode* left, ENodeType nt, ENode* right) {
     ENode* expr;
 
@@ -10390,6 +10511,8 @@ ENode* CExpr_MakeAssignment(ENode* left, ENodeType nt, ENode* right) {
             return NULL;
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 ENode* assignment_expression(void) {
     ENode* left;
@@ -10539,6 +10662,8 @@ ENode* conv_assignment_expression(void) {
 // compare warning, the side-effect test knows the 3.0.1 node kinds
 // (EMIN/EMAX, scopes, template-dependent nodes) and looks through an
 // indirection of a comma.
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts (inlined into CExpr_CheckUnusedExpression)
 inline static Boolean CExpr_HasSideEffect(ENode* expr) {
     switch (expr->type) {
         case EMONMIN:
@@ -10627,6 +10752,8 @@ inline static Boolean CExpr_HasSideEffect(ENode* expr) {
     }
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 void CExpr_CheckUnusedExpression(ENode* expr) {
     ENode* scan;
     ENodeList* arg;
@@ -10693,6 +10820,8 @@ void CExpr_CheckUnusedExpression(ENode* expr) {
         }
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #else
 static Boolean CExpr_HasSideEffect(ENode* expr) {
     switch (expr->type) {
@@ -10891,6 +11020,8 @@ void CExpr_CheckUnusedExpression(ENode* expr) {
 #define CError_B69_SHIFT (-7)
 #endif
 #if MWCCPSP
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts (s_expression301 too)
 // 0x50D1E0: commas stay operands in inline assembly; template-dependent
 // operands make a dependent expression. 3.0.1 inlines it into expression.
 inline static ENode* s_expression301(void) {
@@ -10925,6 +11056,8 @@ inline static ENode* s_expression301(void) {
 #if MWCCPSP
 
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 ENode* s_expression(void) {
     ENode* left;
     ENode* right;
@@ -10965,7 +11098,11 @@ ENode* s_expression(void) {
         right = pointer_generation(assignment_expression());
 
         if (copts.cplusplus && CExpr_CheckOperator(',', left, right, &conv)) {
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(6581, left = conv.expression);
+#else
             CError_ASSERT(7150, left = conv.expression);
+#endif
         } else {
             CExpr_CheckUnusedExpression(left);
             left = makecommaexpression(left, right);
@@ -10987,6 +11124,8 @@ ENode* expression(void) {
     return pointer_generation(s_expression());
 #endif
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 CInt64 CExpr_IntegralConstExprType(Type** tint) {
     ENode* expr;
@@ -11018,6 +11157,8 @@ CInt64 CExpr_IntegralConstExprType(Type** tint) {
 #define CError_B52_SHIFT (1290)
 #endif
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -5 // b119 asserts
 ENode* CExpr_IntegralConstOrDepExpr(void) {
     ENode* expr;
 
@@ -11033,7 +11174,11 @@ ENode* CExpr_IntegralConstOrDepExpr(void) {
 #if MWCCPSP
                 CError_FATAL(8521);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_FATAL(6647);
+#else
                 CError_FATAL(7216);
+#endif
 #endif
         }
     }
@@ -11047,6 +11192,8 @@ ENode* CExpr_IntegralConstOrDepExpr(void) {
     expr->rtype = TYPE(&stchar);
     return expr;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT (0)

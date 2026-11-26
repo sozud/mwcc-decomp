@@ -478,7 +478,8 @@ Statement* IRO_Optimizer(Object* func, Statement* statements) {
                 }
                 if (copts.opt_optimizecontrolflow) {
                     IRO_EvaluateConditionals();
-#if MWCC_CORE != MWCC_CORE_B52
+                    // b119 (0x4D0C07): no loop depth recount after the second pass's conditionals
+#if MWCC_CORE != MWCC_CORE_B52 && !(MWCCPS2 && MWCCPS2_BUILD == 119)
                     IRO_SetLoopDepth();
 #endif
                 }
@@ -641,6 +642,9 @@ Statement* IRO_Optimizer(Object* func, Statement* statements) {
     return statements;
 }
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+Boolean IRO_B233RangeResult;
+#endif
 Statement* IRO_Optimizer(Object* func, Statement* statements) {
     Boolean changed;
     int pass;
@@ -693,11 +697,23 @@ Statement* IRO_Optimizer(Object* func, Statement* statements) {
     IRO_DumpAfterPhase("IRO_BuildflowGraph", FALSE);
 
     IRO_FindAllVars();
+#if MWCC_CORE == MWCC_CORE_B011126
+    IRO_CheckInit(); // 011126 (0x43AA30): no warn_uninitializedvar, always
+#else
+#if MWCC_CORE == MWCC_CORE_B233
+    if (COPTS_T.warn_uninitializedvar) {
+#else
     if (copts.warn_uninitializedvar) {
+#endif
         IRO_CheckInit();
     }
+#endif
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (!DisableDueToAsm && copts.optimizationlevel > 0 && COPTS_T.opt_pointer_analysis && func) {
+#else
     if (!DisableDueToAsm && copts.optimizationlevel > 0 && copts.opt_pointer_analysis && func) {
+#endif
         IRO_AnalyzePointers(func);
         if (copts.propagation && IRO_EvaluateDefinitePointers(func)) {
             IRO_UpdateFlagsOnInts();
@@ -747,6 +763,12 @@ Statement* IRO_Optimizer(Object* func, Statement* statements) {
                 IRO_ExpressionPropagation();
                 IRO_DumpAfterPhase("Copy and constant propagation", FALSE);
 
+#if MWCC_CORE == MWCC_CORE_B233
+                // 2.3.3's IRO_RangePropagateInFNode (0x4CA2C0) never clears its
+                // result: it starts as the caller's bl, which holds the pass
+                // (0x43E89C), so the second pass always recomputes succ/pred
+                IRO_B233RangeResult = pass != 0;
+#endif
                 IRO_RangePropagateInFNode();
                 IRO_DumpAfterPhase("IRO_RangePropagateInFNode", FALSE);
                 IRO_UpdateFlagsOnInts();
@@ -767,6 +789,8 @@ Statement* IRO_Optimizer(Object* func, Statement* statements) {
             IRO_RemoveUnreachable();
             IRO_SimplifyConditionals();
 
+// 2.3.3's IRO_Optimizer (0x43E99C) has no empty-loop pass and no unroller
+#if MWCC_CORE != MWCC_CORE_B233
             if (pass == 1 && copts.optimizationlevel > 2) {
                 IRO_RenumberInts();
                 IRO_DumpAfterPhase("Before IRO_FindEmptyLoops", FALSE);
@@ -781,6 +805,7 @@ Statement* IRO_Optimizer(Object* func, Statement* statements) {
                 IRO_DumpAfterPhase("After IRO_LoopUnroller", FALSE);
                 IRO_RenumberInts();
             }
+#endif
 
             VectorPhaseCalledFromUnroll = FALSE;
 
@@ -868,18 +893,27 @@ Statement* IRO_Optimizer(Object* func, Statement* statements) {
     IRO_RewriteBitFieldTemps();
     IRO_DumpAfterPhase("After IRO_RewriteBitFieldTemps", FALSE);
 
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x43EB9A): the usage counts are taken before the expressions
+    // are regenerated
+    CountUsage();
+#endif
+
     if (!DisableDueToAsm) {
         IRO_RegenerateExpressions();
         IRO_DumpAfterPhase("IRO_RegenerateExpressions", FALSE);
     }
 
+#if MWCC_CORE != MWCC_CORE_B233
     CountUsage();
+#endif
 
     IRO_DumpAfterPhase("After IRO_Optimizer", FALSE);
 
     statements = IRO_Delinearize(IRO_FirstNode, NULL);
 
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B233
+    // b69 0x43AC68 (2.3.3 narrows at the end of IRO_TransformTree instead)
     IRO_NarrowExpressions(statements);
 
 #endif

@@ -1230,7 +1230,11 @@ static void CTemplClass_CopyBaseClasses(
 #if MWCCPSP
                             CError_ASSERT(1271, base && instbase);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+                            CError_ASSERT(1147, base && instbase);
+#else
                             CError_ASSERT(1233, base && instbase);
+#endif
 #endif
 
                             if (base == action->u.base.insert_after) {
@@ -1482,7 +1486,11 @@ static void CTemplClass_CopyIVars(TypeDeduce* deduce, TemplClassInst* inst, Temp
 #if MWCCPSP
         CError_ASSERT(1436, !src->has_path);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(1333, !src->has_path);
+#else
         CError_ASSERT(1408, !src->has_path);
+#endif
 #endif
 
         dest = galloc(sizeof(ObjMemberVar));
@@ -1582,7 +1590,11 @@ static void CTemplClass_CopyObjType(TypeDeduce* deduce, ObjType* src, HashNameNo
 #if MWCCPSP
         CError_ASSERT(1533, list->next == NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(1406, list->next == NULL);
+#else
         CError_ASSERT(1481, list->next == NULL);
+#endif
 #endif
 
         newlist = galloc(sizeof(NameSpaceObjectList));
@@ -2078,7 +2090,11 @@ static void CTemplClass_CopyNameSpace(TypeDeduce* deduce, TemplClassInst* inst, 
     NameSpaceName* nsname;
     NameSpaceObjectList* list;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(1766, !templ->theclass.nspace->is_hash);
+#else
     CError_ASSERT(1841, !templ->theclass.nspace->is_hash);
+#endif
 
     for (nsname = templ->theclass.nspace->data.list; nsname; nsname = nsname->next) {
         for (list = &nsname->first; list; list = list->next) {
@@ -2096,12 +2112,20 @@ static void CTemplClass_CopyNameSpace(TypeDeduce* deduce, TemplClassInst* inst, 
                 case OT_TYPETAG:
                     break;
                 case OT_NAMESPACE:
+#if MWCC_CORE == MWCC_CORE_B233
+                    CError_FATAL(1790);
+#else
                     CError_FATAL(1865);
+#endif
                 case OT_OBJECT:
                     CTemplClass_CopyObject(deduce, OBJECT(list->object));
                     break;
                 default:
+#if MWCC_CORE == MWCC_CORE_B233
+                    CError_FATAL(1797);
+#else
                     CError_FATAL(1872);
+#endif
             }
         }
     }
@@ -2123,7 +2147,11 @@ static void CTemplClass_CopyUsingDecl(TypeDeduce* deduce, TypeTemplDep* type, Ac
     TypeClass* tclass;
     UInt32 qual = 0;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(1814, IS_TYPE_TEMPLATE(type) && type->dtype == TEMPLDEP_QUALNAME);
+#else
     CError_ASSERT(1889, IS_TYPE_TEMPLATE(type) && type->dtype == TEMPLDEP_QUALNAME);
+#endif
 
     tclass = TYPE_CLASS(CTemplTool_DeduceTypeCopy(deduce, TYPE(type->u.qual.type), &qual));
     if (!IS_TYPE_CLASS(tclass)) {

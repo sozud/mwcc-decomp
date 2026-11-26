@@ -17,7 +17,7 @@ typedef struct VENDORCODE {
     char flexlm_patch[2];
     char behavior_ver[5];
 #if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
-#if MWCCPSP
+#if MWCCPSP && !(MWCCPS2 && MWCCPS2_BUILD == 119) // b119 links FlexLM 3.26: 0x28 bytes
     char unk27[0x27C - 0x27]; // 3.0.1 links FlexLM 8: VENDORCODE is 0x27C bytes
 #endif
 #endif

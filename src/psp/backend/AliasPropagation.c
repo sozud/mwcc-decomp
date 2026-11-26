@@ -478,7 +478,7 @@ void func_0053B8B0(MPCode* use, int reg, Alias* alias) {
     }
 #if MWCCPS2
     // b210: qmove/vmove (0x1CC/0x2AF) are moves too
-    if (use->op != data_00625E48 && use->op != 0x1CC && use->op != 0x2AF) {
+    if (use->op != data_00625E48 && use->op != PS2_OP(0x1CC) && use->op != PS2_OP(0x2AF)) {
 #else
     if (use->op != data_00625E48) {
 #endif
@@ -577,8 +577,8 @@ void func_0053B8B0(MPCode* use, int reg, Alias* alias) {
         if (use->op == 3 ||
             use->op == 4 ||
             use->op == data_00625E48 ||
-            use->op == 0x1CC ||
-            use->op == 0x2AF) {
+            use->op == PS2_OP(0x1CC) ||
+            use->op == PS2_OP(0x2AF)) {
 #else
         if (use->op == 3 || use->op == 4 || use->op == data_00625E48) {
 #endif
@@ -612,7 +612,7 @@ int func_0053B7D0(register int candidateID, int useID) {
     int reg;
     UInt32 flags;
 
-    if (cand->op == 0x3AA &&
+    if (cand->op == PS2_OP(0x3AA) &&
         (UInt16)cand->args[2].reg == 0x1D &&
         cand->args[1].kind == 2 &&
         cand->args[1].value == 0) {
@@ -648,7 +648,7 @@ int func_0053B7D0(int candidateID, int useID) {
     Alias* alias;
     int reg;
 
-    if (cand->op == 0x3AA &&
+    if (cand->op == PS2_OP(0x3AA) &&
         cand->args[2].reg == 0x1D &&
         cand->args[1].kind == 2 &&
         cand->args[1].value == 0) {

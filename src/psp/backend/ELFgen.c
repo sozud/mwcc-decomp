@@ -243,6 +243,8 @@ ELFSymbol* ELF_NewSymbol(
     return sym;
 }
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -2 // b119 asserts
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 void ELF_DefineSymbol(
     ELFSymbol* sym, UInt16 shndx, UInt8 bind, UInt8 type, UInt32 size, void* data, UInt32 align
@@ -296,6 +298,8 @@ void ELF_DefineSymbol(
         sym->sym.st_value = offset;
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 ELFSymbol* ELF_NewUndefinedSymbol(

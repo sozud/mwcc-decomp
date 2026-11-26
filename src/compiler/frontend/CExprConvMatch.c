@@ -1355,7 +1355,11 @@ static ENode* CExpr_UserConversion(
 
                 if (CExpr_StandardConversionMatch(expr, argtype, arg->qual, FALSE, &cand_std)) {
                     if (best_ctor) {
+#if MWCC_CORE == MWCC_CORE_B233
+                        if (OBJ_FUNC_INST(cand) && !OBJ_FUNC_INST(best_ctor)) {
+#else
                         if (cand->u.func.inst && !best_ctor->u.func.inst) {
+#endif
                             continue;
                         }
                         if (CExpr_IsBetterStandardConv(&ctor_std, &cand_std)) {
@@ -1363,7 +1367,11 @@ static ENode* CExpr_UserConversion(
                         }
 
                         if (!CExpr_IsBetterStandardConv(&cand_std, &ctor_std)) {
+#if MWCC_CORE == MWCC_CORE_B233
+                            if (!OBJ_FUNC_INST(cand) && OBJ_FUNC_INST(best_ctor)) {
+#else
                             if (!cand->u.func.inst && best_ctor->u.func.inst) {
+#endif
                                 ambig_ctors = NULL;
                             } else {
                                 objlist = lalloc(sizeof(ObjectList));
@@ -2238,7 +2246,11 @@ do_int_float_conversion:
                             }
                             break;
                         case TYPEPOINTER:
+#if MWCC_CORE == MWCC_CORE_B233
+                            if (expr->rtype->size > type->size && COPTS_T.warn_ptr_int_conv) {
+#else
                             if (expr->rtype->size > type->size && copts.warn_ptr_int_conv) {
+#endif
                                 CError_Warning(ERR_INTEGRAL_TYPE_TOO_SMALL_FOR_POINTER);
                             }
                             if (ENODE_IS(expr, ETYPCON)) {
@@ -2385,7 +2397,11 @@ ENode* CExpr_AssignmentPromotion(ENode* expr, Type* type2, UInt32 qual2, Boolean
     ObjBase* obj;
 #endif
 
+#if MWCC_CORE == MWCC_CORE_B233
+    if (COPTS_T.old_argmatch) {
+#else
     if (copts.old_argmatch) {
+#endif
         return oldassignmentpromotion(expr, type2, qual2, checkAccess);
     }
 #if MWCCPSP
@@ -2465,13 +2481,21 @@ static Boolean CExpr_IsBetterMatch(Match* a, Match* b, int count) {
 
     if (b->object) {
         CError_ASSERT(2165, IS_TYPE_FUNC(b->object->type));
+#if MWCC_CORE == MWCC_CORE_B233
+        if (OBJ_FUNC_INST(b->object)) {
+#else
         if (b->object->u.func.inst) {
+#endif
             if (!a->object) {
                 return TRUE;
             }
 
             CError_ASSERT(2169, IS_TYPE_FUNC(a->object->type));
+#if MWCC_CORE == MWCC_CORE_B233
+            if (!OBJ_FUNC_INST(a->object)) {
+#else
             if (!a->object->u.func.inst) {
+#endif
                 return TRUE;
             }
 

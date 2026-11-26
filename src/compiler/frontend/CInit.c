@@ -495,7 +495,11 @@ static Object* CInit_GetInitObject(Object* obj) {
 #if MWCCPSP
         CError_ASSERT(928, !obj->u.alias.offset);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(496, !obj->u.alias.offset);
+#else
         CError_ASSERT(521, !obj->u.alias.offset);
+#endif
 #endif
         obj = obj->u.alias.object;
     }
@@ -2822,7 +2826,11 @@ static void CInit_TypeExpr(Type* type, ENode* expr) {
             CError_Error(ERR_ILLEGAL_INITIALIZATION);
             return;
         default:
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(2007);
+#else
             CError_FATAL(2082);
+#endif
     }
 }
 
@@ -4026,6 +4034,11 @@ ENode* CInit_AutoObject(Object* obj, Type* type, UInt32 qual) {
         newtype = CDecl_NewStructType(type->size, CMach_GetTypeAlign(type));
     }
     newobj = CInit_CreateStaticDataObject(newtype, 0, NULL);
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x461642): the initialiser image is always declared with its
+    // bytes, all zero or not (so it is .data, never .bss)
+    CInit_DeclareData(newobj, db.buffer, db.list, db.size);
+#else
     if (db.list || !CInit_IsAllZero(db.buffer, db.size)) {
 #if MWCC_CORE == MWCC_CORE_B52
         extern Object* clear_func;
@@ -4054,6 +4067,7 @@ ENode* CInit_AutoObject(Object* obj, Type* type, UInt32 qual) {
         CInit_DeclareReadOnlyData(newobj, NULL, NULL, db.size);
 #endif
     }
+#endif
 
 #if MWCC_CORE != MWCC_CORE_B52
     indirect_expr = makemonadicnode(obj_expr, EINDIRECT);
@@ -4442,8 +4456,15 @@ void CInit_InitializeData(Object* obj) {
         if (obj->sclass == TK_EXTERN) {
             return;
         }
+#if MWCC_CORE == MWCC_CORE_B233
+        // 2.3.3 (0x461D70): a static is defined at once; any other C object is
+        // tentative, complete or not
+        if (!copts.cplusplus && obj->sclass != TK_STATIC) {
+            {
+#else
         if (!copts.cplusplus) {
             if (IsCompleteType(obj->type)) {
+#endif
                 for (list = cinit_tentative; list; list = list->next) {
                     if (list->object == obj) {
                         break;
@@ -4715,7 +4736,11 @@ void CInit_RewriteString(ENode* expr, Boolean unused) {
         CError_Error(ERR_ILLEGAL_USE_PRECOMPILED_HEADER);
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(4020, expr->rtype->type == TYPEPOINTER);
+#else
     CError_ASSERT(4229, expr->rtype->type == TYPEPOINTER);
+#endif
 
     is_wide = TYPE_POINTER(expr->rtype)->target->size != 1;
     if (copts.poolstrings) {

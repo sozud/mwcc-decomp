@@ -337,10 +337,15 @@ Boolean IRO_IsSubableExpression(IROLinear* nd) {
                             if (IS_TYPE_INT(rtype) &&
                                 TYPE_INTEGRAL(rtype)->integral < 0x11 &&
                                 rtype->size >= nd->u.monadic->rtype->size) {
-#else
+#elif MWCC_CORE == MWCC_CORE_B233
+                // 2.3.3 (0x4ED8E0): only a widening integer cast
             } else if (nd->nodetype == ETYPCON &&
-                       IS_TYPE_INT(nd->rtype) &&
-                       nd->rtype->size >= nd->u.monadic->rtype->size) {
+                       nd->rtype->type == TYPEINT &&
+                       nd->rtype->size > nd->u.monadic->rtype->size) {
+#else
+    } else if (nd->nodetype == ETYPCON &&
+               IS_TYPE_INT(nd->rtype) &&
+               nd->rtype->size >= nd->u.monadic->rtype->size) {
 #endif
                                 return TRUE;
 #if MWCC_CORE != MWCC_CORE_B52
@@ -353,12 +358,24 @@ Boolean IRO_IsSubableExpression(IROLinear* nd) {
                         return FALSE;
 #endif
                     case IROLinearOperand:
+#if MWCC_CORE == MWCC_CORE_B233
+                        // 2.3.3 (0x4ED780): no operand is a common subexpression
+                        return FALSE;
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if MWCC_CORE == MWCC_CORE_B52
                         if (nd->u.node &&
                             nd->u.node->type == EOBJREF &&
                             IRO_Hook12 &&
                             ((Boolean (*)(ENode*))IRO_Hook12)(nd->u.node)) {
+#elif MWCC_CORE == MWCC_CORE_B233
+        if (COPTS_T.irocseglobaladdresses &&
+            nd->u.node &&
+            nd->u.node->type == EOBJREF &&
+            (varobj = nd->u.node->data.objref) &&
+            varobj->type->type != TYPEFUNC &&
+            varobj->datatype != DLOCAL &&
+            !is_volatile_object(varobj)) {
 #else
         if (copts.irocseglobaladdresses &&
             nd->u.node &&

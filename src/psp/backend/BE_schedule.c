@@ -56,7 +56,10 @@ void func_004B8240(MPCodeBlock* block) {
         return;
     }
     opcode = last->op;
-    if ((opcode == 0x39 || opcode == 0x38A || opcode == 0x38B || (flags & 0x10000000)) &&
+    if ((opcode == 0x39 ||
+         opcode == PS2_OP(0x38A) ||
+         opcode == PS2_OP(0x38B) ||
+         (flags & 0x10000000)) &&
         last->unk38 == 0 &&
         !(flags & 0x800000)) {
         target = LABEL_BLOCK(func_0048FAE0(last));
@@ -86,6 +89,29 @@ void func_004B8240(MPCodeBlock* block) {
         }
     }
 }
+#elif MWCC_CORE == MWCC_CORE_B233
+// 2.3.3 (0x4AA310): a nop in the delay slot of an unscheduled block's
+// branch unless the slot is filled; no jump to the next block is deleted
+// and no short loop gets a second nop
+void func_004B8240(MPCodeBlock* block) {
+    MPCode* last;
+    MPCode* nop;
+
+    if (block->flags2E & 0x4000) {
+        return;
+    }
+    last = block->last;
+    if (!last || !(last->flags & 0x20000000)) {
+        return;
+    }
+    if (last->prev && (last->prev->flags & 0x40000000)) {
+        return;
+    }
+    nop = makepcode(func_004903F0());
+    nop->unk20 = last->unk20;
+    nop->flags |= 0x40000000;
+    insertpcodebefore(last, nop);
+}
 #else
 void func_004B8240(MPCodeBlock* block) {
     MPCode* last;
@@ -109,9 +135,10 @@ void func_004B8240(MPCodeBlock* block) {
         !last->unk38 &&
         !(last->flags & 0x800000)) {
 #else
-    if ((
-            last->op == 0x39 || last->op == 0x38A || last->op == 0x38B || (last->flags & 0x10000000)
-        ) &&
+    if ((last->op == 0x39 ||
+         last->op == PS2_OP(0x38A) ||
+         last->op == PS2_OP(0x38B) ||
+         (last->flags & 0x10000000)) &&
         !last->unk38 &&
         !(last->flags & 0x800000)) {
 #endif
@@ -133,9 +160,14 @@ void func_004B8240(MPCodeBlock* block) {
     nop->unk20 = last->unk20;
     nop->flags |= 0x40000000;
     insertpcodebefore(last, nop);
+#if MWCC_CORE == MWCC_CORE_B011126
+    // 011126 (0x4B1E13): the second nop only for a two-instruction loop
+    if (target && target->number == last->block->number && target->pcodecount == 2) {
+#else
     if (target && target->number == last->block->number && target->pcodecount <= 7) {
-#if MWCCPS2
-        // b210: #pragma padloop pads the short loop instead
+#endif
+#if MWCCPS2 && MWCC_CORE != MWCC_CORE_B011126
+        // b210: #pragma padloop pads the short loop instead (011126, 0x4B1D00: always the nop)
         if (copts.padloop) {
             ps2_padloop_4C2960(block);
             return;
@@ -154,6 +186,10 @@ void func_004B8240(MPCodeBlock* block) {
 // in InlineAsmMIPS.h
 
 extern void func_0046F9B0(void); // recompute the predecessor lists
+#if MWCC_CORE == MWCC_CORE_B233
+extern void deleteunreachableblocks(void);
+extern void b233_addpredecessors(void); // PCode.c
+#endif
 
 static Boolean changed;
 static void func_004B7AE0(MPCodeBlock* block);
@@ -162,7 +198,7 @@ static int func_004B7D10(MPCodeBlock* block);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #define IS_JUMP(pc) ((pc)->op == OPC(0x39) || (pc)->op == OPC(0x38A) || (pc)->op == OPC(0x38B))
 #else
-#define IS_JUMP(pc) ((pc)->op == 0x39 || (pc)->op == 0x38A || (pc)->op == 0x38B)
+#define IS_JUMP(pc) ((pc)->op == 0x39 || (pc)->op == PS2_OP(0x38A) || (pc)->op == PS2_OP(0x38B))
 #endif
 
 void func_004B7A50(void) {
@@ -182,7 +218,13 @@ void func_004B7A50(void) {
             for (block = data_00624FD0; block; block = block->next) {
                 block->predecessors = NULL;
             }
+#if MWCC_CORE == MWCC_CORE_B233
+            // 2.3.3 (0x4A9D32): deleteunreachableblocks, then the lists anew
+            deleteunreachableblocks();
+            b233_addpredecessors();
+#else
             func_0046F9B0();
+#endif
         }
     } while (changed);
 }
@@ -384,7 +426,7 @@ static int func_004B7D10(MPCodeBlock* block) {
     return 0;
 }
 
-#define IS_UNCOND_JUMP(op) ((op) == 0x39 || (op) == 0x38A || (op) == 0x38B)
+#define IS_UNCOND_JUMP(op) ((op) == 0x39 || (op) == PS2_OP(0x38A) || (op) == PS2_OP(0x38B))
 
 // A jump the delay-slot filler can fold into a branch: a plain 0x39 (no
 // register), possibly after a filled delay slot (0xBA).
@@ -462,7 +504,12 @@ static Boolean b69_writeslive(MPCode* pc, MPCodeBlock* block) {
     MOperand* op = &pc->args[(pc->flags & 0x80000000) ? 1 : 0];
     BlockLiveness* bl = &data_0062541C[op->rclass].blocks[block->number];
 
+#if MWCC_CORE == MWCC_CORE_B233 || MWCC_CORE == MWCC_CORE_B011126
+    // 2.3.3 (0x4AA2A0) and 011126 (0x4B1C70) test the live-out set only
+    if (bitvectorgetbit(op->reg, bl->liveout)) {
+#else
     if (bitvectorgetbit(op->reg, bl->liveout) || bitvectorgetbit(op->reg, bl->livein)) {
+#endif
         return 1;
     }
     return 0;
@@ -543,6 +590,160 @@ static Boolean b69_independent(MPCode* pc, MPCodeBlock* block) {
 #else
 #define B198_SLOT_COPY 0
 #endif
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3 (0x4AA550): b69's filler, but a conditional branch whose target's
+// first instruction cannot simply go in its slot becomes branch-likely (the
+// next opcode) with that instruction moved or copied, unless no_branch_likely;
+// no padloop handling
+void func_004B7E20(MPCodeBlock* block, Boolean special) {
+    MPCode* br;
+    MPCode* pc;
+    MPCode* first;
+    MPCode* fallfirst;
+    MPCodeBlock* target;
+    MPCodeBlock* follow;
+    MPCodeBlock* fall;
+    MPBlockLink* succ;
+    MPBlockLink* pred;
+
+    if (block->flags2E & 0x4000) {
+        return;
+    }
+    if (!block->pcodecount) {
+        return;
+    }
+    br = block->last;
+    if (!(br->flags & 0x20000000)) {
+        return;
+    }
+    if ((IS_UNCOND_JUMP(br->op) || (br->flags & 0x10000000)) &&
+        br->unk38 == 0 &&
+        !(br->flags & 0x800000)) {
+        target = LABEL_BLOCK(func_0048FAE0(br));
+        follow = nextnonempty(block);
+        if (follow && target->number == follow->number) {
+            deletepcode(br);
+            return;
+        }
+    }
+    if ((pc = func_004B88B0(block))) {
+        insertpcodebefore(br, pc);
+        return;
+    }
+    if (special || !copts.no_load_delay_nops) {
+        goto nop;
+    }
+    if (IS_UNCOND_JUMP(br->op)) {
+        target = br->block->successors->block;
+        first = target->first;
+        if (!first || (first->flags & 0x48000000)) {
+            goto nop;
+        }
+        pred = target->predecessors;
+        if (pred && !pred->nextpred) {
+            deletepcode(first);
+            insertpcodebefore(br, first);
+            first->flags |= 0x40000000;
+        } else {
+            if (first->unk38 == 5) {
+                goto nop;
+            }
+            pc = copypcode(first);
+            insertpcodebefore(br, pc);
+            pc->flags |= 0x40000000;
+            br->flags |= 0x4000000;
+            first->flags |= 0x8000000;
+        }
+        freeoheap();
+        func_004C34A0();
+        return;
+    }
+    if (!(br->flags & 0x10000000)) {
+        goto nop;
+    }
+    target = LABEL_BLOCK(func_0048FAE0(br));
+    succ = block->successors;
+    fall = succ->block;
+    if (fall->number == target->number) {
+        fall = succ->next->block;
+    }
+    fallfirst = fall->first;
+    first = target->first;
+    if (first) {
+        if (!(first->flags & 0x48000106) && !b69_writeslive(first, block)) {
+            pred = target->predecessors;
+            if (pred && !pred->nextpred) {
+                goto move;
+            }
+            for (; pred; pred = pred->nextpred) {
+                if (pred->from->number != block->number && pred->from->number != fall->number) {
+                    goto copy;
+                }
+            }
+            if (fall->predecessors &&
+                !fall->predecessors->nextpred &&
+                b69_independent(first, fall)) {
+                goto move;
+            }
+copy:
+            if (first->unk38 == 5) {
+                goto nop;
+            }
+            pc = copypcode(first);
+            insertpcodebefore(br, pc);
+            pc->flags |= 0x40000000;
+            br->flags |= 0x4000000;
+            first->flags |= 0x8000000;
+            freeoheap();
+            func_004C34A0();
+            return;
+        }
+        if (!copts.no_branch_likely && !(first->flags & 0x48000106)) {
+            pred = target->predecessors;
+            if (pred && !pred->nextpred) {
+                deletepcode(first);
+                insertpcodebefore(br, first);
+                first->flags |= 0x40000000;
+            } else {
+                if (first->unk38 == 5) {
+                    goto nop;
+                }
+                pc = copypcode(first);
+                insertpcodebefore(br, pc);
+                pc->flags |= 0x40000000;
+                br->flags |= 0x4000000;
+                first->flags |= 0x8000000;
+            }
+            freeoheap();
+            func_004C34A0();
+            br->op++; // the branch-likely form
+            return;
+        }
+    }
+    if (fallfirst &&
+        !(fallfirst->flags & 0x48000106) &&
+        fall->predecessors &&
+        !fall->predecessors->nextpred &&
+        b69_movable(fallfirst) &&
+        !b69_writeslive(fallfirst, block)) {
+        first = fallfirst;
+        goto move;
+    }
+
+nop:
+    pc = makepcode(func_004903F0());
+    pc->flags |= 0x40000000;
+    insertpcodebefore(br, pc);
+    return;
+
+move:
+    deletepcode(first);
+    insertpcodebefore(br, first);
+    first->flags |= 0x40000000;
+    freeoheap();
+    func_004C34A0();
+}
+#else
 void func_004B7E20(MPCodeBlock* block, Boolean special) {
     MPCode* br;
     MPCode* pc;
@@ -621,7 +822,8 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
             insertpcodebefore(br, first);
             first->flags |= 0x40000000;
         } else {
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if (MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52) || MWCCPS2_BUILD == 119
+            // b69/b52, b119 (0x4C2E65): only 5 stays out of a copied delay slot
             if (first->unk38 == 5) {
 #else
             if (first->unk38 == 5 || first->unk38 == 6) {
@@ -638,6 +840,12 @@ void func_004B7E20(MPCodeBlock* block, Boolean special) {
         func_004C34A0();
         return;
     }
+#if !MWCC_CORE && MWCCPS2_BUILD == 119
+    // b119 (0x4C2CF0): a conditional branch whose slot the block can't fill
+    // gets a nop; there is no branch-likely form with the target's first
+    // instruction (b145/b210 have it)
+    goto nop;
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (!(br->flags & 0x10000000)) {
 #else
@@ -800,7 +1008,9 @@ nop:
             br->block->number == target->number &&
             target->pcodecount <= 7) {
 #else
-        if (copts.padloop &&
+        // 011126 (0x4B1F90) has no padloop here
+        if (MWCC_CORE != MWCC_CORE_B011126 &&
+            copts.padloop &&
             target &&
             br->block->number == target->number &&
             target->pcodecount == 2) {
@@ -824,6 +1034,7 @@ move:
         func_004C34A0();
 #endif
     }
+#endif /* MWCC_CORE == MWCC_CORE_B233 */
 #else
 void func_004B7E20(MPCodeBlock* block, Boolean special) {
     MPCode* br;
@@ -951,125 +1162,125 @@ nop:
 }
 #endif
 
-    void BE_InsertNops(Object * func, int scheduled, Boolean special) {
-        MPCodeBlock* block;
+void BE_InsertNops(Object* func, int scheduled, Boolean special) {
+    MPCodeBlock* block;
 
-        if (!scheduled) {
-            for (block = data_00624FD0; block; block = block->next) {
-                func_004B8240(block);
-            }
-        } else {
-            func_004C34A0();
-            for (block = data_00624FD0; block; block = block->next) {
-                func_004B7E20(block, special);
-            }
-            func_00446C10();
-        }
-        if (copts.debuglisting) {
-            BE_DumpPCode(CMangler_GetLinkName(func)->name, "After Branch Delay Slot");
-        }
+    if (!scheduled) {
         for (block = data_00624FD0; block; block = block->next) {
-            if (!(block->flags2E & 0x4000)) {
-                func_004B83A0(block);
-            }
+            func_004B8240(block);
+        }
+    } else {
+        func_004C34A0();
+        for (block = data_00624FD0; block; block = block->next) {
+            func_004B7E20(block, special);
+        }
+        func_00446C10();
+    }
+    if (copts.debuglisting) {
+        BE_DumpPCode(CMangler_GetLinkName(func)->name, "After Branch Delay Slot");
+    }
+    for (block = data_00624FD0; block; block = block->next) {
+        if (!(block->flags2E & 0x4000)) {
+            func_004B83A0(block);
         }
     }
+}
 
-    // Does user read op's register? Floating-point registers are compared by
-    // even/odd pair.
-    int func_004B8810(MOperand * op, MPCode * user) {
-        MOperand* arg;
-        RegClass301 rclass;
-        int reg;
-        int n;
-        int i;
+// Does user read op's register? Floating-point registers are compared by
+// even/odd pair.
+int func_004B8810(MOperand* op, MPCode* user) {
+    MOperand* arg;
+    RegClass301 rclass;
+    int reg;
+    int n;
+    int i;
 
-        rclass = op->rclass;
-        arg = user->args;
-        reg = op->reg;
-        if (rclass == 1 && (reg & 1)) {
-            reg &= ~1;
-        }
-        n = (data_006115F8[user->op].flags & 8) ? 2 : user->argcount;
-        for (i = 0; i < n; i++, arg++) {
+    rclass = op->rclass;
+    arg = user->args;
+    reg = op->reg;
+    if (rclass == 1 && (reg & 1)) {
+        reg &= ~1;
+    }
+    n = (data_006115F8[user->op].flags & 8) ? 2 : user->argcount;
+    for (i = 0; i < n; i++, arg++) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-            if (arg->kind == 0 &&
-                arg->rclass == rclass &&
-                reg == (arg->reg & ((arg->rclass == 1) ? ~1 : ~0)) &&
+        if (arg->kind == 0 &&
+            arg->rclass == rclass &&
+            reg == (arg->reg & ((arg->rclass == 1) ? ~1 : ~0)) &&
 #else
         if (arg->kind == 0 &&
             arg->rclass == rclass &&
             reg == (arg->reg & ((arg->rclass == 1) ? ~1 : ~0)) &&
 #endif
-                (arg->flags & 1)) {
-                return 1;
-            }
+            (arg->flags & 1)) {
+            return 1;
         }
-        return 0;
+    }
+    return 0;
+}
+
+// Does pc write a register that user reads?
+static int feeds(MPCode* pc, MPCode* user) {
+    MOperand* op;
+    int n;
+    int i;
+
+    op = pc->args;
+    n = (data_006115F8[pc->op].flags & 8) ? 2 : pc->argcount;
+    for (i = 0; i < n; i++, op++) {
+        if (op->kind == 0 && (op->flags & 2) && func_004B8810(op, user)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// Pipeline hazards in unscheduled code: a nop between an instruction and a
+// next one that reads its result too early.
+void func_004B83A0(MPCodeBlock* block) {
+    MPCode* pc;
+    MPCode* next;
+    MPCode* last;
+    MPCode* delay;
+    int nops;
+    int extra;
+    int i;
+
+    last = block->last;
+    pc = block->first;
+    if (last && (last->flags & 0x20000000)) {
+        // take the branch's delay slot out while looking
+        delay = last->prev;
+        if (delay && (delay->flags & 0x40000000)) {
+            deletepcode(delay);
+        }
+    } else {
+        delay = NULL;
     }
 
-    // Does pc write a register that user reads?
-    static int feeds(MPCode * pc, MPCode * user) {
-        MOperand* op;
-        int n;
-        int i;
-
-        op = pc->args;
-        n = (data_006115F8[pc->op].flags & 8) ? 2 : pc->argcount;
-        for (i = 0; i < n; i++, op++) {
-            if (op->kind == 0 && (op->flags & 2) && func_004B8810(op, user)) {
-                return 1;
-            }
+    for (; pc; pc = next) {
+        nops = 0;
+        extra = nops;
+        next = pc->next;
+        if (pc->op >= MACRO_OP(0x00) || !next) {
+            continue;
         }
-        return 0;
-    }
-
-    // Pipeline hazards in unscheduled code: a nop between an instruction and a
-    // next one that reads its result too early.
-    void func_004B83A0(MPCodeBlock * block) {
-        MPCode* pc;
-        MPCode* next;
-        MPCode* last;
-        MPCode* delay;
-        int nops;
-        int extra;
-        int i;
-
-        last = block->last;
-        pc = block->first;
-        if (last && (last->flags & 0x20000000)) {
-            // take the branch's delay slot out while looking
-            delay = last->prev;
-            if (delay && (delay->flags & 0x40000000)) {
-                deletepcode(delay);
+        if (pc->flags & 2) {
+            if (feeds(pc, next) && !copts.no_load_delay_nops) {
+                nops++;
             }
-        } else {
-            delay = NULL;
-        }
-
-        for (; pc; pc = next) {
-            nops = 0;
-            extra = nops;
-            next = pc->next;
-            if (pc->op >= MACRO_OP(0x00) || !next) {
-                continue;
+        } else if (data_006115F8[pc->op].flags2 & 0xA000) {
+            if (feeds(next, pc)) {
+                nops++;
             }
-            if (pc->flags & 2) {
-                if (feeds(pc, next) && !copts.no_load_delay_nops) {
-                    nops++;
-                }
-            } else if (data_006115F8[pc->op].flags2 & 0xA000) {
-                if (feeds(next, pc)) {
-                    nops++;
-                }
-            } else if (data_006115F8[pc->op].flags2 & 0x4000) {
+        } else if (data_006115F8[pc->op].flags2 & 0x4000) {
 #if MWCCPS2
-                // b210 tests the hazard but never pads it
+            // b210 tests the hazard but never pads it
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if MWCC_CORE != MWCC_CORE_B52
-                if (feeds(pc, next) && copts.mips_isa < 4) {
-                    nops++;
-                }
+            if (feeds(pc, next) && copts.mips_isa < 4) {
+                nops++;
+            }
 #endif
 #endif
 #else
@@ -1077,118 +1288,117 @@ nop:
                 nops++;
             }
 #endif
-            } else if (data_006115F8[pc->op].flags2 & 0x5000) {
-                if (feeds(pc, next)) {
-                    nops++;
-                }
-#if MWCCPS2
-            } else if (data_006115F8[pc->op].flags2 & 0x20000) {
-                // b210: an instruction two ahead (or the delay slot) of kind
-                // 0x10000 needs a nop after the next one (or after this one)
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-                // b69: the next one of that kind needs two after this one
-                if (data_006115F8[next->op].flags2 & 0x10000) {
-                    nops += 2;
-                } else
-#endif
-                    if (next->next && (data_006115F8[next->next->op].flags2 & 0x10000)) {
-                    extra++;
-                } else if (!next->next && delay && (data_006115F8[delay->op].flags2 & 0x10000)) {
-                    nops++;
-                }
-            } else if (data_006115F8[pc->op].flags2 & 0x80000) {
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-                if (data_006115F8[next->op].flags2 & 0x40000) {
-                    nops += 2;
-                } else
-#endif
-                    if (next->next && (data_006115F8[next->next->op].flags2 & 0x40000)) {
-                    extra++;
-                } else if (!next->next && delay && (data_006115F8[delay->op].flags2 & 0x40000)) {
-                    nops++;
-                }
-#endif
-            } else if (pc->flags & 0x1000000) {
-                if (feeds(pc, next)) {
-                    nops++;
-                }
+        } else if (data_006115F8[pc->op].flags2 & 0x5000) {
+            if (feeds(pc, next)) {
+                nops++;
             }
+#if MWCCPS2
+        } else if (data_006115F8[pc->op].flags2 & 0x20000) {
+            // b210: an instruction two ahead (or the delay slot) of kind
+            // 0x10000 needs a nop after the next one (or after this one)
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-            if ((copts.mips_flags02 & 0x2000) &&
-                (UInt16)(pc->op - OPC(0xB4)) <= 1 &&
-                (UInt16)(next->op - OPC(0xB4)) <= 3 &&
-                !nops) {
+            // b69: the next one of that kind needs two after this one
+            if (data_006115F8[next->op].flags2 & 0x10000) {
+                nops += 2;
+            } else
+#endif
+                if (next->next && (data_006115F8[next->next->op].flags2 & 0x10000)) {
+                extra++;
+            } else if (!next->next && delay && (data_006115F8[delay->op].flags2 & 0x10000)) {
+                nops++;
+            }
+        } else if (data_006115F8[pc->op].flags2 & 0x80000) {
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+            if (data_006115F8[next->op].flags2 & 0x40000) {
+                nops += 2;
+            } else
+#endif
+                if (next->next && (data_006115F8[next->next->op].flags2 & 0x40000)) {
+                extra++;
+            } else if (!next->next && delay && (data_006115F8[delay->op].flags2 & 0x40000)) {
+                nops++;
+            }
+#endif
+        } else if (pc->flags & 0x1000000) {
+            if (feeds(pc, next)) {
+                nops++;
+            }
+        }
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+        if ((copts.mips_flags02 & 0x2000) &&
+            (UInt16)(pc->op - OPC(0xB4)) <= 1 &&
+            (UInt16)(next->op - OPC(0xB4)) <= 3 &&
+            !nops) {
 #else
         if ((copts.mips_flags02 & 0x2000) &&
             (UInt16)(pc->op - 0xB4) <= 1 &&
             (UInt16)(next->op - 0xB4) <= 3 &&
             !nops) {
 #endif
-                nops++;
-            }
-            for (i = 0; i < nops; i++) {
-                insertpcodeafter(pc, makepcode(func_004903F0()));
-            }
-            for (i = 0; i < extra; i++) {
-                insertpcodeafter(next, makepcode(func_004903F0()));
-            }
+            nops++;
         }
+        for (i = 0; i < nops; i++) {
+            insertpcodeafter(pc, makepcode(func_004903F0()));
+        }
+        for (i = 0; i < extra; i++) {
+            insertpcodeafter(next, makepcode(func_004903F0()));
+        }
+    }
 
-        // the last real instruction before the block's closing pseudo-ops
-        last = block->last;
-        if (last && last->op >= MACRO_OP(0xA3)) {
-            for (pc = last->prev; pc && pc->op >= MACRO_OP(0x00); pc = pc->prev) {}
-        } else {
-            pc = last;
-        }
-        if (!pc) {
-            return;
-        }
+    // the last real instruction before the block's closing pseudo-ops
+    last = block->last;
+    if (last && last->op >= MACRO_OP(0xA3)) {
+        for (pc = last->prev; pc && pc->op >= MACRO_OP(0x00); pc = pc->prev) {}
+    } else {
+        pc = last;
+    }
+    if (!pc) {
+        return;
+    }
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 #if MWCC_CORE == MWCC_CORE_B52
-        if ((!copts.no_load_delay_nops && (pc->flags & 2)) ||
-            (data_006115F8[pc->op].flags2 & 0x5000)) {
+    if ((!copts.no_load_delay_nops && (pc->flags & 2)) || (data_006115F8[pc->op].flags2 & 0x5000)) {
 #else
-    // b69 pads a closing load whatever no_load_delay_nops says
-    if ((pc->flags & 2) || (data_006115F8[pc->op].flags2 & 0x5000)) {
+        // b69 pads a closing load whatever no_load_delay_nops says
+        if ((pc->flags & 2) || (data_006115F8[pc->op].flags2 & 0x5000)) {
 #endif
 #else
     if ((!copts.no_load_delay_nops && (pc->flags & 2)) || (data_006115F8[pc->op].flags2 & 0x5000)) {
 #endif
-            insertpcodeafter(pc, makepcode(func_004903F0()));
-        }
-        if (delay) {
-            insertpcodebefore(last, delay);
-        }
+        insertpcodeafter(pc, makepcode(func_004903F0()));
     }
+    if (delay) {
+        insertpcodebefore(last, delay);
+    }
+}
 
-    // Take an instruction off the end of the block for a delay slot: one marked
-    // before, else the earliest of the movable ones at the end.
-    MPCode* func_004B88B0(MPCodeBlock * block) {
-        MPCode* pc;
-        MPCode* cand = NULL;
+// Take an instruction off the end of the block for a delay slot: one marked
+// before, else the earliest of the movable ones at the end.
+MPCode* func_004B88B0(MPCodeBlock* block) {
+    MPCode* pc;
+    MPCode* cand = NULL;
 
-        for (pc = block->last; pc; pc = pc->prev) {
-            if (pc->flags & 0x40000000) {
-                deletepcode(pc);
-                return pc;
-            }
-        }
-        for (pc = block->last; pc; pc = pc->prev) {
-            if (pc->flags & 0xA000000) {
-                continue;
-            }
-            if (!(pc->flags & 2)) {
-                break;
-            }
-            cand = pc;
-        }
-        if (!pc) {
-            pc = cand;
-        }
-        if (pc) {
-            pc->flags |= 0x40000000;
+    for (pc = block->last; pc; pc = pc->prev) {
+        if (pc->flags & 0x40000000) {
             deletepcode(pc);
+            return pc;
         }
-        return pc;
     }
+    for (pc = block->last; pc; pc = pc->prev) {
+        if (pc->flags & 0xA000000) {
+            continue;
+        }
+        if (!(pc->flags & 2)) {
+            break;
+        }
+        cand = pc;
+    }
+    if (!pc) {
+        pc = cand;
+    }
+    if (pc) {
+        pc->flags |= 0x40000000;
+        deletepcode(pc);
+    }
+    return pc;
+}

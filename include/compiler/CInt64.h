@@ -9,12 +9,20 @@
 extern "C" {
 #endif
 
+#if MWCC_CORE == MWCC_CORE_B233
+extern const CInt64 cint64_negone;
+extern const CInt64 cint64_zero;
+extern const CInt64 cint64_one;
+extern const CInt64 cint64_max;
+extern const CInt64 cint64_min;
+#else
 // b69 (as 3.0.1): plain globals that CInt64_Init sets up
 extern CInt64 cint64_negone;
 extern CInt64 cint64_zero;
 extern CInt64 cint64_one;
 extern CInt64 cint64_max;
 extern CInt64 cint64_min;
+#endif
 
 HEADER_INLINE Boolean CInt64_IsNegative(const CInt64* n) {
     return (n->hi & 0x80000000) != 0;
@@ -26,14 +34,25 @@ HEADER_INLINE UInt32 CInt64_GetULong(const CInt64* n) {
 HEADER_INLINE UInt32 CInt64_GetHi_b69_00478BE0(const CInt64* n) {
     return n->hi;
 }
+#if MWCC_CORE == MWCC_CORE_B233
+// b69 (as 3.0.1): real functions over four words (CInt64.c); 2.3.3 calls them
+// too (CInt64_SetLong 0x444BD0, CInt64_IsZero 0x444BF0: canadd2 calls it)
+#else
 // b69 (as 3.0.1): real functions over four words (CInt64.c)
+#endif
 extern void CInt64_SetLong(CInt64* pN, SInt32 n);
 extern void CInt64_SetULong(CInt64* pN, UInt32 n);
 extern Boolean CInt64_IsZero(CInt64* n);
 extern Boolean CInt64_IsOne(CInt64* n);
 
+#if MWCC_CORE == MWCC_CORE_B233
+// 64-bit constants need no widening (the copied back end calls these)
+#define CInt64_ConvertUInt64(i) ((void)0)
+#define CInt64_ConvertInt64(i) ((void)0)
+#else
 extern void CInt64_ConvertUInt64(CInt64* i);
 extern void CInt64_ConvertInt64(CInt64* i);
+#endif
 #else
 
 #include "compiler/common.h"

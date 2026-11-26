@@ -159,7 +159,11 @@ const char* Plugin_GetDropInName(Plugin* pl) {
 #if MWCCPSP
     OS_ASSERT(262, pl);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(258, pl);
+#else
     OS_ASSERT(263, pl);
+#endif
 #endif
 
 #if MWCCPSP
@@ -187,7 +191,11 @@ const VersionInfo* Plugin_GetVersionInfo(Plugin* pl) {
 #if MWCCPSP
     OS_ASSERT(275, pl);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(271, pl);
+#else
     OS_ASSERT(276, pl);
+#endif
 #endif
 
 #if MWCCPSP
@@ -245,7 +253,11 @@ DropInFlags* Plugin_GetDropInFlags(Plugin* pl) {
 #if MWCCPSP
     OS_ASSERT(328, pl);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(324, pl);
+#else
     OS_ASSERT(329, pl);
+#endif
 #endif
 
 #if MWCCPSP
@@ -271,7 +283,11 @@ OSType Plugin_GetPluginType(Plugin* pl) {
 #if MWCCPSP
     OS_ASSERT(344, pl);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(340, pl);
+#else
     OS_ASSERT(345, pl);
+#endif
 #endif
 
     df = Plugin_GetDropInFlags(pl);
@@ -298,8 +314,13 @@ const CWTargetList* Plugin_CL_GetTargetList(Plugin* pl) {
     OS_ASSERT(357, pl);
     OS_ASSERT(358, pl->cl_cb != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(353, pl);
+    OS_ASSERT(354, pl->cl_cb != NULL);
+#else
     OS_ASSERT(358, pl);
     OS_ASSERT(359, pl->cl_cb != NULL);
+#endif
 #endif
 
 #if MWCCPSP
@@ -328,7 +349,11 @@ const CWPanelList* Plugin_GetPanelList(Plugin* pl) {
 #if MWCCPSP
     OS_ASSERT(380, pl);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(376, pl);
+#else
     OS_ASSERT(381, pl);
+#endif
 #endif
 
 #if MWCCPSP
@@ -358,8 +383,13 @@ const CWExtMapList* Plugin_CL_GetExtMapList(Plugin* pl) {
     OS_ASSERT(400, pl);
     OS_ASSERT(401, pl->cl_cb != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(396, pl);
+    OS_ASSERT(397, pl->cl_cb != NULL);
+#else
     OS_ASSERT(401, pl);
     OS_ASSERT(402, pl->cl_cb != NULL);
+#endif
 #endif
 
 #if MWCCPSP
@@ -387,7 +417,11 @@ const OSFileTypeMappingList* Plugin_GetFileTypeMappingList(Plugin* pl) {
 #if MWCCPSP
     OS_ASSERT(421, pl);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(417, pl);
+#else
     OS_ASSERT(422, pl);
+#endif
 #endif
 
 #if MWCCPSP
@@ -417,8 +451,13 @@ const CWObjectFlags* Plugin_CL_GetObjectFlags(Plugin* pl) {
     OS_ASSERT(433, pl);
     OS_ASSERT(434, pl->cl_cb != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(429, pl);
+    OS_ASSERT(430, pl->cl_cb != NULL);
+#else
     OS_ASSERT(434, pl);
     OS_ASSERT(435, pl->cl_cb != NULL);
+#endif
 #endif
 
 #if MWCCPSP
@@ -523,7 +562,11 @@ Boolean Plugin_Pr_MatchesPlugin(Plugin* pl, CLPluginInfo* pluginfo, OSType cpu, 
 #if MWCCPSP
     OS_ASSERT(565, pl->pr_cb != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(561, pl->pr_cb != NULL);
+#else
     OS_ASSERT(566, pl->pr_cb != NULL);
+#endif
 #endif
 
     if (pl->pr_cb->SupportsPlugin &&
@@ -552,7 +595,11 @@ Boolean Plugin_Pr_MatchesPanels(Plugin* pl, int numPanels, const char** panelNam
 #if MWCCPSP
     OS_ASSERT(577, pl->pr_cb != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(573, pl->pr_cb != NULL);
+#else
     OS_ASSERT(578, pl->pr_cb != NULL);
+#endif
 #endif
 
     if (pl->pr_cb->SupportsPanels &&
@@ -602,8 +649,13 @@ Boolean Plugin_CL_WriteObjectFile(
 ) {
     OSSpec outoss;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(585, pl->cl_cb != NULL);
+    OS_ASSERT(586, data != NULL && srcfss != NULL && outfss != NULL);
+#else
     OS_ASSERT(590, pl->cl_cb != NULL);
     OS_ASSERT(591, data != NULL && srcfss != NULL && outfss != NULL);
+#endif
 
     if (pl->cl_cb->WriteObjectFile) {
         return pl->cl_cb->WriteObjectFile(srcfss, outfss, creator, type, data) == 0;
@@ -719,7 +771,8 @@ static Boolean SupportedPlugin(Plugin* pl, const char** reason) {
             (cof->flags & 0x3FFFFFFF) ||
             (cof->flags & 0xC0000000) == 0xC0000000) {
 #else
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B011126
+        // (011126 0x409A70: the old test, any flag but the top one is invalid)
         if (cof->version < 2 ||
             cof->flags & 0x3FFFFFFF ||
             (cof->flags & 0xC0000000) == 0xC0000000) {
@@ -1307,9 +1360,16 @@ int Plugins_GetPluginList(Plugin* list, int* numPlugins, CLPluginInfo** pluginIn
         OS_ASSERT(1295, df != NULL);
         OS_ASSERT(1296, vi != NULL);
 #else
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE && \
+    MWCC_CORE <= MWCC_CORE_B52 && \
+    MWCC_CORE != MWCC_CORE_B011126 // 011126: the older lines
+#if MWCC_CORE == MWCC_CORE_B233
+        OS_ASSERT(1265, df != NULL);
+        OS_ASSERT(1266, vi != NULL);
+#else
         OS_ASSERT(1273, df != NULL);
         OS_ASSERT(1274, vi != NULL);
+#endif
 #else
         OS_ASSERT(1270, df != NULL);
         OS_ASSERT(1271, vi != NULL);

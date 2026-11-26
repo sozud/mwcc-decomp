@@ -125,7 +125,7 @@ static inline Boolean RepositionAllowed(void) {
 
     for (linear = IRO_FirstLinear; linear; linear = linear->next) {
         if (linear->type == IROLinearAsm && IRO_GetAsmEffectsHook && linear->u.asm_stmt) {
-            IROAsmEffects effects = IRO_EmptyAsmEffects;
+            IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
             IRO_GetAsmEffectsHook(linear->u.asm_stmt, &effects);
             if (effects.flag7) {
                 return FALSE;

@@ -1,0 +1,222 @@
+symbols.derived.txt: CLFileOps.c/CompileFile = 0x0041B640;
+symbols.derived.txt: CLFileOps.c/DisassembleFile = 0x0041B8D0;
+symbols.derived.txt: File_New = 0x00423C80;
+symbols.derived.txt: CLCompilerLinkerDropin_V10.cpp/UnitNameToSBMName = 0x004277B0;
+symbols.derived.txt: CodeGen_ExpandSpecialMacro = 0x00439F50;
+symbols.derived.txt: CPrep.c/CPrep_GetQuotedFileName = 0x0043E3E0;
+symbols.derived.txt: CPrep_SkipNewComment = 0x00479010;
+symbols.derived.txt: PPCError.c/PPCError_GetErrorString = 0x0050AA50;
+symbols.derived.txt: GCCInlineAsm.c/gcc_copy_expression = 0x0050C080;
+symbols.derived.txt: CLFileOps.c/_b69sec.data = 0x0052D6E8;
+symbols.derived.txt: CLFileOps.c/_b69at408 = 0x0052D6F8;
+symbols.derived.txt: FEInterface.c/_b69at451 = 0x0053FA20;
+symbols.manual.txt: ps2_IsQuadwordClass = 0x0050C2B0;
+symbols.manual.txt: mips_makecopyinstruction = 0x0049A830;
+symbols.manual.txt: mips_is128bitop = 0x0049AC60;
+symbols.manual.txt: func_00488EB0 = 0x004B3C60;
+symbols.manual.txt: func_004890B0 = 0x004B36A0;
+symbols.manual.txt: func_00489410 = 0x004B34B0;
+symbols.manual.txt: func_00482330 = 0x004B68E0;
+symbols.manual.txt: InlineAsm_GCCLookupSymbol = 0x004B7860;
+symbols.manual.txt: InlineAsm_GCCLookupMember = 0x004B7A70;
+symbols.manual.txt: GCCInlineAsm.c/gcc_parse_attribute = 0x0050ACC0;
+symbols.manual.txt: GCCInlineAsm.c/gcc_parse_name = 0x0050AEF0;
+symbols.manual.txt: ps2_IsQuadwordClassPointer = 0x0050C370;
+symbols.manual.txt: ps2_gcc_quadmove = 0x004B7760;
+symbols.manual.txt: ps2_IsQuadwordClassLocal = 0x0050C3D0;
+symbols.manual.txt: PPCError.c/PPCError_VAErrorMessage = 0x0050AA90;
+symbols.manual.txt: CCompiler.c/IsJapaneseSystem = 0x0043A310;
+symbols.manual.txt: LocalCSE_ours.c/mips_is128bitop = 0x0049AC60;
+symbols.guess.txt: RecordBrowseInfo = 0x0041B440; // anchor 0.974
+symbols.guess.txt: RecordObjectData = 0x0041B4F0; // anchor 0.706
+symbols.guess.txt: CompileFile = 0x0041B640; // anchor 0.891
+symbols.guess.txt: DisassembleFile = 0x0041B8D0; // anchor 0.951
+symbols.guess.txt: File_New = 0x00423C80; // anchor 0.872
+symbols.guess.txt: UCBGetFileInfo = 0x004248D0; // anchor 0.989
+symbols.guess.txt: UCBStoreObjectData = 0x00427110; // anchor 0.959
+symbols.guess.txt: UCBBeginSubCompile = 0x004273D0; // anchor 0.903
+symbols.guess.txt: UCBEndSubCompile = 0x00427410; // anchor 0.903
+symbols.guess.txt: UCBGetPrecompiledHeaderSpec = 0x00427450; // anchor 0.989
+symbols.guess.txt: UCBGetResourceFile = 0x00427730; // anchor 0.903
+symbols.guess.txt: UCBPutResourceFile = 0x00427770; // anchor 0.903
+symbols.guess.txt: UCBLookUpUnit = 0x004277B0; // anchor 0.966
+symbols.guess.txt: UCBStoreUnit = 0x00427D50; // anchor 1.000
+symbols.guess.txt: UCBGetModifiedFiles = 0x00428210; // anchor 0.857
+symbols.guess.txt: UCBGetStoredObjectFileSpec = 0x004282D0; // anchor 0.940
+symbols.guess.txt: CToLowercase = 0x0043E3C0; // anchor 0.514
+symbols.guess.txt: CPrep_GetQuotedFileName = 0x0043E3E0; // unit 0.881
+symbols.guess.txt: XpandSpecialMacro = 0x0043E490; // unit 0.933
+symbols.guess.txt: binary_immediate = 0x004A2310; // unit 0.659
+symbols.guess.txt: UCBLoadObjectData = 0x00427070; // order-aligned 0.63
+symbols.guess.txt: UCBFreeObjectData = 0x00427330; // order-aligned 0.78
+symbols.guess.txt: CLFileOps.c/RecordBrowseInfo = 0x0041B440; // order-aligned 1.00
+symbols.guess.txt: ??1CWParserContext@@QAE@XZ = 0x0041B4F0; // order-aligned 0.60
+symbols.guess.txt: atoi = 0x00423C80; // order-aligned 0.62
+symbols.guess145.txt: CLFileOps.c/RecordBrowseInfo = 0x0041AA90; // CLFileOps.c 0.549
+symbols.guess145.txt: CLFileOps.c/RecordObjectData = 0x0041B4F0; // CLFileOps.c 0.598
+symbols.guess145.txt: CLFileOps.c/CompileFile = 0x0041B640; // CLFileOps.c 0.616
+symbols.guess145.txt: File_New = 0x00423C80; // CLFiles.c 0.765
+symbols.guess145.txt: UCBLoadObjectData = 0x00427070; // CLCompilerLinkerDropin_V10.cpp 0.569
+symbols.guess145.txt: UCBStoreObjectData = 0x00427110; // CLCompilerLinkerDropin_V10.cpp 0.542
+symbols.guess145.txt: UCBBeginSubCompile = 0x004273D0; // CLCompilerLinkerDropin_V10.cpp 1.000
+symbols.guess145.txt: UCBEndSubCompile = 0x00427410; // CLCompilerLinkerDropin_V10.cpp 1.000
+symbols.guess145.txt: UCBGetPrecompiledHeaderSpec = 0x00427450; // CLCompilerLinkerDropin_V10.cpp 0.622
+symbols.guess145.txt: UCBGetResourceFile = 0x00427730; // CLCompilerLinkerDropin_V10.cpp 1.000
+symbols.guess145.txt: UCBPutResourceFile = 0x00427770; // CLCompilerLinkerDropin_V10.cpp 1.000
+symbols.guess145.txt: UCBLookUpUnit = 0x004277B0; // CLCompilerLinkerDropin_V10.cpp 0.605
+symbols.guess145.txt: UCBStoreUnit = 0x00427D50; // CLCompilerLinkerDropin_V10.cpp 0.689
+symbols.guess145.txt: UCBGetModifiedFiles = 0x00428210; // CLCompilerLinkerDropin_V10.cpp 0.944
+symbols.guess145.txt: UCBGetStoredObjectFileSpec = 0x004282D0; // CLCompilerLinkerDropin_V10.cpp 0.784
+symbols.guess145.txt: func_00438680 = 0x00434160; // CodeGen.c 0.603
+symbols.guess145.txt: CPrep.c/CPrep_GetQuotedFileName = 0x0043E3E0; // CPrep.c 0.559
+symbols.guess145.txt: CPrep.c/XpandSpecialMacro = 0x0043E490; // CPrep.c 0.569
+symbols.guess145.txt: CPrep_SkipNewComment = 0x00479010; // CPrepTokenizer.c 0.504
+symbols.guess145.txt: func_0049D530 = 0x0049B0B0; // InstrSelection.c 0.808
+symbols.guess145.txt: func_0049C250 = 0x0049B400; // InstrSelection.c 0.576
+symbols.guess145.txt: func_00496CB0 = 0x0049FAD0; // InstrSelection.c 0.894
+symbols.guess145.txt: func_00493F90 = 0x004A14B0; // InstrSelection.c 1.000
+symbols.guess145.txt: func_00494940 = 0x004A1C00; // InstrSelection.c 1.000
+symbols.guess145.txt: func_00493D90 = 0x004A2310; // InstrSelection.c 0.714
+symbols.guess145.txt: func_00488EB0 = 0x004B3C60; // InlineAsmMIPS.c 0.626
+symbols.guess145.txt: func_00488180 = 0x004B40F0; // InlineAsmMIPS.c 0.513
+symbols.guess145.txt: func_00481EE0 = 0x004B7660; // InlineAsmMIPS.c 0.893
+symbols.guess145.txt: GCCInlineAsm.c/gcc_copy_expression = 0x0050C080; // GCCInlineAsm.c 0.609
+functions.csv: 0041a9b0 
+functions.csv: 0041aa90 
+functions.csv: 0041ab00 
+functions.csv: 0041b440 
+functions.csv: 0041b4f0 CLFileOps.c
+functions.csv: 0041b640 CLFileOps.c?
+functions.csv: 0041b8d0 CLFileOps.c?
+functions.csv: 00423c80 
+functions.csv: 004248d0 
+functions.csv: 00427070 
+functions.csv: 00427110 CLCompilerLinkerDropin_V10.cpp
+functions.csv: 00427330 CLCompilerLinkerDropin_V10.cpp?
+functions.csv: 004273d0 CLCompilerLinkerDropin_V10.cpp
+functions.csv: 00427410 CLCompilerLinkerDropin_V10.cpp
+functions.csv: 00427450 CLCompilerLinkerDropin_V10.cpp
+functions.csv: 00427730 CLCompilerLinkerDropin_V10.cpp
+functions.csv: 00427770 CLCompilerLinkerDropin_V10.cpp
+functions.csv: 004277b0 CLCompilerLinkerDropin_V10.cpp
+functions.csv: 00427d50 CLCompilerLinkerDropin_V10.cpp
+functions.csv: 00428210 CLCompilerLinkerDropin_V10.cpp
+functions.csv: 004282d0 CLCompilerLinkerDropin_V10.cpp
+functions.csv: 00434160 CodeGen.c
+functions.csv: 00434a30 CodeGen.c
+functions.csv: 004355d0 CodeGen.c
+functions.csv: 00435cc0 CodeGen.c
+functions.csv: 00436740 CodeGen.c
+functions.csv: 00436a60 CodeGen.c
+functions.csv: 004375d0 CodeGen.c
+functions.csv: 00439f50 CodeGen.c
+functions.csv: 0043a310 
+functions.csv: 0043e3c0 CPrep.c?
+functions.csv: 0043e3e0 CPrep.c?
+functions.csv: 0043e490 CPrep.c?
+functions.csv: 00440f80 CPrep.c
+functions.csv: 00478550 
+functions.csv: 00479010 
+functions.csv: 0048a1e0 
+functions.csv: 0048e660 mips.c
+functions.csv: 0048ea60 
+functions.csv: 004979c0 
+functions.csv: 0049a830 PCodeInfo.c
+functions.csv: 0049ac60 PCodeInfo.c?
+functions.csv: 0049b0b0 InstrSelection.c
+functions.csv: 0049b400 InstrSelection.c
+functions.csv: 0049c8d0 InstrSelection.c?
+functions.csv: 0049dc60 InstrSelection.c?
+functions.csv: 0049ea20 InstrSelection.c
+functions.csv: 0049eec0 InstrSelection.c
+functions.csv: 0049f710 InstrSelection.c?
+functions.csv: 0049f9f0 InstrSelection.c?
+functions.csv: 0049fad0 InstrSelection.c?
+functions.csv: 0049fbc0 InstrSelection.c?
+functions.csv: 004a14b0 InstrSelection.c
+functions.csv: 004a15d0 InstrSelection.c
+functions.csv: 004a1c00 InstrSelection.c
+functions.csv: 004a2310 InstrSelection.c
+functions.csv: 004a3390 FunctionCalls.c
+functions.csv: 004b1280 
+functions.csv: 004b1510 BE_schedule.c
+functions.csv: 004b34b0 
+functions.csv: 004b36a0 
+functions.csv: 004b3c60 
+functions.csv: 004b40f0 InlineAsmMIPS.c
+functions.csv: 004b68e0 InlineAsmMIPS.c
+functions.csv: 004b6c70 InlineAsmMIPS.c?
+functions.csv: 004b6ce0 InlineAsmMIPS.c
+functions.csv: 004b7660 InlineAsmMIPS.c?
+functions.csv: 004b7760 InlineAsmMIPS.c?
+functions.csv: 004b7860 InlineAsmMIPS.c
+functions.csv: 004b7a70 
+functions.csv: 004b8aa0 
+functions.csv: 00502100 DWARF.c
+functions.csv: 005052b0 
+functions.csv: 00506ac0 
+functions.csv: 005072b0 
+functions.csv: 00507570 
+functions.csv: 00507a90 
+functions.csv: 0050aa50 
+functions.csv: 0050aa90 
+functions.csv: 0050acc0 
+functions.csv: 0050aef0 GCCInlineAsm.c
+functions.csv: 0050c080 GCCInlineAsm.c
+functions.csv: 0050c2b0 
+functions.csv: 0050c320 
+functions.csv: 0050c370 
+functions.csv: 0050c3a0 
+functions.csv: 0050c3d0 
+functions.csv: 0050c420 
+glue/text_names.txt: 0041B440 static CLFileOps.c/RecordBrowseInfo
+glue/text_names.txt: 0041B640 static CLFileOps.c/CompileFile
+glue/text_names.txt: 0041B8D0 static CLFileOps.c/DisassembleFile
+glue/text_names.txt: 00423C80 global _File_New
+glue/text_names.txt: 004248D0 global _UCBGetFileInfo@16
+glue/text_names.txt: 004273D0 global _UCBBeginSubCompile@12
+glue/text_names.txt: 00427410 global _UCBEndSubCompile@4
+glue/text_names.txt: 00427450 global _UCBGetPrecompiledHeaderSpec@12
+glue/text_names.txt: 00427730 global _UCBGetResourceFile@8
+glue/text_names.txt: 00427770 global _UCBPutResourceFile@16
+glue/text_names.txt: 004277B0 static CLCompilerLinkerDropin_V10.cpp/UnitNameToSBMName
+glue/text_names.txt: 00427D50 global _UCBStoreUnit@16
+glue/text_names.txt: 00428210 global _UCBGetModifiedFiles@12
+glue/text_names.txt: 004282D0 global _UCBGetStoredObjectFileSpec@12
+glue/text_names.txt: 00436751 global _is_cfm_type
+glue/text_names.txt: 0043A310 static CCompiler.c/IsJapaneseSystem
+glue/text_names.txt: 0043E3E0 static CPrep.c/CPrep_GetQuotedFileName
+glue/text_names.txt: 0043E490 static CPrep.c/XpandSpecialMacro
+glue/text_names.txt: 00440EBC global _SetupDumpIR
+glue/text_names.txt: 00440ED6 static Help.c/Help_Flush
+glue/text_names.txt: 00440F80 static Help.c/Help_Flush
+glue/text_names.txt: 00479010 global _CPrep_SkipNewComment
+glue/text_names.txt: 0049AC60 static LocalCSE_ours.c/mips_is128bitop
+glue/text_names.txt: 0049C8D0 global _func_0049A740
+glue/text_names.txt: 0049DC60 global _func_00499820
+glue/text_names.txt: 0049EA20 global _func_00498590
+glue/text_names.txt: 0049EEC0 global _func_004980C0
+glue/text_names.txt: 0049F710 global _func_00496D50
+glue/text_names.txt: 0049FAD0 global _func_00496CB0
+glue/text_names.txt: 0049FBC0 global _func_00495500
+glue/text_names.txt: 004A14B0 static Help.c/Help_Flush
+glue/text_names.txt: 004A1C00 global _func_00494940
+glue/text_names.txt: 004A2310 global _func_00493D90
+glue/text_names.txt: 004B34B0 global _func_00489410
+glue/text_names.txt: 004B36A0 global _func_004890B0
+glue/text_names.txt: 004B3C60 global _func_00488EB0
+glue/text_names.txt: 004B68E0 global _func_00482330
+glue/text_names.txt: 004B7760 global _ps2_gcc_quadmove
+glue/text_names.txt: 004B7860 global _InlineAsm_GCCLookupSymbol
+glue/text_names.txt: 004B7A70 global _InlineAsm_GCCLookupMember
+glue/text_names.txt: 0050AA50 static PPCError.c/PPCError_GetErrorString
+glue/text_names.txt: 0050AA90 static PPCError.c/PPCError_VAErrorMessage
+glue/text_names.txt: 0050ACC0 static GCCInlineAsm.c/gcc_parse_attribute
+glue/text_names.txt: 0050AEF0 static GCCInlineAsm.c/gcc_parse_name
+glue/text_names.txt: 0050C080 static GCCInlineAsm.c/gcc_copy_expression
+glue/text_names.txt: 0050C2B0 global _ps2_IsQuadwordClass
+glue/text_names.txt: 0050C370 global _ps2_IsQuadwordClassPointer
+glue/text_names.txt: 0050C3D0 global _ps2_IsQuadwordClassLocal
+glue/text_names.txt: 0052D6E8 static CLFileOps.c/_b69sec.data
+glue/text_names.txt: 0052D6F8 static CLFileOps.c/_b69at408
+glue/text_names.txt: 0053FA20 static FEInterface.c/_b69at451

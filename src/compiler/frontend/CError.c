@@ -836,7 +836,11 @@ static void CError_AppendObjectName(CErrorBuffer* eb, Object* obj) {
             eb,
             obj->nspace,
             obj->name,
+#if MWCC_CORE == MWCC_CORE_B233
+            OBJ_FUNC_INST(obj) ? OBJ_FUNC_INST(obj)->args : NULL,
+#else
             obj->u.func.inst ? obj->u.func.inst->args : NULL,
+#endif
             TYPE_FUNC(obj->type)
         );
 #if MWCCPSP
@@ -954,7 +958,11 @@ char* CError_GetNameString(NameSpace* nspace, HashNameNode* operatorName) {
 #if MWCCPSP
     CError_ASSERT(1084, operatorName);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(924, operatorName);
+#else
     CError_ASSERT(973, operatorName);
+#endif
 #endif
 
     opStr = CMangler_GetOperator(operatorName);
@@ -1491,7 +1499,11 @@ void CError_AbstractClassError(TypeClass* tclass) {
 
 void CError_Warning(int code, ...) {
     va_list va;
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 (0x45B6F0) has no supress_warnings
+    if (trychain) {
+#else
     if (trychain || copts.supress_warnings) {
+#endif
         return;
     }
 

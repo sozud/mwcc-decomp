@@ -107,11 +107,17 @@ struct IROLinear {
 #if MWCC_CORE != MWCC_CORE_B52
     struct ERange* range;
 #endif
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3: the operands at +0x1A, next at +0x2A (dispmap.py: 0x20/0x24/0x34 ->
+    // 0x1A/0x1E/0x2A in IROUseDef.c, IroLoop.c); pointsToFunction, evaluated and
+    // returnedLocs are kept after next (ours alone)
+#else
     struct PointsToFunction* pointsToFunction;
 #if MWCC_CORE == MWCC_CORE_B52
     struct ERange* range; // +0x20
 #else
     Boolean evaluated;
+#endif
 #endif
     union {
         ENode* node;
@@ -131,7 +137,9 @@ struct IROLinear {
             IROLinear** args;
             IROLinear* callee;
             TypeFunc* functype;
+#if MWCC_CORE != MWCC_CORE_B233
             struct LocationSetSet* returnedLocs;
+#endif
         } funccall;
         Statement* asm_stmt;
         struct {
@@ -173,7 +181,17 @@ struct IROLinear {
         struct IRODef301* aggDefs; // the aggregate pass's definitions by this linear
     } x24;
 #endif
+#if MWCC_CORE == MWCC_CORE_B233
+    struct PointsToFunction* pointsToFunction;
+    Boolean evaluated;
+    struct LocationSetSet* returnedLocs_b233;
+#endif
 };
+#if MWCC_CORE == MWCC_CORE_B233
+#define IRO_RETURNEDLOCS(l) ((l)->returnedLocs_b233)
+#else
+#define IRO_RETURNEDLOCS(l) ((l)->u.funccall.returnedLocs)
+#endif
 #if MWCC_CORE == MWCC_CORE_B52
 
 // 3.0.1: what the loop passes record for a counter loop, and what

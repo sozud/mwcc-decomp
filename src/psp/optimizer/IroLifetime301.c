@@ -450,7 +450,7 @@ void func_00594C60(void) {
                     Bv_SetBit(var->index, node->gen);
                 }
             } else if (nd->type == IROLinearAsm && IRO_GetAsmEffectsHook && nd->u.asm_stmt) {
-                IROAsmEffects effects = IRO_EmptyAsmEffects;
+                IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
                 IRO_GetAsmEffectsHook(nd->u.asm_stmt, &effects);
                 index = 0;
                 for (j = 0; j < effects.numoperands; j++) {
@@ -556,7 +556,7 @@ void func_00594C60(void) {
                     Bv_ClearBit(index, data_00608CD0);
                 }
             } else if (nd->type == IROLinearAsm && IRO_GetAsmEffectsHook && nd->u.asm_stmt) {
-                IROAsmEffects effects = IRO_EmptyAsmEffects;
+                IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
                 IRO_GetAsmEffectsHook(nd->u.asm_stmt, &effects);
                 index = 0;
                 for (j = effects.numoperands - 1; j >= 0; j--) {

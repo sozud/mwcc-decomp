@@ -1188,7 +1188,11 @@ CW_CALLBACK UCBStorePluginData(
         CLPrint("Callback: %s\n", "UCBStorePluginData");
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    DO_INTERNAL_ERROR(1249, "UCBStorePluginData not implemented");
+#else
     DO_INTERNAL_ERROR(1267, "UCBStorePluginData not implemented");
+#endif
     return cwErrRequestFailed;
 }
 
@@ -1199,7 +1203,11 @@ CW_CALLBACK UCBGetPluginData(
         CLPrint("Callback: %s\n", "UCBGetPluginData");
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    DO_INTERNAL_ERROR(1268, "UCBGetPluginData not implemented");
+#else
     DO_INTERNAL_ERROR(1286, "UCBGetPluginData not implemented");
+#endif
     return cwErrRequestFailed;
 }
 
@@ -1713,7 +1721,11 @@ CW_CALLBACK UCBCreateNewTextDocument(
             }
         }
     } else {
+#if MWCC_CORE == MWCC_CORE_B233
+        DO_INTERNAL_ERROR(1737, "Cannot deal with unexpected document");
+#else
         DO_INTERNAL_ERROR(1755, "Cannot deal with unexpected document");
+#endif
         return cwErrInvalidCallback;
     }
 }
@@ -2092,7 +2104,11 @@ CW_CALLBACK UCBPreFileAction(CWPluginContext context, const CWFileSpec* theFile)
         CLPrint("Callback: %s\n", "UCBPreFileAction");
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    DO_INTERNAL_ERROR(1945, "UCBPreFileAction not implemented");
+#else
     DO_INTERNAL_ERROR(1963, "UCBPreFileAction not implemented");
+#endif
     return cwErrRequestFailed;
 }
 
@@ -2101,7 +2117,11 @@ CW_CALLBACK UCBPostFileAction(CWPluginContext context, const CWFileSpec* theFile
         CLPrint("Callback: %s\n", "UCBPostFileAction");
     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+    DO_INTERNAL_ERROR(1959, "UCBPostFileAction not implemented");
+#else
     DO_INTERNAL_ERROR(1977, "UCBPostFileAction not implemented");
+#endif
     return cwErrRequestFailed;
 }
 
@@ -2410,7 +2430,11 @@ CW_CALLBACK UCBResolveRelativePath(
     CWFileSpec* fileSpec,
     Boolean create
 ) {
+#if MWCC_CORE == MWCC_CORE_B233
+    DO_INTERNAL_ERROR(2237, "UCBResolveRelativePath not implemented");
+#else
     DO_INTERNAL_ERROR(2255, "UCBResolveRelativePath not implemented");
+#endif
     return cwErrRequestFailed;
 }
 

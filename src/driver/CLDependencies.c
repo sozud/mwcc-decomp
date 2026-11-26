@@ -132,7 +132,11 @@ static Boolean FindFileInPaths(Paths* paths, const char* filename, Path** thepat
 #if MWCCPSP
         OS_ASSERT(166, path);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        OS_ASSERT(176, path);
+#else
         OS_ASSERT(175, path);
+#endif
 #endif
         if (_FindFileInPath(path, filename, thepath, spec)) {
             return TRUE;
@@ -342,9 +346,15 @@ int Deps_ChangeSpecialAccessPath(OSSpec* srcfss, Boolean initialize) {
                 482, "Unhandled include file search type (%d)\n", optsCompiler.includeSearch
             );
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            DO_INTERNAL_ERROR(
+                453, "Unhandled include file search type (%d)\n", optsCompiler.includeSearch
+            );
+#else
             DO_INTERNAL_ERROR(
                 468, "Unhandled include file search type (%d)\n", optsCompiler.includeSearch
             );
+#endif
 #endif
     }
 

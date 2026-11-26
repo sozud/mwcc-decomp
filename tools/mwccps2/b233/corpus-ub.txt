@@ -1,0 +1,137 @@
+# 2.3.3 corpus cases whose expected output depends on memory 2.3.3 never
+# initialised, so the native (which takes 2.3.3's usual value) cannot match
+# them deterministically. One per line: case, kind, 2.3.3 addresses, evidence.
+# Native 2.3.3 1550/1637 on 2026-11-17; these 87 are all its failures.
+#
+# arena-residue: primary_expression lallocs the ENode of an integer constant
+# (0x470880) or a float constant (0x4708C2) and writes its type, cost, flags,
+# rtype and value but not the ignored/hascall bytes (+4/+5), so hascall is
+# whatever an earlier allocation left in lalloc's arena. call_function
+# (0x49E830) tests the byte for every argument (0x49E925) and the function
+# reference / this (0x49E94F, 0x49E97B, 0x49EFFB, 0x49F06C): an argument with
+# it set is evaluated in the first loop, before the others, which changes
+# the virtual register order and so code selection, allocation and
+# scheduling (float constants loaded before or after the other arguments).
+# The native writes hascall = 0 for a float constant (CExpr.c) and keeps its
+# own arena's byte for an integer one (0 there too measures worse: -1
+# function). Proof: tools/mwccps2/b233/residue/hcrec.py records every hascall
+# test of the original (ptrace under wibo, the value of [node+5] at those five
+# sites, in order); the native replays them through MWCCPS2_B233_HASCALL
+# (FunctionCalls.c, native only), and with them every case below gives
+# expected.o byte for byte, with the record in step (no .mis report); the
+# same native without the replay gives the failing object. With
+# MWCCPS2_B233_HASCALL_DIFF=1 the replay also reports where its values
+# differ from the native's own: on 81 of these cases on constant nodes, and
+# otherwise (and besides) only on nodes whose byte expandIR (ExpandIR.c,
+# 2.3.3 likewise) computes as the OR of their operands' (EADD, ESUB, EMUL,
+# EDIV, ETYPCON, EASS, ECOND over a constant), i.e. the constants' residue
+# carried up; no difference on any other kind of node. Evidence column:
+# hascall tests recorded, of them nonzero.
+#
+# float-residue: 0x432F50 (the alias test of the CSE, 0x4A4D90, and of the
+# scheduler) reads +0x24 of a data object as a local's VarInfo; for a pooled
+# float constant (func_004A43A0) that word is the Float pointer, and the
+# "noregister" byte it then tests (+0x22) lies past the 8-byte Float, in
+# whatever lalloc handed out next (often a TypePointer, whose size byte is
+# 4). Nonzero, the constant counts as aliased and a store through a pointer
+# kills its loaded value; zero, it is a scalar and survives. The native
+# keeps "aliased" (taking 0 instead loses two cases whose bytes are 4).
+# Proof: gdb on the original at 0x432F6E records each constant's byte, the
+# native replays them through MWCCPS2_B233_FLOATRES (OperandsA.c, native
+# only) together with the hascall bytes, and gives expected.o. Forcing the
+# test in 2.3.3 itself (gdb at 0x432F80: $pc = 0x432F8B for scalar, eax = 1
+# and $pc = 0x432FDA for aliased) gives expected.o forced scalar and the
+# native's mdlUpdateDrawState forced aliased.
+#
+# Checked on the original as well (2026-11-17, mwccps2-ub-demo/): forcing
+# every constant node's hascall to 0 under gdb changes 2.3.3's own output on
+# all 87 cases, and the native's own hascall bytes written into the original
+# at the five test sites (nrec.py -> orep.py) make 2.3.3 produce the native's
+# object byte for byte on the 86 arena-residue-only cases.
+06a3635c908d  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 228 hascall bytes (25 nonzero) -> expected.o
+0e7b1d1432d0  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 1590 hascall bytes (89 nonzero) -> expected.o
+110edd614f59  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 298 hascall bytes (16 nonzero) -> expected.o
+1279702a2d86  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 732 hascall bytes (2 nonzero) -> expected.o
+137f505f7080  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 439 hascall bytes (45 nonzero) -> expected.o
+16d167c1b1ae  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 99 hascall bytes (5 nonzero) -> expected.o
+1419d6e2d123  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 16604 hascall bytes (1392 nonzero) -> expected.o
+1dd3c272f3e6  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 2869 hascall bytes (19 nonzero) -> expected.o
+1ea43f8a3109  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 261 hascall bytes (14 nonzero) -> expected.o
+22b4564885c6  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 747 hascall bytes (14 nonzero) -> expected.o
+28c987c0952c  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 992 hascall bytes (36 nonzero) -> expected.o
+2a0f12bb7b36  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 654 hascall bytes (15 nonzero) -> expected.o
+0c95a4b3bed7  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 2533 hascall bytes (68 nonzero) -> expected.o
+2a5c76daa827  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 3999 hascall bytes (55 nonzero) -> expected.o
+3424f9b03f43  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 231 hascall bytes (30 nonzero) -> expected.o
+36861f9fecd9  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 327 hascall bytes (5 nonzero) -> expected.o
+36e28c5461de  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 755 hascall bytes (7 nonzero) -> expected.o
+405817dd1858  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 819 hascall bytes (15 nonzero) -> expected.o
+4378f5cea84f  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 432 hascall bytes (10 nonzero) -> expected.o
+45d7f50b0ee7  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 265 hascall bytes (9 nonzero) -> expected.o
+4f1ec69df645  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 162 hascall bytes (4 nonzero) -> expected.o
+518157017ac1  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 451 hascall bytes (31 nonzero) -> expected.o
+577e55e98290  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 170 hascall bytes (5 nonzero) -> expected.o
+5950715fd87c  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 1199 hascall bytes (32 nonzero) -> expected.o
+58844e6ef3a2  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 520 hascall bytes (13 nonzero) -> expected.o
+62a33f0c1dbd  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 1438 hascall bytes (127 nonzero) -> expected.o
+646c2d93c343  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 1152 hascall bytes (39 nonzero) -> expected.o
+66030bf44206  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 172 hascall bytes (11 nonzero) -> expected.o
+65d018290ea4  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 2526 hascall bytes (189 nonzero) -> expected.o
+6cdbf93bdc96  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 990 hascall bytes (16 nonzero) -> expected.o
+71473b01785c  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 483 hascall bytes (5 nonzero) -> expected.o
+74592af4f459  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 563 hascall bytes (27 nonzero) -> expected.o
+741de9a56f80  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 499 hascall bytes (8 nonzero) -> expected.o
+75f58d5a2563  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 192 hascall bytes (2 nonzero) -> expected.o
+779cf6415a54  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 132 hascall bytes (6 nonzero) -> expected.o
+8759beb1a491  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 299 hascall bytes (3 nonzero) -> expected.o
+881d2ad97caa  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 696 hascall bytes (16 nonzero) -> expected.o
+863dfcdca7e4  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 14789 hascall bytes (1292 nonzero) -> expected.o
+8bd97e901318  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 3537 hascall bytes (383 nonzero) -> expected.o
+8ecb66823cd5  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 669 hascall bytes (57 nonzero) -> expected.o
+8788e8398581  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 17394 hascall bytes (1457 nonzero) -> expected.o
+907d4c9eecfd  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 1177 hascall bytes (30 nonzero) -> expected.o
+9643928c6a3a  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 1591 hascall bytes (20 nonzero) -> expected.o
+972743662725  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 1992 hascall bytes (131 nonzero) -> expected.o
+97db78026541  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 552 hascall bytes (8 nonzero) -> expected.o
+998bcdd0e559  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 774 hascall bytes (112 nonzero) -> expected.o
+9ac1b73876e1  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 577 hascall bytes (10 nonzero) -> expected.o
+9c3c809e48d1  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 963 hascall bytes (16 nonzero) -> expected.o
+a21f22fb33b8  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 382 hascall bytes (12 nonzero) -> expected.o
+a2eabe8bed03  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 412 hascall bytes (9 nonzero) -> expected.o
+a34fdac7c587  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 2182 hascall bytes (111 nonzero) -> expected.o
+a3ac2ecc7e4e  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 1603 hascall bytes (107 nonzero) -> expected.o
+a582008098ba  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 665 hascall bytes (22 nonzero) -> expected.o
+a7f3469de4d0  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 281 hascall bytes (7 nonzero) -> expected.o
+ac2a828489b2  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 137 hascall bytes (9 nonzero) -> expected.o
+abf137bfa9ec  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 356 hascall bytes (7 nonzero) -> expected.o
+af3f23b6776f  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 654 hascall bytes (28 nonzero) -> expected.o
+b8021893135a  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 469 hascall bytes (14 nonzero) -> expected.o
+b8c5abc49e31  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 651 hascall bytes (41 nonzero) -> expected.o
+ba3d3e1773cc  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 120 hascall bytes (8 nonzero) -> expected.o
+bb9510f98997  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 962 hascall bytes (31 nonzero) -> expected.o
+c32462d3733a  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 316 hascall bytes (10 nonzero) -> expected.o
+c4242ef831e7  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 336 hascall bytes (9 nonzero) -> expected.o
+cc1f2ac982c4  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 2424 hascall bytes (196 nonzero) -> expected.o
+ccdc2a8d0ae1  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 2358 hascall bytes (107 nonzero) -> expected.o
+d10169464a89  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 297 hascall bytes (9 nonzero) -> expected.o
+d4b877c3a122  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 281 hascall bytes (3 nonzero) -> expected.o
+d62cd6e0a9bf  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 464 hascall bytes (33 nonzero) -> expected.o
+d6d503bb3000  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 1406 hascall bytes (21 nonzero) -> expected.o
+d73d7806a59c  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 714 hascall bytes (40 nonzero) -> expected.o
+d82cd6445fcc  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 938 hascall bytes (75 nonzero) -> expected.o
+da5092506129  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 64 hascall bytes (2 nonzero) -> expected.o
+d9a46c55e584  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 760 hascall bytes (12 nonzero) -> expected.o
+e40c723822c3  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 775 hascall bytes (14 nonzero) -> expected.o
+e549244c58af  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 477 hascall bytes (28 nonzero) -> expected.o
+e56bc6f8aa41  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 525 hascall bytes (7 nonzero) -> expected.o
+e63fa4357171  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 1501 hascall bytes (63 nonzero) -> expected.o
+e9d22248ad89  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 450 hascall bytes (24 nonzero) -> expected.o
+ea769b77280e  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 194 hascall bytes (9 nonzero) -> expected.o
+eb7c3a68075e  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 5392 hascall bytes (400 nonzero) -> expected.o
+f44c9beba38b  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 111 hascall bytes (11 nonzero) -> expected.o
+f3d29aa1e2b9  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 653 hascall bytes (14 nonzero) -> expected.o
+fcc65a2a1d60  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 228 hascall bytes (14 nonzero) -> expected.o
+ff41d2265d81  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 2191 hascall bytes (149 nonzero) -> expected.o
+10a13bb34be4  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 173 hascall bytes (7 nonzero) -> expected.o
+dc7d31fbcaa4  arena-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C  replay of the original's 838 hascall bytes (64 nonzero) -> expected.o
+9cff7ee317ec  arena-residue,float-residue  0x470880,0x4708C2,0x49E925,0x49E94F,0x49E97B,0x49EFFB,0x49F06C,0x432F6E  replay of the original's 2149 hascall bytes (18 nonzero) and 9 float-constant bytes (2 nonzero) -> expected.o; 2.3.3 with 0x432F80 forced aliased gives the native's mdlUpdateDrawState, forced scalar expected.o

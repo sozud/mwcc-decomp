@@ -26,7 +26,11 @@ char* __stdcall strcpyn(char* d, const char* s, SInt32 len, SInt32 max) {
     return d;
 }
 
+#if MWCC_CORE == MWCC_CORE_B233
+int USTRCMP_CC ustrcmp(const char* src, const char* dst) {
+#else
 int __stdcall ustrcmp(const char* src, const char* dst) {
+#endif
     int diff;
 
     do {

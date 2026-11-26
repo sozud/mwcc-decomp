@@ -96,7 +96,10 @@ struct CI_Statement {
     UInt8 flags;
     UInt16 value;
     SInt32 sourceoffset;
+// 2.3.3: none either (dispmap.py: dobjstack 0xC -> 0x8, u 0x10 -> 0xC)
+#if MWCC_CORE != MWCC_CORE_B233
     HashNameNode* sourcefilepath;
+#endif
     ExceptionAction* dobjstack;
     union {
         SInt16 statementnum;

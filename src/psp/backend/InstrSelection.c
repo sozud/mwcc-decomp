@@ -27,13 +27,54 @@ extern void func_00531730(Object* obj);
 extern VOperand func_004C3BA0(SInt32 reg, UInt8 kind);
 extern VOperand func_004C3B10(MOperand op);
 
+#if MWCC_CORE == MWCC_CORE_B011126
+#include "compiler/CParser.h"
+extern SInt32 data_00625350; // RegClasses.c: registers are assigned by coloring
+extern Boolean ps2_IsQuadwordClassLocal(Object* obj); // 011126 0x499240
+extern Boolean ps2_IsQuadwordClass(Type* type); // 011126 0x499140
+extern Boolean IsTempName(HashNameNode* name);
+#endif
 // An object as a memory operand: base register and offset. Objects reached
 // through $gp, $s7 or an absolute address get their offset from a relocation.
 VOperand func_004949B0(Object* obj) {
     VOperand v;
     ObjectList_* list;
 
-    memclrw(&v, sizeof(VOperand));
+#if !(MWCCPS2 && MWCCPS2_BUILD == 119)
+    memclrw(&v, sizeof(VOperand)); // b119 leaves the other fields unset
+#endif
+#if MWCC_CORE == MWCC_CORE_B011126
+    // 011126 (0x4A246E): optimizing with VU0 registers, a quadword-class temporary or
+    // quadword-class pointer temporary is a listed object (kind 6) in its register, a
+    // flagged 128-bit integer variable its VU0 register (kind 5)
+    if (data_00625350 &&
+        copts.enable_vu0_registers &&
+        obj->u.var.info &&
+        !obj->u.var.info->noregister) {
+        if ((ps2_IsQuadwordClassLocal(obj) && IsTempName(obj->name)) ||
+            (b011126_IsQuadwordClassPointerLocal(obj) && IsTempName(obj->name))) {
+            if (!obj->u.var.info || !obj->u.var.info->reg) {
+                CError_Internal("InstrSelection.c", 0xE7E);
+            }
+            v.kind = 6;
+            v.reg = obj->u.var.info->reg;
+            v.object = (PtrInt)obj;
+            v.offset = 0;
+            v.unk18 = 0;
+            return v;
+        }
+        if (obj->u.var.info->unk24[1] &&
+            (obj->type->type == TYPEINT || obj->type->type == TYPEENUM) &&
+            obj->type->size == 16) {
+            v.kind = 5;
+            v.reg = obj->u.var.info->reg;
+            v.object = (PtrInt)obj;
+            v.offset = 0;
+            v.unk18 = 0;
+            return v;
+        }
+    }
+#endif
     v.kind = 2;
     v.reg = func_004A5360(obj);
     v.object = (PtrInt)obj;
@@ -234,7 +275,7 @@ VOperand func_0049C060(Type* type, VOperand* src, CInt64 value) {
     if ((type->type == TYPEINT || type->type == TYPEENUM) && type->size == 8) {
         hi = func_004A7390(src);
         lo = func_0047EF00(src, value.lo, NULL);
-        c = func_0047F740(0xD7, &lo, src, 0);
+        c = func_0047F740(PS2_OP(0xD7), &lo, src, 0);
         c = func_0047F740(4, &c, &hi, 0);
         c = func_0047EF00(&c, value.hi, NULL);
         lo.regHi = c.reg;
@@ -264,7 +305,7 @@ Boolean func_00494170(VOperand* src, SInt32 shift, int negate, VOperand* out, Ty
     SInt32 reg;
     CLabel* label;
     VOperand t;
-#if !MWCCPS2
+#if !MWCCPS2 || MWCC_CORE == MWCC_CORE_B233
     VOperand v;
 #endif
 
@@ -277,6 +318,20 @@ Boolean func_00494170(VOperand* src, SInt32 shift, int negate, VOperand* out, Ty
     }
 #endif
     reg = data_00625A98[0]++;
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x49C840): just the arithmetic shift, no rounding toward zero
+    // for a negative dividend
+    (void)label;
+    t = func_0047EA50(src, shift, type);
+    emitpcode(data_00625E48, reg, t.reg);
+    t = func_004C3BA0(reg, 0);
+    *out = func_0047F9A0(&t);
+    if (negate) {
+        v = func_0047F900(ll ? 0x83 : 0xB9, out, 0);
+        *out = v;
+    }
+    return 1;
+#endif
     label = newlabel();
     t = func_0047EA50(src, shift, type);
     emitpcode(data_00625E48, reg, t.reg);
@@ -327,25 +382,39 @@ void func_00494360(VOperand* src, Type* type, SInt16 shift, VOperand* out) {
         if (n == 32) {
             out->reg = src->regHi;
             emitpcode(
-                is_unsigned(type) ? 0xDA : 0xD8, out->regHi = data_00625A98[0]++, out->reg, 31
+                is_unsigned(type) ? PS2_OP(0xDA) : PS2_OP(0xD8),
+                out->regHi = data_00625A98[0]++,
+                out->reg,
+                31
             );
             out->kind = 0;
         } else {
             emitpcode(
-                is_unsigned(type) ? 0xDA : 0xD8, out->regHi = data_00625A98[0]++, src->regHi, 31
+                is_unsigned(type) ? PS2_OP(0xDA) : PS2_OP(0xD8),
+                out->regHi = data_00625A98[0]++,
+                src->regHi,
+                31
             );
             emitpcode(
-                is_unsigned(type) ? 0xDA : 0xD8, out->reg = data_00625A98[0]++, src->regHi, n - 32
+                is_unsigned(type) ? PS2_OP(0xDA) : PS2_OP(0xD8),
+                out->reg = data_00625A98[0]++,
+                src->regHi,
+                n - 32
             );
             out->kind = 0;
         }
     } else {
         out->kind = 0;
         n = shift & 0x3F;
-        emitpcode(is_unsigned(type) ? 0xDA : 0xD8, out->regHi = data_00625A98[0]++, src->regHi, n);
-        emitpcode(0xDA, t1 = data_00625A98[0]++, src->reg, n);
-        emitpcode(0xD2, t2 = data_00625A98[0]++, src->regHi, 32 - n);
-        emitpcode(0xBE, out->reg = data_00625A98[0]++, t2, t1);
+        emitpcode(
+            is_unsigned(type) ? PS2_OP(0xDA) : PS2_OP(0xD8),
+            out->regHi = data_00625A98[0]++,
+            src->regHi,
+            n
+        );
+        emitpcode(PS2_OP(0xDA), t1 = data_00625A98[0]++, src->reg, n);
+        emitpcode(PS2_OP(0xD2), t2 = data_00625A98[0]++, src->regHi, 32 - n);
+        emitpcode(PS2_OP(0xBE), out->reg = data_00625A98[0]++, t2, t1);
     }
 }
 #endif
@@ -424,7 +493,7 @@ void func_00494AE0(ENode* expr, void* target, VOperand* out) {
         cond->data.diadic.right->type == EINTCONST &&
         CInt64_Equal(cond->data.diadic.right->data.intval, cint64_zero)) {
         // a conditional move on the value compared with zero
-        op = expr->data.cond.cond->type == ENOTEQU ? 0x111 : 0x110;
+        op = expr->data.cond.cond->type == ENOTEQU ? PS2_OP(0x111) : PS2_OP(0x110);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         data_005D0140[expr->data.cond.cond->data.diadic.left->type](
             expr->data.cond.cond->data.diadic.left, NULL, &c
@@ -575,10 +644,10 @@ void func_004945B0(VOperand* src, Type* type, SInt16 shift, SInt16 negate, VOper
             n = shift & 0x3F;
             hi = func_0047EBB0(&hi, n, type);
             *out = func_0047EBB0(src, n, type);
-            pc = makepcode(0xDA, data_00625A98[0]++, src->reg, 32 - n);
+            pc = makepcode(PS2_OP(0xDA), data_00625A98[0]++, src->reg, 32 - n);
             appendpcode(data_006246B4, pc);
             t = func_004C3B10(pc->args[0]);
-            hi = func_0047F740(0xBE, &hi, &t, 0);
+            hi = func_0047F740(PS2_OP(0xBE), &hi, &t, 0);
             out->kind = 0;
             out->regHi = hi.reg;
         }
@@ -683,11 +752,11 @@ extern VOperand func_00497480(
 void func_00497360(ENode* expr, void* target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     *out = func_00497480(
-        expr->rtype, expr->data.diadic.left, expr->data.diadic.right, 0xBE, MACRO_OP(0x69)
+        expr->rtype, expr->data.diadic.left, expr->data.diadic.right, PS2_OP(0xBE), MACRO_OP(0x69)
     );
 #else
     *out = func_00497480(
-        expr->rtype, expr->data.diadic.left, expr->data.diadic.right, 0xBE, MACRO_OP(0x69)
+        expr->rtype, expr->data.diadic.left, expr->data.diadic.right, PS2_OP(0xBE), MACRO_OP(0x69)
     );
 #endif
 }
@@ -696,11 +765,11 @@ void func_00497360(ENode* expr, void* target, VOperand* out) {
 void func_004973C0(ENode* expr, void* target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     *out = func_00497480(
-        expr->rtype, expr->data.diadic.left, expr->data.diadic.right, 0xE4, MACRO_OP(0x97)
+        expr->rtype, expr->data.diadic.left, expr->data.diadic.right, PS2_OP(0xE4), MACRO_OP(0x97)
     );
 #else
     *out = func_00497480(
-        expr->rtype, expr->data.diadic.left, expr->data.diadic.right, 0xE4, MACRO_OP(0x97)
+        expr->rtype, expr->data.diadic.left, expr->data.diadic.right, PS2_OP(0xE4), MACRO_OP(0x97)
     );
 #endif
 }
@@ -824,6 +893,167 @@ VOperand func_00497480(Type* type, ENode* left, ENode* right, UInt16 op, UInt16 
 extern SInt16 func_00464E20(Object* obj); // an object's alignment
 extern void func_0052DE30(VOperand* dst, VOperand* src, SInt32 size, SInt32 align); // copy a block
 
+#if MWCC_CORE == MWCC_CORE_B011126
+extern MPCode* func_00480420(int op, SInt16 nargs);
+extern MOperand func_004C3C60(VOperand* v);
+extern MOperand func_004C3E70(SInt16 reg, UInt8 rclass, UInt16 flags);
+extern struct Alias* func_0053BD10(VOperand* mem, MPCode* pc);
+extern struct Alias* make_alias(Object* obj, SInt32 offset, SInt32 size);
+extern SInt16 data_00625E3E; // frame register
+extern Type data_005CB170; // the type an address is loaded as
+extern void func_004A64C0(VOperand* op, Type* type, int flags);
+
+// 011126 (0x4A0391, 0x4A0521): a data object whose link name has a '$'
+static Boolean b011126_DollarObject(Object* obj) {
+    return obj && obj->datatype != DLOCAL && strchr(CMangler_GetLinkName(obj)->name, '$');
+}
+
+// 011126 0x4A0070: optimizing with VU0 registers, a quadword-class copy goes through the
+// VU0 registers (lqc2/sqc2/vmove/qmtc2) instead of a block copy
+void func_00496CB0(ENode* expr, void* target, VOperand* out) {
+    ENode* left;
+    ENode* right;
+    Type* type;
+    SInt32 align;
+    VOperand src;
+    int quad = 0;
+    int callq = 0;
+    MPCode* pc;
+
+    left = expr->data.diadic.left;
+    right = expr->data.diadic.right;
+    type = expr->rtype;
+    if (right && right->type == EFUNCCALL && ps2_IsQuadwordClass(right->rtype)) {
+        callq = 1;
+    }
+    data_005D0140[right->type](right, NULL, &src);
+    data_005D0140[left->type](left, NULL, out);
+    align = CMach_GetTypeAlign(type);
+    if (left->type == EOBJREF && right->type == EOBJREF) {
+        if (func_00464E20(left->data.objref) < func_00464E20(right->data.objref)) {
+            align = func_00464E20(left->data.objref);
+        } else {
+            align = func_00464E20(right->data.objref);
+        }
+    }
+    if (copts.enable_vu0_registers && data_00625350) {
+        if (type->type == TYPECLASS && ps2_IsQuadwordClass(type)) {
+            quad = 1;
+        }
+        if (quad) {
+            if (left->type == EOBJREF &&
+                right->type == EINDIRECT &&
+                ps2_IsQuadwordClassLocal((Object*)out->object) &&
+                b011126_IsQuadwordClassPointerLocal((Object*)src.object)) {
+                emitpcode(0x263, b011126_QuadLocalReg((Object*)out->object), 0, 0, src.reg); // lqc2
+                return;
+            }
+            if (left->type == EINDIRECT &&
+                right->type == EOBJREF &&
+                b011126_IsQuadwordClassPointerLocal((Object*)out->object) &&
+                ps2_IsQuadwordClassLocal((Object*)src.object)) {
+                emitpcode(0x268, b011126_QuadLocalReg((Object*)src.object), 0, 0, out->reg); // sqc2
+                return;
+            }
+            if (out->reg && src.reg && out->kind == src.kind && out->kind == 5) {
+                emitpcode(0x1CC, out->reg, src.reg); // qmove
+            }
+            if (out->kind == 6 && out->object) {
+                out->reg = b011126_QuadLocalReg((Object*)out->object);
+                if (out->reg) {
+                    out->kind = 5;
+                } else {
+                    CError_Internal("InstrSelection.c", 0xA95);
+                }
+            }
+            if (src.kind == 6 && src.object) {
+                src.reg = b011126_QuadLocalReg((Object*)src.object);
+                if (src.reg) {
+                    src.kind = 5;
+                } else {
+                    CError_Internal("InstrSelection.c", 0xAA0);
+                }
+            }
+            if (out->kind == 5 && src.kind == 5) {
+                emitpcode(0x2AF, 0xF, out->reg, src.reg); // vmove
+                return;
+            }
+            if (src.kind == 5 && out->kind != 5) {
+                switch (out->kind) {
+                    case 3:
+                        if (out->kind) {
+                            func_004A64C0(out, &data_005CB170, 0);
+                        }
+                        emitpcode(0x268, src.reg, 0, 0, out->reg);
+                        break;
+                    case 2:
+                    case 4:
+                        if (b011126_DollarObject((Object*)out->object)) {
+                            pc = func_00480420(MACRO_OP(0x80), 3);
+                            pc->args[0] = func_004C3C60(&src);
+                            pc->args[1] = func_004C3C60(out);
+                            pc->args[2] = func_004C3E70(out->reg, 0, 1);
+                            pc->alias = func_0053BD10(out, pc);
+                            appendpcode(data_006246B4, pc);
+                            break;
+                        }
+                        if (out->kind) {
+                            func_004A64C0(out, &data_005CB170, 0);
+                        }
+                    case 0:
+                        emitpcode(0x268, src.reg, 0, 0, out->reg);
+                        break;
+                    default:
+                        CError_Internal("InstrSelection.c", 0xAC2);
+                }
+                return;
+            }
+            if (src.kind != 5 && out->kind == 5) {
+                switch (src.kind) {
+                    case 3:
+                        if (src.kind) {
+                            func_004A64C0(&src, &data_005CB170, 0);
+                        }
+                        emitpcode(0x263, out->reg, 0, 0, src.reg);
+                        break;
+                    case 2:
+                    case 4:
+                        if (b011126_DollarObject((Object*)src.object)) {
+                            SInt16 base;
+                            pc = func_00480420(MACRO_OP(0x5E), 3);
+                            pc->args[0] = func_004C3C60(out);
+                            pc->args[1] = func_004C3C60(&src);
+                            pc->args[2] = func_004C3E70(src.reg, 0, 1);
+                            pc->args[0].flags = 2;
+                            base = pc->args[2].reg;
+                            if (base == data_00625E3E || base == 29) {
+                                pc->alias = func_0053BD10(&src, pc);
+                            } else {
+                                pc->alias = make_alias((Object*)src.object, 0, 0);
+                            }
+                            appendpcode(data_006246B4, pc);
+                            break;
+                        }
+                        if (src.kind) {
+                            func_004A64C0(&src, &data_005CB170, 0);
+                        }
+                    case 0:
+                        if (callq) {
+                            emitpcode(0x266, src.reg, out->reg); // qmtc2
+                        } else {
+                            emitpcode(0x263, out->reg, 0, 0, src.reg);
+                        }
+                        break;
+                    default:
+                        CError_Internal("InstrSelection.c", 0xAE6);
+                }
+                return;
+            }
+        }
+    }
+    func_0052DE30(out, &src, type->size, align);
+}
+#else
 // Struct assignment: copy the block, as aligned as both objects allow.
 void func_00496CB0(ENode* expr, void* target, VOperand* out) {
 #if MWCCPS2
@@ -862,6 +1092,7 @@ void func_00496CB0(ENode* expr, void* target, VOperand* out) {
 #endif
     func_0052DE30(out, &src, type->size, align);
 }
+#endif
 
 extern Object* rt_ashldi3;
 extern void func_004A47E0(VOperand* op, int unk, int argno); // pass as a call argument
@@ -898,7 +1129,7 @@ void func_00497E50(ENode* expr, void* target, VOperand* out) {
         return;
     }
 #endif
-    op = IS_TYPE_LL(type) ? 0x86 : 0xD3;
+    op = IS_TYPE_LL(type) ? 0x86 : PS2_OP(0xD3);
     func_0049D8D0(left, right, &a, &b, 0);
     if (a.kind) {
         func_004A64C0(&a, left->rtype, 0);
@@ -955,7 +1186,7 @@ void func_00497A90(ENode* expr, void* target, VOperand* out) {
         emitpcode(op, data_00625A98[0]++, a.reg, b.reg);
         *out = func_004C3B10(data_006246B4->last->args[0]);
     } else {
-        op = is_unsigned(type) ? 0xDB : 0xD9;
+        op = is_unsigned(type) ? PS2_OP(0xDB) : PS2_OP(0xD9);
         func_0049D8D0(left, right, &a, &b, 0);
         if (a.kind) {
             func_004A64C0(&a, left->rtype, 0);
@@ -1023,6 +1254,9 @@ extern void func_004A5380(VOperand src, VOperand* dst, PtrInt bitfield); // merg
 extern void func_004A5730(VOperand src, PtrInt bitfield, VOperand* out); // a bitfield's new value
 extern VOperand func_00479C30(UInt16 op, VOperand* src, SInt32 bits); // sign or zero extend
 
+#if MWCC_CORE == MWCC_CORE_B011126
+extern SInt32 data_00625350; // RegClasses.c
+#endif
 // EASS
 void func_00496D50(ENode* expr, void* target, VOperand* out) {
     ENode* right;
@@ -1047,7 +1281,9 @@ void func_00496D50(ENode* expr, void* target, VOperand* out) {
         if (src.kind) {
             func_004A64C0(&src, right->rtype, 0);
         }
-        if (left->type == EINDIRECT) {
+        // 011126 (0x49FD6B) generates the destination whole: ExpandIR has already
+        // made it the target's address (it drops the EINDIRECT, ExpandIR.c EASS)
+        if (MWCC_CORE != MWCC_CORE_B011126 && left->type == EINDIRECT) {
             data_005D0140[left->data.monadic->type](left->data.monadic, NULL, &dst);
         } else {
             data_005D0140[left->type](left, NULL, &dst);
@@ -1064,7 +1300,9 @@ void func_00496D50(ENode* expr, void* target, VOperand* out) {
     if (src.kind) {
         func_004A64C0(&src, right->rtype, 0);
     }
-    if (left->type == EINDIRECT) {
+    // 011126 (0x49FDF2) generates the destination whole: ExpandIR has already
+    // made it the target's address (it drops the EINDIRECT, ExpandIR.c EASS)
+    if (MWCC_CORE != MWCC_CORE_B011126 && left->type == EINDIRECT) {
         data_005D0140[left->data.monadic->type](left->data.monadic, NULL, &dst);
     } else {
         data_005D0140[left->type](left, NULL, &dst);
@@ -1083,7 +1321,21 @@ void func_00496D50(ENode* expr, void* target, VOperand* out) {
             return;
         }
     } else {
+#if MWCC_CORE == MWCC_CORE_B011126
+        // 011126 (0x49FEE0): the expression (its volatile and const marks) only
+        // for a 128-bit integer with the VU0 registers on
+        func_004A72B0(
+            &dst,
+            (copts.enable_vu0_registers &&
+             data_00625350 &&
+             (type->type == TYPEINT || type->type == TYPEENUM) &&
+             type->size == 16)
+                ? expr
+                : NULL
+        );
+#else
         func_004A72B0(&dst, expr);
+#endif
         func_004A5A90(src, &dst, type);
     }
 
@@ -1188,11 +1440,11 @@ void func_004980C0(ENode* expr, SInt16 target, VOperand* out) {
             CError_ASSERT(2412, right->rtype->type == TYPEFLOAT);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             func_00499010(
-                0x1E2, right->data.diadic.left, right->data.diadic.right, left, target, out
+                PS2_OP(0x1E2), right->data.diadic.left, right->data.diadic.right, left, target, out
             );
 #else
             func_00499010(
-                0x1E2, right->data.diadic.left, right->data.diadic.right, left, target, out
+                PS2_OP(0x1E2), right->data.diadic.left, right->data.diadic.right, left, target, out
             );
 #endif
             return;
@@ -1204,7 +1456,9 @@ void func_004980C0(ENode* expr, SInt16 target, VOperand* out) {
             func_004A4A20(IS_SINGLE(type) ? rt_f_sub : rt_subdf3);
             *out = func_004A4710(type);
         } else {
-            emitpcode(IS_SINGLE(type) ? 0x103 : 0x102, data_00625A98[1]++, a.reg, b.reg);
+            emitpcode(
+                IS_SINGLE(type) ? PS2_OP(0x103) : PS2_OP(0x102), data_00625A98[1]++, a.reg, b.reg
+            );
             *out = func_004C3B10(data_006246B4->last->args[0]);
         }
         return;
@@ -1222,23 +1476,23 @@ void func_004980C0(ENode* expr, SInt16 target, VOperand* out) {
     if (a.kind == 3) {
         a = ps2_const128_48E3D0(a.imm, type);
     }
-    *out = func_0047F740(IS_TYPE_LL(type) ? 0x8E : 0xDD, &a, &b, 0);
+    *out = func_0047F740(IS_TYPE_LL(type) ? 0x8E : PS2_OP(0xDD), &a, &b, 0);
     return;
 #endif
     if (a.kind == 3) {
         a = func_0047F9F0(a.imm, type);
     }
     if (IS_TYPE_LL(type)) {
-        borrow = func_0047F740(0xD7, &a, &b, 0);
-        *out = func_0047F740(0xDD, &a, &b, 0);
+        borrow = func_0047F740(PS2_OP(0xD7), &a, &b, 0);
+        *out = func_0047F740(PS2_OP(0xDD), &a, &b, 0);
         ahi = func_004A7390(&a);
         bhi = func_004A7390(&b);
-        ahi = func_0047F740(0xDD, &ahi, &bhi, 0);
-        ahi = func_0047F740(0xDD, &ahi, &borrow, 0);
+        ahi = func_0047F740(PS2_OP(0xDD), &ahi, &bhi, 0);
+        ahi = func_0047F740(PS2_OP(0xDD), &ahi, &borrow, 0);
         out->kind = 0;
         out->regHi = ahi.reg;
     } else {
-        *out = func_0047F740(0xDD, &a, &b, 0);
+        *out = func_0047F740(PS2_OP(0xDD), &a, &b, 0);
     }
 }
 
@@ -1286,11 +1540,11 @@ void func_00498590(ENode* expr, SInt16 target, VOperand* out) {
             CError_ASSERT(2246, left->rtype->type == TYPEFLOAT);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             func_00499010(
-                0x1DE, left->data.diadic.left, left->data.diadic.right, right, target, out
+                PS2_OP(0x1DE), left->data.diadic.left, left->data.diadic.right, right, target, out
             );
 #else
             func_00499010(
-                0x1DE, left->data.diadic.left, left->data.diadic.right, right, target, out
+                PS2_OP(0x1DE), left->data.diadic.left, left->data.diadic.right, right, target, out
             );
 #endif
             return;
@@ -1315,11 +1569,11 @@ void func_00498590(ENode* expr, SInt16 target, VOperand* out) {
             CError_ASSERT(2258, right->rtype->type == TYPEFLOAT);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             func_00499010(
-                0x1DE, right->data.diadic.left, right->data.diadic.right, left, target, out
+                PS2_OP(0x1DE), right->data.diadic.left, right->data.diadic.right, left, target, out
             );
 #else
             func_00499010(
-                0x1DE, right->data.diadic.left, right->data.diadic.right, left, target, out
+                PS2_OP(0x1DE), right->data.diadic.left, right->data.diadic.right, left, target, out
             );
 #endif
             return;
@@ -1337,7 +1591,9 @@ void func_00498590(ENode* expr, SInt16 target, VOperand* out) {
             if (b.kind) {
                 func_004A64C0(&b, right->rtype, 0);
             }
-            emitpcode(IS_SINGLE(type) ? 0xED : 0xEC, data_00625A98[1]++, a.reg, b.reg);
+            emitpcode(
+                IS_SINGLE(type) ? PS2_OP(0xED) : PS2_OP(0xEC), data_00625A98[1]++, a.reg, b.reg
+            );
             *out = func_004C3B10(data_006246B4->last->args[0]);
         }
         return;
@@ -1409,7 +1665,7 @@ void func_00498590(ENode* expr, SInt16 target, VOperand* out) {
 #endif
     if (IS_TYPE_LL(type)) {
         *out = func_0047F740(4, &a, &b, 0);
-        c = func_0047F740(0xD7, out, &a, 0);
+        c = func_0047F740(PS2_OP(0xD7), out, &a, 0);
         hi = func_004A7390(&a);
         c = func_0047F740(4, &c, &hi, 0);
         hi = func_004A7390(&b);
@@ -1468,7 +1724,7 @@ void func_00499010(UInt16 op, ENode* x, ENode* y, ENode* z, SInt16 target, VOper
     emitpcode(OPC(0x1DD), acc, vz.reg);
 #else
     emitpcode(0xAD, 0, acc);
-    emitpcode(0x1DD, acc, vz.reg);
+    emitpcode(PS2_OP(0x1DD), acc, vz.reg);
 #endif
     emitpcode(op, dst, vx.reg, vy.reg);
     memclrw(out, sizeof(VOperand));
@@ -1553,7 +1809,12 @@ static inline SInt32 ll_mul_size(ENode* e) {
 
 // a constant operand's low 64 bits (the low 32 only when it is narrower)
 static inline unsigned long long ll_mul_const(ENode* e, SInt32 size) {
+#if MWCC_CORE == MWCC_CORE_B233
+    return ((unsigned long long)(size < 8 ? 0 : e->data.intval.CI64_MID1) << 32) +
+        e->data.intval.lo;
+#else
     return ((unsigned long long)(size < 8 ? 0 : e->data.intval.mid[1]) << 32) + e->data.intval.lo;
+#endif
 }
 
 // the shift a power-of-two constant multiplies by (1..62), else 0
@@ -1665,14 +1926,14 @@ void func_00490BB0(ENode* expr, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0x48C), dst, dst, 0x20);
 #else
-                emitpcode(0x48C, dst, dst, 0x20);
+                emitpcode(PS2_OP(0x48C), dst, dst, 0x20);
 #endif
             } else {
                 emitpcode(data_00625CE0, dst, a.reg, b.reg);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0x48B), dst, dst, 0x20);
 #else
-                emitpcode(0x48B, dst, dst, 0x20);
+                emitpcode(PS2_OP(0x48B), dst, dst, 0x20);
 #endif
             }
             break;
@@ -1691,7 +1952,7 @@ void func_00490BB0(ENode* expr, SInt16 target, VOperand* out) {
             emitpcode(OPC(0x228), dst, t2, t1);
 #else
             emitpcode(0xA8, t2);
-            emitpcode(0x228, dst, t2, t1);
+            emitpcode(PS2_OP(0x228), dst, t2, t1);
 #endif
             break;
         case 9:
@@ -1705,7 +1966,7 @@ void func_00490BB0(ENode* expr, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0x48B), t1, a.reg, 0x20);
 #else
-                emitpcode(0x48B, t1, a.reg, 0x20);
+                emitpcode(PS2_OP(0x48B), t1, a.reg, 0x20);
 #endif
                 t2 = data_00625A98[0]++;
                 emitpcode(ps2_pipeop3_63732A, t2, t1, b.reg);
@@ -1719,7 +1980,7 @@ void func_00490BB0(ENode* expr, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0x228), t4, t3, t2);
 #else
-                emitpcode(0x228, t4, t3, t2);
+                emitpcode(PS2_OP(0x228), t4, t3, t2);
 #endif
                 t5 = data_00625A98[0]++;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -1745,13 +2006,13 @@ void func_00490BB0(ENode* expr, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x48B), t1, a.reg, 0x20);
 #else
-            emitpcode(0x48B, t1, a.reg, 0x20);
+            emitpcode(PS2_OP(0x48B), t1, a.reg, 0x20);
 #endif
             t2 = data_00625A98[0]++;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x48B), t2, b.reg, 0x20);
 #else
-            emitpcode(0x48B, t2, b.reg, 0x20);
+            emitpcode(PS2_OP(0x48B), t2, b.reg, 0x20);
 #endif
             t3 = data_00625A98[0]++;
             emitpcode(ps2_pipeop3_63732A, t3, t1, t2);
@@ -1765,7 +2026,7 @@ void func_00490BB0(ENode* expr, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x228), t5, t4, t3);
 #else
-            emitpcode(0x228, t5, t4, t3);
+            emitpcode(PS2_OP(0x228), t5, t4, t3);
 #endif
             t6 = data_00625A98[0]++;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -1862,8 +2123,9 @@ void func_0049A740(ENode* expr, SInt16 target, VOperand* out) {
     }
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
 // b52 (0x4B2880..0x4B2A50) has b210's order: constants first, then a long
-// long under mips_option25 (func_00490BB0); no early __muldi3
-#if MWCC_CORE != MWCC_CORE_B52
+// long under mips_option25 (func_00490BB0); no early __muldi3 (2.3.3's
+// comes after the 32-bit constant cases)
+#if MWCC_CORE != MWCC_CORE_B52 && MWCC_CORE != MWCC_CORE_B233 && MWCC_CORE != MWCC_CORE_B011126
     if (IS_TYPE_LL(type)) {
         func_0049D8D0(left, right, &a, &b, 1);
         func_004A47E0(&a, 1, 1);
@@ -1905,21 +2167,43 @@ void func_0049A740(ENode* expr, SInt16 target, VOperand* out) {
         *out = MultiplyByConstant(&b, left->data.intval.lo, type);
         return;
     }
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 calls __muldi3 for a long long multiply, after the 32-bit
+    // constant cases (x * 10 is still shifts and adds)
+    if (IS_TYPE_LL(type)) {
+        func_0049D8D0(left, right, &a, &b, 1);
+        func_004A47E0(&a, 1, 1);
+        func_004A47E0(&b, 1, 2);
+        func_004A4A20(is_unsigned(type) ? rt_muldi3_2 : rt_muldi3);
+        *out = func_004A46E0(1);
+        return;
+    }
+#endif
     if (IS_TYPE_LL(type) && copts.mips_option25) {
-#if MWCC_CORE == MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52 || MWCC_CORE == MWCC_CORE_B011126
+        // 011126 (0x49D0A0..0x49D400) has b52's order, as b69's code (0x49CC11) does
         if (left->type == ETYPCON &&
             right->type == ETYPCON &&
             left->data.monadic->rtype->size < 8 &&
             right->data.monadic->rtype->size < 8) {
             UInt16 hi, lo;
+#if MWCC_CORE == MWCC_CORE_B011126
+            // 011126 (0x49D2E4): always the signed mult
+            func_00493FA0(data_00625CE0, left, right, out);
+#else
             func_00493FA0(is_unsigned(type) ? data_00625E4A : data_00625CE0, left, right, out);
+#endif
             hi = data_00625A98[0]++;
             emitpcode(OPC(0xA9), hi);
             lo = data_00625A98[0]++;
             emitpcode(OPC(0xA8), lo);
             emitpcode(OPC(0x85), hi, hi, 0);
             emitpcode(OPC(0x85), lo, lo, 0);
+#if MWCC_CORE == MWCC_CORE_B011126
+            emitpcode(OPC(0x8B), hi, hi, 0); // 011126 (0x49D356): the mflo result
+#else
             emitpcode(OPC(0x8B), lo, lo, 0);
+#endif
             emitpcode(OPC(0xBE), data_00625A98[0]++, lo, hi);
             *out = func_004C3B10(data_006246B4->last->args[0]);
 #else
@@ -1927,7 +2211,7 @@ void func_0049A740(ENode* expr, SInt16 target, VOperand* out) {
 #endif
             return;
         }
-#if MWCC_CORE == MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B52 || MWCC_CORE == MWCC_CORE_B011126
         func_0049D8D0(left, right, &a, &b, 1);
         func_004A47E0(&a, 1, 1);
         func_004A47E0(&b, 1, 2);
@@ -2007,19 +2291,32 @@ void func_00499820(ENode* expr, SInt16 target, VOperand* out) {
             func_004A4A20(rt_divdf3);
             *out = func_004A4710(type);
         } else {
-            func_00493FA0(IS_SINGLE(type) ? 0xF3 : 0xF2, left, right, out);
+            func_00493FA0(IS_SINGLE(type) ? PS2_OP(0xF3) : PS2_OP(0xF2), left, right, out);
         }
         return;
     }
 
     func_0049D8D0(left, right, &a, &b, 1);
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 (0x498EB4): a long long divides in the library before any
+    // constant case
+    if (IS_TYPE_LL(type) && copts.mips_option25) {
+        func_004A47E0(&a, 1, 1);
+        func_004A47E0(&b, 1, 2);
+        func_004A4A20(is_unsigned(type) ? rt_udivdi3 : rt_divdi3);
+        *out = func_004A46E0(1);
+        return;
+    }
+#endif
     if (is_unsigned(type)) {
         if (right->type == EINTCONST) {
+#if MWCC_CORE != MWCC_CORE_B011126 // 011126 (0x49E2C0): no division-by-zero warning
             if (CInt64_Equal(right->data.intval, cint64_zero)) {
                 CError_Warning(40);
                 *out = a;
                 return;
             }
+#endif
             if (CInt64_Equal(right->data.intval, cint64_one)) {
                 *out = a;
                 return;
@@ -2040,11 +2337,13 @@ void func_00499820(ENode* expr, SInt16 target, VOperand* out) {
         divop = IS_TYPE_LL(type) ? 0x7B : 0x7D;
     } else {
         if (right->type == EINTCONST) {
+#if MWCC_CORE != MWCC_CORE_B011126 // 011126 (0x49E2C0): no division-by-zero warning
             if (CInt64_Equal(right->data.intval, cint64_zero)) {
                 CError_Warning(40);
                 *out = a;
                 return;
             }
+#endif
             if (CInt64_Equal(right->data.intval, cint64_one)) {
                 *out = a;
                 return;
@@ -2058,6 +2357,16 @@ void func_00499820(ENode* expr, SInt16 target, VOperand* out) {
                 *out = func_0047F900(IS_TYPE_LL(type) ? 0x83 : 0xB9, &a, 0);
                 return;
             }
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 (0x499132..0x499184): any power of two, positive or negated
+            n = const_log2(right->data.intval);
+            if (n > 0 && func_00494170(&a, n, 0, out, type)) {
+                return;
+            }
+            n = const_log2(CInt64_Neg(right->data.intval));
+            if (n > 0 && func_00494170(&a, n, 1, out, type)) {
+                return;
+            }
+#else
             n = const_log2(right->data.intval);
             if (n > 0 && n < 16 && func_00494170(&a, n, 0, out, type)) {
                 return;
@@ -2066,6 +2375,7 @@ void func_00499820(ENode* expr, SInt16 target, VOperand* out) {
             if (n > 0 && n < 16 && func_00494170(&a, n, 1, out, type)) {
                 return;
             }
+#endif
             if (!copts.optimizesize && !IS_TYPE_LL(type)) {
                 *out = func_0049A430(&a, right->data.intval.lo);
                 return;
@@ -2372,8 +2682,13 @@ void func_0049B930(ENode* expr, VOperand* old, VOperand* updated) {
             } else {
 #if MWCCPS2 // b210: 1.0 as a 64-bit constant in one register
                 c.hi = 0;
+#if MWCC_CORE == MWCC_CORE_B233
+                c.CI64_MID0 = 0;
+                c.CI64_MID1 = 0x3FF00000;
+#else
                 c.mid[0] = 0;
                 c.mid[1] = 0x3FF00000;
+#endif
                 c.lo = 0;
                 one = func_0047F9F0(c, TYPE(&stsignedlonglong));
 #else
@@ -2401,7 +2716,7 @@ void func_0049B930(ENode* expr, VOperand* old, VOperand* updated) {
 #endif
             setpcodeflags(0x4000);
             if (IS_SINGLE(type)) {
-                op = inc ? 0xED : 0x103;
+                op = inc ? PS2_OP(0xED) : PS2_OP(0x103);
             } else {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0x6D), delta = data_00625A98[1]++, f);
@@ -2409,7 +2724,7 @@ void func_0049B930(ENode* expr, VOperand* old, VOperand* updated) {
                 emitpcode(0x6D, delta = data_00625A98[1]++, f);
 #endif
                 f = delta;
-                op = inc ? 0xEC : 0x102;
+                op = inc ? PS2_OP(0xEC) : PS2_OP(0x102);
             }
             emitpcode(op, data_00625A98[1]++, old->reg, f);
             *updated = func_004C3B10(data_006246B4->last->args[0]);
@@ -2484,15 +2799,17 @@ void func_00493FA0(SInt16 op, ENode* left, ENode* right, VOperand* out) {
 #else
     if (copts.mips_isa >= 4 &&
         copts.mips_option11 &&
-        (op == 0xF2 || op == 0xF3) &&
+        (op == PS2_OP(0xF2) || op == PS2_OP(0xF3)) &&
         !copts.optimizesize) {
-        emitpcode(op == 0xF3 ? 0x123 : 0x122, r = data_00625A98[1]++, b.reg);
+        emitpcode(
+            op == PS2_OP(0xF3) ? PS2_OP(0x123) : PS2_OP(0x122), r = data_00625A98[1]++, b.reg
+        );
 #endif
         if (!one) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(op == OPC(0xF3) ? 0xB5 : 0xB4, data_00625A98[1]++, a.reg, r);
 #else
-            emitpcode(op == 0xF3 ? 0xB5 : 0xB4, data_00625A98[1]++, a.reg, r);
+            emitpcode(op == PS2_OP(0xF3) ? 0xB5 : 0xB4, data_00625A98[1]++, a.reg, r);
 #endif
         }
     } else {
@@ -2529,7 +2846,11 @@ void func_0049B1D0(ENode* expr, void* target, VOperand* out) {
             if ((out->kind >= 4 || out->kind == 2) && out->kind) {
                 func_004A64C0(out, sub->rtype, 0);
             }
+#if MWCC_CORE == MWCC_CORE_B233
+            if (COPTS_T.fastmath && out->kind == 1) {
+#else
             if (copts.fastmath && out->kind == 1) {
+#endif
                 *out = func_00479F10(out);
             }
             if (IS_SINGLE(type)) {
@@ -2539,33 +2860,38 @@ void func_0049B1D0(ENode* expr, void* target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(OPC(0xE4), data_00625A98[0]++, out->reg, k);
 #else
-                    emitpcode(0xE4, data_00625A98[0]++, out->reg, k);
+                    emitpcode(PS2_OP(0xE4), data_00625A98[0]++, out->reg, k);
 #endif
                 }
 #else
-                emitpcode(0xE4, data_00625A98[0]++, out->reg, func_0047F680(0x80000000));
+                emitpcode(PS2_OP(0xE4), data_00625A98[0]++, out->reg, func_0047F680(0x80000000));
 #endif
                 *out = func_004C3B10(data_006246B4->last->args[0]);
             } else {
 #if MWCCPS2 // b210: the double is one 64-bit register; xor its bit 63
                 c.hi = 0;
+#if MWCC_CORE == MWCC_CORE_B233
+                c.CI64_MID0 = 0;
+                c.CI64_MID1 = 0x80000000;
+#else
                 c.mid[0] = 0;
                 c.mid[1] = 0x80000000;
+#endif
                 c.lo = 0;
                 k = func_0047F9F0(c, TYPE(&stunsignedlonglong));
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xE4), data_00625A98[0]++, out->reg, k.reg);
 #else
-                emitpcode(0xE4, data_00625A98[0]++, out->reg, k.reg);
+                emitpcode(PS2_OP(0xE4), data_00625A98[0]++, out->reg, k.reg);
 #endif
                 *out = func_004C3B10(data_006246B4->last->args[0]);
 #elif MWCCPSP_NATIVE // 3.0.1 evaluates arguments right to left
                 {
                     SInt32 k = func_0047F680(0x80000000);
-                    emitpcode(0xE4, n = data_00625A98[0]++, out->regHi, k);
+                    emitpcode(PS2_OP(0xE4), n = data_00625A98[0]++, out->regHi, k);
                 }
 #else
-                emitpcode(0xE4, n = data_00625A98[0]++, out->regHi, func_0047F680(0x80000000));
+            emitpcode(PS2_OP(0xE4), n = data_00625A98[0]++, out->regHi, func_0047F680(0x80000000));
 #endif
 #if !MWCCPS2
                 out->regHi = n;
@@ -2573,7 +2899,7 @@ void func_0049B1D0(ENode* expr, void* target, VOperand* out) {
             }
             return;
         }
-        op = IS_SINGLE(type) ? 0xFB : 0xFA;
+        op = IS_SINGLE(type) ? PS2_OP(0xFB) : PS2_OP(0xFA);
         data_005D0140[sub->type](sub, NULL, &v);
         if (v.kind) {
             func_004A64C0(&v, sub->rtype, 0);
@@ -2590,10 +2916,10 @@ void func_0049B1D0(ENode* expr, void* target, VOperand* out) {
         }
         hi = func_004A7390(&v);
         zero = func_004C3BA0(0, 0);
-        borrow = func_0047F740(0xD7, &zero, &v, 0);
-        lo = func_0047F740(0xDD, &zero, &v, 0);
-        hi = func_0047F740(0xDD, &zero, &hi, 0);
-        hi = func_0047F740(0xDD, &hi, &borrow, 0);
+        borrow = func_0047F740(PS2_OP(0xD7), &zero, &v, 0);
+        lo = func_0047F740(PS2_OP(0xDD), &zero, &v, 0);
+        hi = func_0047F740(PS2_OP(0xDD), &zero, &hi, 0);
+        hi = func_0047F740(PS2_OP(0xDD), &hi, &borrow, 0);
         *out = lo;
         out->kind = 0;
         out->regHi = hi.reg;
@@ -2976,7 +3302,11 @@ void func_0049C250(ENode* cond, CLabel* label, Boolean truth) {
 
     if (b.kind == 3) {
 #if MWCCPS2 // b210 tests the 64-bit value: words 2 and 3 of the constant
+#if MWCC_CORE == MWCC_CORE_B233
+        hi = b.imm.CI64_MID1;
+#else
         hi = b.imm.mid[1];
+#endif
 #else
         hi = b.imm.hi;
 #endif
@@ -3008,6 +3338,7 @@ void func_0049C250(ENode* cond, CLabel* label, Boolean truth) {
                 func_00479540(uns ? 0x2A : 0x20, &a, label);
             } else {
                 if (b.kind == 3) {
+#if MWCC_CORE != MWCC_CORE_B011126 // 011126 (0x49C067): no tests of the extremes here
                     if (lo == -1) {
                         if (hi == 0x7FFFFFFF && !uns) {
                             return;
@@ -3016,6 +3347,7 @@ void func_0049C250(ENode* cond, CLabel* label, Boolean truth) {
                             return;
                         }
                     }
+#endif
                     brop = uns ? MACRO_OP(0x13) : MACRO_OP(0x0F);
                 } else {
                     brop = uns ? MACRO_OP(0x11) : MACRO_OP(0x0D);
@@ -3028,6 +3360,7 @@ void func_0049C250(ENode* cond, CLabel* label, Boolean truth) {
                 func_00479540(uns ? 0x1A : 0x22, &a, label);
             } else {
                 if (b.kind == 3) {
+#if MWCC_CORE != MWCC_CORE_B011126 // 011126 (0x49C102): no tests of the extremes here
                     if (lo == -1) {
                         if (hi == -1 && uns) {
                             func_00480710((MPCodeLabel*)label->pclabel);
@@ -3042,6 +3375,7 @@ void func_0049C250(ENode* cond, CLabel* label, Boolean truth) {
                         func_0047A850(&a, &b.imm, right->rtype, label);
                         return;
                     }
+#endif
                     brop = uns ? MACRO_OP(0x1B) : MACRO_OP(0x17);
                 } else {
                     brop = uns ? MACRO_OP(0x19) : MACRO_OP(0x15);
@@ -3054,7 +3388,13 @@ void func_0049C250(ENode* cond, CLabel* label, Boolean truth) {
                 if (!uns) {
                     func_00479540(0x1C, &a, label);
                 } else {
+#if MWCC_CORE == MWCC_CORE_B233
+                    // 2.3.3 (0x496E80..0x496E97): an unsigned x >= 0 branches
+                    // with bnez, not always
+                    func_00479540(0x2A, &a, label);
+#else
                     func_00479640(0x39, label);
+#endif
                 }
             } else if (isone) {
                 func_00479540(uns ? 0x2A : 0x20, &a, label);
@@ -3132,7 +3472,7 @@ VOperand func_0049A430(VOperand* src, SInt32 d) {
     emitpcode(0xB6, func_0047F680(m.magic), src->reg);
 #endif
     if (d > 0) {
-        sign = func_00479D10(0xDA, src, 31);
+        sign = func_00479D10(PS2_OP(0xDA), src, 31);
     }
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     emitpcode(OPC(0xA8), data_00625A98[0]++);
@@ -3143,13 +3483,13 @@ VOperand func_0049A430(VOperand* src, SInt32 d) {
     if (d > 0 && m.magic < 0) {
         q = func_0047F740(4, &q, src, 0);
     } else if (d < 0 && m.magic > 0) {
-        q = func_0047F740(0xDD, &q, src, 0);
+        q = func_0047F740(PS2_OP(0xDD), &q, src, 0);
     }
     if (m.shift) {
-        q = func_00479D10(0xD8, &q, m.shift);
+        q = func_00479D10(PS2_OP(0xD8), &q, m.shift);
     }
     if (d < 0) {
-        sign = func_00479D10(0xDA, &q, 31);
+        sign = func_00479D10(PS2_OP(0xDA), &q, 31);
     }
     q = func_0047F740(4, &q, &sign, 0);
     return q;
@@ -3172,7 +3512,7 @@ VOperand func_0049A5C0(VOperand* src, UInt32 d) {
             q = func_00479D10(0xDA, &q, m.shift);
         }
     } else {
-        t = func_0047F740(0xDD, src, &q, 0);
+        t = func_0047F740(PS2_OP(0xDD), src, &q, 0);
         t = func_00479D10(0xDA, &t, 1);
         q = func_0047F740(4, &t, &q, 0);
         if (m.shift - 1) {
@@ -3200,15 +3540,15 @@ VOperand func_0049A5C0(VOperand* src, UInt32 d) {
     q = func_004C3B10(data_006246B4->last->args[0]);
     if (!m.add) {
         if (m.shift) {
-            q = func_00479D10(0xDA, &q, m.shift);
+            q = func_00479D10(PS2_OP(0xDA), &q, m.shift);
         }
         return q;
     }
-    t = func_0047F740(0xDD, src, &q, 0);
-    t = func_00479D10(0xDA, &t, 1);
+    t = func_0047F740(PS2_OP(0xDD), src, &q, 0);
+    t = func_00479D10(PS2_OP(0xDA), &t, 1);
     q = func_0047F740(4, &t, &q, 0);
     if (m.shift - 1 != 0) {
-        q = func_00479D10(0xDA, &q, m.shift - 1);
+        q = func_00479D10(PS2_OP(0xDA), &q, m.shift - 1);
     } else {
         q = t;
     }
@@ -3392,7 +3732,7 @@ static void float_to_uint(
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         emitpcode(OPC(0xBE), out->reg, f, func_0047F680(topbit));
 #else
-        emitpcode(0xBE, out->reg, f, func_0047F680(topbit));
+        emitpcode(PS2_OP(0xBE), out->reg, f, func_0047F680(topbit));
 #endif
         func_0046FA90(large);
     } else {
@@ -3420,7 +3760,7 @@ static void float_to_uint(
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         emitpcode(OPC(0xBE), out->reg, f, func_0047F680(topbit));
 #else
-        emitpcode(0xBE, out->reg, f, func_0047F680(topbit));
+        emitpcode(PS2_OP(0xBE), out->reg, f, func_0047F680(topbit));
 #endif
         func_0046FA90(end);
     }
@@ -3483,7 +3823,7 @@ void ps2_lltod_wide_4A5F00(VOperand* left, VOperand* right) {
     g = ps2_fromfpr64_487060(&f);
     h = func_0047ECC0(&g, &constant, TYPE(&stsignedlonglong));
     i = ps2_tofpr64_487210(&h);
-    emitpcode(0xEC, right->reg, i.reg, c.reg);
+    emitpcode(PS2_OP(0xEC), right->reg, i.reg, c.reg);
 }
 
 // b210 0x4A6140: the same for a float
@@ -3512,7 +3852,7 @@ void ps2_lltof_wide_4A6140(VOperand* left, VOperand* right) {
     g = func_00479F10(&f);
     h = func_0047EF00(&g, 0x1B800000, TYPE(&stsignedlong));
     i = func_0047A060(&h);
-    emitpcode(0xED, right->reg, i.reg, c.reg);
+    emitpcode(PS2_OP(0xED), right->reg, i.reg, c.reg);
 }
 
 // b210 0x4A5810: long long to float
@@ -3643,7 +3983,7 @@ void ps2_ulltod_4A5C00(Type* type, VOperand* op) {
         func_0046FA90((MPCodeLabel*)conditional->pclabel);
         emitpcode(0x8A, gpr = data_00625A98[0]++, op->reg, 1);
         scratch = func_0047E650(op, 1);
-        emitpcode(0xBE, gpr, gpr, scratch.reg);
+        emitpcode(PS2_OP(0xBE), gpr, gpr, scratch.reg);
         scratch.reg = gpr;
         scratch = ps2_tofpr64_487210(&scratch);
         emitpcode(opcode, fpr, scratch.reg);
@@ -3680,8 +4020,13 @@ inline void ps2_float_to_uint(
     large = makepclabel();
     if (dbl) {
         c.hi = 0;
+#if MWCC_CORE == MWCC_CORE_B233
+        c.CI64_MID0 = 0;
+        c.CI64_MID1 = 0x41E00000;
+#else
         c.mid[0] = 0;
         c.mid[1] = 0x41E00000;
+#endif
         c.lo = 0;
         k = ps2_const128_48E3D0(c, TYPE(&stunsignedlonglong));
         k = ps2_tofpr64_487210(&k);
@@ -3712,7 +4057,7 @@ inline void ps2_float_to_uint(
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         emitpcode(OPC(0xBE), out->reg, f, func_0047F680(topbit));
 #else
-        emitpcode(0xBE, out->reg, f, func_0047F680(topbit));
+        emitpcode(PS2_OP(0xBE), out->reg, f, func_0047F680(topbit));
 #endif
         func_0046FA90(large);
     } else {
@@ -3741,7 +4086,7 @@ inline void ps2_float_to_uint(
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         emitpcode(OPC(0xBE), out->reg, f, func_0047F680(topbit));
 #else
-        emitpcode(0xBE, out->reg, f, func_0047F680(topbit));
+        emitpcode(PS2_OP(0xBE), out->reg, f, func_0047F680(topbit));
 #endif
         func_0046FA90(end);
     }
@@ -3766,6 +4111,13 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
     from = sub->rtype;
     to = expr->rtype;
     data_005D0140[sub->type](sub, NULL, out);
+#if MWCC_CORE == MWCC_CORE_B233 || MWCC_CORE == MWCC_CORE_B011126
+    // 2.3.3 (0x49A8D0), 011126 (0x4A0739): any cast puts the value in a register, so *(T*)&obj
+    // goes through the address in a register
+    if (out->kind) {
+        func_004A64C0(out, from, 0);
+    }
+#else
     if (to->type == TYPEPOINTER) {
         if (to->size < from->size && out->kind) {
             func_004A64C0(out, from, 0);
@@ -3773,6 +4125,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
     } else if (out->kind) {
         func_004A64C0(out, from, 0);
     }
+#endif
 
     if (to->type == TYPEVOID) {
         out->kind = 3;
@@ -3875,7 +4228,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
                 emitpcode(OPC(0x105), f = data_00625A98[1]++, out->reg);
                 emitpcode(OPC(0x7F), data_00625A98[0]++, f);
 #else
-                emitpcode(0x105, f = data_00625A98[1]++, out->reg);
+                emitpcode(PS2_OP(0x105), f = data_00625A98[1]++, out->reg);
                 emitpcode(0x7F, data_00625A98[0]++, f);
 #endif
                 *out = func_004C3B10(data_006246B4->last->args[0]);
@@ -3887,7 +4240,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
                     emitpcode(OPC(0x107), f = data_00625A98[1]++, out->reg);
                     emitpcode(OPC(0xA5), data_00625A98[0]++, f);
 #else
-                    emitpcode(0x107, f = data_00625A98[1]++, out->reg);
+                    emitpcode(PS2_OP(0x107), f = data_00625A98[1]++, out->reg);
                     emitpcode(0xA5, data_00625A98[0]++, f);
 #endif
                     setpcodeflags(0x4000);
@@ -3895,7 +4248,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
                     return;
                 }
                 if (is_unsigned(to)) {
-                    ps2_float_to_uint(out, 0, 0x107, 0x49, 0x103, -0x8000);
+                    ps2_float_to_uint(out, 0, PS2_OP(0x107), 0x49, PS2_OP(0x103), -0x8000);
                     return;
                 }
             }
@@ -3906,7 +4259,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
                 emitpcode(OPC(0x104), f = data_00625A98[1]++, out->reg);
                 emitpcode(OPC(0x7F), data_00625A98[0]++, f);
 #else
-                emitpcode(0x104, f = data_00625A98[1]++, out->reg);
+                emitpcode(PS2_OP(0x104), f = data_00625A98[1]++, out->reg);
                 emitpcode(0x7F, data_00625A98[0]++, f);
 #endif
                 *out = func_004C3B10(data_006246B4->last->args[0]);
@@ -3918,7 +4271,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
                     emitpcode(OPC(0x106), f = data_00625A98[1]++, out->reg);
                     emitpcode(OPC(0xA5), data_00625A98[0]++, f);
 #else
-                    emitpcode(0x106, f = data_00625A98[1]++, out->reg);
+                    emitpcode(PS2_OP(0x106), f = data_00625A98[1]++, out->reg);
                     emitpcode(0xA5, data_00625A98[0]++, f);
 #endif
                     setpcodeflags(0x4000);
@@ -3926,13 +4279,21 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
                     return;
                 }
                 if (is_unsigned(to)) {
-                    ps2_float_to_uint(out, 1, 0x106, 0x48, 0x102, 0x80000000);
+                    ps2_float_to_uint(out, 1, PS2_OP(0x106), 0x48, PS2_OP(0x102), 0x80000000);
                     return;
                 }
             }
         }
     }
-    if ((copts.fast_fptosi || copts.fastmath) && IS_SINGLE(from) && !IS_TYPE_LL(to)) {
+#if MWCC_CORE == MWCC_CORE_B233
+    if ((COPTS_T.fast_fptosi || COPTS_T.fastmath) && IS_SINGLE(from) && !IS_TYPE_LL(to)) {
+#elif MWCC_CORE == MWCC_CORE_B011126
+    // 011126 (0x4A19F0): only the signed conversion, a long long one too; an
+    // unsigned one calls the library
+    if ((copts.fast_fptosi || copts.fastmath) && !is_unsigned(to) && IS_SINGLE(from)) {
+#else
+if ((copts.fast_fptosi || copts.fastmath) && IS_SINGLE(from) && !IS_TYPE_LL(to)) {
+#endif
         if (!is_unsigned(to)) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x75), f = data_00625A98[1]++, out->reg);
@@ -3960,7 +4321,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
         emitpcode(OPC(0xF9), f = data_00625A98[1]++, out->reg);
         emitpcode(OPC(0x49), k.reg, f);
 #else
-        emitpcode(0xF9, f = data_00625A98[1]++, out->reg);
+        emitpcode(PS2_OP(0xF9), f = data_00625A98[1]++, out->reg);
         emitpcode(0x49, k.reg, f);
 #endif
         func_00479B00(0xE, fin);
@@ -3987,7 +4348,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
         emitpcode(OPC(0x75), f, f);
         emitpcode(OPC(0xA5), r, f);
 #else
-        emitpcode(0x103, f, f, k.reg);
+        emitpcode(PS2_OP(0x103), f, f, k.reg);
         emitpcode(0x75, f, f);
         emitpcode(0xA5, r, f);
 #endif
@@ -3995,7 +4356,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         emitpcode(OPC(0xBE), r, r, func_0047F680(0x80000000));
 #else
-        emitpcode(0xBE, r, r, func_0047F680(0x80000000));
+        emitpcode(PS2_OP(0xBE), r, r, func_0047F680(0x80000000));
         if (to == TYPE(&stunsignedchar)) {
             emitpcode(MACRO_OP(0x82), r, r, 8);
         } else if (to == TYPE(&stunsignedshort)) {
@@ -4049,13 +4410,13 @@ int_to_float:
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xDA), r = data_00625A98[0]++, out->reg, 1);
 #else
-                emitpcode(0xDA, r = data_00625A98[0]++, out->reg, 1);
+                emitpcode(PS2_OP(0xDA), r = data_00625A98[0]++, out->reg, 1);
 #endif
                 tmp = func_0047E650(out, 1);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xBE), r, r, tmp.reg);
 #else
-                emitpcode(0xBE, r, r, tmp.reg);
+                emitpcode(PS2_OP(0xBE), r, r, tmp.reg);
 #endif
                 tmp.reg = r;
                 tmp = func_0047A060(&tmp);
@@ -4064,7 +4425,7 @@ int_to_float:
                 emitpcode(OPC(0xED), f, f, f);
 #else
                 emitpcode(0x73, f, tmp.reg);
-                emitpcode(0xED, f, f, f);
+                emitpcode(PS2_OP(0xED), f, f, f);
 #endif
                 *out = func_004C3B10(data_006246B4->last->args[0]);
                 func_0046FA90((MPCodeLabel*)done->pclabel);
@@ -4158,7 +4519,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
                 if (is_unsigned(to) && is_unsigned(from)) {
                     out->regHi = 0;
                 } else {
-                    tmp = func_00479D10(0xD8, out, 31);
+                    tmp = func_00479D10(PS2_OP(0xD8), out, 31);
                     out->regHi = tmp.reg;
                 }
                 return;
@@ -4217,7 +4578,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
         if ((copts.fp_library & 1) && IS_SINGLE(from)) {
             if (!IS_TYPE_LL(to)) {
                 if (!is_unsigned(to)) {
-                    emitpcode(0x107, f = data_00625A98[1]++, out->reg);
+                    emitpcode(PS2_OP(0x107), f = data_00625A98[1]++, out->reg);
                     emitpcode(0xA5, data_00625A98[0]++, f);
                     setpcodeflags(0x4000);
                     *out = func_004C3B10(data_006246B4->last->args[0]);
@@ -4226,7 +4587,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
                 if (is_unsigned(to)) {
                     k = func_0047F660(0x4F000000);
                     k = func_0047A060(&k);
-                    float_to_uint(out, &k, 0x107, 0x49, 0x103, -0x8000);
+                    float_to_uint(out, &k, PS2_OP(0x107), 0x49, PS2_OP(0x103), -0x8000);
                     return;
                 }
             }
@@ -4234,7 +4595,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
         if ((copts.fp_library & 2) && IS_DOUBLE(from)) {
             if (!IS_TYPE_LL(to)) {
                 if (!is_unsigned(to)) {
-                    emitpcode(0x106, f = data_00625A98[1]++, out->reg);
+                    emitpcode(PS2_OP(0x106), f = data_00625A98[1]++, out->reg);
                     emitpcode(0xA5, data_00625A98[0]++, f);
                     setpcodeflags(0x4000);
                     *out = func_004C3B10(data_006246B4->last->args[0]);
@@ -4245,7 +4606,7 @@ void func_00495500(ENode* expr, void* target, VOperand* out) {
                     c.lo = 0;
                     k = func_0047F9F0(c, TYPE(&stunsignedlonglong));
                     k = func_00479F70(&k);
-                    float_to_uint(out, &k, 0x106, 0x48, 0x102, 0x80000000);
+                    float_to_uint(out, &k, PS2_OP(0x106), 0x48, PS2_OP(0x102), 0x80000000);
                     return;
                 }
             }
@@ -4287,13 +4648,13 @@ int_to_float:
                 emitpcode(0x73, f, tmp.reg);
                 func_00480710((MPCodeLabel*)done->pclabel);
                 func_0046FA90((MPCodeLabel*)neg->pclabel);
-                emitpcode(0xDA, r = data_00625A98[0]++, out->reg, 1);
+                emitpcode(PS2_OP(0xDA), r = data_00625A98[0]++, out->reg, 1);
                 tmp = func_0047E650(out, 1);
-                emitpcode(0xBE, r, r, tmp.reg);
+                emitpcode(PS2_OP(0xBE), r, r, tmp.reg);
                 tmp.reg = r;
                 tmp = func_0047A060(&tmp);
                 emitpcode(0x73, f, tmp.reg);
-                emitpcode(0xED, f, f, f);
+                emitpcode(PS2_OP(0xED), f, f, f);
                 *out = func_004C3B10(data_006246B4->last->args[0]);
                 func_0046FA90((MPCodeLabel*)done->pclabel);
                 return;
@@ -4344,9 +4705,17 @@ void func_00493F90(ENode* expr, void* target, VOperand* out) {
 #define CError_B52_SHIFT (16)
 #endif
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 void func_00494940(ENode* expr, void* target, VOperand* out) {
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_FATAL(3750);
+#else
     CError_FATAL(3908);
+#endif
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #if MWCC_CORE == MWCC_CORE_B52
 #undef CError_B52_SHIFT
 #define CError_B52_SHIFT 0
@@ -4445,7 +4814,7 @@ void func_00493EF0(ENode* expr, void* target, VOperand* out) {
     if (a.kind >= 4 && a.kind) {
         func_004A64C0(&a, sub->rtype, 0);
     }
-    *out = func_00479D70(0xE5, &a, 1);
+    *out = func_00479D70(PS2_OP(0xE5), &a, 1);
 }
 
 extern void func_0047B480(VOperand* a, SInt32 imm, CLabel* label);
@@ -4523,8 +4892,13 @@ void func_004951F0(ENode* expr, void* target, VOperand* out) {
 #if MWCCPS2
         // b210 (0x49F940): the double's bits in the low 64 of the 128-bit constant
         c.hi = 0;
+#if MWCC_CORE == MWCC_CORE_B233
+        c.CI64_MID0 = 0;
+        c.CI64_MID1 = dbl.w[1];
+#else
         c.mid[0] = 0;
         c.mid[1] = dbl.w[1];
+#endif
         c.lo = dbl.w[0];
 #else
         c.lo = dbl.w[0];
@@ -4660,11 +5034,11 @@ void func_0049AF50(ENode* expr, void* target, VOperand* out) {
     zero = func_004C3BA0(0, 0);
     if (sub->type == EOR) {
         func_0049D8D0(sub->data.diadic.left, sub->data.diadic.right, &a, &b, 1);
-        *out = func_0047F740(0xBC, &a, &b, 0);
+        *out = func_0047F740(PS2_OP(0xBC), &a, &b, 0);
         if (IS_LONGLONG(type)) {
             a = func_004A7390(&a);
             b = func_004A7390(&b);
-            a = func_0047F740(0xBC, &a, &b, 0);
+            a = func_0047F740(PS2_OP(0xBC), &a, &b, 0);
             out->regHi = a.reg;
             out->kind = 0;
         }
@@ -4677,15 +5051,15 @@ void func_0049AF50(ENode* expr, void* target, VOperand* out) {
 #if !MWCCPS2 // b210 keeps the pair only in the EOR case above
     if (IS_LONGLONG(type)) {
         b = func_004A7390(&a);
-        a = func_0047F740(0xBC, &a, &zero, 0);
-        b = func_0047F740(0xBC, &b, &zero, 0);
+        a = func_0047F740(PS2_OP(0xBC), &a, &zero, 0);
+        b = func_0047F740(PS2_OP(0xBC), &b, &zero, 0);
         *out = a;
         out->regHi = b.reg;
         out->kind = 0;
     } else
 #endif
     {
-        *out = func_0047F740(0xBC, &a, &zero, 0);
+        *out = func_0047F740(PS2_OP(0xBC), &a, &zero, 0);
     }
 }
 
@@ -4871,12 +5245,12 @@ void func_00492050(ENode* expr, VOperand* out) {
                     t2 = func_0047CF50(&a, b.imm.lo);
                 } else {
                     bhi = func_004A7390(&b);
-                    *out = func_0047F740(uns ? 0xD7 : 0xD4, &ahi, &bhi, 0);
+                    *out = func_0047F740(uns ? PS2_OP(0xD7) : PS2_OP(0xD4), &ahi, &bhi, 0);
                     t1 = func_0047F740(MACRO_OP(0x83), &ahi, &bhi, 0);
-                    t2 = func_0047F740(0xD7, &a, &b, 0);
+                    t2 = func_0047F740(PS2_OP(0xD7), &a, &b, 0);
                 }
                 t2 = func_0047F740(6, &t2, &t1, 0);
-                *out = func_0047F740(0xBE, &t2, out, 0);
+                *out = func_0047F740(PS2_OP(0xBE), &t2, out, 0);
                 break;
             case EGREATER:
                 if (b.kind == 3) {
@@ -4890,7 +5264,7 @@ void func_00492050(ENode* expr, VOperand* out) {
                     t2 = func_0047F740(MACRO_OP(0x8B), &a, &b, 0);
                 }
                 t2 = func_0047F740(6, &t2, &t1, 0);
-                *out = func_0047F740(0xBE, &t2, out, 0);
+                *out = func_0047F740(PS2_OP(0xBE), &t2, out, 0);
                 break;
             case ELESSEQU:
                 if (b.kind == 3) {
@@ -4899,12 +5273,12 @@ void func_00492050(ENode* expr, VOperand* out) {
                     t2 = func_0047D870(&a, b.imm.lo);
                 } else {
                     bhi = func_004A7390(&b);
-                    *out = func_0047F740(uns ? 0xD7 : 0xD4, &ahi, &bhi, 0);
+                    *out = func_0047F740(uns ? PS2_OP(0xD7) : PS2_OP(0xD4), &ahi, &bhi, 0);
                     t1 = func_0047F740(MACRO_OP(0x83), &ahi, &bhi, 0);
                     t2 = func_0047F740(MACRO_OP(0x8F), &a, &b, 0);
                 }
                 t2 = func_0047F740(6, &t2, &t1, 0);
-                *out = func_0047F740(0xBE, &t2, out, 0);
+                *out = func_0047F740(PS2_OP(0xBE), &t2, out, 0);
                 break;
             case EGREATEREQU:
                 if (b.kind == 3) {
@@ -4918,7 +5292,7 @@ void func_00492050(ENode* expr, VOperand* out) {
                     t2 = func_0047F740(MACRO_OP(0x87), &a, &b, 0);
                 }
                 t2 = func_0047F740(6, &t2, &t1, 0);
-                *out = func_0047F740(0xBE, &t2, out, 0);
+                *out = func_0047F740(PS2_OP(0xBE), &t2, out, 0);
                 break;
             case EEQU:
             case ENOTEQU:
@@ -4927,12 +5301,12 @@ void func_00492050(ENode* expr, VOperand* out) {
                     t2 = b.imm.lo ? func_00479D70(MACRO_OP(0x96), &a, b.imm.lo) : a;
                 } else {
                     bhi = func_004A7390(&b);
-                    t1 = func_0047F740(0xDD, &ahi, &bhi, 0);
-                    t2 = func_0047F740(0xDD, &a, &b, 0);
+                    t1 = func_0047F740(PS2_OP(0xDD), &ahi, &bhi, 0);
+                    t2 = func_0047F740(PS2_OP(0xDD), &a, &b, 0);
                 }
-                t3 = func_0047F740(0xBE, &t1, &t2, 0);
+                t3 = func_0047F740(PS2_OP(0xBE), &t1, &t2, 0);
                 if (op == EEQU) {
-                    *out = func_00479D70(0xD6, &t3, 1);
+                    *out = func_00479D70(PS2_OP(0xD6), &t3, 1);
                 } else {
                     *out = func_00479D70(MACRO_OP(0x94), &t3, 0);
                 }
@@ -4966,7 +5340,7 @@ void func_00492050(ENode* expr, VOperand* out) {
                         *out = func_0047D240(&a, &b.imm, type);
                     }
                 } else {
-                    *out = func_0047F740(uns ? 0xD7 : 0xD4, &a, &b, 0);
+                    *out = func_0047F740(uns ? PS2_OP(0xD7) : PS2_OP(0xD4), &a, &b, 0);
                 }
                 break;
             case EGREATER:
@@ -5012,7 +5386,7 @@ void func_00492050(ENode* expr, VOperand* out) {
                 if (b.kind == 3) {
                     *out = uns ? func_0047CD10(&a, &b.imm, type) : func_0047D240(&a, &b.imm, type);
                 } else {
-                    *out = func_0047F740(uns ? 0xD7 : 0xD4, &a, &b, 0);
+                    *out = func_0047F740(uns ? PS2_OP(0xD7) : PS2_OP(0xD4), &a, &b, 0);
                 }
                 break;
             case EGREATER:

@@ -366,7 +366,15 @@ void func_00531C10(Object* obj, Boolean global, ELFSymbol* sym, SInt32 size) {
         Boolean inreg;
 
         a2 = addr;
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B233
+        if (a2.basereg == -1 &&
+            COPTS_X.mips_option43 &&
+            obj->datatype == DDATA &&
+            (vi = OBJ_DATA_INFO(obj)) != NULL &&
+            (vi->reg != 0 ||
+             VI_B210_CLASS(vi) == 5 ||
+             (VI_B210_2F(vi) != 0 && VI_B210_CLASS(vi) == 0))) {
+#elif MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         if (a2.basereg == -1 &&
             COPTS_X.mips_option43 &&
             obj->datatype == DDATA &&
@@ -386,7 +394,9 @@ void func_00531C10(Object* obj, Boolean global, ELFSymbol* sym, SInt32 size) {
             inreg = FALSE;
         }
         if (inreg) {
-#if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B233
+            switch (VI_B210_CLASS(OBJ_DATA_INFO(obj))) {
+#elif MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             switch (VI_B210_CLASS(obj->u.data.info)) {
 #else
             switch (obj->u.data.info->unk24[2]) {
@@ -455,6 +465,8 @@ void func_00531C10(Object* obj, Boolean global, ELFSymbol* sym, SInt32 size) {
 // function entry, its parameters and a lexical block of its locals
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -2 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -2 // b119 asserts
 void func_00531D90(Object* obj, Boolean global, ELFSymbol* sym, SInt32 size) {
     ObjAddress addr;
     DwNode* block;
@@ -588,6 +600,11 @@ void func_00531D90(Object* obj, Boolean global, ELFSymbol* sym, SInt32 size) {
         o = list->object;
         if (!o->debugInfo.entry) {
             node = DW_NewNode(0xC);
+#if MWCC_CORE == MWCC_CORE_B011126
+            // 011126 (0x502920): the name and type are set first too
+            node->f20 = o->name;
+            node->f28 = func_00535110(o->type);
+#endif
             o->debugInfo.entry = (struct DwarfNode*)node;
             if (copts.mips_option07) {
                 ObjGen_GetObjectAddress(list->object, &addr);
@@ -620,6 +637,8 @@ void func_00531D90(Object* obj, Boolean global, ELFSymbol* sym, SInt32 size) {
     DW_S16(func, 0x2C) = numparams;
     cu->f20 = func;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 
@@ -1060,6 +1079,8 @@ static const UInt16 dw_fundtypes[20] = {3,   1,   2,   3,   8,      5,      6,
                                         0xF, 0xF, 0xF, 0xE, 0xA510, 0xA408};
 #endif
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -2 // b119 asserts
 // 0x534F60: describe a type as an attribute: pointers and references become
 // modifiers of their target, a function's pointer refers to the function
 void func_00534F60(DwType* rec, DwTypeDesc* desc) {
@@ -1117,6 +1138,8 @@ void func_00534F60(DwType* rec, DwTypeDesc* desc) {
         desc->attr = desc->attr == 0x55 ? 0x63 : 0x83;
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 // a location as the backend records it for the frame and each saved register
 // (BE_macro.c SavedReg): how, the register, an offset and the base register
@@ -1324,6 +1347,8 @@ SInt32 func_005340F0(DwNode* node) {
 #undef CError_PS2_SHIFT
 #define CError_PS2_SHIFT 0
 
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -2 // b119 asserts
 // 0x5328B0: the function's .line table: its length, the base address (a
 // relocation), each (line, position, offset), and an end entry at the code
 // size; the offset of the length
@@ -1352,6 +1377,8 @@ SInt32 func_005328B0(DwNode* unit) {
     func_00531580(line, table[1]);
     return offset;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 
 extern MPCodeBlock* data_00624FD0; // the function's first block
 
@@ -1429,6 +1456,8 @@ SInt32* func_00532800(SInt32 base, SInt32 size) {
 // by func_00532990), then its attributes; the length
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -2 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -2 // b119 asserts
 SInt32 func_005331C0(DwNode* node) {
     DwTypeDesc desc;
     ELFSection* sec;
@@ -1696,6 +1725,8 @@ SInt32 func_005331C0(DwNode* node) {
     func_00531460(sec, (SInt32)(PtrInt)node->f14, size);
     return size;
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 
@@ -1787,6 +1818,8 @@ static inline SInt32 DW_LocAddrPos(DwNode* node) {
 // its sibling, its type, and the relocations of addresses
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -2 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -2 // b119 asserts
 void func_00532990(DwNode* node) {
     DwTypeDesc desc;
     SInt32 pos;
@@ -1912,5 +1945,7 @@ void func_00532990(DwNode* node) {
             break;
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0

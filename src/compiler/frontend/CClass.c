@@ -1436,7 +1436,11 @@ static AccessType CClass_GetPathAccess(BClassList* path) {
 #if MWCCPSP
     CError_ASSERT(1024, path);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(752, path);
+#else
     CError_ASSERT(930, path);
+#endif
 #endif
 
     result = ACCESSPUBLIC;
@@ -1456,7 +1460,11 @@ static AccessType CClass_GetPathAccess(BClassList* path) {
 #if MWCCPSP
         CError_ASSERT(1033, base);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(761, base);
+#else
         CError_ASSERT(939, base);
+#endif
 #endif
 
         switch (base->access) {
@@ -1480,7 +1488,11 @@ static AccessType CClass_GetPathAccess(BClassList* path) {
 #if MWCCPSP
                 CError_FATAL(1054);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_FATAL(782);
+#else
                 CError_FATAL(960);
+#endif
 #endif
         }
     }
@@ -1506,7 +1518,11 @@ Boolean CClass_IsMoreAccessiblePath(BClassList* path1, BClassList* path2) {
 #if MWCCPSP
             CError_FATAL(1072);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(800);
+#else
             CError_FATAL(978);
+#endif
 #endif
         case ACCESSPROTECTED:
             switch (CClass_GetPathAccess(path1)) {
@@ -1520,7 +1536,11 @@ Boolean CClass_IsMoreAccessiblePath(BClassList* path1, BClassList* path2) {
 #if MWCCPSP
                     CError_FATAL(1081);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+                    CError_FATAL(809);
+#else
                     CError_FATAL(987);
+#endif
 #endif
             }
         case ACCESSPRIVATE:
@@ -1535,7 +1555,11 @@ Boolean CClass_IsMoreAccessiblePath(BClassList* path1, BClassList* path2) {
 #if MWCCPSP
                     CError_FATAL(1091);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+                    CError_FATAL(819);
+#else
                     CError_FATAL(997);
+#endif
 #endif
             }
     }
@@ -1942,7 +1966,11 @@ SInt32 CClass_VirtualBaseOffset(TypeClass* tclass, TypeClass* baseclass) {
 #if MWCCPSP
     CError_FATAL(1435);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_FATAL(1182);
+#else
     CError_FATAL(1342);
+#endif
 #endif
     return 0;
 }
@@ -1971,7 +1999,11 @@ SInt32 CClass_VirtualBaseVTableOffset(TypeClass* tclass, TypeClass* baseclass) {
 #if MWCCPSP
     CError_FATAL(1452);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_FATAL(1199);
+#else
     CError_FATAL(1359);
+#endif
 #endif
     return 0;
 }
@@ -2229,11 +2261,19 @@ static TypeList* CClass_GetCoVariantClassList(
 #undef CError_PS2_SHIFT
 #define CError_PS2_SHIFT 181 // mwccps2: its assert is at line 0x74B
 #endif
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_ASSERT(
+                    1526,
+                    IS_TYPE_POINTER_ONLY(TYPE_FUNC(object->type)->functype) &&
+                        IS_TYPE_CLASS(TPTR_TARGET(TYPE_FUNC(object->type)->functype))
+                );
+#else
                 CError_ASSERT(
                     1686,
                     IS_TYPE_POINTER_ONLY(TYPE_FUNC(object->type)->functype) &&
                         IS_TYPE_CLASS(TPTR_TARGET(TYPE_FUNC(object->type)->functype))
                 );
+#endif
 #if MWCCPS2
 #undef CError_PS2_SHIFT
 #define CError_PS2_SHIFT 0
@@ -2309,7 +2349,11 @@ static Object* CClass_FindCovariantFunction(Object* func, Type* type) {
 #if MWCCPSP
     CError_ASSERT(1935, nsol && !nsol->next && nsol->object->otype == OT_OBJECT);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(1594, nsol && !nsol->next && nsol->object->otype == OT_OBJECT);
+#else
     CError_ASSERT(1754, nsol && !nsol->next && nsol->object->otype == OT_OBJECT);
+#endif
 #endif
 
     return OBJECT(nsol->object);
@@ -2580,7 +2624,11 @@ static void CClass_CheckVirtualBaseOverrides(OVClass* a, OVClass* b, Boolean isV
         for (ovfunc = b->vfuncs; ovfunc; ovfunc = ovfunc->next) {
             if (ovfunc->overrider) {
                 cclass_ovbase = NULL;
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_ASSERT(1880, CClass_IsBaseOf(b, ovfunc->overriderclass));
+#else
                 CError_ASSERT(2040, CClass_IsBaseOf(b, ovfunc->overriderclass));
+#endif
 
                 if (cclass_ovbase) {
                     for (vbase = a->tclass->vbases; vbase; vbase = vbase->next) {
@@ -2589,7 +2637,11 @@ static void CClass_CheckVirtualBaseOverrides(OVClass* a, OVClass* b, Boolean isV
                         }
                     }
 
+#if MWCC_CORE == MWCC_CORE_B233
+                    CError_ASSERT(1887, vbase);
+#else
                     CError_ASSERT(2047, vbase);
+#endif
                     vbase->has_override = TRUE;
                 }
             }
@@ -2923,7 +2975,11 @@ void CClass_ClassAction(TypeClass* tclass) {
 #if MWCCPSP
         CError_ASSERT(2682, tclass->vtable->object->type->size == tclass->vtable->size);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(2314, tclass->vtable->object->type->size == tclass->vtable->size);
+#else
         CError_ASSERT(2492, tclass->vtable->object->type->size == tclass->vtable->size);
+#endif
 #endif
         CInit_DeclareData(
             tclass->vtable->object, vtable_object_data, vtable_object_links, tclass->vtable->size
@@ -3303,7 +3359,11 @@ void CClass_CheckStaticAccess(BClassList* path, TypeClass* tclass, AccessType ac
             CError_Warning(ERR_ILLEGAL_ACCESS_PROTECTED_PRIVATE_MEMBER);
             return;
         default:
-            CError_FATAL(3013);
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(2970);
+#else
+    CError_FATAL(3013);
+#endif
     }
 }
 
@@ -3432,180 +3492,188 @@ Type* CClass_CombineClassAccessQualifiers(
 #define CError_B52_SHIFT (0)
 #endif
 
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+__declspec(noinline) // b119 calls its empty body
+#endif
 static void CClass_OptimizeBitFieldAccess(Type** ptype, SInt32* poffset) {
-    TypeBitfield* bitfield;
-    Type* innertype;
-    TypeBitfield* newtype;
-    short i;
-    short lastBit;
-    short firstBit;
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+    // b119's (0x50DB70) is empty: a bitfield access keeps its declared type
+    // and offset (no narrowing to the byte or halfword holding the field)
+#else
+        TypeBitfield* bitfield;
+        Type* innertype;
+        TypeBitfield* newtype;
+        short i;
+        short lastBit;
+        short firstBit;
 
-    bitfield = TYPE_BITFIELD(*ptype);
-    innertype = bitfield->bitfieldtype;
-    if (bitfield->bitlength == 8) {
-        switch (bitfield->offset) {
-            case 0:
-                i = 0;
-                break;
-            case 8:
-                i = 1;
-                break;
-            case 16:
-                i = 2;
-                break;
-            case 24:
-                i = 3;
-                break;
-            case 32:
-                i = 4;
-                break;
-            case 40:
-                i = 5;
-                break;
-            case 48:
-                i = 6;
-                break;
-            case 56:
-                i = 7;
-                break;
-            default:
-                i = -1;
-        }
-        if (i >= 0) {
-            if (innertype->size != 1) {
-                if (is_unsigned(bitfield->bitfieldtype)) {
-                    *ptype = TYPE(&stunsignedchar);
-                } else {
-                    *ptype = TYPE(&stsignedchar);
-                }
-            } else {
-                *ptype = innertype;
+        bitfield = TYPE_BITFIELD(*ptype);
+        innertype = bitfield->bitfieldtype;
+        if (bitfield->bitlength == 8) {
+            switch (bitfield->offset) {
+                case 0:
+                    i = 0;
+                    break;
+                case 8:
+                    i = 1;
+                    break;
+                case 16:
+                    i = 2;
+                    break;
+                case 24:
+                    i = 3;
+                    break;
+                case 32:
+                    i = 4;
+                    break;
+                case 40:
+                    i = 5;
+                    break;
+                case 48:
+                    i = 6;
+                    break;
+                case 56:
+                    i = 7;
+                    break;
+                default:
+                    i = -1;
             }
-            *poffset += i;
-            return;
+            if (i >= 0) {
+                if (innertype->size != 1) {
+                    if (is_unsigned(bitfield->bitfieldtype)) {
+                        *ptype = TYPE(&stunsignedchar);
+                    } else {
+                        *ptype = TYPE(&stsignedchar);
+                    }
+                } else {
+                    *ptype = innertype;
+                }
+                *poffset += i;
+                return;
+            }
         }
-    }
-    if (bitfield->bitlength == 16) {
-        switch (bitfield->offset) {
-            case 0:
-                i = 0;
-                break;
-            case 16:
-                i = 2;
-                break;
-            case 32:
-                i = 4;
-                break;
-            case 48:
-                i = 6;
-                break;
-            default:
-                i = -1;
+        if (bitfield->bitlength == 16) {
+            switch (bitfield->offset) {
+                case 0:
+                    i = 0;
+                    break;
+                case 16:
+                    i = 2;
+                    break;
+                case 32:
+                    i = 4;
+                    break;
+                case 48:
+                    i = 6;
+                    break;
+                default:
+                    i = -1;
+            }
+            if (i >= 0) {
+                if (innertype->size != stsignedshort.size) {
+                    if (is_unsigned(innertype)) {
+                        *ptype = TYPE(&stunsignedshort);
+                    } else {
+                        *ptype = TYPE(&stsignedshort);
+                    }
+                } else {
+                    *ptype = innertype;
+                }
+                *poffset += i;
+                return;
+            }
         }
-        if (i >= 0) {
-            if (innertype->size != stsignedshort.size) {
+        if (bitfield->bitlength == 32 && bitfield->offset == 0) {
+            if (innertype->size != stsignedlong.size) {
                 if (is_unsigned(innertype)) {
-                    *ptype = TYPE(&stunsignedshort);
-                } else {
-                    *ptype = TYPE(&stsignedshort);
-                }
-            } else {
-                *ptype = innertype;
-            }
-            *poffset += i;
-            return;
-        }
-    }
-    if (bitfield->bitlength == 32 && bitfield->offset == 0) {
-        if (innertype->size != stsignedlong.size) {
-            if (is_unsigned(innertype)) {
 #if MWCCPSP
-                *ptype = TYPE_UNSIGNED_OFFSET;
+                    *ptype = TYPE_UNSIGNED_OFFSET;
 #else
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-                    *ptype = TYPE(&ST_OFFS_U);
+                                    *ptype = TYPE(&ST_OFFS_U);
 #else
                                     *ptype = TYPE(&stunsignedlong);
 #endif
 #endif
-            } else {
+                } else {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
-                *ptype = TYPE(&ST_OFFS_S);
+                    *ptype = TYPE(&ST_OFFS_S);
 #else
-                    *ptype = TYPE(&stsignedlong);
+                                    *ptype = TYPE(&stsignedlong);
 #endif
-            }
+                }
 #if MWCCPS2 && MWCCPS2_BUILD >= 198 // b210 leaves a full-width 32-bit bitfield's type alone
-        }
-#else
-            } else {
-                *ptype = innertype;
             }
+#else
+                            } else {
+                                *ptype = innertype;
+                            }
 #endif
-        return;
-    }
-    if (bitfield->size == stsignedchar.size) {
-        return;
-    }
-    firstBit = bitfield->offset;
-    lastBit = firstBit + bitfield->bitlength - 1;
-    if (bitfield->bitlength < 8 && (firstBit & 0xFFF8) == (lastBit & 0xFFF8)) {
-        newtype = galloc(sizeof(TypeBitfield));
-        *newtype = *TYPE_BITFIELD(*ptype);
-        *ptype = TYPE(newtype);
-        i = 0;
-        if (newtype->offset >= 8) {
-            i = 1;
+            return;
         }
-        if (newtype->offset >= 16) {
-            i = 2;
+        if (bitfield->size == stsignedchar.size) {
+            return;
         }
-        if (newtype->offset >= 24) {
-            i = 3;
+        firstBit = bitfield->offset;
+        lastBit = firstBit + bitfield->bitlength - 1;
+        if (bitfield->bitlength < 8 && (firstBit & 0xFFF8) == (lastBit & 0xFFF8)) {
+            newtype = galloc(sizeof(TypeBitfield));
+            *newtype = *TYPE_BITFIELD(*ptype);
+            *ptype = TYPE(newtype);
+            i = 0;
+            if (newtype->offset >= 8) {
+                i = 1;
+            }
+            if (newtype->offset >= 16) {
+                i = 2;
+            }
+            if (newtype->offset >= 24) {
+                i = 3;
+            }
+            if (newtype->offset >= 32) {
+                i = 4;
+            }
+            if (newtype->offset >= 40) {
+                i = 5;
+            }
+            if (newtype->offset >= 48) {
+                i = 6;
+            }
+            if (newtype->offset >= 56) {
+                i = 7;
+            }
+            *poffset += i;
+            newtype->offset -= 8 * i;
+            newtype->bitfieldtype =
+                is_unsigned(innertype) ? TYPE(&stunsignedchar) : TYPE(&stsignedchar);
+            newtype->size = newtype->bitfieldtype->size;
+            return;
         }
-        if (newtype->offset >= 32) {
-            i = 4;
+        if (bitfield->size == stsignedshort.size) {
+            return;
         }
-        if (newtype->offset >= 40) {
-            i = 5;
+        if (bitfield->bitlength < 16 && (firstBit & 0xFFF0) == (lastBit & 0xFFF0)) {
+            newtype = galloc(sizeof(TypeBitfield));
+            *newtype = *TYPE_BITFIELD(*ptype);
+            *ptype = TYPE(newtype);
+            i = 0;
+            if (newtype->offset >= 16) {
+                i = stsignedshort.size;
+            }
+            if (newtype->offset >= 32) {
+                i = 4;
+            }
+            if (newtype->offset >= 48) {
+                i = 6;
+            }
+            *poffset += i;
+            newtype->offset -= 8 * i;
+            newtype->bitfieldtype =
+                is_unsigned(innertype) ? TYPE(&stunsignedshort) : TYPE(&stsignedshort);
+            newtype->size = newtype->bitfieldtype->size;
+            return;
         }
-        if (newtype->offset >= 48) {
-            i = 6;
-        }
-        if (newtype->offset >= 56) {
-            i = 7;
-        }
-        *poffset += i;
-        newtype->offset -= 8 * i;
-        newtype->bitfieldtype =
-            is_unsigned(innertype) ? TYPE(&stunsignedchar) : TYPE(&stsignedchar);
-        newtype->size = newtype->bitfieldtype->size;
-        return;
-    }
-    if (bitfield->size == stsignedshort.size) {
-        return;
-    }
-    if (bitfield->bitlength < 16 && (firstBit & 0xFFF0) == (lastBit & 0xFFF0)) {
-        newtype = galloc(sizeof(TypeBitfield));
-        *newtype = *TYPE_BITFIELD(*ptype);
-        *ptype = TYPE(newtype);
-        i = 0;
-        if (newtype->offset >= 16) {
-            i = stsignedshort.size;
-        }
-        if (newtype->offset >= 32) {
-            i = 4;
-        }
-        if (newtype->offset >= 48) {
-            i = 6;
-        }
-        *poffset += i;
-        newtype->offset -= 8 * i;
-        newtype->bitfieldtype =
-            is_unsigned(innertype) ? TYPE(&stunsignedshort) : TYPE(&stsignedshort);
-        newtype->size = newtype->bitfieldtype->size;
-        return;
-    }
+#endif
 }
 
 ENode* CClass_AccessMember(ENode* classexpr, Type* type, UInt32 qual, SInt32 offset) {

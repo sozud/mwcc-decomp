@@ -259,7 +259,9 @@ struct Object {
     UInt32 qual;
     SInt16 sclass;
     UInt8 flags;
+#if MWCC_CORE != MWCC_CORE_B233
     struct ExtendedParam* extParam;
+#endif
     union {
         struct Object* toc;
         struct DwarfNode* pendingEntry;
@@ -284,10 +286,12 @@ struct Object {
             // b69: no register info (CParser_UpdateObject copies none) and, as
             // in GC 2.0, no islocalstatic; info at +0x3C is unverified
             HashNameNode* linkname;
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3: a data object ends with its link name (Object is 0x30)
             union {
                 VarInfo* info;
                 struct InterruptGenerationRecord* interruptInfo;
             };
+#endif
 #else
             union {
                 CInt64 intconst;
@@ -345,9 +349,16 @@ struct Object {
             } u;
             DefArgCtorInfo* defargdata;
             HashNameNode* linkname;
+#if MWCC_CORE != MWCC_CORE_B233
+            // 2.3.3 has neither: template function instances are not linked
+            // from their objects (CMangler_FunctionLinkName 0x454290 reads no
+            // +0x30; CTempl_GetCreateFuncInstance stores none) and there is no
+            // pointer analysis (no IroPointerAnalysis.c, no
+            // opt_pointer_analysis pragma)
             TemplFuncInstance* inst;
             struct PTFList* ptfList;
             ObjectList* argList;
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         } func;
         struct {
@@ -396,7 +407,29 @@ struct Object {
 #endif
 #endif
     } u;
+    // 2.3.3: Object is 0x30 bytes (CParser_NewLocalDataObject/NewFunctionObject
+    // allocate 0x30) with u at +0x24 (dispmap.py: 0x28 -> 0x24) and a link name at
+    // +0x2C (CMangler_GetLinkName 0x4544B0); no extParam (pointer analysis only)
 };
+#if MWCC_CORE == MWCC_CORE_B233
+// fields 2.3.3's Object does not have: the code that would use them reads
+// NULL (no template instance link, no data VarInfo), and the pointer analysis
+// (not in 2.3.3, never enabled: no pragma) stops in PA_NoObjectField
+#define OBJ_FUNC_INST(o) ((TemplFuncInstance*)0)
+#define OBJ_DATA_INFO(o) ((VarInfo*)0)
+#define OBJ_ISLOCALSTATIC(o) 0
+extern void* PA_NoObjectField(void);
+#define OBJ_PTFLIST(o) (*(struct PTFList**)PA_NoObjectField())
+#define OBJ_ARGLIST(o) (*(ObjectList**)PA_NoObjectField())
+#define OBJ_EXTPARAM(o) (*(struct ExtendedParam**)PA_NoObjectField())
+#else
+#define OBJ_FUNC_INST(o) ((o)->u.func.inst)
+#define OBJ_DATA_INFO(o) ((o)->u.data.info)
+#define OBJ_ISLOCALSTATIC(o) ((o)->u.data.islocalstatic)
+#define OBJ_PTFLIST(o) ((o)->u.func.ptfList)
+#define OBJ_ARGLIST(o) ((o)->u.func.argList)
+#define OBJ_EXTPARAM(o) ((o)->extParam)
+#endif
 struct ObjectTemplated {
     Object object;
     Object* parent;
@@ -419,7 +452,24 @@ struct VarInfo {
     // b69's VarInfo is 0x34 bytes (CodeGen_GetNewVarInfo 0x4337F0 allocates
     // and clears 0x34); 0x434410 (func_00438160) tests +0x2D, stores the
     // class at +0x2F (5 or 0) and the register at +0x30, 0x4341E0 the same
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3: 0x2C bytes (CodeGen_GetNewVarInfo lalloc(0x2C)); b69's four
+    // bytes are flags (|= at +0x25) and the register class (+0x26), with the
+    // register at +0x28
+    union {
+        UInt8 unk24[4];
+        struct {
+            UInt8 unk24_0;
+            UInt8 flags;
+            UInt8 rclass;
+            UInt8 unk24_3;
+        };
+    };
+#else
     UInt8 unk24[2]; // +0x2C; [1] the VU0 flag (gcc_replace_arg_st_asm, +0x2D)
+    UInt8 flags;
+    UInt8 rclass;
+#endif
 #else
 #if MWCCPS2
     UInt8 unk24
@@ -428,9 +478,9 @@ struct VarInfo {
     UInt8 unk24
         [2]; // 3.0.1: flags at +0x26, rclass +0x27, reg +0x28, regHi +0x2A (Coloring.c, RegClasses.c)
 #endif
-#endif
     UInt8 flags;
     UInt8 rclass;
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     SInt16 reg;
     SInt16 regHi;

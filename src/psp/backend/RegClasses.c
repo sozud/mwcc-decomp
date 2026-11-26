@@ -221,8 +221,13 @@ typedef struct PS2RegVarNode {
     SInt32 unk8;
     void* info; // VarInfo: requested class at +0x2E, register at +0x32
 } PS2RegVarNode;
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3's VarInfo: class +0x26, register +0x28
+#define REGVAR_CLASS(vi) (((VarInfo*)(vi))->rclass)
+#define REGVAR_REG(vi) (((VarInfo*)(vi))->reg)
+#else
 #define REGVAR_CLASS(vi) (*(char*)PS2_VARINFO_AT(vi, 0x2E))
 #define REGVAR_REG(vi) (*(SInt16*)PS2_VARINFO_AT(vi, 0x32))
+#endif
 extern PS2RegVarNode* ps2_objgen_636288;
 extern SInt32 ps2_regquota_636150[7]; // registers kept back per class
 extern void func_004C5940(SInt32 err, ...); // MIPSError.c: an error
@@ -304,7 +309,9 @@ __declspec(noinline) void func_004B8C50(void) {
     data_0060FEE8[0][27] = 2; // $k1
     data_0060FEE8[0][28] = 2; // $gp
     data_0060FEE8[0][29] = 2; // $sp
+#if MWCC_CORE != MWCC_CORE_B233 // 2.3.3 (0x4ABBC9) leaves $ra to the allocator
     data_0060FEE8[0][31] = 2; // $ra
+#endif
     if (data_00625EAE) {
         data_0060FEE8[0][30] = 2; // $fp
         data_00625E3E = 30;

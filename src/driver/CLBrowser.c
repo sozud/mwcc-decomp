@@ -88,8 +88,13 @@ int Browser_SearchFile(OSHandle* browsetable, const char* fullpath, SInt16* ID) 
     SInt32 size;
     Boolean found = FALSE;
 
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(115, OS_IsFullPath(fullpath));
+    OS_ASSERT(116, browsetable!=NULL);
+#else
     OS_ASSERT(114, OS_IsFullPath(fullpath));
     OS_ASSERT(115, browsetable!=NULL);
+#endif
 
     GetBrowseTableInfoAndLock(browsetable, &scan, &cnt, &size);
     for (idx = 0; idx < cnt; idx++, scan++) {

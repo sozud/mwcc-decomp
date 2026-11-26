@@ -386,8 +386,9 @@ static void func_0043A3C0(Statement* stmt, Object* obj, ENode* expr) {
     MAsmOperand* op;
     SInt32 i;
 
-#if MWCC_CORE == MWCC_CORE_B52
-    // b52 (0x43B400) asks only for an object reference of the same kind
+#if MWCC_CORE == MWCC_CORE_B52 || (MWCCPS2 && MWCCPS2_BUILD == 119)
+    // b52 (0x43B400) asks only for an object reference of the same kind;
+    // b119 (0x43A090) propagates float variables too
     if (expr->type != EOBJREF) {
 #else
     if (obj->type->type == TYPEFLOAT || expr->type != EOBJREF) {
@@ -708,7 +709,56 @@ extern Boolean func_004B8980(Object* obj);
 // b210 0x439CD0: quadword values are subable only with cse_vector_type; a
 // read of a local that lives in a register only with that class's
 // cse_hard_reg_* option (the class byte at VarInfo +0x2E)
-#if MWCCPS2 && !MWCC_CORE
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -27 // b119 asserts
+// b119 (0x439AE0): no cse_vector_type and no quadword test, the tests as
+// separate ifs
+static Boolean FE_Hook0(IROLinear* linear) {
+    IROLinear* x;
+    ENode* node;
+    Object* obj;
+    VarInfo* vi;
+
+    if (!func_004C3EC0(linear)) {
+        return FALSE;
+    }
+    if (linear->nodetype != EINDIRECT) {
+        return TRUE;
+    }
+    x = linear->u.monadic;
+    if (!x) {
+        CError_FATAL(567);
+        return FALSE;
+    }
+    if (x->nodetype != EOBJREF || !(node = x->u.node)) {
+        return TRUE;
+    }
+    if (node->type != EOBJREF || (obj = node->data.objref) == NULL) {
+        return TRUE;
+    }
+    if (!func_004B8980(obj)) {
+        return TRUE;
+    }
+    vi = Registers_GetVarInfo(obj);
+    if (vi) {
+        switch ((signed char)vi->unk24[2]) {
+            case 0:
+                return copts.cse_hard_reg_gpr;
+            case 1:
+                return copts.cse_hard_reg_fpr;
+            case 5:
+            case 6:
+                return copts.cse_hard_reg_vu0;
+            default:
+                return copts.cse_hard_reg_special;
+        }
+    }
+    return TRUE;
+}
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
+#elif MWCCPS2 && !MWCC_CORE
 // mwccps2 (b198 0x439CA0, b210): the tests folded into assignments, the special class
 // as an if (the PS2 b198 decompilation's fn_00439CA0)
 static Boolean FE_Hook0(IROLinear* linear) {

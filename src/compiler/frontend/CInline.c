@@ -1430,7 +1430,11 @@ static short CInline_GetLabelStatementNumber(HashNameNode* name) {
 #if MWCCPS2
     CError_FATAL(775);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_FATAL(629);
+#else
     CError_FATAL(742);
+#endif
 #endif
     return 0;
 }
@@ -3275,7 +3279,11 @@ static UInt8 CInline_GetObjectSFlags(Object* object) {
 #undef CError_PS2_SHIFT
 #define CError_PS2_SHIFT 474 // mwccps2: line 1678
 #endif
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(1068);
+#else
             CError_FATAL(1204);
+#endif
 #if MWCCPS2
 #undef CError_PS2_SHIFT
 #define CError_PS2_SHIFT 0
@@ -3324,7 +3332,11 @@ static void CInline_SetObjectSFlags(Object* object, UInt8 sflags) {
 #undef CError_PS2_SHIFT
 #define CError_PS2_SHIFT 470 // mwccps2: line 1699
 #endif
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(1093);
+#else
             CError_FATAL(1229);
+#endif
 #if MWCCPS2
 #undef CError_PS2_SHIFT
 #define CError_PS2_SHIFT 0
@@ -3367,7 +3379,11 @@ static ENode* CInline_FuncArgConvert(ENode* expr) {
 #endif
             return copy;
         case ETEMP:
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(1136);
+#else
             CError_FATAL(1272);
+#endif
         default:
             break;
     }
@@ -3780,7 +3796,12 @@ static ENode* CInline_InlineFunctionExpression(ENode* expr) {
             if (cinline_unconditionalpart && cinline_stmtlevelexprs < 16) {
                 cinline_stmtlevelexpr[cinline_stmtlevelexprs++] = expr;
             }
+#if MWCC_CORE != MWCC_CORE_B233
+            // 2.3.3 (0x46B28D..0x46B2BD) only lists the call: it never
+            // serializes the statement (0x52BE4D is only cleared), so
+            // CInline_ExpandStatement extracts the listed calls in place
             cinline_serialize_stmt = TRUE;
+#endif
         }
         return expr;
     }
@@ -4423,7 +4444,11 @@ static Boolean CInline_InlineFunctionCheck(ENode* expr) {
             return TRUE;
         }
 
+#if MWCC_CORE == MWCC_CORE_B233
+        if (COPTS_T.inline_bottom_up) {
+#else
         if (copts.inline_bottom_up) {
+#endif
             CI_FuncData* funcdata;
             if (!(funcdata = object->u.func.u.ifuncdata)) {
                 return FALSE;
@@ -5082,7 +5107,9 @@ void CInline_SerializeStatement(Statement* stmt) {
             scan->value = stmt->value;
             scan->dobjstack = stmt->dobjstack;
             scan->sourceoffset = stmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
             scan->sourcefilepath = stmt->sourcefilepath;
+#endif
         }
 
         copy = CInline_NewStatement(ST_EXPRESSION);
@@ -5164,7 +5191,11 @@ static void CInline_UnpackSwitch(Statement* stmt, CI_Statement* packstmt, CLabel
     info->x4 = NULL;
 #endif
     stmt->label = (CLabel*)info;
-    CError_ASSERT(2730, info->defaultlabel = labels[packstmt->u.switchdata->defaultlabelID]);
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(2054, info->defaultlabel = labels[packstmt->u.switchdata->defaultlabelID]);
+#else
+        CError_ASSERT(2730, info->defaultlabel = labels[packstmt->u.switchdata->defaultlabelID]);
+#endif
     info->exprtype = packstmt->u.switchdata->exprtype;
 
     for (i = 0; i < packstmt->u.switchdata->numcases; i++) {
@@ -5181,7 +5212,11 @@ static void CInline_UnpackSwitch(Statement* stmt, CI_Statement* packstmt, CLabel
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         swcase->max = packstmt->u.switchdata->cases[i].max;
 #endif
-        CError_ASSERT(2740, swcase->label = labels[packstmt->u.switchdata->cases[i].labelID]);
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(2064, swcase->label = labels[packstmt->u.switchdata->cases[i].labelID]);
+#else
+            CError_ASSERT(2740, swcase->label = labels[packstmt->u.switchdata->cases[i].labelID]);
+#endif
     }
 }
 #endif
@@ -5194,7 +5229,11 @@ Object* CInline_GetLocalObj(SInt32 id, Boolean inlineCopy) {
         if (id & 0x80000000) {
             id = (id & ~0x80000000) - 1;
             if (inlineCopy) {
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_ASSERT(2085, local_aobjects[id].object);
+#else
                 CError_ASSERT(2761, local_aobjects[id].object);
+#endif
                 return local_aobjects[id].object;
             }
 
@@ -5204,11 +5243,19 @@ Object* CInline_GetLocalObj(SInt32 id, Boolean inlineCopy) {
                 }
             }
 
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(2089);
+#else
             CError_FATAL(2765);
+#endif
         } else {
             id--;
             if (inlineCopy) {
+#if MWCC_CORE == MWCC_CORE_B233
+                CError_ASSERT(2096, local_dobjects[id]);
+#else
                 CError_ASSERT(2772, local_dobjects[id]);
+#endif
                 return local_dobjects[id];
             }
 
@@ -5218,7 +5265,11 @@ Object* CInline_GetLocalObj(SInt32 id, Boolean inlineCopy) {
                 }
             }
 
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_FATAL(2100);
+#else
             CError_FATAL(2776);
+#endif
         }
     }
 
@@ -6231,10 +6282,19 @@ static void CInline_Expand(Statement* stmt) {
     Statement* scan;
 
     if (!copts.dontinline && copts.inlinelevel >= 0) {
-        if (copts.inline_bottom_up) {
-            inline_max_size = copts.inlinemaxsize;
+#if MWCC_CORE == MWCC_CORE_B233
+        if (COPTS_T.inline_bottom_up) {
+            inline_max_size = COPTS_T.inlinemaxsize;
+#else
+            if (copts.inline_bottom_up) {
+                inline_max_size = copts.inlinemaxsize;
+#endif
             while (inline_max_size > 1 &&
-                   EstimateExpandedSizeOfFunction(stmt) > copts.inlinemaxtotalsize) {
+#if MWCC_CORE == MWCC_CORE_B233
+                   EstimateExpandedSizeOfFunction(stmt) > COPTS_T.inlinemaxtotalsize) {
+#else
+                       EstimateExpandedSizeOfFunction(stmt) > copts.inlinemaxtotalsize) {
+#endif
                 inline_max_size >>= 1;
             }
         }
@@ -6270,13 +6330,25 @@ static void CInline_Expand(Statement* stmt) {
                 }
             }
 
-            if (!copts.inline_bottom_up && !any_inline_expanded) {
+#if MWCC_CORE == MWCC_CORE_B233
+            if (!COPTS_T.inline_bottom_up && !any_inline_expanded) {
+#else
+                if (!copts.inline_bottom_up && !any_inline_expanded) {
+#endif
                 break;
             }
 
-            if (!copts.alwaysinline || copts.inline_bottom_up) {
+#if MWCC_CORE == MWCC_CORE_B233
+            if (!copts.alwaysinline || COPTS_T.inline_bottom_up) {
+#else
+                if (!copts.alwaysinline || copts.inline_bottom_up) {
+#endif
                 if (copts.inlinelevel == 0) {
-                    if (copts.inline_bottom_up) {
+#if MWCC_CORE == MWCC_CORE_B233
+                    if (COPTS_T.inline_bottom_up) {
+#else
+                        if (copts.inline_bottom_up) {
+#endif
                         if ((cinline_level + 1) >= 8) {
                             break;
                         }
@@ -6356,7 +6428,11 @@ SInt16 CInline_GetStatementNumber(Statement* first, Statement* stmt) {
 #if MWCCPSP
     CError_FATAL(3986);
 #else
-    CError_FATAL(3517);
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_FATAL(2824);
+#else
+        CError_FATAL(3517);
+#endif
 #endif
     return 0;
 }
@@ -6803,7 +6879,9 @@ void CInline_PackIFunctionData(CI_FuncData* funcdata, Statement* stmt, Object* o
         packstmt->value = scan->value;
         packstmt->dobjstack = CInline_PackActions(stmt, scan);
         packstmt->sourceoffset = scan->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
         packstmt->sourcefilepath = scan->sourcefilepath;
+#endif
 
         switch (scan->type) {
             case ST_NOP:
@@ -6968,7 +7046,9 @@ void CInline_UnpackIFunctionData(Object* object, CI_FuncData* funcdata, Statemen
         stmt->value = packstmt->value;
         stmt->flags = packstmt->flags;
         stmt->sourceoffset = packstmt->sourceoffset;
+#if MWCC_CORE != MWCC_CORE_B233
         stmt->sourcefilepath = packstmt->sourcefilepath;
+#endif
 #if MWCCPSP
         stmt->dobjstack = CInline_UnpackActions(packstmt, TRUE);
 #else
@@ -7365,7 +7445,11 @@ static void CInline_AddFRefList_ExAction(ExceptionAction* exc) {
 #if MWCCPSP
                 CError_FATAL(4840);
 #else
-                    CError_FATAL(4307);
+#if MWCC_CORE == MWCC_CORE_B233
+                    CError_FATAL(3601);
+#else
+                CError_FATAL(4307);
+#endif
 #endif
         }
         exc = exc->prev;
@@ -7434,7 +7518,11 @@ static void CInline_AddFRefList_Statement(Statement* stmt) {
 #if MWCCPSP
                 CError_FATAL(4902);
 #else
-                    CError_FATAL(4368);
+#if MWCC_CORE == MWCC_CORE_B233
+                    CError_FATAL(3662);
+#else
+                CError_FATAL(4368);
+#endif
 #endif
         }
 
@@ -7484,7 +7572,11 @@ static void CInline_AddFRefList_InlineFunc(CI_FuncData* data) {
 #if MWCCPSP
                 CError_FATAL(4954);
 #else
-                    CError_FATAL(4420);
+#if MWCC_CORE == MWCC_CORE_B233
+                    CError_FATAL(3714);
+#else
+                CError_FATAL(4420);
+#endif
 #endif
         }
 
@@ -7536,7 +7628,11 @@ static void CInline_AddFRefList_InlineFunc(CI_FuncData* data) {
 #if MWCCPSP
                     CError_FATAL(5005);
 #else
-                        CError_FATAL(4470);
+#if MWCC_CORE == MWCC_CORE_B233
+                        CError_FATAL(3764);
+#else
+                    CError_FATAL(4470);
+#endif
 #endif
             }
         }
@@ -7699,7 +7795,11 @@ static Boolean CInline_IsSmallFunction(Object* object, Statement* stmt) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             if (statementCount > 15) {
 #else
+#if MWCC_CORE == MWCC_CORE_B233 // 2.3.3 (0x46D900): at most 15 statements
+        if (statementCount > 15) {
+#else
         if (statementCount > 30) {
+#endif
 #endif
                 return FALSE;
             }
@@ -7829,8 +7929,16 @@ static void CInline_GenerateDefaultFunc(Object* object) {
     CError_ASSERT(5421, TYPE_FUNC(object->type)->flags & FUNC_AUTO_GENERATED);
     CError_ASSERT(5422, TYPE_FUNC(object->type)->flags & FUNC_METHOD);
 #else
-        CError_ASSERT(4771, TYPE_FUNC(object->type)->flags & FUNC_AUTO_GENERATED);
-        CError_ASSERT(4772, TYPE_FUNC(object->type)->flags & FUNC_METHOD);
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(4067, TYPE_FUNC(object->type)->flags & FUNC_AUTO_GENERATED);
+#else
+    CError_ASSERT(4771, TYPE_FUNC(object->type)->flags & FUNC_AUTO_GENERATED);
+#endif
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(4068, TYPE_FUNC(object->type)->flags & FUNC_METHOD);
+#else
+    CError_ASSERT(4772, TYPE_FUNC(object->type)->flags & FUNC_METHOD);
+#endif
 #endif
 
     tclass = TYPE_METHOD(object->type)->theclass;
@@ -7858,7 +7966,11 @@ static void CInline_GenerateDefaultFunc(Object* object) {
 #if MWCCPSP
     CError_FATAL(5456);
 #else
-        CError_FATAL(4806);
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_FATAL(4102);
+#else
+    CError_FATAL(4806);
+#endif
 #endif
 }
 #if MWCC_CORE == MWCC_CORE_B52

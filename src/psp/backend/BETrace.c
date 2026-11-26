@@ -4,6 +4,8 @@
 // the matching build, where TRACE_PCODE expands to nothing.
 #include "compiler/common.h"
 #include "psp/BE.h"
+#define BE_TRACE_ALIAS 1
+#include "compiler/Alias.h"
 
 void BE_TracePCode(char* label) {
     MPCodeBlock* block;
@@ -19,6 +21,19 @@ void BE_TracePCode(char* label) {
         fprintf(stderr, "B%d:", (int)block->number);
         for (pc = block->first; pc; pc = pc->next) {
             fprintf(stderr, "\n  %x f%08x", pc->op, (unsigned)pc->flags);
+#ifdef BE_TRACE_ALIAS
+            if (pc->alias) {
+                struct Alias* al = (struct Alias*)pc->alias;
+                fprintf(
+                    stderr,
+                    " A%d:%d,%d,%d",
+                    (int)al->type,
+                    (int)al->offset,
+                    (int)al->size,
+                    (int)al->index
+                );
+            }
+#endif
             for (i = 0, op = pc->args; i < pc->argcount; i++, op++) {
                 switch (op->kind) {
                     case 0:
@@ -27,7 +42,8 @@ void BE_TracePCode(char* label) {
                     case 6:
                         fprintf(
                             stderr,
-                            " L%d",
+                            " L/%x:%d",
+                            op->flags,
                             op->ptr ? (int)((MPCodeLabel*)op->ptr)->block->number : -1
                         );
                         break;
@@ -35,7 +51,14 @@ void BE_TracePCode(char* label) {
                         fprintf(stderr, " m%d/%x", (int)op->value, op->flags);
                         break;
                     default:
-                        fprintf(stderr, " k%d:%d,%d", op->kind, (int)op->value, (int)op->value2);
+                        fprintf(
+                            stderr,
+                            " k%d:%d,%d/%x",
+                            op->kind,
+                            (int)op->value,
+                            (int)op->value2,
+                            op->flags
+                        );
                         break;
                 }
             }

@@ -783,7 +783,9 @@ static Boolean CDecl_ParseOperatorDecl(DeclInfo* declinfo) {
     if (!declinfo->operator_token) {
         conversion_type_name(declinfo);
         tkidentifier = CMangler_ConversionFuncName(declinfo->thetype, declinfo->qual);
+#if MWCC_CORE != MWCC_CORE_B233
         declinfo->isConversionOperator = TRUE;
+#endif
     }
     return TRUE;
 }
@@ -1008,7 +1010,11 @@ static void scandirectdeclarator(DeclInfo* declinfo, NameSpace* nspace) {
 
     if (tk == '(') {
         if ((tk = lex()) == ')') {
+#if MWCC_CORE == MWCC_CORE_B233
+            if (DI_ISTYPEID(declinfo)) {
+#else
             if (declinfo->isTypeID) {
+#endif
                 CDecl_ParseDirectFuncDecl(declinfo);
                 if (nspace) {
                     CScope_RestoreScope(&scopesave);
@@ -1065,7 +1071,11 @@ static void scandirectdeclarator(DeclInfo* declinfo, NameSpace* nspace) {
                 return;
             }
 
+#if MWCC_CORE == MWCC_CORE_B233
+            if (DI_ISCONVERSIONOPERATOR(declinfo)) {
+#else
             if (declinfo->isConversionOperator) {
+#endif
                 declinfo->nspace = nspace;
                 declinfo->name = tkidentifier;
                 if (nspace) {
@@ -2781,7 +2791,11 @@ Boolean CDecl_FunctionDeclarator(
                     (copts.ANSIstrict && TYPE_FUNC(obj->type)->functype != (Type*)&stsignedint)) {
                     CError_Error(ERR_MAIN_NOT_DEFINED_AS_EXTERNAL_INT);
                 }
+#if MWCC_CORE == MWCC_CORE_B233
+            } else if (copts.checkprotos && (firstDecl || DI_FIRSTDECLARATION(declinfo))) {
+#else
             } else if (copts.checkprotos && (firstDecl || declinfo->firstDeclaration)) {
+#endif
                 if (obj->sclass != TK_STATIC &&
                     !(obj->qual & Q_INLINE) &&
                     !obj->nspace->is_unnamed) {
@@ -3064,7 +3078,11 @@ void scandeclaratorlist(DeclInfo* declinfo) {
     }
 
     CScope_GetScope(&savescope);
+#if MWCC_CORE == MWCC_CORE_B233
+    CError_ASSERT(2624, declinfo->thetype);
+#else
     CError_ASSERT(2772, declinfo->thetype);
+#endif
 
     isFirst = TRUE;
     while (1) {
@@ -4592,7 +4610,11 @@ static void CDecl_LayoutStruct(TypeStruct* tstruct) {
 #if MWCCPSP
             CError_ASSERT(4211, IS_TYPE_STRUCT(member->type));
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+            CError_ASSERT(3483, IS_TYPE_STRUCT(member->type));
+#else
             CError_ASSERT(4129, IS_TYPE_STRUCT(member->type));
+#endif
 #endif
             innerbase = member->offset;
             innermember = TYPE_STRUCT(member->type)->members;
@@ -6509,7 +6531,11 @@ static void CDecl_AddDefaultAssignmentOperator(ClassLayout* decle, TypeClass* tc
     access = ACCESSPUBLIC;
 
     if (!CClass_AssignmentOperator(tclass)) {
+#if MWCC_CORE == MWCC_CORE_B233
+        if (!COPTS_T.old_argmatch) {
+#else
         if (!copts.old_argmatch) {
+#endif
             has_ass = TRUE;
         }
 
@@ -6770,7 +6796,11 @@ TypeClass* CDecl_DefineClass(
     ObjType* objtype;
 
     if (!tclass && nspace->theclass && (nspace->theclass->flags & CLASS_IS_TEMPL)) {
+#if MWCC_CORE == MWCC_CORE_B233
+        CError_ASSERT(6073, !asTypeName);
+#else
         CError_ASSERT(6625, !asTypeName);
+#endif
         return TYPE_CLASS(CTemplClass_DefineNestedClass(TEMPL_CLASS(nspace->theclass), name, mode));
     }
 

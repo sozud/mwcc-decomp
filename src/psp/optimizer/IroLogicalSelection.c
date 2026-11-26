@@ -43,6 +43,8 @@ typedef Boolean (*ENodeWalkFunc)(ENode** ep, int phase, void* arg);
 #if !MWCCPS2
 #line 39 "IroUtil.c"
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -1 // b119 asserts
 void func_0054F380(ENode** ep, ENodeWalkFunc func, int flags, void* arg) {
     ENode* expr;
     ENodeList* list;
@@ -145,6 +147,8 @@ void func_0054F380(ENode** ep, ENodeWalkFunc func, int flags, void* arg) {
         func(ep, 2, arg);
     }
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 #if !MWCCPS2
@@ -808,6 +812,8 @@ Boolean func_0056DE70(BitTestSet* set, ENode* expr, CInt64 value) {
 // values after the others
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -19 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -6 // b119 asserts
 #if MWCCPS2 // b210/b198 (0x582A40): the span in a local, the body under its test
 void func_0056DD80(BitTestSet* set) {
     BitTestValue* first;
@@ -861,6 +867,8 @@ void func_0056DD80(BitTestSet* set) {
     }
 }
 #endif
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0
 
@@ -1208,6 +1216,8 @@ static Boolean CollapseLogicalSelection(ENode** ep, int phase, void* arg) {
 // 0x56D490
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT -19 // b145 asserts
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT -6 // b119 asserts
 #if MWCCPS2 // b210/b198: the list walked in a local
 void IRO_CollapseLogicalSelections(Statement* statements) {
     Statement* stmt;
@@ -1235,5 +1245,7 @@ void IRO_CollapseLogicalSelections(Statement* stmt) {
     }
     IRO_CheckForUserBreak();
 }
+#undef CError_B119_SHIFT
+#define CError_B119_SHIFT 0
 #undef CError_B145_SHIFT
 #define CError_B145_SHIFT 0

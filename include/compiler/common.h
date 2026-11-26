@@ -377,10 +377,17 @@ typedef enum RegClass {
 } RegClass;
 
 struct CInt64 {
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3: 64-bit (CInt64_Or 0x4B6B60 takes two 8-byte values, returns edx:eax;
+    // Object's value at +0x24 is followed by the link name at +0x2C)
+    SInt32 hi;
+    UInt32 lo;
+#else
     // b69: 128-bit constants, as mwccps2 3.0.1 (word 0 most significant)
     SInt32 hi;
     UInt32 mid[2];
     UInt32 lo;
+#endif
 #else
     RegClassMax = 5,
     RegClass_CRBIT = 6,
@@ -401,6 +408,24 @@ struct CInt64 {
 #endif
 #endif
 };
+// functions 2.3.3 returns as int where GC 2.0 has Boolean (mov eax, 1 /
+// xor eax, eax at their returns)
+#if MWCC_CORE == MWCC_CORE_B233
+#define BOOL_INT int
+#else
+#define BOOL_INT Boolean
+#endif
+
+#if MWCC_CORE == MWCC_CORE_B233 || (!MWCC_CORE && !MWCCPS2)
+// a 64-bit CInt64 (2.3.3, 3.0.1, GC): the copied 3.0.1 back end's 128-bit
+// words 1 and 2: with 64 bits, word 2 (bits 32..63) is hi; word 1 only ever
+// pairs with hi in a test or store of the upper half
+#define CI64_MID0 hi
+#define CI64_MID1 hi
+#else
+#define CI64_MID0 mid[0]
+#define CI64_MID1 mid[1]
+#endif
 union FloatStorage {
     int words[2];
     double value;

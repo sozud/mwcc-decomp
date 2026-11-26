@@ -49,7 +49,13 @@ typedef struct OpcodeDef {
 extern OpcodeDef data_006115F8[]; // OpcodeTable.c
 extern TypePointer char_ptr; // 0x5CCB34: char *
 
-Object* intrinsics_objects[0x4AC]; // 0x5E9AD0 (b210 0x601CD8), by intrinsic id
+// intrinsic ids: b119 has 0x497
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+#define NUM_INTRINSICS 0x497
+#else
+#define NUM_INTRINSICS 0x4AC
+#endif
+Object* intrinsics_objects[NUM_INTRINSICS]; // 0x5E9AD0 (b210 0x601CD8), by intrinsic id
 
 // 0x45B8C0: point a call at the intrinsic's object
 void func_0045B8C0(ENode* funccall, short id) {
@@ -92,7 +98,7 @@ static void Intrinsics_SetupOpcodeBuiltins(void) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     for (op = 0; op <= OPC(0x3E5); op++) {
 #else
-    for (op = 0; op <= 0x3E5; op++) {
+    for (op = 0; op <= PS2_OP(0x3E5); op++) {
 #endif
         if (!data_006115F8[op].intrinsic) {
             continue;
@@ -244,7 +250,7 @@ static void Intrinsics_SetupOpcodeBuiltins(void) {
     SInt32 id;
     Type* args[6];
 
-    for (op = 0; op <= 0x3E5; op++) {
+    for (op = 0; op <= PS2_OP(0x3E5); op++) {
         def = &data_006115F8[op];
         if (!def->intrinsic) {
             continue;
@@ -403,7 +409,7 @@ void func_0045B910(void) {
 
     savecpp = copts.cplusplus;
     copts.cplusplus = FALSE;
-    for (i = 0; i < 0x4AC; i++) {
+    for (i = 0; i < NUM_INTRINSICS; i++) {
         intrinsics_objects[i] = NULL;
     }
     Intrinsics_SetupOpcodeBuiltins();
@@ -1063,7 +1069,7 @@ static void Intrinsics_DefUnary(int id, char* name, Type* type) {
 Boolean func_00458530(Object* obj) {
     int i;
 
-    for (i = 0; i < 0x4AC; i++) {
+    for (i = 0; i < NUM_INTRINSICS; i++) {
         if (obj == intrinsics_objects[i]) {
             return TRUE;
         }
@@ -1419,7 +1425,7 @@ Boolean func_00458560(Boolean is_precompiler) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         for (op = 0; op < OPC(0x3E5); op++) {
 #else
-        for (op = 0; op < 0x3E5; op++) {
+        for (op = 0; op < PS2_OP(0x3E5); op++) {
 #endif
             name = data_006115F8[op].intrinsic;
             if (name != NULL) {
@@ -1437,7 +1443,7 @@ Boolean func_00458560(Boolean is_precompiler) {
 #else
 
     if (is_precompiler) {
-        for (op = 0; op < 0x3E5; op++) {
+        for (op = 0; op < PS2_OP(0x3E5); op++) {
             if (data_006115F8[op].intrinsic) {
                 intrinsics_objects[data_006115F8[op].intrinsicid]->name =
                     GetHashNameNodeExport(data_006115F8[op].intrinsic);
@@ -2062,7 +2068,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xD4), t, v.reg, 0);
 #else
-                emitpcode(0xD4, t, v.reg, 0);
+                emitpcode(PS2_OP(0xD4), t, v.reg, 0);
 #endif
                 out->reg = data_00625A98[0]++;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -2070,7 +2076,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 emitpcode(OPC(0x111), out->reg, v.reg, t);
 #else
                 emitpcode(0xB8, out->reg, v.reg);
-                emitpcode(0x111, out->reg, v.reg, t);
+                emitpcode(PS2_OP(0x111), out->reg, v.reg, t);
 #endif
             } else {
                 label = newlabel();
@@ -2096,7 +2102,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xEB), out->reg, v.reg);
 #else
-                emitpcode(0xEB, out->reg, v.reg);
+                emitpcode(PS2_OP(0xEB), out->reg, v.reg);
 #endif
                 out->kind = 1;
             } else {
@@ -2104,13 +2110,13 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xD2), sop, v.reg, 1);
 #else
-                emitpcode(0xD2, sop, v.reg, 1);
+                emitpcode(PS2_OP(0xD2), sop, v.reg, 1);
 #endif
                 out->reg = data_00625A98[0]++;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xDA), out->reg, sop, 1);
 #else
-                emitpcode(0xDA, out->reg, sop, 1);
+                emitpcode(PS2_OP(0xDA), out->reg, sop, 1);
 #endif
                 out->kind = 0;
             }
@@ -2125,7 +2131,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0xEA), out->reg, v.reg);
 #else
-                emitpcode(0xEA, out->reg, v.reg);
+                emitpcode(PS2_OP(0xEA), out->reg, v.reg);
 #endif
                 out->kind = 1;
             } else {
@@ -2173,25 +2179,25 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             *out = v;
             break;
         case 0x19:
-            *out = func_0049D710(0x1B9, args->node);
+            *out = func_0049D710(PS2_OP(0x1B9), args->node);
             break;
         case 0x1A:
-            *out = func_0049D710(0x1BA, args->node);
+            *out = func_0049D710(PS2_OP(0x1BA), args->node);
             break;
         case 0x1B:
-            *out = func_0049D710(0x1BB, args->node);
+            *out = func_0049D710(PS2_OP(0x1BB), args->node);
             break;
         case 0x15:
-            *out = func_0049D7A0(0x1A7, 0x1A8, args->node, args->next->node);
+            *out = func_0049D7A0(PS2_OP(0x1A7), PS2_OP(0x1A8), args->node, args->next->node);
             break;
         case 0x16:
-            *out = func_0049D7A0(0x1A9, 0x1AA, args->node, args->next->node);
+            *out = func_0049D7A0(PS2_OP(0x1A9), PS2_OP(0x1AA), args->node, args->next->node);
             break;
         case 0x17:
-            *out = func_0049D7A0(0x1B5, 0x1B6, args->node, args->next->node);
+            *out = func_0049D7A0(PS2_OP(0x1B5), PS2_OP(0x1B6), args->node, args->next->node);
             break;
         case 0x18:
-            *out = func_0049D7A0(0x1B7, 0x1B8, args->node, args->next->node);
+            *out = func_0049D7A0(PS2_OP(0x1B7), PS2_OP(0x1B8), args->node, args->next->node);
             break;
         case 0x23:
         case 0x24:
@@ -2207,13 +2213,13 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             n = v2.sel ? v2.sel - 1 : 11;
             switch (call->data.funccall.funcref->data.objref->u.func.u.intrinsicid) {
                 case 0x23:
-                    sop = 0x1A1;
+                    sop = PS2_OP(0x1A1);
                     break;
                 case 0x24:
-                    sop = 0x1A3;
+                    sop = PS2_OP(0x1A3);
                     break;
                 case 0x25:
-                    sop = 0x1A5;
+                    sop = PS2_OP(0x1A5);
                     break;
                 default:
                     CError_FATAL(1162);
@@ -2329,7 +2335,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #else
             if (CInt64_IsOne(&v2.imm)) {
 #endif
-                func_00479710(0xC3, &zero, &v);
+                func_00479710(PS2_OP(0xC3), &zero, &v);
                 *out = v;
                 break;
             }
@@ -2347,7 +2353,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             *out = func_0047F740(4, &v, &zero, 0);
             func_004A72B0(&v, args->node);
             func_0046FA90((MPCodeLabel*)label->pclabel);
-            func_00479710(0xC3, &zero, &v);
+            func_00479710(PS2_OP(0xC3), &zero, &v);
             emitpcode(3, v.reg, v.reg, 1);
             emitpcode(3, v2.reg, v2.reg, -1);
             func_00479430(0x28, &v2, &zero, label);
@@ -2366,7 +2372,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x101), out->reg, v.reg);
 #else
-            emitpcode(0x101, out->reg, v.reg);
+            emitpcode(PS2_OP(0x101), out->reg, v.reg);
 #endif
             out->kind = 1;
             break;
@@ -2387,7 +2393,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x125), out->reg, v.reg, v2.reg);
 #else
-            emitpcode(0x125, out->reg, v.reg, v2.reg);
+            emitpcode(PS2_OP(0x125), out->reg, v.reg, v2.reg);
 #endif
             out->kind = 1;
             break;
@@ -2400,7 +2406,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x206), r, mv.reg);
 #else
-            emitpcode(0x206, r, mv.reg);
+            emitpcode(PS2_OP(0x206), r, mv.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2413,7 +2419,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x207), r, mv.reg);
 #else
-            emitpcode(0x207, r, mv.reg);
+            emitpcode(PS2_OP(0x207), r, mv.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2430,7 +2436,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x208), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x208, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x208), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2447,7 +2453,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x209), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x209, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x209), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2464,7 +2470,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x20b), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x20b, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x20B), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2481,7 +2487,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x20c), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x20c, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x20C), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2498,7 +2504,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x20d), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x20d, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x20D), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2515,7 +2521,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x20e), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x20e, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x20E), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2532,7 +2538,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x20f), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x20f, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x20F), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2549,7 +2555,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x210), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x210, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x210), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2566,7 +2572,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x20a), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x20a, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x20A), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2583,7 +2589,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x211), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x211, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x211), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2600,7 +2606,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x212), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x212, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x212), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2617,7 +2623,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x213), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x213, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x213), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2634,7 +2640,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x214), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x214, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x214), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2651,7 +2657,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x215), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x215, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x215), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2668,7 +2674,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x216), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x216, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x216), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2685,7 +2691,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x217), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x217, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x217), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2702,7 +2708,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x218), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x218, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x218), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2715,7 +2721,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x219), r, mv.reg);
 #else
-            emitpcode(0x219, r, mv.reg);
+            emitpcode(PS2_OP(0x219), r, mv.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2732,7 +2738,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x21a), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x21a, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x21A), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2749,7 +2755,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x21b), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x21b, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x21B), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2765,7 +2771,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x21c), mv.reg, mv2.reg);
 #else
-            emitpcode(0x21c, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x21C), mv.reg, mv2.reg);
 #endif
             break;
         case 0x3D:
@@ -2780,7 +2786,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x21d), mv.reg, mv2.reg);
 #else
-            emitpcode(0x21d, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x21D), mv.reg, mv2.reg);
 #endif
             break;
         case 0x3E:
@@ -2795,7 +2801,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x21e), mv.reg, mv2.reg);
 #else
-            emitpcode(0x21e, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x21E), mv.reg, mv2.reg);
 #endif
             break;
         case 0x3F:
@@ -2811,7 +2817,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x22c), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x22c, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x22C), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2828,7 +2834,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x22d), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x22d, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x22D), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2845,7 +2851,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x231), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x231, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x231), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2862,7 +2868,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x232), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x232, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x232), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2879,7 +2885,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x233), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x233, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x233), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2896,7 +2902,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x23f), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x23f, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x23F), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2913,7 +2919,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x240), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x240, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x240), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2930,7 +2936,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x244), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x244, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x244), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2947,7 +2953,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x245), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x245, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x245), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2964,7 +2970,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x246), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x246, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x246), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2977,7 +2983,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x21f), r, mv.reg);
 #else
-            emitpcode(0x21f, r, mv.reg);
+            emitpcode(PS2_OP(0x21F), r, mv.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -2990,7 +2996,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x220), r, mv.reg);
 #else
-            emitpcode(0x220, r, mv.reg);
+            emitpcode(PS2_OP(0x220), r, mv.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3003,7 +3009,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x221), r, mv.reg);
 #else
-            emitpcode(0x221, r, mv.reg);
+            emitpcode(PS2_OP(0x221), r, mv.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3016,7 +3022,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x223), r, mv.reg);
 #else
-            emitpcode(0x223, r, mv.reg);
+            emitpcode(PS2_OP(0x223), r, mv.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3029,7 +3035,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x225), r, mv.reg);
 #else
-            emitpcode(0x225, r, mv.reg);
+            emitpcode(PS2_OP(0x225), r, mv.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3046,7 +3052,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x226), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x226, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x226), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3063,7 +3069,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x227), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x227, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x227), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3080,7 +3086,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x228), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x228, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x228), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3097,7 +3103,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x229), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x229, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x229), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3114,7 +3120,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x22a), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x22a, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x22A), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3131,7 +3137,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x22b), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x22b, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x22B), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3148,7 +3154,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x22e), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x22e, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x22E), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3165,7 +3171,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x22f), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x22f, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x22F), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3178,7 +3184,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x230), r, mv.reg);
 #else
-            emitpcode(0x230, r, mv.reg);
+            emitpcode(PS2_OP(0x230), r, mv.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3195,7 +3201,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x234), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x234, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x234), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3212,7 +3218,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x235), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x235, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x235), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3229,7 +3235,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x23d), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x23d, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x23D), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3246,7 +3252,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x23e), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x23e, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x23E), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3263,7 +3269,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x247), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x247, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x247), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3280,7 +3286,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x248), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x248, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x248), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3293,7 +3299,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x249), r, mv.reg);
 #else
-            emitpcode(0x249, r, mv.reg);
+            emitpcode(PS2_OP(0x249), r, mv.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3310,7 +3316,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x24a), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x24a, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x24A), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3327,7 +3333,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x24b), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x24b, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x24B), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3344,7 +3350,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x24c), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x24c, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x24C), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3357,7 +3363,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x24d), r, mv.reg);
 #else
-            emitpcode(0x24d, r, mv.reg);
+            emitpcode(PS2_OP(0x24D), r, mv.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3370,7 +3376,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x24e), r, mv.reg);
 #else
-            emitpcode(0x24e, r, mv.reg);
+            emitpcode(PS2_OP(0x24E), r, mv.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3383,7 +3389,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x24f), r, mv.reg, args->next->node->data.intval.lo);
 #else
-            emitpcode(0x24f, r, mv.reg, args->next->node->data.intval.lo);
+            emitpcode(PS2_OP(0x24F), r, mv.reg, args->next->node->data.intval.lo);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3400,7 +3406,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x250), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x250, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x250), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3413,7 +3419,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x251), r, mv.reg, args->next->node->data.intval.lo);
 #else
-            emitpcode(0x251, r, mv.reg, args->next->node->data.intval.lo);
+            emitpcode(PS2_OP(0x251), r, mv.reg, args->next->node->data.intval.lo);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3426,7 +3432,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x252), r, mv.reg, args->next->node->data.intval.lo);
 #else
-            emitpcode(0x252, r, mv.reg, args->next->node->data.intval.lo);
+            emitpcode(PS2_OP(0x252), r, mv.reg, args->next->node->data.intval.lo);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3443,7 +3449,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x253), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x253, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x253), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3456,7 +3462,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x254), r, mv.reg, args->next->node->data.intval.lo);
 #else
-            emitpcode(0x254, r, mv.reg, args->next->node->data.intval.lo);
+            emitpcode(PS2_OP(0x254), r, mv.reg, args->next->node->data.intval.lo);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3469,7 +3475,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x255), r, mv.reg, args->next->node->data.intval.lo);
 #else
-            emitpcode(0x255, r, mv.reg, args->next->node->data.intval.lo);
+            emitpcode(PS2_OP(0x255), r, mv.reg, args->next->node->data.intval.lo);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3486,7 +3492,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x256), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x256, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x256), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3499,7 +3505,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x257), r, mv.reg, args->next->node->data.intval.lo);
 #else
-            emitpcode(0x257, r, mv.reg, args->next->node->data.intval.lo);
+            emitpcode(PS2_OP(0x257), r, mv.reg, args->next->node->data.intval.lo);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3516,7 +3522,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x258), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x258, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x258), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3533,7 +3539,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x259), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x259, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x259), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3550,7 +3556,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x25a), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x25a, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x25A), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3567,7 +3573,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x25b), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x25b, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x25B), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3584,7 +3590,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x25c), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x25c, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x25C), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3601,7 +3607,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x25d), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x25d, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x25D), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3618,7 +3624,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x25e), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x25e, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x25E), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3635,7 +3641,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x25f), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x25f, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x25F), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3652,7 +3658,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x260), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x260, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x260), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3669,7 +3675,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x261), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x261, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x261), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3681,7 +3687,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x200), mv.reg, args->next->node->data.intval.lo);
 #else
-            emitpcode(0x200, mv.reg, args->next->node->data.intval.lo);
+            emitpcode(PS2_OP(0x200), mv.reg, args->next->node->data.intval.lo);
 #endif
             break;
         case 0x77:
@@ -3692,7 +3698,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x201), mv.reg, args->next->node->data.intval.lo);
 #else
-            emitpcode(0x201, mv.reg, args->next->node->data.intval.lo);
+            emitpcode(PS2_OP(0x201), mv.reg, args->next->node->data.intval.lo);
 #endif
             break;
         case 0x78:
@@ -3703,7 +3709,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x1ff), mv.reg);
 #else
-            emitpcode(0x1ff, mv.reg);
+            emitpcode(PS2_OP(0x1FF), mv.reg);
 #endif
             break;
         case 0x79:
@@ -3711,7 +3717,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x1fc), r);
 #else
-            emitpcode(0x1fc, r);
+            emitpcode(PS2_OP(0x1FC), r);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3728,7 +3734,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x262), r, mv.reg, mv2.reg);
 #else
-            emitpcode(0x262, r, mv.reg, mv2.reg);
+            emitpcode(PS2_OP(0x262), r, mv.reg, mv2.reg);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3737,7 +3743,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x236), r);
 #else
-            emitpcode(0x236, r);
+            emitpcode(PS2_OP(0x236), r);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3746,7 +3752,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x237), r);
 #else
-            emitpcode(0x237, r);
+            emitpcode(PS2_OP(0x237), r);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3755,7 +3761,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x238), r);
 #else
-            emitpcode(0x238, r);
+            emitpcode(PS2_OP(0x238), r);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3764,7 +3770,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x239), r);
 #else
-            emitpcode(0x239, r);
+            emitpcode(PS2_OP(0x239), r);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3773,7 +3779,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x23a), r);
 #else
-            emitpcode(0x23a, r);
+            emitpcode(PS2_OP(0x23A), r);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3782,7 +3788,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x23b), r);
 #else
-            emitpcode(0x23b, r);
+            emitpcode(PS2_OP(0x23B), r);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3791,7 +3797,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x23c), r);
 #else
-            emitpcode(0x23c, r);
+            emitpcode(PS2_OP(0x23C), r);
 #endif
             *out = func_004C3BA0(r, 0);
             break;
@@ -3803,7 +3809,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x241), mv.reg);
 #else
-            emitpcode(0x241, mv.reg);
+            emitpcode(PS2_OP(0x241), mv.reg);
 #endif
             break;
         case 0x83:
@@ -3814,7 +3820,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x242), mv.reg);
 #else
-            emitpcode(0x242, mv.reg);
+            emitpcode(PS2_OP(0x242), mv.reg);
 #endif
             break;
         case 0x84:
@@ -3825,143 +3831,143 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x243), mv.reg);
 #else
-            emitpcode(0x243, mv.reg);
+            emitpcode(PS2_OP(0x243), mv.reg);
 #endif
             break;
         case 0x85:
-            ps2_vu0op_463B20(call, 0x269, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x269), out);
             break;
         case 0x86:
-            ps2_vu0op_463B20(call, 0x2af, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2AF), out);
             break;
         case 0x87:
-            ps2_vu0op_463B20(call, 0x2b0, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2B0), out);
             break;
         case 0x88:
-            ps2_vu0op_463B20(call, 0x26a, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x26A), out);
             break;
         case 0x89:
-            ps2_vu0op_463B20(call, 0x26c, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x26C), out);
             break;
         case 0x8A:
-            ps2_vu0op_463B20(call, 0x26e, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x26E), out);
             break;
         case 0x8B:
-            ps2_vu0op_463B20(call, 0x294, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x294), out);
             break;
         case 0x8C:
-            ps2_vu0op_463B20(call, 0x296, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x296), out);
             break;
         case 0x8D:
-            ps2_vu0op_463B20(call, 0x298, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x298), out);
             break;
         case 0x8E:
-            ps2_vu0op_463B20(call, 0x2a2, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2A2), out);
             break;
         case 0x8F:
-            ps2_vu0op_463B20(call, 0x2a3, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2A3), out);
             break;
         case 0x90:
-            ps2_vu0op_463B20(call, 0x2a5, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2A5), out);
             break;
         case 0x91:
-            ps2_vu0op_463B20(call, 0x2a9, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2A9), out);
             break;
         case 0x92:
-            ps2_vu0op_463B20(call, 0x2aa, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2AA), out);
             break;
         case 0x93:
-            ps2_vu0op_463B20(call, 0x2ac, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2AC), out);
             break;
         case 0x94:
-            ps2_vu0op_463B20(call, 0x2b1, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2B1), out);
             break;
         case 0x95:
-            ps2_vu0op_463B20(call, 0x2b3, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2B3), out);
             break;
         case 0x96:
-            ps2_vu0op_463B20(call, 0x2b5, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2B5), out);
             break;
         case 0x97:
-            ps2_vu0op_463B20(call, 0x2c0, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2C0), out);
             break;
         case 0x98:
-            ps2_vu0op_463B20(call, 0x2c2, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2C2), out);
             break;
         case 0x99:
-            ps2_vu0op_463B20(call, 0x2c4, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2C4), out);
             break;
         case 0x9A:
-            ps2_vu0op_463B20(call, 0x2d9, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2D9), out);
             break;
         case 0x9B:
-            ps2_vu0op_463B20(call, 0x2db, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2DB), out);
             break;
         case 0x9C:
-            ps2_vu0op_463B20(call, 0x2dd, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2DD), out);
             break;
         case 0x9D:
-            ps2_vu0op_463B20(call, 0x2cf, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2CF), out);
             break;
         case 0x9E:
-            ps2_vu0op_463B20(call, 0x2d0, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2D0), out);
             break;
         case 0x9F:
-            ps2_vu0op_463B20(call, 0x27c, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x27C), out);
             break;
         case 0xA0:
-            ps2_vu0op_463B20(call, 0x2d8, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2D8), out);
             break;
         case 0xA1:
-            ps2_vu0op_463B20(call, 0x2d4, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2D4), out);
             break;
         case 0xA2:
-            ps2_vu0op_463B20(call, 0x2e7, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2E7), out);
             break;
         case 0xA3:
-            ps2_vu0op_463B20(call, 0x2d1, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2D1), out);
             break;
         case 0xA4:
-            ps2_vu0op_463B20(call, 0x2d2, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2D2), out);
             break;
         case 0xA5:
-            ps2_vu0op_463B20(call, 0x2d3, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2D3), out);
             break;
         case 0xA6:
-            ps2_vu0op_463B20(call, 0x2d5, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x2D5), out);
             break;
         case 0xA7:
-            ps2_vu0op_463B20(call, 0x27b, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x27B), out);
             break;
         case 0xA8:
-            ps2_vu0op_463B20(call, 0x27d, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x27D), out);
             break;
         case 0xA9:
-            ps2_vu0op_463B20(call, 0x27e, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x27E), out);
             break;
         case 0xAA:
-            ps2_vu0op_463B20(call, 0x27f, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x27F), out);
             break;
         case 0xAB:
-            ps2_vu0op_463B20(call, 0x280, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x280), out);
             break;
         case 0xAC:
-            ps2_vu0op_463B20(call, 0x28e, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x28E), out);
             break;
         case 0xAD:
-            ps2_vu0op_463B20(call, 0x28f, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x28F), out);
             break;
         case 0xAE:
-            ps2_vu0op_463B20(call, 0x290, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x290), out);
             break;
         case 0xAF:
-            ps2_vu0op_463B20(call, 0x291, out);
+            ps2_vu0op_463B20(call, PS2_OP(0x291), out);
             break;
         case 0xB0:
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x2ce));
 #else
-            emitpcode(0x2ce);
+            emitpcode(PS2_OP(0x2CE));
 #endif
             break;
         case 0xB1:
@@ -3975,7 +3981,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                 emitpcode(OPC(0x266), v3.reg, t);
 #else
-                emitpcode(0x266, v3.reg, t);
+                emitpcode(PS2_OP(0x266), v3.reg, t);
 #endif
             } else {
                 t = v3.reg;
@@ -3985,13 +3991,13 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x2AF), n, u, t);
 #else
-            emitpcode(0x2AF, n, u, t);
+            emitpcode(PS2_OP(0x2AF), n, u, t);
 #endif
             k = data_00625A98[0]++;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             emitpcode(OPC(0x264), k, u);
 #else
-            emitpcode(0x264, k, u);
+            emitpcode(PS2_OP(0x264), k, u);
 #endif
             switch (n) {
                 case 8:
@@ -4012,13 +4018,13 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(OPC(0x220), r2_, k);
 #else
-                    emitpcode(0x220, r2_, k);
+                    emitpcode(PS2_OP(0x220), r2_, k);
 #endif
                     r = data_00625A98[0]++;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(OPC(0x223), r, r2_);
 #else
-                    emitpcode(0x223, r, r2_);
+                    emitpcode(PS2_OP(0x223), r, r2_);
 #endif
                     break;
                 case 2:
@@ -4027,7 +4033,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(OPC(0x223), r, k);
 #else
-                    emitpcode(0x223, r, k);
+                    emitpcode(PS2_OP(0x223), r, k);
 #endif
                     break;
                 case 1:
@@ -4035,19 +4041,19 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(OPC(0x21B), r, k, k);
 #else
-                    emitpcode(0x21B, r, k, k);
+                    emitpcode(PS2_OP(0x21B), r, k, k);
 #endif
                     r2_ = data_00625A98[0]++;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(OPC(0x220), r2_, r);
 #else
-                    emitpcode(0x220, r2_, r);
+                    emitpcode(PS2_OP(0x220), r2_, r);
 #endif
                     r = data_00625A98[0]++;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
                     emitpcode(OPC(0x223), r, r2_);
 #else
-                    emitpcode(0x223, r, r2_);
+                    emitpcode(PS2_OP(0x223), r, r2_);
 #endif
                     break;
                 default:
@@ -4168,10 +4174,10 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             out->kind = 0;
             if (copts.conditional_move) {
                 t = data_00625A98[0]++;
-                emitpcode(0xD4, t, v.reg, 0);
+                emitpcode(PS2_OP(0xD4), t, v.reg, 0);
                 out->reg = data_00625A98[0]++;
                 emitpcode(0xB8, out->reg, v.reg);
-                emitpcode(0x111, out->reg, v.reg, t);
+                emitpcode(PS2_OP(0x111), out->reg, v.reg, t);
             } else {
                 label = newlabel();
                 label->pclabel = (struct PCodeLabel*)makepclabel();
@@ -4189,13 +4195,13 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             }
             if (copts.fp_library) {
                 out->reg = data_00625A98[1]++;
-                emitpcode(0xEB, out->reg, v.reg);
+                emitpcode(PS2_OP(0xEB), out->reg, v.reg);
                 out->kind = 1;
             } else {
                 t = data_00625A98[0]++;
-                emitpcode(0xD2, t, v.reg, 1);
+                emitpcode(PS2_OP(0xD2), t, v.reg, 1);
                 out->reg = data_00625A98[0]++;
-                emitpcode(0xDA, out->reg, t, 1);
+                emitpcode(PS2_OP(0xDA), out->reg, t, 1);
                 out->kind = 0;
             }
             break;
@@ -4206,37 +4212,37 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             }
             if (copts.fp_library & 2) {
                 out->reg = data_00625A98[1]++;
-                emitpcode(0xEA, out->reg, v.reg);
+                emitpcode(PS2_OP(0xEA), out->reg, v.reg);
                 out->kind = 1;
             } else {
                 out->reg = v.reg;
                 t = data_00625A98[0]++;
-                emitpcode(0xD2, t, v.regHi, 1);
+                emitpcode(PS2_OP(0xD2), t, v.regHi, 1);
                 out->regHi = data_00625A98[0]++;
-                emitpcode(0xDA, out->regHi, t, 1);
+                emitpcode(PS2_OP(0xDA), out->regHi, t, 1);
                 out->kind = 0;
             }
             break;
         case 0x19:
-            *out = func_0049D710(0x1B9, args->node);
+            *out = func_0049D710(PS2_OP(0x1B9), args->node);
             break;
         case 0x1A:
-            *out = func_0049D710(0x1BA, args->node);
+            *out = func_0049D710(PS2_OP(0x1BA), args->node);
             break;
         case 0x1B:
-            *out = func_0049D710(0x1BB, args->node);
+            *out = func_0049D710(PS2_OP(0x1BB), args->node);
             break;
         case 0x15:
-            *out = func_0049D7A0(0x1A7, 0x1A8, args->node, args->next->node);
+            *out = func_0049D7A0(PS2_OP(0x1A7), PS2_OP(0x1A8), args->node, args->next->node);
             break;
         case 0x16:
-            *out = func_0049D7A0(0x1A9, 0x1AA, args->node, args->next->node);
+            *out = func_0049D7A0(PS2_OP(0x1A9), PS2_OP(0x1AA), args->node, args->next->node);
             break;
         case 0x17:
-            *out = func_0049D7A0(0x1B5, 0x1B6, args->node, args->next->node);
+            *out = func_0049D7A0(PS2_OP(0x1B5), PS2_OP(0x1B6), args->node, args->next->node);
             break;
         case 0x18:
-            *out = func_0049D7A0(0x1B7, 0x1B8, args->node, args->next->node);
+            *out = func_0049D7A0(PS2_OP(0x1B7), PS2_OP(0x1B8), args->node, args->next->node);
             break;
         case 0x23:
         case 0x24:
@@ -4324,7 +4330,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             }
             zero = func_004C3BA0(0, 0);
             if (CInt64_IsOne(&v2.imm)) {
-                func_00479710(0xC3, &zero, &v);
+                func_00479710(PS2_OP(0xC3), &zero, &v);
                 *out = v;
                 break;
             }
@@ -4342,7 +4348,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             *out = func_0047F740(4, &v, &zero, 0);
             func_004A72B0(&v, args->node);
             func_0046FA90((MPCodeLabel*)label->pclabel);
-            func_00479710(0xC3, &zero, &v);
+            func_00479710(PS2_OP(0xC3), &zero, &v);
             emitpcode(3, v.reg, v.reg, 1);
             emitpcode(3, v2.reg, v2.reg, -1);
             func_00479430(0x28, &v2, &zero, label);
@@ -4358,7 +4364,7 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 break;
             }
             out->reg = data_00625A98[1]++;
-            emitpcode(0x101, out->reg, v.reg);
+            emitpcode(PS2_OP(0x101), out->reg, v.reg);
             out->kind = 1;
             break;
         case 0x11: // __rsqrt
@@ -4375,19 +4381,20 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 break;
             }
             out->reg = data_00625A98[1]++;
-            emitpcode(0x125, out->reg, v.reg, v2.reg);
+            emitpcode(PS2_OP(0x125), out->reg, v.reg, v2.reg);
             out->kind = 1;
             break;
         case 0xB2: // __builtin_allegrex_clz
-            Intrinsics_GenUnary(0x3FD, args, out, TYPE(&stsignedlong), 0);
+            Intrinsics_GenUnary(PS2_OP(0x3FD), args, out, TYPE(&stsignedlong), 0);
             break;
         case 0xB3: // clo
-            Intrinsics_GenUnary(0x3FC, args, out, TYPE(&stsignedlong), 0);
+            Intrinsics_GenUnary(PS2_OP(0x3FC), args, out, TYPE(&stsignedlong), 0);
             break;
         case 0xB4: // ctz: clz of the reversed bits
         case 0xB5: // cto
-            op = call->data.funccall.funcref->data.objref->u.func.u.intrinsicid == 0xB4 ? 0x3FD
-                                                                                        : 0x3FC;
+            op = call->data.funccall.funcref->data.objref->u.func.u.intrinsicid == 0xB4
+                ? PS2_OP(0x3FD)
+                : PS2_OP(0x3FC);
             INTR_EVAL(args->node, v);
             INTR_EVAL(args->node, v2);
             if (v.kind != 0) {
@@ -4397,48 +4404,48 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&v2, TYPE(&stsignedlong), 1);
             }
             t = data_00625A98[0]++;
-            emitpcode(0x3FB, t, v.reg);
+            emitpcode(PS2_OP(0x3FB), t, v.reg);
             r = data_00625A98[0]++;
             *out = func_004C3BA0(r, 0);
             emitpcode(op, r, t, v2.reg);
             break;
         case 0xB6: // max
-            Intrinsics_GenBinary(0x402, args, out);
+            Intrinsics_GenBinary(PS2_OP(0x402), args, out);
             break;
         case 0xB7: // min
-            Intrinsics_GenBinary(0x404, args, out);
+            Intrinsics_GenBinary(PS2_OP(0x404), args, out);
             break;
         case 0xB8: // seb
-            Intrinsics_GenUnary(0x3F2, args, out, TYPE(&stsignedlong), 0);
+            Intrinsics_GenUnary(PS2_OP(0x3F2), args, out, TYPE(&stsignedlong), 0);
             break;
         case 0xB9: // seh
-            Intrinsics_GenUnary(0x3F3, args, out, TYPE(&stsignedlong), 0);
+            Intrinsics_GenUnary(PS2_OP(0x3F3), args, out, TYPE(&stsignedlong), 0);
             break;
         case 0xBA: // wsbh
-            Intrinsics_GenUnary(0x3F4, args, out, TYPE(&stsignedlong), 0);
+            Intrinsics_GenUnary(PS2_OP(0x3F4), args, out, TYPE(&stsignedlong), 0);
             break;
         case 0xBB: // wsbw
-            Intrinsics_GenUnary(0x409, args, out, TYPE(&stsignedlong), 0);
+            Intrinsics_GenUnary(PS2_OP(0x409), args, out, TYPE(&stsignedlong), 0);
             break;
-        case 0xBC: // bitrev
-            Intrinsics_GenUnary(0x3FB, args, out, TYPE(&stsignedlong), 0);
+        case PS2_OP(0xBC): // bitrev
+            Intrinsics_GenUnary(PS2_OP(0x3FB), args, out, TYPE(&stsignedlong), 0);
             break;
-        case 0xC1: // ceil.w.s
-            Intrinsics_GenUnary(0xF1, args, out, TYPE(&stfloat), 1);
+        case PS2_OP(0xC1): // ceil.w.s
+            Intrinsics_GenUnary(PS2_OP(0xF1), args, out, TYPE(&stfloat), 1);
             break;
-        case 0xC2: // floor.w.s
-            Intrinsics_GenUnary(0xF7, args, out, TYPE(&stfloat), 1);
+        case PS2_OP(0xC2): // floor.w.s
+            Intrinsics_GenUnary(PS2_OP(0xF7), args, out, TYPE(&stfloat), 1);
             break;
-        case 0xC3: // round.w.s
-            Intrinsics_GenUnary(0xFF, args, out, TYPE(&stfloat), 1);
+        case PS2_OP(0xC3): // round.w.s
+            Intrinsics_GenUnary(PS2_OP(0xFF), args, out, TYPE(&stfloat), 1);
             break;
-        case 0xC4: // trunc.w.s
-            Intrinsics_GenUnary(0x107, args, out, TYPE(&stfloat), 1);
+        case PS2_OP(0xC4): // trunc.w.s
+            Intrinsics_GenUnary(PS2_OP(0x107), args, out, TYPE(&stfloat), 1);
             break;
-        case 0xC5: // sqrt.s
-            Intrinsics_GenUnary(0x101, args, out, TYPE(&stfloat), 1);
+        case PS2_OP(0xC5): // sqrt.s
+            Intrinsics_GenUnary(PS2_OP(0x101), args, out, TYPE(&stfloat), 1);
             break;
-        case 0xBF: // ext(x, pos, size)
+        case PS2_OP(0xBF): // ext(x, pos, size)
             INTR_EVAL(args->node, v);
             INTR_EVAL(args->next->node, v2);
             INTR_EVAL(args->next->next->node, v3);
@@ -4459,9 +4466,9 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             }
             r = data_00625A98[0]++;
             *out = func_004C3BA0(r, 0);
-            emitpcode(0x3EE, r, v.reg, v2.imm.lo, v3.imm.lo);
+            emitpcode(PS2_OP(0x3EE), r, v.reg, v2.imm.lo, v3.imm.lo);
             break;
-        case 0xC0: { // ins(x, y, pos, size)
+        case PS2_OP(0xC0): { // ins(x, y, pos, size)
             VOperand v4;
 
             INTR_EVAL(args->node, v);
@@ -4489,11 +4496,11 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
             r = data_00625A98[0]++;
             *out = func_004C3BA0(r, 0);
             emitpcode(0xAA, r, v.reg);
-            emitpcode(0x3EF, r, v2.reg, v3.imm.lo, v4.imm.lo);
+            emitpcode(PS2_OP(0x3EF), r, v2.reg, v3.imm.lo, v4.imm.lo);
             break;
         }
-        case 0xBD: // rotr
-        case 0xBE: // rotl
+        case PS2_OP(0xBD): // rotr
+        case PS2_OP(0xBE): // rotl
             INTR_EVAL(args->node, v);
             INTR_EVAL(args->next->node, v2);
             if (v.kind != 0) {
@@ -4505,9 +4512,9 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 CInt64_SetLong(&limit, 32);
                 if (CInt64_LessU(v2.imm, limit)) {
                     if (call->data.funccall.funcref->data.objref->u.func.u.intrinsicid == 0xBD) {
-                        emitpcode(0x3F0, r, v.reg, v2.imm.lo);
+                        emitpcode(PS2_OP(0x3F0), r, v.reg, v2.imm.lo);
                     } else {
-                        emitpcode(0x3F0, r, v.reg, 32 - v2.imm.lo);
+                        emitpcode(PS2_OP(0x3F0), r, v.reg, 32 - v2.imm.lo);
                     }
                     break;
                 }
@@ -4516,13 +4523,13 @@ void func_004585B0(ENode* call, SInt16 target, VOperand* out) {
                 func_004A64C0(&v2, TYPE(&stsignedlong), 1);
             }
             if (call->data.funccall.funcref->data.objref->u.func.u.intrinsicid == 0xBD) {
-                emitpcode(0x3F1, r, v.reg, v2.reg);
+                emitpcode(PS2_OP(0x3F1), r, v.reg, v2.reg);
             } else {
                 t = data_00625A98[0]++;
                 emitpcode(3, t, v2.reg, -32);
                 u = data_00625A98[0]++;
-                emitpcode(0xDC, u, 0, t);
-                emitpcode(0x3F1, r, v.reg, u);
+                emitpcode(PS2_OP(0xDC), u, 0, t);
+                emitpcode(PS2_OP(0x3F1), r, v.reg, u);
             }
             break;
         default:

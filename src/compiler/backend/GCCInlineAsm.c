@@ -114,7 +114,14 @@ GCCOperandInfo gcc_operands[20];
 #else
 GCCOperandInfo gcc_operands[30];
 #endif
+// a Type*: pointer-sized natively (the matching build's code is the same either way)
+#if MWCCPSP_NATIVE
+long data_006242D0;
+#define GCC_TYPEWORD long
+#else
 SInt32 data_006242D0;
+#define GCC_TYPEWORD SInt32
+#endif
 
 extern Boolean data_00625EC1;
 extern char data_00625FD6;
@@ -222,7 +229,13 @@ static GCCConstraint gcc_parse_attribute(Boolean isOutput) {
         return c;
     }
 
+#if MWCC_CORE == MWCC_CORE_B011126
+    // 011126 (0x50AB70): no matching constraints ("0"): a number is an illegal
+    // token like anything else that is not a letter (match stays -1)
+    if (0) {
+#else
     if (tk == TK_INTCONST) {
+#endif
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         c.match = CInt64_GetULong(&tkintconst);
 #else
@@ -238,7 +251,11 @@ static GCCConstraint gcc_parse_attribute(Boolean isOutput) {
             copts.cplusplus = data_00625FD6;
         }
         if (c.kind == 'j') {
+#if MWCC_CORE == MWCC_CORE_B233
+            COPTS_T.enable_vu0_registers = 1;
+#else
             copts.enable_vu0_registers = 1;
+#endif
         }
 #else
         switch (tkidentifier->name[0]) {
@@ -279,7 +296,11 @@ static GCCConstraint gcc_parse_attribute(Boolean isOutput) {
         }
         if (c.kind == 4) {
 #if MWCCPS2
+#if MWCC_CORE == MWCC_CORE_B233
+            COPTS_T.enable_vu0_registers = 1;
+#else
             copts.enable_vu0_registers = 1;
+#endif
 #else
             copts.mips_option41 = 1;
 #endif
@@ -312,6 +333,249 @@ extern Boolean InlineAsm_GCCLookupSymbol(
     HashNameNode* name, MLookupResult* result, Boolean* needtemp
 );
 #endif
+#if MWCC_CORE == MWCC_CORE_B011126
+// 011126 0x50AD60: a memory operand's address: the operand without its
+// indirection (a pointer read through twice is an error), or an object
+// reference as it is
+static ENode* gcc_mem_operand(ENode* expr) {
+    if (expr && ENODE_IS(expr, EINDIRECT)) {
+        expr = expr->data.monadic;
+        if (ENODE_IS(expr, EINDIRECT)) {
+            // 0x4BABE0 (b69's 0x50AAF0): PPCError_Error, the b69 line's codes
+            // (our func_004C5940 is MIPSError.c's, 3.0.1's codes)
+            extern void PPCError_Error(int code, ...);
+            PPCError_Error(0x6D);
+            return NULL;
+        }
+        return expr;
+    }
+    if (expr && ENODE_IS(expr, EOBJREF)) {
+        return expr;
+    }
+    CError_Error(ERR_ILLEGAL_OPERAND);
+    return NULL;
+}
+
+// a VU0 temporary of the 128-bit integer type is marked (VarInfo +0x2D)
+#define GCC_MARK_VU0(obj) \
+    if ((obj)->u.var.info && (obj)->type->type == TYPEINT && (obj)->type->size == 16) { \
+        (obj)->u.var.info->unk24[1] = TRUE; \
+    }
+
+// 011126 0x50ADA0: b69's, but no matching constraints, no '*'/'&' shortcut
+// to a temporary, memory operands through gcc_mem_operand, and a VU0 operand
+// with a quadword class found under it gets a temporary of that class (the
+// 128-bit check and conversion are gone)
+static void gcc_parse_name(Boolean isOutput, GCCConstraint c) {
+    ENode* expr;
+    ENode* e;
+    ENode* tempexpr;
+    Object* tempobj;
+    Statement* stmt;
+    MLookupResult* entry;
+    short next;
+    Boolean needtemp = FALSE;
+    Boolean found = FALSE;
+    Boolean done = FALSE;
+    Boolean saved;
+
+    while (tk == TK_EOL) {
+        tk = lex();
+    }
+
+    if (tk != '(') {
+        CError_Error(ERR_LPAREN_EXPECTED);
+    }
+    next = lookahead();
+
+    if (isOutput) {
+        ++gcc_name_list_index;
+        gcc_operands[gcc_name_list_index].mode = c.mode;
+        GCC_SET_KIND(gcc_name_list_index, c.kind);
+        gcc_operands[gcc_name_list_index].flags = c.flags;
+        if (next != TK_IDENTIFIER && gcc_operands[gcc_name_list_index].kind != GCC_KIND_MEM) {
+            CError_Error(ERR_ILLEGAL_TOKEN);
+        } else if (gcc_operands[gcc_name_list_index].kind != GCC_KIND_MEM) {
+            found = InlineAsm_GCCLookupSymbol(
+                tkidentifier, &gcc_name_list[gcc_name_list_index], &needtemp
+            );
+            if (found) {
+                tk = lex();
+            }
+        }
+        if (!needtemp && !found && gcc_operands[gcc_name_list_index].kind != GCC_KIND_MEM) {
+            saved = in_assembler;
+            in_assembler = FALSE;
+            CError_Error(0x8C, tkidentifier->name);
+            in_assembler = saved;
+            tk = lex();
+        }
+
+        if (needtemp) {
+            // the asm writes a temporary; copy it to the output after
+            expr = expression();
+            done = TRUE;
+            if (!data_006242D0 && gcc_operands[gcc_name_list_index].kind == GCC_KIND_VU0) {
+                for (e = expr; ENODE_IS(e, EINDIRECT); e = e->data.monadic) {
+                    if (e && ps2_IsQuadwordClass(e->rtype)) {
+                        data_006242D0 = (GCC_TYPEWORD)e->rtype;
+                    } else if (e && ps2_IsQuadwordClassPointer(e->rtype)) {
+                        data_006242D0 = (GCC_TYPEWORD)TPTR_TARGET(e->rtype);
+                    }
+                    if (data_006242D0) {
+                        break;
+                    }
+                }
+            }
+            if (!expr) {
+                goto finish;
+            }
+            if (data_006242D0 && gcc_operands[gcc_name_list_index].kind == GCC_KIND_VU0) {
+                tempobj = create_temp_object((Type*)data_006242D0);
+                tempexpr = create_objectnode(tempobj);
+            } else if (ps2_IsQuadwordClass(expr->rtype) &&
+                       gcc_operands[gcc_name_list_index].kind == GCC_KIND_REG) {
+                expr->rtype = TYPE(&stint128);
+                tempobj = create_temp_object(expr->rtype);
+                tempexpr = create_objectnode(tempobj);
+            } else {
+                tempobj = create_temp_object(expr->rtype);
+                tempexpr = create_objectnode(tempobj);
+            }
+            if (tempexpr->rtype != expr->rtype) {
+                tempexpr->rtype = expr->rtype;
+            }
+            gcc_name_list[gcc_name_list_index].object = tempobj;
+            if (gcc_operands[gcc_name_list_index].kind == GCC_KIND_VU0 && tempobj) {
+                GCC_MARK_VU0(tempobj);
+            }
+            if (c.flags & 1) {
+                e = makediadicnode(tempexpr, gcc_copy_expression(expr), EASS);
+                stmt = CFunc_InsertBeforeStatement(ST_EXPRESSION, first_ST_ASM);
+                stmt->expr = e;
+            }
+            expr = makediadicnode(expr, tempexpr, EASS);
+            stmt = CFunc_InsertStatement(ST_EXPRESSION, curstmt);
+            stmt->expr = expr;
+            curstmt = stmt;
+        } else if (gcc_operands[gcc_name_list_index].kind == GCC_KIND_MEM) {
+            // a memory operand: the address goes in a temporary
+            expr = expression();
+            done = TRUE;
+            if (!(expr = gcc_mem_operand(expr))) {
+                gcc_name_list[gcc_name_list_index].object = NULL;
+                goto finish;
+            }
+            tempobj = create_temp_object(expr->rtype);
+            tempexpr = create_objectnode2(tempobj);
+            gcc_name_list[gcc_name_list_index].object = tempobj;
+            expr = makediadicnode(tempexpr, expr, EASS);
+            stmt = CFunc_InsertBeforeStatement(ST_EXPRESSION, first_ST_ASM);
+            first_ST_ASM = stmt->next;
+            if (!first_ST_ASM->next) {
+                curstmt = first_ST_ASM;
+            }
+            stmt->expr = expr;
+        }
+
+        if ((tempobj = gcc_name_list[gcc_name_list_index].object)) {
+            tempobj->flags |= 1;
+            if (tempobj->u.var.info) {
+                tempobj->u.var.info->used = TRUE;
+            }
+        }
+        if (!done) {
+            tk = lex();
+        }
+    } else {
+        tk = lex();
+        in_assembler = FALSE;
+        cprep_nostring = FALSE;
+        copts.cplusplus = TRUE;
+
+        entry = &gcc_name_list[++gcc_name_list_index];
+        gcc_operands[gcc_name_list_index].mode = c.mode;
+        GCC_SET_KIND(gcc_name_list_index, c.kind);
+        gcc_operands[gcc_name_list_index].flags = c.flags;
+
+        expr = expression();
+        if (c.kind == 'i' || c.kind == 'I') {
+            if (!ENODE_IS(expr, EINTCONST)) {
+                CError_Error(ERR_ILLEGAL_OPERAND);
+            }
+            entry->value = expr->data.intval;
+            entry->has_value = TRUE;
+        } else {
+            if (gcc_operands[gcc_name_list_index].kind == GCC_KIND_MEM) {
+                expr = gcc_mem_operand(expr);
+            }
+            if (!expr) {
+                gcc_name_list[gcc_name_list_index].object = NULL;
+                goto finish;
+            }
+            if (gcc_operands[gcc_name_list_index].kind == GCC_KIND_VU0 && !data_006242D0) {
+                // 011126 (0x50B3F6): the next node is always the operand's
+                // own (expr's, not e's), as the original
+                for (e = expr; ENODE_IS(e, EINDIRECT); e = expr->data.monadic) {
+                    if (e && ps2_IsQuadwordClass(e->rtype)) {
+                        data_006242D0 = (GCC_TYPEWORD)e->rtype;
+                    } else if (e && ps2_IsQuadwordClassPointer(e->rtype)) {
+                        data_006242D0 = (GCC_TYPEWORD)TPTR_TARGET(e->rtype);
+                    }
+                    if (data_006242D0) {
+                        break;
+                    }
+                }
+            }
+
+            if (gcc_operands[gcc_name_list_index].kind == GCC_KIND_VU0 && data_006242D0) {
+                tempobj = create_temp_object((Type*)data_006242D0);
+                tempexpr = create_objectnode(tempobj);
+                if (tempexpr->rtype != expr->rtype) {
+                    tempexpr->rtype = expr->rtype;
+                }
+            } else if (ps2_IsQuadwordClass(expr->rtype) &&
+                       gcc_operands[gcc_name_list_index].kind == GCC_KIND_REG) {
+                tempobj = create_temp_object(TYPE(&stint128));
+                tempexpr = create_objectnode(tempobj);
+                expr->rtype = tempexpr->rtype;
+            } else {
+                tempobj = create_temp_object(expr->rtype);
+                tempexpr = create_objectnode(tempobj);
+            }
+            if (tempobj->u.var.info) {
+                tempobj->u.var.info->used = TRUE;
+                if (gcc_operands[gcc_name_list_index].kind == GCC_KIND_VU0) {
+                    GCC_MARK_VU0(tempobj);
+                }
+            }
+            expr = makediadicnode(tempexpr, expr, EASS);
+            stmt = CFunc_InsertBeforeStatement(ST_EXPRESSION, first_ST_ASM);
+            first_ST_ASM = stmt->next;
+            if (!first_ST_ASM->next) {
+                curstmt = first_ST_ASM;
+            }
+            stmt->expr = expr;
+
+            entry->name = tempobj->name;
+            entry->object = tempobj;
+            entry->label = NULL;
+            entry->type = NULL;
+            entry->has_value = FALSE;
+        }
+    }
+
+finish:
+    cprep_nostring = TRUE;
+    in_assembler = TRUE;
+    if (tk != ')' && !done) {
+        CError_Error(ERR_RPAREN_EXPECTED);
+    }
+    if (!done) {
+        tk = lex();
+    }
+}
+#else
 // b210 (0x54E200): VU0 (j) operands and quadword-class values become
 // stint128; data_006242D0 holds the quadword class found under the operand
 static void gcc_parse_name(Boolean isOutput, GCCConstraint c) {
@@ -422,9 +686,9 @@ static void gcc_parse_name(Boolean isOutput, GCCConstraint c) {
                 while (1) {
 #endif
                     if (e && ps2_IsQuadwordClass(e->rtype)) {
-                        data_006242D0 = (SInt32)e->rtype;
+                        data_006242D0 = (GCC_TYPEWORD)e->rtype;
                     } else if (e && ps2_IsQuadwordClassPointer(e->rtype)) {
-                        data_006242D0 = (SInt32)TPTR_TARGET(e->rtype);
+                        data_006242D0 = (GCC_TYPEWORD)TPTR_TARGET(e->rtype);
                     }
                     if (data_006242D0) {
                         break;
@@ -597,9 +861,9 @@ static void gcc_parse_name(Boolean isOutput, GCCConstraint c) {
                 while (1) {
 #endif
                     if (e && ps2_IsQuadwordClass(e->rtype)) {
-                        data_006242D0 = (SInt32)e->rtype;
+                        data_006242D0 = (GCC_TYPEWORD)e->rtype;
                     } else if (e && ps2_IsQuadwordClassPointer(e->rtype)) {
-                        data_006242D0 = (SInt32)TPTR_TARGET(e->rtype);
+                        data_006242D0 = (GCC_TYPEWORD)TPTR_TARGET(e->rtype);
                     }
                     if (data_006242D0) {
                         break;
@@ -671,6 +935,7 @@ finish:
         tk = lex();
     }
 }
+#endif // MWCC_CORE_B011126
 #else
 static void gcc_parse_name(Boolean isOutput, GCCConstraint c) {
     ENode* expr;
@@ -857,6 +1122,223 @@ extern void ps2_gcc_quadmove(
 ); // b210 0x490E20
 #endif
 
+#if MWCC_CORE == MWCC_CORE_B011126
+extern Boolean ps2_IsArgument_b011126_004992F0(Object* obj);
+
+// 011126 0x50B730: b69's, but the moves around the asm all go next to (or
+// after) the asm statement itself (stmt never advances), an operand with no
+// object is left alone, a read-write operand's effect is the instruction's,
+// a field suffix only when there is one, and a VU0 operand goes through a
+// stint128 temporary when it is one of the function's arguments (an integer
+// or a pointer), else it is used as it is
+static void gcc_replace_arg_st_asm(Statement* stmt) {
+    MAsmInstruction* mi;
+    Statement* nstmt;
+    ENode* tempexpr;
+    MAsmOperand* op;
+    Object* obj;
+    Object* temp;
+    Type* type;
+    int i;
+    SInt32 n;
+    SInt16 effect;
+    SInt16 rclass;
+    char xyzw;
+    SInt8 kind;
+
+    if ((mi = (MAsmInstruction*)stmt->expr)) {
+        for (i = 0, op = mi->ops; i < mi->nops; i++, op++) {
+            switch (op->type) {
+                case MOpnd_Imm:
+                case MOpnd_Reg:
+                case MOpnd_GlobalObj:
+                case MOpnd_LocalObj:
+                case MOpnd_Lab:
+                    break;
+
+                case MOpnd_GCCReg:
+                    n = op->u.gcc.num;
+                    if (!gcc_name_list[n].object || !gcc_name_list[n].object->type) {
+                        CError_Error(ERR_ILLEGAL_OPERAND);
+                    }
+
+                    effect = op->u.gcc.effect;
+                    rclass = op->u.gcc.rclass;
+                    xyzw = op->u.gcc.xyzw;
+                    op->type = MOpnd_Reg;
+                    op->u.reg.num = 0;
+                    if (xyzw && gcc_operands[n].kind == GCC_KIND_VU0 && n <= gcc_name_list_index) {
+                        op->xyzw = xyzw;
+                    }
+                    if ((effect & 2) && (effect & 1) && !(gcc_operands[n].flags & 1)) {
+                        effect &= ~1;
+                    }
+                    op->effect = effect;
+                    op->rclass = rclass;
+                    op->u.reg.object = NULL;
+
+                    if (n > gcc_name_list_index) {
+                        func_004C5940(0x67, "%", n);
+                        break;
+                    }
+
+                    if (op->rclass != -1 && gcc_name_list[n].object) {
+                        if (gcc_operands[n].kind == GCC_KIND_REG && op->rclass != 0) {
+                            func_004C5940(0x6B, "%", n, func_00481FE0(mi));
+                        }
+                        if (gcc_operands[n].kind == GCC_KIND_FPR && op->rclass != 1) {
+                            func_004C5940(0x6B, "%", n, func_00481FE0(mi));
+                        }
+                        if (gcc_operands[n].kind == GCC_KIND_VU0 && op->rclass != 5) {
+                            func_004C5940(0x6B, "%", n, func_00481FE0(mi));
+                        }
+                        if (gcc_operands[n].kind == GCC_KIND_MEM && op->rclass != 0) {
+                            func_004C5940(0x6B, "%", n, func_00481FE0(mi));
+                        }
+                    }
+
+                    if (!(obj = gcc_name_list[n].object)) {
+                        op->u.reg.object = NULL;
+                    } else if (gcc_operands[n].mode == 1 || gcc_operands[n].mode == 3) {
+                        // written: a global or a value of the other class goes through a temporary
+                        if (obj->datatype == DDATA) {
+                            temp = create_temp_object(TYPE(&stsignedint));
+                            if (temp->u.var.info) {
+                                temp->u.var.info->used = TRUE;
+                            }
+                            tempexpr = create_objectnode(gcc_name_list[n].object);
+                            tempexpr = makediadicnode(tempexpr, create_objectnode(temp), EASS);
+                            nstmt = CFunc_InsertStatement(ST_EXPRESSION, stmt);
+                            nstmt->expr = tempexpr;
+                            if (curstmt == stmt) {
+                                curstmt = nstmt;
+                            }
+                        } else {
+                            kind = gcc_operands[n].kind;
+                            if (kind == GCC_KIND_FPR && obj->type->type == TYPEINT) {
+                                temp = create_temp_object(TYPE(&stfloat));
+                                if (temp->u.var.info) {
+                                    temp->u.var.info->used = TRUE;
+                                }
+                                if (op->effect & 2) {
+                                    func_00481EE0(stmt, gcc_name_list[n].object, temp, FALSE, TRUE);
+                                }
+                                if (op->effect & 1) {
+                                    func_00481EE0(stmt, gcc_name_list[n].object, temp, TRUE, FALSE);
+                                }
+                            } else if (kind == GCC_KIND_REG &&
+                                       obj->type->type == TYPEFLOAT &&
+                                       obj->type->size == 4) {
+                                temp = create_temp_object(TYPE(&stsignedint));
+                                if (op->effect & 2) {
+                                    func_00481EE0(stmt, temp, gcc_name_list[n].object, TRUE, TRUE);
+                                }
+                                if (op->effect & 1) {
+                                    func_00481EE0(
+                                        stmt, temp, gcc_name_list[n].object, FALSE, FALSE
+                                    );
+                                }
+                            } else if (kind == GCC_KIND_VU0) {
+                                if (ps2_IsArgument_b011126_004992F0(obj)) {
+                                    temp = gcc_name_list[n].object;
+                                    if (temp->type->type == TYPEINT ||
+                                        temp->type->type == TYPEPOINTER) {
+                                        temp = create_temp_object(TYPE(&stint128));
+                                        if (temp->u.var.info) {
+                                            temp->u.var.info->unk24[1] = 1;
+                                        }
+                                        if (op->effect & 1) {
+                                            ps2_gcc_quadmove(
+                                                stmt, gcc_name_list[n].object, temp, TRUE, FALSE
+                                            );
+                                        }
+                                        if (op->effect & 2) {
+                                            ps2_gcc_quadmove(
+                                                stmt, gcc_name_list[n].object, temp, FALSE, TRUE
+                                            );
+                                        }
+                                    }
+                                } else {
+                                    temp = gcc_name_list[n].object;
+                                }
+                            } else {
+                                temp = obj;
+                            }
+                        }
+                        if (temp->u.var.info) {
+                            temp->u.var.info->used = TRUE;
+                        }
+                        op->u.reg.object = temp;
+                    } else {
+                        type = obj->type;
+                        if (type->type == TYPEFLOAT &&
+                            type->size == 4 &&
+                            gcc_operands[n].kind == GCC_KIND_REG) {
+                            temp = create_temp_object(TYPE(&stsignedint));
+                            if (temp->u.var.info) {
+                                temp->u.var.info->used = TRUE;
+                            }
+                            op->u.reg.object = temp;
+                            func_00481EE0(stmt, temp, gcc_name_list[n].object, FALSE, FALSE);
+                        } else if ((type->type == TYPEINT || type->type == TYPEPOINTER) &&
+                                   type->size == 4 &&
+                                   gcc_operands[n].kind == GCC_KIND_FPR) {
+                            temp = create_temp_object(TYPE(&stfloat));
+                            if (temp->u.var.info) {
+                                temp->u.var.info->used = TRUE;
+                            }
+                            op->u.reg.object = temp;
+                            func_00481EE0(stmt, gcc_name_list[n].object, temp, TRUE, FALSE);
+                        } else if (gcc_operands[n].kind == GCC_KIND_VU0) {
+                            if (ps2_IsArgument_b011126_004992F0(obj)) {
+                                temp = gcc_name_list[n].object;
+                                if (temp->type->type == TYPEINT ||
+                                    temp->type->type == TYPEPOINTER) {
+                                    temp = create_temp_object(TYPE(&stint128));
+                                    if (temp->u.var.info) {
+                                        temp->u.var.info->unk24[1] = 1;
+                                    }
+                                    // 011126 (0x50BC19): one move, as written by the asm
+                                    ps2_gcc_quadmove(
+                                        stmt, gcc_name_list[n].object, temp, FALSE, TRUE
+                                    );
+                                }
+                            } else {
+                                temp = gcc_name_list[n].object;
+                            }
+                            op->u.reg.object = temp;
+                        } else {
+                            op->u.reg.object = obj;
+                        }
+                    }
+
+                    op->effect = gcc_operands[n].flags;
+                    kind = gcc_operands[gcc_name_list_index].kind;
+                    if (kind == GCC_KIND_REG) {
+                        op->rclass = 0;
+                    } else if (kind == GCC_KIND_FPR) {
+                        op->rclass = 1;
+                    } else if (kind == GCC_KIND_VU0) {
+                        op->rclass = 5;
+                    } else if (kind == GCC_KIND_MEM) {
+                        op->rclass = 0;
+                    } else if (kind == GCC_KIND_OFFSET) {
+                        op->rclass = 0;
+                    }
+                    break;
+
+                case MOpnd_GCCImm:
+                    op->type = MOpnd_Imm;
+                    op->u.imm = gcc_name_list[op->u.gcc.num].value;
+                    break;
+
+                default:
+                    break;
+            }
+        }
+    }
+}
+#else
 // b210 (0x54D920): a VU0 (j) operand keeps its field suffix, and a 16-byte
 // integer or a pointer in one goes through a stint128 temporary
 static void gcc_replace_arg_st_asm(Statement* stmt) {
@@ -1224,6 +1706,7 @@ static void gcc_replace_arg_st_asm(Statement* stmt) {
         }
     }
 }
+#endif // MWCC_CORE_B011126
 #else
 static void gcc_replace_arg_st_asm(Statement* stmt) {
     MAsmInstruction* mi;
@@ -1732,12 +2215,24 @@ static ENode* gcc_copy_expression(ENode* expr) {
             copy->data.mfpointer.accessnode = gcc_copy_expression(copy->data.mfpointer.accessnode);
             copy->data.mfpointer.mfpointer = gcc_copy_expression(copy->data.mfpointer.mfpointer);
             break;
+#if MWCC_CORE == MWCC_CORE_B011126
+        // 011126 (0x50BD90): a call copies its function expression only (not
+        // the arguments); ENULLCHECK and EPRECOMP are kept as they are
         case EFUNCCALL:
         case EFUNCCALLP:
+            copy->data.funccall.funcref = gcc_copy_expression(copy->data.funccall.funcref);
+            break;
         case ENULLCHECK:
         case EPRECOMP:
-            CError_FATAL(1135);
             break;
+#else
+                case EFUNCCALL:
+                case EFUNCCALLP:
+                case ENULLCHECK:
+                case EPRECOMP:
+                    CError_FATAL(1135);
+                    break;
+#endif
         case EINDIRECT:
             copy->data.monadic = gcc_copy_expression(copy->data.monadic);
             break;

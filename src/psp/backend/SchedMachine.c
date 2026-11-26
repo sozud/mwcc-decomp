@@ -101,10 +101,10 @@ static int func_004B4EC0(MPCode* instr) {
         case 0xB7:
 #endif
 #if MWCCPS2_BUILD >= 198 // b145 has no latency for these
-        case 0x400:
-        case 0x401:
-        case 0x405:
-        case 0x406:
+        case PS2_OP(0x400):
+        case PS2_OP(0x401):
+        case PS2_OP(0x405):
+        case PS2_OP(0x406):
 #endif
         case MACRO_OP(0x5F):
         case MACRO_OP(0x64):
@@ -215,10 +215,10 @@ static int func_004B4EC0(MPCode* instr) {
         case OPC(0x102):
         case OPC(0x103):
 #else
-        case 0xEC:
-        case 0xED:
-        case 0x102:
-        case 0x103:
+        case PS2_OP(0xEC):
+        case PS2_OP(0xED):
+        case PS2_OP(0x102):
+        case PS2_OP(0x103):
 #endif
             return 4;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -264,13 +264,13 @@ static int func_004B4EC0(MPCode* instr) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xF2):
 #else
-        case 0xF2:
+        case PS2_OP(0xF2):
 #endif
             return 59;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0xF3):
 #else
-        case 0xF3:
+        case PS2_OP(0xF3):
 #endif
             return 31;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -303,34 +303,34 @@ static int func_004B4EC0(MPCode* instr) {
         case OPC(0x106):
         case OPC(0x107):
 #else
-        case 0xEE:
-        case 0xEF:
-        case 0xF0:
-        case 0xF1:
-        case 0xF4:
-        case 0xF5:
-        case 0xF6:
-        case 0xF7:
-        case 0xFC:
-        case 0xFD:
-        case 0xFE:
-        case 0xFF:
-        case 0x104:
-        case 0x105:
-        case 0x106:
-        case 0x107:
+        case PS2_OP(0xEE):
+        case PS2_OP(0xEF):
+        case PS2_OP(0xF0):
+        case PS2_OP(0xF1):
+        case PS2_OP(0xF4):
+        case PS2_OP(0xF5):
+        case PS2_OP(0xF6):
+        case PS2_OP(0xF7):
+        case PS2_OP(0xFC):
+        case PS2_OP(0xFD):
+        case PS2_OP(0xFE):
+        case PS2_OP(0xFF):
+        case PS2_OP(0x104):
+        case PS2_OP(0x105):
+        case PS2_OP(0x106):
+        case PS2_OP(0x107):
 #endif
             return 6;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x100):
 #else
-        case 0x100:
+        case PS2_OP(0x100):
 #endif
             return 59;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x101):
 #else
-        case 0x101:
+        case PS2_OP(0x101):
 #endif
             return 31;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -345,16 +345,16 @@ static int func_004B4EC0(MPCode* instr) {
         case OPC(0x11A):
         case OPC(0x11B):
 #else
-        case 0x112:
-        case 0x113:
-        case 0x114:
-        case 0x115:
-        case 0x116:
-        case 0x117:
-        case 0x118:
-        case 0x119:
-        case 0x11A:
-        case 0x11B:
+        case PS2_OP(0x112):
+        case PS2_OP(0x113):
+        case PS2_OP(0x114):
+        case PS2_OP(0x115):
+        case PS2_OP(0x116):
+        case PS2_OP(0x117):
+        case PS2_OP(0x118):
+        case PS2_OP(0x119):
+        case PS2_OP(0x11A):
+        case PS2_OP(0x11B):
 #endif
             return 2;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -363,10 +363,10 @@ static int func_004B4EC0(MPCode* instr) {
         case OPC(0x11F):
         case OPC(0x121):
 #else
-        case 0x10F:
-        case 0x11D:
-        case 0x11F:
-        case 0x121:
+        case PS2_OP(0x10F):
+        case PS2_OP(0x11D):
+        case PS2_OP(0x11F):
+        case PS2_OP(0x121):
 #endif
             return 9;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -375,34 +375,34 @@ static int func_004B4EC0(MPCode* instr) {
         case OPC(0x11E):
         case OPC(0x120):
 #else
-        case 0x10E:
-        case 0x11C:
-        case 0x11E:
-        case 0x120:
+        case PS2_OP(0x10E):
+        case PS2_OP(0x11C):
+        case PS2_OP(0x11E):
+        case PS2_OP(0x120):
 #endif
             return 10;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x123):
 #else
-        case 0x123:
+        case PS2_OP(0x123):
 #endif
             return 31;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x122):
 #else
-        case 0x122:
+        case PS2_OP(0x122):
 #endif
             return 59;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x125):
 #else
-        case 0x125:
+        case PS2_OP(0x125):
 #endif
             return 61;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x124):
 #else
-        case 0x124:
+        case PS2_OP(0x124):
 #endif
             return 121;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -410,9 +410,9 @@ static int func_004B4EC0(MPCode* instr) {
         case OPC(0x175):
         case OPC(0x176):
 #else
-        case 0x174:
-        case 0x175:
-        case 0x176:
+        case PS2_OP(0x174):
+        case PS2_OP(0x175):
+        case PS2_OP(0x176):
 #endif
         case MACRO_OP(0x60):
         case MACRO_OP(0x61):
@@ -425,28 +425,28 @@ static int func_004B4EC0(MPCode* instr) {
         case OPC(0x180):
         case OPC(0x181):
 #else
-        case 0x17C:
-        case 0x17D:
-        case 0x17E:
-        case 0x17F:
-        case 0x180:
-        case 0x181:
+        case PS2_OP(0x17C):
+        case PS2_OP(0x17D):
+        case PS2_OP(0x17E):
+        case PS2_OP(0x17F):
+        case PS2_OP(0x180):
+        case PS2_OP(0x181):
 #endif
             return 3;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x184):
         case OPC(0x185):
 #else
-        case 0x184:
-        case 0x185:
+        case PS2_OP(0x184):
+        case PS2_OP(0x185):
 #endif
             return 34;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         case OPC(0x182):
         case OPC(0x183):
 #else
-        case 0x182:
-        case 0x183:
+        case PS2_OP(0x182):
+        case PS2_OP(0x183):
 #endif
             return 68;
         default:
@@ -489,33 +489,33 @@ static int func_004B4EC0(MPCode* instr) {
         case 0x62:
         case 0x63:
         case 0x6D:
-        case 0x112:
-        case 0x113:
-        case 0x114:
-        case 0x115:
-        case 0x116:
-        case 0x117:
-        case 0x118:
-        case 0x119:
-        case 0x11A:
-        case 0x11B:
+        case PS2_OP(0x112):
+        case PS2_OP(0x113):
+        case PS2_OP(0x114):
+        case PS2_OP(0x115):
+        case PS2_OP(0x116):
+        case PS2_OP(0x117):
+        case PS2_OP(0x118):
+        case PS2_OP(0x119):
+        case PS2_OP(0x11A):
+        case PS2_OP(0x11B):
             return 2;
         case 0x71:
         case 0xB6:
         case 0xB7:
-        case 0x174:
-        case 0x175:
-        case 0x176:
-        case 0x17C:
-        case 0x17D:
-        case 0x17E:
-        case 0x17F:
-        case 0x180:
-        case 0x181:
-        case 0x400:
-        case 0x401:
-        case 0x405:
-        case 0x406:
+        case PS2_OP(0x174):
+        case PS2_OP(0x175):
+        case PS2_OP(0x176):
+        case PS2_OP(0x17C):
+        case PS2_OP(0x17D):
+        case PS2_OP(0x17E):
+        case PS2_OP(0x17F):
+        case PS2_OP(0x180):
+        case PS2_OP(0x181):
+        case PS2_OP(0x400):
+        case PS2_OP(0x401):
+        case PS2_OP(0x405):
+        case PS2_OP(0x406):
         case MACRO_OP(0x5F):
         case MACRO_OP(0x60):
         case MACRO_OP(0x61):
@@ -525,10 +525,10 @@ static int func_004B4EC0(MPCode* instr) {
         case MACRO_OP(0x67):
         case MACRO_OP(0x68):
             return 3;
-        case 0xEC:
-        case 0xED:
-        case 0x102:
-        case 0x103:
+        case PS2_OP(0xEC):
+        case PS2_OP(0xED):
+        case PS2_OP(0x102):
+        case PS2_OP(0x103):
             return 4;
         case 0xB5:
             return 5;
@@ -543,22 +543,22 @@ static int func_004B4EC0(MPCode* instr) {
         case 0x80:
         case 0x81:
         case 0xB4:
-        case 0xEE:
-        case 0xEF:
-        case 0xF0:
-        case 0xF1:
-        case 0xF4:
-        case 0xF5:
-        case 0xF6:
-        case 0xF7:
-        case 0xFC:
-        case 0xFD:
-        case 0xFE:
-        case 0xFF:
-        case 0x104:
-        case 0x105:
-        case 0x106:
-        case 0x107:
+        case PS2_OP(0xEE):
+        case PS2_OP(0xEF):
+        case PS2_OP(0xF0):
+        case PS2_OP(0xF1):
+        case PS2_OP(0xF4):
+        case PS2_OP(0xF5):
+        case PS2_OP(0xF6):
+        case PS2_OP(0xF7):
+        case PS2_OP(0xFC):
+        case PS2_OP(0xFD):
+        case PS2_OP(0xFE):
+        case PS2_OP(0xFF):
+        case PS2_OP(0x104):
+        case PS2_OP(0x105):
+        case PS2_OP(0x106):
+        case PS2_OP(0x107):
         case MACRO_OP(0x3A):
         case MACRO_OP(0x3B):
         case MACRO_OP(0x3C):
@@ -566,22 +566,22 @@ static int func_004B4EC0(MPCode* instr) {
         case MACRO_OP(0x3E):
         case MACRO_OP(0x3F):
             return 6;
-        case 0x10F:
-        case 0x11D:
-        case 0x11F:
-        case 0x121:
+        case PS2_OP(0x10F):
+        case PS2_OP(0x11D):
+        case PS2_OP(0x11F):
+        case PS2_OP(0x121):
             return 9;
-        case 0x10E:
-        case 0x11C:
-        case 0x11E:
-        case 0x120:
+        case PS2_OP(0x10E):
+        case PS2_OP(0x11C):
+        case PS2_OP(0x11E):
+        case PS2_OP(0x120):
             return 10;
-        case 0xF3:
-        case 0x101:
-        case 0x123:
+        case PS2_OP(0xF3):
+        case PS2_OP(0x101):
+        case PS2_OP(0x123):
             return 31;
-        case 0x184:
-        case 0x185:
+        case PS2_OP(0x184):
+        case PS2_OP(0x185):
             return 34;
         case 0x7C:
         case 0x7D:
@@ -592,16 +592,16 @@ static int func_004B4EC0(MPCode* instr) {
         case MACRO_OP(0x6A):
         case MACRO_OP(0x6B):
             return 36;
-        case 0xF2:
-        case 0x100:
-        case 0x122:
+        case PS2_OP(0xF2):
+        case PS2_OP(0x100):
+        case PS2_OP(0x122):
             return 59;
-        case 0x125:
+        case PS2_OP(0x125):
             return 61;
         case 0x7A:
         case 0x7B:
-        case 0x182:
-        case 0x183:
+        case PS2_OP(0x182):
+        case PS2_OP(0x183):
         case MACRO_OP(0x31):
         case MACRO_OP(0x32):
         case MACRO_OP(0x33):
@@ -609,7 +609,7 @@ static int func_004B4EC0(MPCode* instr) {
         case MACRO_OP(0x40):
         case MACRO_OP(0x41):
             return 68;
-        case 0x124:
+        case PS2_OP(0x124):
             return 121;
         default:
             return 1;
@@ -634,8 +634,8 @@ static int ps2_oplatency(MPCode* instr) {
 #else
         case 0x7C:
         case 0x7D:
-        case 0x1D3:
-        case 0x1D4:
+        case PS2_OP(0x1D3):
+        case PS2_OP(0x1D4):
 #endif
         case MACRO_OP(0x35):
         case MACRO_OP(0x36):
@@ -657,12 +657,12 @@ static int ps2_oplatency(MPCode* instr) {
 #else
         case 0xB6:
         case 0xB7:
-        case 0x1D5:
-        case 0x1D6:
-        case 0x1D7:
-        case 0x1D8:
-        case 0x1DB:
-        case 0x1DC:
+        case PS2_OP(0x1D5):
+        case PS2_OP(0x1D6):
+        case PS2_OP(0x1D7):
+        case PS2_OP(0x1D8):
+        case PS2_OP(0x1DB):
+        case PS2_OP(0x1DC):
 #endif
         case MACRO_OP(0x5F):
         case MACRO_OP(0x64):
@@ -683,16 +683,16 @@ static int ps2_oplatency(MPCode* instr) {
         case OPC(0x245):
         case OPC(0x246):
 #else
-        case 0x22C:
-        case 0x22D:
-        case 0x231:
-        case 0x232:
-        case 0x233:
-        case 0x23F:
-        case 0x240:
-        case 0x244:
-        case 0x245:
-        case 0x246:
+        case PS2_OP(0x22C):
+        case PS2_OP(0x22D):
+        case PS2_OP(0x231):
+        case PS2_OP(0x232):
+        case PS2_OP(0x233):
+        case PS2_OP(0x23F):
+        case PS2_OP(0x240):
+        case PS2_OP(0x244):
+        case PS2_OP(0x245):
+        case PS2_OP(0x246):
 #endif
             return 4;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -700,9 +700,9 @@ static int ps2_oplatency(MPCode* instr) {
         case OPC(0x21D):
         case OPC(0x21E):
 #else
-        case 0x21C:
-        case 0x21D:
-        case 0x21E:
+        case PS2_OP(0x21C):
+        case PS2_OP(0x21D):
+        case PS2_OP(0x21E):
 #endif
             return 37;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
@@ -721,15 +721,15 @@ static int ps2_oplatency(MPCode* instr) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
     if (op > OPC(0x21E) && op <= OPC(0x2E7)) {
 #else
-    if (op > 0x21E && op <= 0x2E7) {
+    if (op > PS2_OP(0x21E) && op <= PS2_OP(0x2E7)) {
 #endif
         switch (op) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x27C):
             case OPC(0x2D8):
 #else
-            case 0x27C:
-            case 0x2D8:
+            case PS2_OP(0x27C):
+            case PS2_OP(0x2D8):
 #endif
                 r = 7;
                 break;
@@ -742,27 +742,27 @@ static int ps2_oplatency(MPCode* instr) {
             case OPC(0x2D2):
             case OPC(0x2D5):
 #else
-            case 0x281:
-            case 0x282:
-            case 0x283:
-            case 0x288:
-            case 0x28D:
-            case 0x2D2:
-            case 0x2D5:
+            case PS2_OP(0x281):
+            case PS2_OP(0x282):
+            case PS2_OP(0x283):
+            case PS2_OP(0x288):
+            case PS2_OP(0x28D):
+            case PS2_OP(0x2D2):
+            case PS2_OP(0x2D5):
 #endif
                 r = 1;
                 break;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x2D4):
 #else
-            case 0x2D4:
+            case PS2_OP(0x2D4):
 #endif
                 r = 13;
                 break;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
             case OPC(0x2E7):
 #else
-            case 0x2E7:
+            case PS2_OP(0x2E7):
 #endif
                 r = 3;
                 break;
@@ -778,6 +778,36 @@ static int ps2_oplatency(MPCode* instr) {
 
 // 0x4B51B0: latency
 int func_004B51B0(MPCode* instr) {
+#if MWCCPS2 && MWCCPS2_BUILD == 119
+    // b119 (0x4BF910, its model at 0x5E3CF8): a load takes 6, other opcodes
+    // with fixed latencies than b210's
+    if (instr->flags & 2) {
+        return 6;
+    }
+    switch (instr->op) {
+        case 0x7F:
+        case 0xA5:
+        case 0xAD:
+        case 0xB1:
+        case 0x173:
+        case 0x174:
+        case 0x175:
+        case 0x176:
+        case 0x177:
+        case 0x469:
+        case 0x46A:
+        case 0x46B:
+        case 0x46C:
+            return 2;
+        case 0xA8:
+        case 0xA9:
+        case 0xB2:
+        case 0xB3:
+            return 3;
+        default:
+            return oplatency(instr);
+    }
+#endif
     if (instr->flags & 2) {
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
         return 6;
@@ -794,10 +824,10 @@ int func_004B51B0(MPCode* instr) {
 #else
         case 0xB6:
         case 0xB7:
-        case 0x400:
-        case 0x401:
-        case 0x405:
-        case 0x406:
+        case PS2_OP(0x400):
+        case PS2_OP(0x401):
+        case PS2_OP(0x405):
+        case PS2_OP(0x406):
         case MACRO_OP(0x5F):
 #endif
         case MACRO_OP(0x64):
@@ -1163,10 +1193,10 @@ int func_004B4B50(MPCode* instr) {
         last &&
         (last->op == 0xB6 ||
          last->op == 0xB7 ||
-         last->op == 0x400 ||
-         last->op == 0x401 ||
-         last->op == 0x405 ||
-         last->op == 0x406) &&
+         last->op == PS2_OP(0x400) ||
+         last->op == PS2_OP(0x401) ||
+         last->op == PS2_OP(0x405) ||
+         last->op == PS2_OP(0x406)) &&
         clock < finished[unit]) {
         return 0;
     }
@@ -1342,7 +1372,316 @@ void func_004B48A0(MPCode* a, MPCode* b) {
 #endif
 }
 
-#if MWCCPSP_NATIVE
+#if MWCC_CORE == MWCC_CORE_B233
+// 2.3.3's machine model (0x4A6C30..0x4A75D0): 3.0.1's single-issue five-unit
+// model (busy/busycount/lastinstr/finished at 0x541114/28/3C/50, clock
+// 0x541110), the unit being 1 for loads and otherwise the opcode table's +0x26
+// byte, with b69-style latencies. The code switches on 2.3.3's opcode numbers
+// (OpMap233.c, re/gen_opmap233.py: op233_of[] maps ours to them, unit233[]
+// holds 2.3.3's unit bytes).
+extern const UInt16 op233_of[];
+extern const UInt8 unit233[];
+#define OP233(pc) op233_of[(pc)->op]
+#define UNIT233(pc) (((pc)->flags & 2) ? 1 : (unit233[(pc)->op] & 0xFFF))
+
+static int (*sm233_oplatency)(MPCode* instr); // 0x541164
+static SInt32 sm233_clock; // 0x541110
+static MPCode* sm233_busy[5]; // 0x541114
+static SInt32 sm233_busycount[5]; // 0x541128
+static MPCode* sm233_lastinstr[5]; // 0x54113C
+static SInt32 sm233_finished[5]; // 0x541150
+
+// 0x4A6DC0: the operation latency
+static int sm233_oplatency_base(MPCode* instr) {
+    switch (OP233(instr)) {
+        case 0x7C:
+        case 0x7D:
+        case 0x3F2:
+        case 0x3F4:
+        case 0x3F5:
+        case 0x3F6:
+        case 0x426:
+        case 0x427:
+            return 36;
+        case 0xB6:
+        case 0xB7:
+        case 0x41B:
+        case 0x420:
+        case 0x421:
+        case 0x422:
+        case 0x423:
+        case 0x424:
+            return 3;
+        case 0x7A:
+        case 0x7B:
+        case 0x3EE:
+        case 0x3EF:
+        case 0x3F0:
+        case 0x3F1:
+        case 0x3FD:
+        case 0x3FE:
+            return 68;
+        case 0x80:
+        case 0x81:
+        case 0x3F7:
+        case 0x3F8:
+        case 0x3F9:
+        case 0x3FA:
+        case 0x3FB:
+        case 0x3FC:
+            return 6;
+        case 0xEB:
+        case 0xEC:
+        case 0x101:
+        case 0x102:
+            return 4;
+        case 0x6C:
+        case 0x6E:
+        case 0x6F:
+        case 0x70:
+        case 0x72:
+        case 0x73:
+        case 0x74:
+        case 0x75:
+            return 6;
+        case 0x6D:
+            return 2;
+        case 0x71:
+            return 3;
+        case 0xF1:
+        case 0xFF:
+        case 0x121:
+            return 59;
+        case 0xF2:
+        case 0x100:
+        case 0x122:
+            return 31;
+        case 0xB4:
+            return 6;
+        case 0xB5:
+            return 5;
+        case 0xED:
+        case 0xEE:
+        case 0xEF:
+        case 0xF0:
+        case 0xF3:
+        case 0xF4:
+        case 0xF5:
+        case 0xF6:
+        case 0xFB:
+        case 0xFC:
+        case 0xFD:
+        case 0xFE:
+        case 0x103:
+        case 0x104:
+        case 0x105:
+        case 0x106:
+            return 6;
+        case 0x10E:
+        case 0x11C:
+        case 0x11E:
+        case 0x120:
+            return 9;
+        case 0x10D:
+        case 0x11B:
+        case 0x11D:
+        case 0x11F:
+            return 10;
+        case 0x124:
+            return 61;
+        case 0x123:
+            return 121;
+        case 0x14B:
+        case 0x14C:
+        case 0x14D:
+        case 0x41C:
+        case 0x41D:
+        case 0x153:
+        case 0x154:
+        case 0x155:
+        case 0x156:
+        case 0x157:
+        case 0x158:
+            return 3;
+        case 0x15B:
+        case 0x15C:
+            return 34;
+        case 0x159:
+        case 0x15A:
+            return 68;
+    }
+    if (OP233(instr) >= 0x44 && OP233(instr) <= 0x63) {
+        return 2;
+    }
+    if (OP233(instr) >= 0x111 && OP233(instr) <= 0x11A) {
+        return 2;
+    }
+    return 1;
+}
+
+// 0x4A6CC0: R5900 multiply/divide and MMI latencies
+static int sm233_oplatency_r5900(MPCode* instr) {
+    switch (OP233(instr)) {
+        case 0x7C:
+        case 0x7D:
+        case 0x1AA:
+        case 0x1AB:
+        case 0x3F2:
+        case 0x3F3:
+        case 0x3F4:
+        case 0x3F5:
+        case 0x3F6:
+        case 0x426:
+        case 0x427:
+        case 0x1F3:
+        case 0x1F4:
+        case 0x1F5:
+            return 37;
+        case 0xB6:
+        case 0xB7:
+        case 0x1AC:
+        case 0x1AD:
+        case 0x1AE:
+        case 0x1AF:
+        case 0x1B2:
+        case 0x1B3:
+        case 0x41B:
+        case 0x420:
+        case 0x421:
+        case 0x422:
+        case 0x423:
+        case 0x424:
+        case 0x203:
+        case 0x204:
+        case 0x208:
+        case 0x209:
+        case 0x20A:
+        case 0x216:
+        case 0x217:
+        case 0x21B:
+        case 0x21C:
+        case 0x21D:
+            return 4;
+        case 0x3:
+        case 0x4:
+        case 0xD4:
+            return 2;
+    }
+    return sm233_oplatency_base(instr);
+}
+
+// 0x4A6DA0
+static int sm233_oplatency_first(MPCode* instr) {
+    sm233_oplatency = sm233_oplatency_r5900;
+    return sm233_oplatency(instr);
+}
+
+// 0x4A6C30: latency
+static int sm233_latency(MPCode* instr) {
+    if (instr->flags & 2) {
+        return 6;
+    }
+    switch (OP233(instr)) {
+        case 0xA8:
+        case 0xA9:
+        case 0xB2:
+        case 0xB3:
+            return 3;
+        case 0x7F:
+        case 0xA5:
+        case 0xAD:
+        case 0xB1:
+        case 0x14B:
+        case 0x14C:
+        case 0x14D:
+        case 0x14E:
+        case 0x14F:
+        case 0x41C:
+        case 0x41D:
+        case 0x41E:
+        case 0x41F:
+            return 2;
+    }
+    return sm233_oplatency_first(instr);
+}
+
+// 0x4A70E0: initialize
+static void sm233_initialize(void) {
+    int i;
+
+    sm233_clock = 0;
+    for (i = 0; i < 5; i++) {
+        sm233_busy[i] = NULL;
+        sm233_busycount[i] = 0;
+        sm233_lastinstr[i] = NULL;
+        sm233_finished[i] = 0;
+    }
+}
+
+// 0x4A71C0: can_issue (the model with the delay-slot hook)
+static int sm233_can_issue(MPCode* instr) {
+    MPCode* last;
+
+    if (sm233_busy[UNIT233(instr)]) {
+        return 0;
+    }
+    if ((instr->flags & 2) &&
+        (last = sm233_lastinstr[UNIT233(instr)]) &&
+        (last->flags & 4) &&
+        sm233_clock < sm233_finished[UNIT233(instr)] + 1) {
+        return 0;
+    }
+    return 1;
+}
+
+// 0x4A72B0: can_issue (the model without it)
+static int sm233_can_issue_simple(MPCode* instr) {
+    return !sm233_busy[UNIT233(instr)];
+}
+
+// 0x4A7330: issue
+static void sm233_issue(MPCode* instr) {
+    sm233_busy[UNIT233(instr)] = instr;
+    sm233_busycount[UNIT233(instr)] = sm233_oplatency(instr);
+}
+
+// 0x4A73A0: advance_clock
+static void sm233_advance_clock(void) {
+    int i;
+
+    sm233_clock++;
+    for (i = 0; i < 5; i++) {
+        if (--sm233_busycount[i] == 0) {
+            sm233_lastinstr[i] = sm233_busy[i];
+            sm233_finished[i] = sm233_clock;
+            sm233_busy[i] = NULL;
+        }
+    }
+}
+
+// 2.3.3's models (0x51D238 with the dependence hook 0x4A73F0, which is
+// func_004B48A0 with the same branch opcodes; 0x51D258 without), issue width 1
+MachineInfo data_005D082C = {
+    1,
+    0,
+    sm233_latency,
+    sm233_initialize,
+    sm233_can_issue,
+    sm233_issue,
+    sm233_advance_clock,
+    func_004B48A0
+};
+MachineInfo data_005D084C = {
+    1,
+    0,
+    sm233_latency,
+    sm233_initialize,
+    sm233_can_issue_simple,
+    sm233_issue,
+    sm233_advance_clock,
+    NULL
+};
+#elif MWCCPSP_NATIVE
 // The models CodeGen hands the scheduler: with and without the delay-slot
 // dependence hook.
 #if MWCCPS2

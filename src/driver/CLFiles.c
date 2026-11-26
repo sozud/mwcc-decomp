@@ -62,6 +62,8 @@ void File_Free(File* file) {
 Boolean Files_Initialize(Files* this) {
 #if MWCCPSP
     OS_ASSERT(52, this != NULL);
+#elif MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(46, this != NULL);
 #else
     OS_ASSERT(47, this != NULL);
 #endif
@@ -82,6 +84,8 @@ Boolean Files_Terminate(Files* this) {
 
 #if MWCCPSP
     OS_ASSERT(61, this != NULL);
+#elif MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(55, this != NULL);
 #else
     OS_ASSERT(56, this != NULL);
 #endif
@@ -113,8 +117,13 @@ Boolean Files_InsertFile(Files* this, File* file, SInt32 position) {
     OS_ASSERT(85, this != NULL);
     OS_ASSERT(86, file != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(79, this != NULL);
+    OS_ASSERT(80, file != NULL);
+#else
     OS_ASSERT(80, this != NULL);
     OS_ASSERT(81, file != NULL);
+#endif
 #endif
 
     if (position < 0) {
@@ -149,8 +158,13 @@ File* Files_GetFile(Files* this, SInt32 filenum) {
     OS_ASSERT(109, this != NULL);
     OS_ASSERT(110, filenum >= 0);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(103, this != NULL);
+    OS_ASSERT(104, filenum >= 0);
+#else
     OS_ASSERT(104, this != NULL);
     OS_ASSERT(105, filenum >= 0);
+#endif
 #endif
 
     file = this->fileList;
@@ -178,7 +192,11 @@ int Files_Count(Files* this) {
 #if MWCCPSP
     OS_ASSERT(132, this != NULL);
 #else
+#if MWCC_CORE == MWCC_CORE_B233
+    OS_ASSERT(126, this != NULL);
+#else
     OS_ASSERT(127, this != NULL);
+#endif
 #endif
 
     return this->fileCount;

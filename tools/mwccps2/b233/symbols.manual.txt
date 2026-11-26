@@ -1,0 +1,581 @@
+// Hand-placed 2.3.3 addresses, with the evidence.
+// ParserHelpers-cc.c: functions.csv's 0x40DA90..0x40DCBD (pointer-called) holds
+// Opt_DefineSymbol ("#define %s %s\n", "{$definec %s %s}\n"; the -D callback the
+// parser tables point at), Opt_UndefineSymbol ("#undef %s\n") and
+// Opt_AddPrefixFile ("#include \"%s\"\n"), after Opt_AddStringToDefines (0x40DA65)
+Opt_DefineSymbol = 0x0040DA90;
+Opt_UndefineSymbol = 0x0040DB42;
+Opt_AddPrefixFile = 0x0040DBD9;
+// CodeGen_InitCompiler (0x435F30, byte match) calls 0x493EC0; b69's func_004621F0 (init_cgdispatch) maps there
+init_cgdispatch = 0x00493EC0;
+// the per-function back end (0x4356B0) calls 0x4A4830 just before dumping "Macro Expansion B"
+// (0x5130C4): a block walk calling 0x4A4610 per pcode (the 128-bit constant and misaligned
+// lw/ld splits, as b69's 0x4AB950)
+func_0048AEF0 = 0x004A4830;
+func_0048AF30 = 0x004A4610;
+// the code-selection table (0x51CA20, ENode type order): ETYPCON's entry 0x49A8D0 coerces
+// through 0x4946F0, whose case 2 calls 0x4879F0 (lui/addiu of an object's address)
+func_00495500 = 0x0049A8D0;
+func_004A64C0 = 0x004946F0;
+func_0047F2D0 = 0x004879F0;
+// nullnode (0x4B9FD0): push 0x32; call 0x4B9F90 -> CExpr_NewENode(EINTCONST)
+CExpr_NewENode = 0x004B9F90;
+// create_objectnode2 (0x4BAD90): cmp dword [0x557144],0; call [0x557144]
+name_obj_check = 0x00557144;
+// IRO_Dump (0x4C0D60): cmp [0x557794],0 gates the log; vfprintf(file at bss+0 = 0x542658)
+IRO_Log = 0x00557794;
+// (IroDump.c's bss base: one sample only, not pinned)
+// func_00480710 (0x493110): first call 0x493740 = emitpcode(0x39, ...)
+emitpcode = 0x00493740;
+// foundnl (0x4413B0): inc [0x557010] (linenumber); bss+0x282 = 0x52B902, bss+0x310 = 0x52B990
+linenumber = 0x00557010;
+// (CPrep.c's bss base 0x52B680 fits foundnl's two offsets but not CPrep_ParseBinary's bss+0x7BC = 0x52BD24: our bss order differs, not pinned)
+// lookahead (0x481EC0): call 0x43FCB0 (GetState), lex, call 0x43FCE0 (SetState)
+CPrep_TokenStreamGetState = 0x0043FCB0;
+// newlabel (0x477900): lalloc, memclrw, call 0x42E5D0
+CParser_GetUniqueName = 0x0042E5D0;
+// ObjGen_Cleanup (0x485CE0): push 0x52EAC8; call FreeGList
+data_005EAF88 = 0x0052EAC8;
+// OS_MakeNameSpec (0x413040): strpbrk(name, 0x50D7BC); between _b69at464 0x50D7B8 and _b69at565 0x50D7C4 (numbers after OS_InitProgram lost its literal)
+MsDos.c/_b69at475 = 0x0050D7BC;
+// WriteHandleToFile (0x415EF0): fopen(path, 0x50D97C)
+CLIO.c/_b69at159 = 0x0050D97C;
+// makepclabel (0x493800): mov ax,[0x52EAE8]; inc [0x52EAE8] (PCode.c's bss is this 2-byte counter alone)
+PCode.c/_b69sec.bss = 0x0052EAE8;
+// nullnode (0x4B9FD0): mov [eax+0xA], 0x516E98 (the node's type)
+stsignedlong = 0x00516E98;
+// foundnl (0x4413B0): inc [0x557010] (linenumber), then inc [0x555F64]
+lines = 0x00555F64;
+// lookahead (0x481EC0): GetState, lex, call 0x43FCE0
+CPrep_TokenStreamSetState = 0x0043FCE0;
+// create_objectnode2 (0x4BAD90): call 0x4BACD0 (obj, 1, 4), then makemonadicnode 0x4BA040
+CExpr_MakeObjRefNode = 0x004BACD0;
+// func_00480710 = branch_always (0x493110): emitpcode; pcbranch([0x557594] = pclastblock, label) at 0x4938D0; makepcblock 0x493830
+data_006246B4 = 0x00557594;
+pcbranch = 0x004938D0;
+makepcblock = 0x00493830;
+// WriteHandleToFile (0x415EF0): OS_SpecToString 0x4130D0; on fopen failure CLReportCError(8, errno) at 0x408CE0;
+// SendHandleToFile 0x415D50; OS_SetMacFileCreatorAndType 0x422B70
+OS_SpecToString = 0x004130D0;
+CLReportCError = 0x00408CE0;
+CLIO.c/SendHandleToFile = 0x00415D50;
+OS_SetMacFileCreatorAndType = 0x00422B70;
+// CParser_GetUniqueName (0x42E5D0): buf[0]='@'; call 0x42E550 (buf+1); GetHashNameNodeExport 0x432610
+CParser_PrintUniqueID = 0x0042E550;
+GetHashNameNodeExport = 0x00432610;
+// Bv_SetBit (0x43C650, in our IroLoop.c): CError_Internal(0x513EE0, line)
+IroLoop.c/_b69at206 = 0x00513EE0;
+// CError_GetErrorString (0x459C30): CError_Internal(0x516B18, ...)
+CError.c/_b69at99 = 0x00516B18;
+// CMach_CalcFloatConvert (0x45CCB0): CError_Internal(0x516EE8, ...)
+CMachine.c/_b69at710 = 0x00516EE8;
+// PPCError_GetErrorString (0x4ECE30): CError_Internal(0x524718, ...)
+PPCError.c/_b69at49 = 0x00524718;
+// CInline_AddFRefList_Object (0x46D390; bss+0x70 = 0x52BE56 gives an unaligned base, not pinned): its one call goes to 0x46D5A0
+CInline.c/CInline_AddFRefList_InlineFunc = 0x0046D5A0;
+// CodeGen_GetNewVarInfo (0x432FF0): mov ax,[0x557CA0]; inc [0x557CA0]
+localcount = 0x00557CA0;
+// IRO_FindPreced (0x4B78A0): mov edx,[0x5570A8]
+IRO_FirstLinear = 0x005570A8;
+// EEquConst (0x4C6BE0): call 0x4B73F0
+IRO_IsIntConstant = 0x004B73F0;
+// allocatecsedatastructures (0x4A49B0): oalloc([ebx*4+0x5572BC]) stored to [ebx*4+0x541098] = bss+0x1188
+data_00625A98 = 0x005572BC;
+// (LocalCSE.c's bss base: one sample only, not pinned)
+// CInit_CreateStaticDataObject (0x45DF10): memclrw(0x5C), CParser_GetUniqueName, call 0x42E910
+CParser_NewGlobalDataObject = 0x0042E910;
+// CParser_NewRTFunc (0x42D7F0): call 0x42E9C0 where ours calls CParser_NewFunctionObject
+CParser_NewFunctionObject = 0x0042E9C0;
+// GetIndString (0x415A30): first call 0x408F20 (Res_GetResource), sprintf(.., 0x50D910, ..), GetResource 0x408A20
+Res_GetResource = 0x00408F20;
+TextUtils.c/_b69at87 = 0x0050D910;
+// SetupConsoleInfo (0x415C00): SetConsoleCtrlHandler(0x415BD0, 1)
+CLIO.c/catchinterrupt = 0x00415BD0;
+// 0x42FD20 is our CParser_GetTypeQualifiers byte for byte but for the
+// missing `& 3` (it returns the qualifiers unmasked); the guess there was
+// GetCVTypeQualifiers, and 0x42FDF0 is CParser_IsVolatile (exact)
+CParser_GetTypeQualifiers = 0x0042FD20;
+// --- begin map_b69_manual.py (generated: b69 manual names at 2.3.3 addresses) ---
+SetBuildTarget = 0x004053C0; // b69 0x00405320, fuzzy >= 0.9 0.95, first mnemonics
+SetPluginType = 0x004053F0; // b69 0x00405350, fuzzy >= 0.9 0.95, first mnemonics
+CmdLine_Driver = 0x00405450; // b69 0x004053B0, fuzzy >= 0.9
+RegisterStaticParserPlugins = 0x0040546E; // b69 0x004053CE, fuzzy >= 0.9
+RegisterStaticTargetPlugins = 0x004054F0; // b69 0x00405450, fuzzy >= 0.9
+RegisterStaticTargetResources = 0x00405510; // b69 0x00405470, fuzzy >= 0.9
+Dispatch_PreParse = 0x00405980; // b69 0x004058E0, fuzzy >= 0.9 0.95, first mnemonics
+Dispatch_MidParse = 0x00405AE0; // b69 0x00405A40, fuzzy >= 0.9
+Dispatch_PostParse = 0x00405AF0; // b69 0x00405A50, fuzzy >= 0.9
+RegisterStaticParserToolInfo = 0x00405B00; // b69 0x00405A60, fuzzy >= 0.9
+NewTypeListEntry = 0x00406A20; // b69 0x004069C0, fuzzy >= 0.9
+FindResourceMap = 0x00406B50; // b69 0x00406AF0, fuzzy >= 0.9 0.95, first mnemonics
+Plugin_GetVersionInfoASCII = 0x00409360; // b69 0x00409250, fuzzy >= 0.9
+VerifyPanels = 0x00409D20; // b69 0x00409C10, fuzzy >= 0.9 0.95, first mnemonics
+CLMain.c/CLT_dummymain = 0x0040AD10; // b69 0x0040ABC0, fuzzy >= 0.9
+special_plugin_debug = 0x0040AE60; // b69 0x0040AD10, fuzzy >= 0.9 0.95, first mnemonics
+SetupCmdLinePrefPanels = 0x0040B990; // b69 0x0040B8A0, fuzzy >= 0.9
+CLMain.c/SetupCmdLinePrefPanels = 0x0040B990; // b69 0x0040B8A0, fuzzy >= 0.9
+SetupParamBlock = 0x0040BD18; // b69 0x0040BBC8, fuzzy >= 0.9
+Parse = 0x0040BE27; // b69 0x0040BCD9, fuzzy >= 0.9
+ParserHelpers.c/MatchesExtension = 0x0040CE7E; // b69 0x0040CD36, fuzzy >= 0.9
+Opt_SavePrefs = 0x0040D569; // b69 0x0040D3FA, fuzzy >= 0.9
+Opt_HandleOutputName = 0x0040D594; // b69 0x0040D425, fuzzy >= 0.9 of 0x0040D3FA +0x2B, first mnemonics
+Opt_SetStage = 0x0040D8F9; // b69 0x0040D7C7, fuzzy >= 0.9
+SetWarningFlags = 0x0040DE90; // b69 0x0040DD80, fuzzy >= 0.9
+DisplayWarningOptions = 0x0040DFD0; // b69 0x0040DEB0, fuzzy >= 0.9 0.95, first mnemonics
+SetOptFlags = 0x0040E130; // b69 0x0040E000, fuzzy >= 0.9 0.95, first mnemonics
+DisplayOptimizationOptions = 0x0040E470; // b69 0x0040E330, fuzzy >= 0.9 0.95, first mnemonics
+AddFileToProject = 0x0040F0E3; // b69 0x0040EF63, fuzzy >= 0.9
+MoveSystemPathsIntoUserList = 0x0040F37D; // b69 0x0040F1EC, fuzzy >= 0.9 0.95, first mnemonics
+SetOutputFileDirectory = 0x0040F3F0; // b69 0x0040F25D, fuzzy >= 0.9 0.95, first mnemonics
+AddOverlayGroup = 0x0040F44C; // b69 0x0040F2B9, fuzzy >= 0.9 0.95, first mnemonics
+Arg_AddToken = 0x0040F7B6; // b69 0x0040F606, fuzzy >= 0.9
+Arg_SkipRespFileWS = 0x0040F96F; // b69 0x0040F7B9, fuzzy >= 0.9 0.95, first mnemonics
+Arg_OpenRespFile = 0x0040FA2C; // b69 0x0040F875, fuzzy >= 0.9 0.95, first mnemonics
+Arguments.c/Arg_OpenRespFile = 0x0040FA2C; // b69 0x0040F875, fuzzy >= 0.9 0.95, first mnemonics
+Arg_GetRespFileToken = 0x0040FAD8; // b69 0x0040F920, fuzzy >= 0.9 0.95, first mnemonics
+Arguments.c/Arg_GetRespFileToken = 0x0040FAD8; // b69 0x0040F920, fuzzy >= 0.9 0.95, first mnemonics
+Arg_GetNext = 0x0040FB84; // b69 0x0040F9CD, fuzzy >= 0.9
+Arg_Parse = 0x0040FCD6; // b69 0x0040FB0F, fuzzy >= 0.9
+ParserToolMatchesPlugin = 0x004105D5; // b69 0x004103E1, fuzzy >= 0.9
+ParserToolHandlesPanels = 0x0041067B; // b69 0x00410486, fuzzy >= 0.9
+GetFileVersionInfoSizeA = 0x00417590; // b69 0x0041762E, fuzzy >= 0.9 0.95, first mnemonics
+allocate_license_slot = 0x00418540; // b69 0x004187A0, fuzzy >= 0.9
+delete_license = 0x00418690; // b69 0x004188F0, fuzzy >= 0.9 0.95, first mnemonics
+get_license_slot_count = 0x00418700; // b69 0x00418960, fuzzy >= 0.9
+set_bytes = 0x0041B8A0; // b69 0x0041BDE0, fuzzy >= 0.9 0.95, first mnemonics
+Option_SpellList = 0x0041DC37; // b69 0x0041D826, fuzzy >= 0.9
+Option_ContinuesThisLevel = 0x0041DEA5; // b69 0x0041DA7A, fuzzy >= 0.9
+Option_IsEndingLevel = 0x0041DFBB; // b69 0x0041DB8D, fuzzy >= 0.9
+Option_MatchString = 0x0041E3E1; // b69 0x0041DF74, fuzzy >= 0.9
+Options_DoParse = 0x0041E710; // b69 0x0041E28A, fuzzy >= 0.9 0.95, first mnemonics
+my_isxdigit = 0x00420B4F; // b69 0x00420F47, fuzzy >= 0.9
+OS_LoadFileHandle = 0x004215B0; // b69 0x00421990, fuzzy >= 0.9 0.95, first mnemonics
+OS_WriteFileHandle = 0x00421650; // b69 0x00421A30, fuzzy >= 0.9 0.95, first mnemonics
+Overlay_AddFile = 0x004240E0; // b69 0x00424590, fuzzy >= 0.9
+UCBStorePluginData = 0x004254F0; // b69 0x004259A0, fuzzy >= 0.9 0.95, first mnemonics
+UCBGetPluginData = 0x00425530; // b69 0x004259E0, fuzzy >= 0.9 0.95, first mnemonics
+UCBAllocMemHandle = 0x004262B0; // b69 0x00426740, fuzzy >= 0.9
+UCBFreeMemHandle = 0x00426300; // b69 0x00426790, fuzzy >= 0.9 0.95, first mnemonics
+UCBGetMemHandleSize = 0x00426350; // b69 0x004267E0, fuzzy >= 0.9
+UCBGetTargetName = 0x00426470; // b69 0x00426900, fuzzy >= 0.9 0.95, first mnemonics
+UCBPreFileAction = 0x004264F0; // b69 0x00426980, fuzzy >= 0.9 0.95, first mnemonics
+UCBPostFileAction = 0x00426530; // b69 0x004269C0, fuzzy >= 0.9 0.95, first mnemonics
+UCBCheckinLicense = 0x004269E0; // b69 0x00426E60, fuzzy >= 0.9 0.95, first mnemonics
+UCBResolveRelativePath = 0x00426A20; // b69 0x00426EA0, fuzzy >= 0.9 0.95, first mnemonics
+UCBDisplayLines = 0x00426F00; // b69 0x00427390, fuzzy >= 0.9 0.95, first mnemonics
+Paths_CopyRecurseFSS = 0x004287A0; // b69 0x00428BF0, fuzzy >= 0.9 0.95, first mnemonics
+Segments_Count = 0x00428A20; // b69 0x00428E60, fuzzy >= 0.9 0.95, first mnemonics
+Browser_SearchFile = 0x00429AA0; // b69 0x00429E70, fuzzy >= 0.9 0.95, first mnemonics
+FreeIncludeFile = 0x0042A120; // b69 0x0042A520, fuzzy >= 0.9 0.95, first mnemonics
+Parameter.c/Param_String = 0x0042A7BD; // b69 0x0042ABBC, fuzzy >= 0.9 0.95, first mnemonics
+Param_Parse = 0x0042B860; // b69 0x0042BC2A, fuzzy >= 0.9
+Param_IsNonTextFile = 0x0042B990; // b69 0x0042BD5A, fuzzy >= 0.9 0.95, first mnemonics
+Param_GetArgument = 0x0042BA13; // b69 0x0042BDDC, fuzzy >= 0.9
+Side_Indent = 0x0042BF86; // b69 0x0042C30C, fuzzy >= 0.9
+Side_Outdent = 0x0042BFFA; // b69 0x0042C37D, fuzzy >= 0.9
+Side_DumpLine = 0x0042C09E; // b69 0x0042C41E, fuzzy >= 0.9 0.95, first mnemonics
+CParser_SetUniqueID = 0x0042E5C0; // b69 0x0042E9E0, fuzzy >= 0.9
+islookaheaddeclaration = 0x0042FB30; // b69 0x00430190, fuzzy >= 0.9
+LockGList = 0x00432220; // b69 0x00432B20, fuzzy >= 0.9
+UnlockGList = 0x00432230; // b69 0x00432B30, fuzzy >= 0.9
+aalloc = 0x00432A80; // b69 0x00433370, fuzzy >= 0.9
+getbit = 0x00432C20; // b69 0x00433500, fuzzy >= 0.9 0.95, first mnemonics
+CodeGen_UpdateOptimizerOptions = 0x0043EE40; // b69 0x0043ACF0, fuzzy >= 0.9 0.95, first mnemonics
+CPrep_UnLex = 0x0043FD20; // b69 0x0043B950, fuzzy >= 0.9 0.95, first mnemonics
+CPrep_GetPrepPos = 0x00440CA0; // b69 0x0043CAD0, fuzzy >= 0.9 0.95, first mnemonics
+CPrep.c/gotonexttoken = 0x00441460; // b69 0x0043D2C0, fuzzy >= 0.9 0.95, first mnemonics
+CPrep.c/pragma_precompile_target = 0x004436E0; // b69 0x0043F150, fuzzy >= 0.9
+CPrep.c/prepelse = 0x00445300; // b69 0x00440EF0, fuzzy >= 0.9
+getsyserr = 0x00447190; // b69 0x00442D40, fuzzy >= 0.9 0.95, first mnemonics
+CDecl.c/checkfuncintegr = 0x004479A0; // b69 0x004435C0, fuzzy >= 0.9 0.95, first mnemonics
+CDecl.c/CDecl_IsEnumClassTypeOrRef = 0x00448070; // b69 0x00443BE0, fuzzy >= 0.9
+CheckDefaultArgs = 0x00449130; // b69 0x00444DE0, fuzzy >= 0.9
+CScope_AppendName = 0x0044F6B0; // b69 0x0044AFB0, fuzzy >= 0.9 0.95, first mnemonics
+CScope_MergeNameSpace = 0x0044FAA0; // b69 0x0044B370, fuzzy >= 0.9 0.95, first mnemonics
+CMangler_Setup = 0x00452E20; // b69 0x0044E920, fuzzy >= 0.9
+CMangler.c/CMangler_MangleQualifier = 0x00453B20; // b69 0x0044F660, fuzzy >= 0.9
+CMangler_MangleTypeAppend = 0x00453B60; // b69 0x0044F6A0, fuzzy >= 0.9
+CMangler.c/CMangler_MangleArgs = 0x00454080; // b69 0x0044FB70, fuzzy >= 0.9 0.95, first mnemonics
+CSOM_Setup = 0x00454530; // b69 0x00450080, fuzzy >= 0.9
+CSOM_Cleanup = 0x00454590; // b69 0x004500E0, fuzzy >= 0.9
+CABI_GetPtrDiffTType = 0x00456F00; // b69 0x004528B0, fuzzy >= 0.9
+CABI_GetVTableOffset = 0x00457460; // b69 0x00452DD0, fuzzy >= 0.9
+CABI_LayoutClass = 0x00457790; // b69 0x004530D0, fuzzy >= 0.9 0.95, first mnemonics
+CABI.c/CABI_ThisArg = 0x00457A60; // b69 0x004533B0, fuzzy >= 0.9 0.95, first mnemonics
+CABI.c/CABI_MakeVArgExpr = 0x00457B70; // b69 0x004534C0, fuzzy >= 0.9
+CABI.c/CABI_MakeCopyConArgExpr = 0x00457B80; // b69 0x004534D0, fuzzy >= 0.9 0.95, first mnemonics
+FindFirst = 0x00459C10; // b69 0x004556B0, addrmap 11 votes
+CMach_CalcFloatMonadic = 0x0045CAF0; // b69 0x00458660, fuzzy >= 0.9 0.95, first mnemonics
+CMach_GetCustomType = 0x0045D400; // b69 0x00458FC0, fuzzy >= 0.9
+CInit.c/CInit_GetInitObject = 0x0045DEE0; // b69 0x004599B0, fuzzy >= 0.9 0.95, first mnemonics
+CInit.c/CInit_FindNextMember = 0x0045ED50; // b69 0x0045A7E0, fuzzy >= 0.9 0.95, first mnemonics
+CInit.c/CInit_GlobalStaticInit = 0x004605C0; // b69 0x0045C000, fuzzy >= 0.9 of 0x0045BF00 +0x100, first mnemonics
+CClass_Init = 0x00462700; // b69 0x0045E390, fuzzy >= 0.9
+CClass_MakeStaticActionClass = 0x004646F0; // b69 0x00460690, fuzzy >= 0.9
+CClass_CheckPures = 0x00464750; // b69 0x004606F0, fuzzy >= 0.9
+CIRTrans_Setup = 0x004651F0; // b69 0x00461130, fuzzy >= 0.9
+CInline.c/CInline_NewLocalObject = 0x0046ACE0; // b69 0x00462700, fuzzy >= 0.9
+CExpr.c/CExpr_TemplArgDepCast = 0x0046F660; // b69 0x00467FF0, fuzzy >= 0.9 0.95, first mnemonics
+CExpr.c/CExpr_IsTemplateFunc = 0x0046F7F0; // b69 0x00468180, fuzzy >= 0.9 0.95, first mnemonics
+CFunc_NewDeclBlock = 0x00477180; // b69 0x004702B0, fuzzy >= 0.9 0.95, first mnemonics
+CFunc.c/CFunc_FunctionRedefinedCheck = 0x0047B110; // b69 0x004742D0, fuzzy >= 0.9
+CPrepTokenizer.c/tohex = 0x0047F1F0; // b69 0x00478D90, fuzzy >= 0.9
+CPrepTokenizer.c/tmult = 0x0047FE70; // b69 0x00479A60, fuzzy >= 0.9
+CPrepTokenizer.c/tless = 0x0047FF00; // b69 0x00479AF0, fuzzy >= 0.9
+CPrepTokenizer.c/tequa = 0x0047FFB0; // b69 0x00479BA0, fuzzy >= 0.9
+CPrepTokenizer.c/tgrea = 0x0047FFE0; // b69 0x00479BD0, fuzzy >= 0.9
+CPrepTokenizer.c/texcl = 0x004802B0; // b69 0x00479CE0, fuzzy >= 0.9
+CPrepTokenizer.c/tplus = 0x004802E0; // b69 0x00479D10, fuzzy >= 0.9
+CPrepTokenizer.c/tminu = 0x00480330; // b69 0x00479D60, fuzzy >= 0.9
+CPrepTokenizer.c/torrr = 0x004803C0; // b69 0x00479DF0, fuzzy >= 0.9
+CPrepTokenizer.c/tampe = 0x00480410; // b69 0x00479E40, fuzzy >= 0.9
+tnull = 0x00481E60; // b69 0x0047B810, fuzzy >= 0.9 0.95, first mnemonics
+CTemplTool_GetFuncTempl = 0x00482AD0; // b69 0x0047C540, fuzzy >= 0.9 0.95, first mnemonics
+CTemplTool_CheckTemplArgType = 0x00483570; // b69 0x0047D150, fuzzy >= 0.9
+ObjGen_SrcBreakName = 0x00486BC0; // b69 0x0048AF00, fuzzy >= 0.9
+ObjGen_CodeCleanup = 0x00486BE0; // b69 0x0048AF20, fuzzy >= 0.9
+func_0046FA50 = 0x00493940; // b69 0x00498670, fuzzy >= 0.9
+deleteblock = 0x004939B0; // b69 0x00498680, fuzzy >= 0.9 0.95, first mnemonics
+LocalCSE.c/getvaluestate = 0x004A5CE0; // b69 0x004A7D70, fuzzy >= 0.9 0.95, first mnemonics
+LocalCSE.c/forkvaluestate = 0x004A5D20; // b69 0x004A7DB0, fuzzy >= 0.9 0.95, first mnemonics
+BE_schedule.c/b69_movable = 0x004AA240; // b69 0x004B1220, fuzzy >= 0.9
+func_00483B20 = 0x004AF6A0; // b69 0x004B67D0, fuzzy >= 0.9
+IRO_IsConstant = 0x004B7370; // b69 0x004BE040, fuzzy >= 0.9 0.95, first mnemonics
+IRO_IsFloatConstant = 0x004B7410; // b69 0x004BE0F0, fuzzy >= 0.9 0.95, first mnemonics
+IRO_IsAssignment = 0x004B7430; // b69 0x004BE110, fuzzy >= 0.9 0.95, first mnemonics
+IRO_AddToList = 0x004B8090; // b69 0x004BF100, fuzzy >= 0.9 0.95, first mnemonics
+IroTransform.c/IRO_SwitchChildren = 0x004C2E80; // b69 0x004C68D0, fuzzy >= 0.9 0.95, first mnemonics
+IroTransform.c/NarrowIsBitfield = 0x004C5750; // b69 0x004C9950, fuzzy >= 0.9 0.95, first mnemonics
+IRO_IsRegable = 0x004C8010; // b69 0x004CA5F0, fuzzy >= 0.9 0.95, first mnemonics
+IroEval.c/checkStruct = 0x004C6EF0; // b69 0x004D1CF0, fuzzy >= 0.9
+IroRangePropagation.c/ERnewERange = 0x004C8EA0; // b69 0x004D29B0, fuzzy >= 0.9 0.95, first mnemonics
+CPrec.c/CPrec_GetExpressionListPatch = 0x004D0EF0; // b69 0x004E4210, fuzzy >= 0.9
+CPrec.c/CPrec_GetInlineAsmPatch = 0x004D1380; // b69 0x004E46B0, fuzzy >= 0.9
+CPrec.c/CPrec_FileAlign = 0x004D2A20; // b69 0x004E5BB0, fuzzy >= 0.9
+SetupAssembler = 0x004D5140; // b69 0x004E7EE0, fuzzy >= 0.9
+CleanupAssembler = 0x004D5150; // b69 0x004E7EF0, fuzzy >= 0.9
+CBrowse.c/CBrowse_GetLinkName = 0x004D5FC0; // b69 0x004E8D20, fuzzy >= 0.9
+CBrowse_NewFunction = 0x004D6270; // b69 0x004E8F90, fuzzy >= 0.9 0.95, first mnemonics
+CTemplateClass.c/CTemplClass_CopyNestedClass = 0x004DA0B0; // b69 0x004ED210, fuzzy >= 0.9
+CRTTI.c/CRTTI_ConstCastQualCheck = 0x004DFAA0; // b69 0x004FE1B0, fuzzy >= 0.9
+CRTTI.c/CRTTI_IncompleteCheck = 0x004DFC80; // b69 0x004FE390, fuzzy >= 0.9
+ThreadLocalData.c/ = 0x004F0244; // b69 0x0050F244, addrmap 2 votes
+setupargs.c/ = 0x004F0290; // b69 0x0050F290, addrmap 3 votes
+CLStaticMain.c/ = 0x004F0298; // b69 0x0050F298, data delta -0x1f000 (addrmap neighbours)
+CLStaticMain.c/_b69at42 = 0x004F0298; // b69 0x0050F298, data delta -0x1f000 (addrmap neighbours)
+CLStaticMain.c/_b69at43 = 0x004F02D0; // b69 0x0050F2D0, data delta -0x1f000 (addrmap neighbours)
+CLStaticMain.c/_b69at44 = 0x004F0308; // b69 0x0050F308, data delta -0x1f000 (addrmap neighbours)
+CLStaticMain.c/_b69at45 = 0x004F0338; // b69 0x0050F338, data delta -0x1f000 (addrmap neighbours)
+CLStaticMain.c/_b69at46 = 0x004F0358; // b69 0x0050F358, data delta -0x1f000 (addrmap neighbours)
+printf_g.c/ = 0x004F0658; // b69 0x0050F658, addrmap 1 votes
+StaticParserGlue.c/ = 0x004F16DC; // b69 0x005106DC, addrmap 1 votes
+pGlobalOptimizer = 0x004F1B88; // b69 0x00510B88, data delta -0x1f000 (addrmap neighbours)
+parser_mw = 0x004FDFD0; // b69 0x0051D08C, data delta -0x1f0bc (addrmap neighbours)
+parser_gcc = 0x004FE064; // b69 0x0051D120, data delta -0x1f0bc (addrmap neighbours)
+parser_dispatch = 0x004FE10C; // b69 0x0051D1C8, data delta -0x1f0bc (addrmap neighbours)
+CLErrors.c/ = 0x004FE8C8; // b69 0x0051D980, data delta -0x1f0b8 (addrmap neighbours)
+CLErrors.c/_b69at81 = 0x004FE8D0; // b69 0x0051D988, data delta -0x1f0b8 (addrmap neighbours)
+CLErrors.c/_b69at89 = 0x004FE8EC; // b69 0x0051D9A4, data delta -0x1f0b8 (addrmap neighbours)
+ResourceStrings.c/ = 0x004FE900; // b69 0x0051D9B8, data delta -0x1f0b8 (addrmap neighbours)
+ResourceStrings.c/_b69at51 = 0x004FE920; // b69 0x0051D9D8, data delta -0x1f0b8 (addrmap neighbours)
+ResourceStrings.c/_b69at52 = 0x004FE950; // b69 0x0051DA08, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/ = 0x004FE980; // b69 0x0051DA38, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at82 = 0x004FE980; // b69 0x0051DA38, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at83 = 0x004FE984; // b69 0x0051DA3C, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at84 = 0x004FE9AC; // b69 0x0051DA64, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at85 = 0x004FE9D4; // b69 0x0051DA8C, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at86 = 0x004FEA00; // b69 0x0051DAB8, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at87 = 0x004FEA28; // b69 0x0051DAE0, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at88 = 0x004FEA50; // b69 0x0051DB08, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at89 = 0x004FEA54; // b69 0x0051DB0C, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at90 = 0x004FEA5C; // b69 0x0051DB14, data delta -0x1f0b8 (addrmap neighbours)
+target_info = 0x004FEAC0; // b69 0x0051DB78, data delta -0x1f0b8 (addrmap neighbours)
+plugin_directory_list = 0x004FEAE4; // b69 0x0051DB9C, data delta -0x1f0b8 (addrmap neighbours)
+file_map = 0x004FEAEC; // b69 0x0051DBA4, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at238 = 0x004FEAF4; // b69 0x0051DBAC, data delta -0x1f0b8 (addrmap neighbours)
+object_flags = 0x004FEAF8; // b69 0x0051DBB0, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/DropInFlagsSize$391 = 0x004FEB88; // b69 0x0051DC40, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at431 = 0x004FEB94; // b69 0x0051DC4C, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at432 = 0x004FEBB8; // b69 0x0051DC70, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at433 = 0x004FEBD8; // b69 0x0051DC90, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at434 = 0x004FEC08; // b69 0x0051DCC0, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at435 = 0x004FEC50; // b69 0x0051DD08, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at436 = 0x004FEC98; // b69 0x0051DD50, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at437 = 0x004FECC8; // b69 0x0051DD80, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at438 = 0x004FECE8; // b69 0x0051DDA0, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at439 = 0x004FED14; // b69 0x0051DDCC, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at440 = 0x004FED4C; // b69 0x0051DE04, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at655 = 0x004FED7C; // b69 0x0051DE34, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at656 = 0x004FED88; // b69 0x0051DE40, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at657 = 0x004FED90; // b69 0x0051DE48, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at658 = 0x004FEDB4; // b69 0x0051DE6C, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at659 = 0x004FEDEC; // b69 0x0051DEA4, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at660 = 0x004FEDFC; // b69 0x0051DEB4, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at661 = 0x004FEE0C; // b69 0x0051DEC4, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at662 = 0x004FEE1C; // b69 0x0051DED4, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at663 = 0x004FEE20; // b69 0x0051DED8, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at664 = 0x004FEE30; // b69 0x0051DEE8, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at665 = 0x004FEE5C; // b69 0x0051DF14, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at666 = 0x004FEE84; // b69 0x0051DF3C, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at667 = 0x004FEE9C; // b69 0x0051DF54, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at668 = 0x004FEEA4; // b69 0x0051DF5C, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at669 = 0x004FEEB4; // b69 0x0051DF6C, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at670 = 0x004FEEC8; // b69 0x0051DF80, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at671 = 0x004FEEDC; // b69 0x0051DF94, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at672 = 0x004FEEF4; // b69 0x0051DFAC, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at673 = 0x004FEF08; // b69 0x0051DFC0, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at674 = 0x004FEF1C; // b69 0x0051DFD4, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at675 = 0x004FEF2C; // b69 0x0051DFE4, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at676 = 0x004FEF3C; // b69 0x0051DFF4, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at677 = 0x004FEF50; // b69 0x0051E008, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at678 = 0x004FEF70; // b69 0x0051E028, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at679 = 0x004FEF8C; // b69 0x0051E044, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at680 = 0x004FEFA4; // b69 0x0051E05C, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at681 = 0x004FEFC4; // b69 0x0051E07C, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at682 = 0x004FEFE4; // b69 0x0051E09C, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at683 = 0x004FF00C; // b69 0x0051E0C4, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at684 = 0x004FF034; // b69 0x0051E0EC, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at685 = 0x004FF060; // b69 0x0051E118, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at686 = 0x004FF08C; // b69 0x0051E144, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at687 = 0x004FF0A4; // b69 0x0051E15C, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at688 = 0x004FF0BC; // b69 0x0051E174, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at689 = 0x004FF0D0; // b69 0x0051E188, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at690 = 0x004FF0E8; // b69 0x0051E1A0, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at691 = 0x004FF100; // b69 0x0051E1B8, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at693 = 0x004FF100; // b69 0x0051E1B8, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at692 = 0x004FF128; // b69 0x0051E1E0, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at694 = 0x004FF128; // b69 0x0051E1E0, data delta -0x1f0b8 (addrmap neighbours)
+CLPlugins.c/_b69at928 = 0x004FF15C; // b69 0x0051E214, data delta -0x1f0b8 (addrmap neighbours)
+CLMain.c/ = 0x004FF1B4; // b69 0x0051E26C, data delta -0x1f0b8 (addrmap neighbours)
+CLMain.c/_b69at430 = 0x00500600; // b69 0x0051F760, data delta -0x1f160 (addrmap neighbours)
+ParserFace.c/ = 0x005007A8; // b69 0x0051F890, data delta -0x1f0e8 (addrmap neighbours)
+cc-psp.c/sTargetList$36 = 0x0050087C; // b69 0x0051F964, data delta -0x1f0e8 (addrmap neighbours)
+cc-psp.c/sExtensionMapList$51 = 0x00500A4C; // b69 0x0051FB34, data delta -0x1f0e8 (addrmap neighbours)
+cc-psp.c/sPanelList$61 = 0x00500AC8; // b69 0x0051FBB0, data delta -0x1f0e8 (addrmap neighbours)
+cc-psp.c/vi$65 = 0x00500AD0; // b69 0x0051FBB8, data delta -0x1f0e8 (addrmap neighbours)
+cc-psp.c/ftml$72 = 0x00500B04; // b69 0x0051FBEC, data delta -0x1f0e8 (addrmap neighbours)
+cc-psp.c/myFlags$76 = 0x00500B48; // b69 0x0051FC30, data delta -0x1f0e8 (addrmap neighbours)
+cc-psp.c/lsPanelList$98 = 0x00500BFC; // b69 0x0051FCE4, data delta -0x1f0e8 (addrmap neighbours)
+cc-psp.c/lsTargetList$104 = 0x00500C0C; // b69 0x0051FCF4, data delta -0x1f0e8 (addrmap neighbours)
+cc-psp.c/lsExtensionMapList$109 = 0x00500C94; // b69 0x0051FD7C, data delta -0x1f0e8 (addrmap neighbours)
+libimp-eabi-ppc.c/vi$64 = 0x00503B68; // b69 0x00523280, data delta -0x1f718 (addrmap neighbours)
+ParserHelpers-cc.c/_b69at89 = 0x00503E5C; // b69 0x00523554, data delta -0x1f6f8 (addrmap neighbours)
+ParserHelpers-cc.c/_b69at90 = 0x00503E6C; // b69 0x00523564, data delta -0x1f6f8 (addrmap neighbours)
+WarningHelpers.c/ = 0x00503F68; // b69 0x00523660, data delta -0x1f6f8 (addrmap neighbours)
+WarningHelpers.c/_b69at88 = 0x00503F8C; // b69 0x00523684, data delta -0x1f6f8 (addrmap neighbours)
+WarningHelpers.c/_b69at89 = 0x00503FAC; // b69 0x005236A4, data delta -0x1f6f8 (addrmap neighbours)
+WarningHelpers.c/_b69at90 = 0x00503FCC; // b69 0x005236C4, data delta -0x1f6f8 (addrmap neighbours)
+WarningHelpers.c/_b69at91 = 0x00503FE8; // b69 0x005236E0, data delta -0x1f6f8 (addrmap neighbours)
+WarningHelpers.c/_b69at92 = 0x00504000; // b69 0x005236F8, data delta -0x1f6f8 (addrmap neighbours)
+WarningHelpers.c/_b69at93 = 0x0050401C; // b69 0x00523714, data delta -0x1f6f8 (addrmap neighbours)
+OptimizerHelpers.c/ = 0x00504158; // b69 0x0052384C, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at126 = 0x00504158; // b69 0x0052384C, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at181 = 0x00504180; // b69 0x00523874, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at182 = 0x005041A0; // b69 0x00523894, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at183 = 0x005041A8; // b69 0x0052389C, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at184 = 0x005041B0; // b69 0x005238A4, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at185 = 0x005041CC; // b69 0x005238C0, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at186 = 0x005041D0; // b69 0x005238C4, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at187 = 0x005041D4; // b69 0x005238C8, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at188 = 0x005041FC; // b69 0x005238F0, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at189 = 0x00504214; // b69 0x00523908, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at190 = 0x00504230; // b69 0x00523924, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at191 = 0x00504250; // b69 0x00523944, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at192 = 0x00504270; // b69 0x00523964, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at193 = 0x0050428C; // b69 0x00523980, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at194 = 0x005042A8; // b69 0x0052399C, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at195 = 0x005042CC; // b69 0x005239C0, data delta -0x1f6f4 (addrmap neighbours)
+OptimizerHelpers.c/_b69at196 = 0x005042F4; // b69 0x005239E8, data delta -0x1f6f4 (addrmap neighbours)
+StdTargetWarningHelpers-cc.c/ = 0x005045A4; // b69 0x00523C9C, addrmap 1 votes
+IO.c/_b69at83 = 0x00504828; // b69 0x00523F24, data delta -0x1f6fc (addrmap neighbours)
+IO.c/_b69at84 = 0x0050482C; // b69 0x00523F28, data delta -0x1f6fc (addrmap neighbours)
+IO.c/_b69at85 = 0x00504850; // b69 0x00523F4C, data delta -0x1f6fc (addrmap neighbours)
+IO.c/_b69at86 = 0x00504854; // b69 0x00523F50, data delta -0x1f6fc (addrmap neighbours)
+IO.c/_b69at87 = 0x00504894; // b69 0x00523F90, data delta -0x1f6fc (addrmap neighbours)
+IO.c/_b69at88 = 0x005048AC; // b69 0x00523FA8, data delta -0x1f6fc (addrmap neighbours)
+Projects.c/ = 0x005048E8; // b69 0x00523FE8, addrmap 1 votes
+StringUtils.c/ = 0x005049F8; // b69 0x005240F8, data delta -0x1f700 (addrmap neighbours)
+StringUtils.c/_b69at73 = 0x00504A08; // b69 0x00524108, data delta -0x1f700 (addrmap neighbours)
+StringUtils.c/_b69at74 = 0x00504A18; // b69 0x00524118, data delta -0x1f700 (addrmap neighbours)
+Arguments.c/ = 0x00504A2C; // b69 0x00524128, data delta -0x1f6fc (addrmap neighbours)
+empty_string = 0x00504A78; // b69 0x00524174, data delta -0x1f6fc (addrmap neighbours)
+Arguments.c/_b69at188 = 0x00504A88; // b69 0x00524184, data delta -0x1f6fc (addrmap neighbours)
+Arguments.c/_b69at189 = 0x00504A90; // b69 0x0052418C, data delta -0x1f6fc (addrmap neighbours)
+Targets.c/ = 0x00504BC0; // b69 0x005242C0, data delta -0x1f700 (addrmap neighbours)
+time_g.c/ = 0x00504DD0; // b69 0x005244D0, addrmap 1 votes
+lastVolRef = 0x0050D82C; // b69 0x0052CF44, data delta -0x1f718 (addrmap neighbours)
+MacSpecs.c/ = 0x0050D830; // b69 0x0052CF48, data delta -0x1f718 (addrmap neighbours)
+MacSpecs.c/_b69at103 = 0x0050D888; // b69 0x0052CFA0, data delta -0x1f718 (addrmap neighbours)
+MacSpecs.c/_b69at246 = 0x0050D89C; // b69 0x0052CFB4, data delta -0x1f718 (addrmap neighbours)
+Files.c/ = 0x0050D8C0; // b69 0x0052CFD8, data delta -0x1f718 (addrmap neighbours)
+assert.c/ = 0x0050D8E0; // b69 0x0052CFF8, addrmap 1 votes
+TextUtils.c/ = 0x0050D910; // b69 0x0052D028, data delta -0x1f718 (addrmap neighbours)
+TextUtils.c/_b69at86 = 0x0050D910; // b69 0x0052D028, data delta -0x1f718 (addrmap neighbours)
+CLTarg.c/ = 0x0050E1E8; // b69 0x0052D920, data delta -0x1f738 (addrmap neighbours)
+Option.c/ = 0x0050E348; // b69 0x0052DA80, data delta -0x1f738 (addrmap neighbours)
+ParserErrors.c/ = 0x0050E498; // b69 0x0052DBD0, addrmap 1 votes
+CCompiler.c/_b69at134 = 0x0050E4B4; // b69 0x0052DBEC, data delta -0x1f738 (addrmap neighbours)
+CCompiler.c/_b69at135 = 0x0050E4C4; // b69 0x0052DBFC, data delta -0x1f738 (addrmap neighbours)
+CCompiler.c/_b69at136 = 0x0050E4C8; // b69 0x0052DC00, data delta -0x1f738 (addrmap neighbours)
+CCompiler.c/_b69at137 = 0x0050E4CC; // b69 0x0052DC04, data delta -0x1f738 (addrmap neighbours)
+CCompiler.c/_b69at138 = 0x0050E4D4; // b69 0x0052DC0C, data delta -0x1f738 (addrmap neighbours)
+CCompiler.c/_b69at139 = 0x0050E4E4; // b69 0x0052DC1C, data delta -0x1f738 (addrmap neighbours)
+Utils.c/ = 0x0050E6B8; // b69 0x0052DDE0, data delta -0x1f728 (addrmap neighbours)
+MonthDays$2 = 0x0050E768; // b69 0x0052DE98, addrmap 1 votes
+time_win32.c/MonthDays$28 = 0x0050E798; // b69 0x0052DEC8, data delta -0x1f730 (addrmap neighbours)
+CLFiles.c/ = 0x00510A98; // b69 0x005301C8, data delta -0x1f730 (addrmap neighbours)
+CLFiles.c/_b69at73 = 0x00510AB4; // b69 0x005301E4, data delta -0x1f730 (addrmap neighbours)
+CLFiles.c/_b69at87 = 0x00510AC4; // b69 0x005301F4, data delta -0x1f730 (addrmap neighbours)
+CLOverlays.c/ = 0x00510AD8; // b69 0x00530208, addrmap 1 votes
+CLOverlays.c/_b69at52 = 0x00510B14; // b69 0x00530244, data delta -0x1f730 (addrmap neighbours)
+CLOverlays.c/_b69at115 = 0x00510B18; // b69 0x00530248, data delta -0x1f730 (addrmap neighbours)
+overlay_group_string = 0x00510B20; // b69 0x00530250, data delta -0x1f730 (addrmap neighbours)
+CLOverlays.c/_b69at116 = 0x00510B20; // b69 0x00530250, data delta -0x1f730 (addrmap neighbours)
+overlay_string = 0x00510B4C; // b69 0x0053027C, data delta -0x1f730 (addrmap neighbours)
+CLOverlays.c/_b69at179 = 0x00510B4C; // b69 0x0053027C, data delta -0x1f730 (addrmap neighbours)
+CLOverlays.c/_b69at199 = 0x00510B54; // b69 0x00530284, data delta -0x1f730 (addrmap neighbours)
+days_in_month = 0x00510B68; // b69 0x00530298, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/monthdays$47 = 0x00510B68; // b69 0x00530298, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/ = 0x00510BA8; // b69 0x005302D8, addrmap 2 votes
+CLDropinCallbacks_V10.cpp/_b69at86 = 0x00510BA8; // b69 0x005302D8, addrmap 2 votes
+CLDropinCallbacks_V10.cpp/_b69at97 = 0x00510BB8; // b69 0x005302E8, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at140 = 0x00510BBC; // b69 0x005302EC, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at142 = 0x00510BE8; // b69 0x00530318, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at187 = 0x00510C20; // b69 0x00530350, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at212 = 0x00510C2C; // b69 0x0053035C, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at224 = 0x00510C3C; // b69 0x0053036C, data delta -0x1f730 (addrmap neighbours)
+ucb_get_segment_info_text = 0x00510C50; // b69 0x00530380, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at235 = 0x00510C50; // b69 0x00530380, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at247 = 0x00510C64; // b69 0x00530394, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at259 = 0x00510C7C; // b69 0x005303AC, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at271 = 0x00510C94; // b69 0x005303C4, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at278 = 0x00510CA8; // b69 0x005303D8, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at280 = 0x00510CB0; // b69 0x005303E0, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at318 = 0x00510CE4; // b69 0x00530414, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at359 = 0x00510D10; // b69 0x00530440, data delta -0x1f730 (addrmap neighbours)
+ucb_show_status_text = 0x00510D18; // b69 0x00530448, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at388 = 0x00510D18; // b69 0x00530448, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at410 = 0x00510D38; // b69 0x00530468, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at418 = 0x00510D64; // b69 0x00530494, data delta -0x1f730 (addrmap neighbours)
+ucb_get_plugin_data_text = 0x00510D88; // b69 0x005304B8, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at426 = 0x00510D9C; // b69 0x005304CC, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at470 = 0x00510DC0; // b69 0x005304F0, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at704 = 0x00510DE4; // b69 0x00530514, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at705 = 0x00510DE8; // b69 0x00530518, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at706 = 0x00510DF4; // b69 0x00530524, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at707 = 0x00510E0C; // b69 0x0053053C, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at708 = 0x00510E2C; // b69 0x0053055C, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at709 = 0x00510E34; // b69 0x00530564, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at711 = 0x00510E58; // b69 0x00530588, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at712 = 0x00510E60; // b69 0x00530590, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at713 = 0x00510E70; // b69 0x005305A0, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at714 = 0x00510E84; // b69 0x005305B4, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at715 = 0x00510E90; // b69 0x005305C0, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at716 = 0x00510EA0; // b69 0x005305D0, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at718 = 0x00510EC0; // b69 0x005305F0, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at773 = 0x00510EDC; // b69 0x0053060C, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at774 = 0x00510EF8; // b69 0x00530628, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at775 = 0x00510F00; // b69 0x00530630, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at776 = 0x00510F04; // b69 0x00530634, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at777 = 0x00510F08; // b69 0x00530638, data delta -0x1f730 (addrmap neighbours)
+ucbAllocateMemoryText = 0x00510F30; // b69 0x00530660, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at787 = 0x00510F30; // b69 0x00530660, data delta -0x1f730 (addrmap neighbours)
+ucb_free_memory_text = 0x00510F44; // b69 0x00530674, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at797 = 0x00510F44; // b69 0x00530674, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at806 = 0x00510F54; // b69 0x00530684, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at813 = 0x00510F68; // b69 0x00530698, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at820 = 0x00510F7C; // b69 0x005306AC, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at830 = 0x00510F90; // b69 0x005306C0, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at837 = 0x00510FA4; // b69 0x005306D4, data delta -0x1f730 (addrmap neighbours)
+ucb_get_target_name_text = 0x00510FCC; // b69 0x005306FC, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at851 = 0x00510FCC; // b69 0x005306FC, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at852 = 0x00510FE0; // b69 0x00530710, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at859 = 0x00510FF4; // b69 0x00530724, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at866 = 0x00511004; // b69 0x00530734, data delta -0x1f730 (addrmap neighbours)
+ucb_pre_file_action_name = 0x00511014; // b69 0x00530744, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at873 = 0x00511014; // b69 0x00530744, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at874 = 0x00511028; // b69 0x00530758, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at881 = 0x0051104C; // b69 0x0053077C, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at882 = 0x00511060; // b69 0x00530790, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at928 = 0x00511084; // b69 0x005307B4, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at929 = 0x0051109C; // b69 0x005307CC, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at930 = 0x005110AC; // b69 0x005307DC, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at937 = 0x005110B4; // b69 0x005307E4, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at948 = 0x005110CC; // b69 0x005307FC, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at959 = 0x005110E4; // b69 0x00530814, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at979 = 0x005110F8; // b69 0x00530828, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at980 = 0x0051110C; // b69 0x0053083C, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at989 = 0x00511124; // b69 0x00530854, data delta -0x1f730 (addrmap neighbours)
+CLDropinCallbacks_V10.cpp/_b69at994 = 0x00511138; // b69 0x00530868, data delta -0x1f730 (addrmap neighbours)
+sIDEInfo = 0x00511224; // b69 0x00530954, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/ = 0x0051129C; // b69 0x005309CC, addrmap 1 votes
+CLCompilerLinkerDropin_V10.cpp/_b69at325 = 0x00511474; // b69 0x00530BA4, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at335 = 0x005116B8; // b69 0x00530DE8, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at391 = 0x005116D8; // b69 0x00530E08, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at394 = 0x00511744; // b69 0x00530E74, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at395 = 0x00511788; // b69 0x00530EB8, data delta -0x1f730 (addrmap neighbours)
+ucb_release_unit_text = 0x0051179C; // b69 0x00530ECC, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at404 = 0x0051179C; // b69 0x00530ECC, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at413 = 0x005117AC; // b69 0x00530EDC, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at414 = 0x005117C4; // b69 0x00530EF4, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at426 = 0x005117C8; // b69 0x00530EF8, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at427 = 0x005117D4; // b69 0x00530F04, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at428 = 0x005117D8; // b69 0x00530F08, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at442 = 0x005117E0; // b69 0x00530F10, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at443 = 0x005117F4; // b69 0x00530F24, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at450 = 0x005117FC; // b69 0x00530F2C, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at451 = 0x00511810; // b69 0x00530F40, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at462 = 0x00511838; // b69 0x00530F68, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at474 = 0x00511858; // b69 0x00530F88, data delta -0x1f730 (addrmap neighbours)
+CLCompilerLinkerDropin_V10.cpp/_b69at475 = 0x00511874; // b69 0x00530FA4, data delta -0x1f730 (addrmap neighbours)
+CLAccessPaths.c/ = 0x005118F0; // b69 0x00531028, data delta -0x1f738 (addrmap neighbours)
+CLAccessPaths.c/_b69at189 = 0x00511920; // b69 0x00531058, data delta -0x1f738 (addrmap neighbours)
+CLAccessPaths.c/_b69at210 = 0x00511928; // b69 0x00531060, data delta -0x1f738 (addrmap neighbours)
+CLAccessPaths.c/_b69at218 = 0x00511960; // b69 0x00531098, data delta -0x1f738 (addrmap neighbours)
+CLSegs.c/ = 0x00511970; // b69 0x005310A8, data delta -0x1f738 (addrmap neighbours)
+CLWriteObjectFile.c/ = 0x00511A90; // b69 0x005311C8, data delta -0x1f738 (addrmap neighbours)
+temporary_output_message = 0x00511AC8; // b69 0x00531200, data delta -0x1f738 (addrmap neighbours)
+browse_file_message = 0x00511AD4; // b69 0x0053120C, data delta -0x1f738 (addrmap neighbours)
+browse_file_table_string = 0x00511AD8; // b69 0x00531210, addrmap 1 votes
+CLBrowser.c/ = 0x00511AEC; // b69 0x00531224, addrmap 1 votes
+CLIncludeFileCache.c/ = 0x00511B60; // b69 0x00531298, data delta -0x1f738 (addrmap neighbours)
+Parameter.c/ = 0x00511D5C; // b69 0x00531494, addrmap 2 votes
+option_usage_notes = 0x0051201C; // b69 0x00531714, addrmap 1 votes
+option_usage_notes_format = 0x0051212C; // b69 0x00531824, addrmap 1 votes
+option_usage_notes_text = 0x005126FC; // b69 0x00531DF4, addrmap 1 votes
+CParser.c/_b69at106 = 0x005129C4; // b69 0x005320BC, data delta -0x1f6f8 (addrmap neighbours)
+CParser.c/_b69at107 = 0x005129D0; // b69 0x005320C8, data delta -0x1f6f8 (addrmap neighbours)
+ErrMgr.c/ = 0x00515D50; // b69 0x00534E70, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at45 = 0x00515D50; // b69 0x00534E70, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at46 = 0x00515D5C; // b69 0x00534E7C, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at47 = 0x00515D78; // b69 0x00534E98, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at48 = 0x00515D84; // b69 0x00534EA4, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at49 = 0x00515D94; // b69 0x00534EB4, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at50 = 0x00515DA8; // b69 0x00534EC8, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at51 = 0x00515DD0; // b69 0x00534EF0, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at52 = 0x00515DE4; // b69 0x00534F04, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at53 = 0x00515E04; // b69 0x00534F24, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at54 = 0x00515E18; // b69 0x00534F38, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at55 = 0x00515E34; // b69 0x00534F54, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at56 = 0x00515E60; // b69 0x00534F80, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at57 = 0x00515E80; // b69 0x00534FA0, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at58 = 0x00515E98; // b69 0x00534FB8, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at59 = 0x00515EB0; // b69 0x00534FD0, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at60 = 0x00515EDC; // b69 0x00534FFC, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at61 = 0x00515EF4; // b69 0x00535014, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at62 = 0x00515F24; // b69 0x00535044, data delta -0x1f120 (addrmap neighbours)
+ErrMgr.c/_b69at74 = 0x00516068; // b69 0x00535188, data delta -0x1f120 (addrmap neighbours)
+stunsignedlong = 0x00516EA0; // b69 0x005360E8, data delta -0x1f248 (addrmap neighbours)
+stshortdouble = 0x00516EC0; // b69 0x00536108, data delta -0x1f248 (addrmap neighbours)
+stlongdouble = 0x00516ED0; // b69 0x00536118, data delta -0x1f248 (addrmap neighbours)
+// stint128: as in b69's (atomtype's 16-byte integer type)
+stint128 = 0x00516EE0;
+CTemplateTools.c/ = 0x005195F0; // b69 0x00538F78, addrmap 1 votes
+IroDump.c/_b69at337 = 0x0051FF9C; // b69 0x00540474, data delta -0x204d8 (addrmap neighbours)
+IroDump.c/_b69at380 = 0x00520020; // b69 0x005404F8, data delta -0x204d8 (addrmap neighbours)
+IroDump.c/_b69at381 = 0x0052002C; // b69 0x00540504, data delta -0x204d8 (addrmap neighbours)
+IroDump.c/_b69at382 = 0x00520054; // b69 0x0054052C, data delta -0x204d8 (addrmap neighbours)
+IroDump.c/_b69at383 = 0x0052005C; // b69 0x00540534, data delta -0x204d8 (addrmap neighbours)
+CPreprocess.c/ = 0x00521CD0; // b69 0x00543840, addrmap 1 votes
+CException.c/ = 0x00522808; // b69 0x00544378, data delta -0x21b70 (addrmap neighbours)
+// --- end map_b69_manual.py ---

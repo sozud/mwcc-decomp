@@ -454,7 +454,7 @@ void func_005804A0(void) {
         if (nd->type == IROLinearOp1Arg && nd->nodetype == EINDIRECT) {
             func_00580E40(nd, &unsafe);
         } else if (nd->type == IROLinearAsm && IRO_GetAsmEffectsHook && nd->u.asm_stmt) {
-            IROAsmEffects effects = IRO_EmptyAsmEffects;
+            IROAsmEffects effects IRO_ASM_EFFECTS_INIT;
             IRO_GetAsmEffectsHook(nd->u.asm_stmt, &effects);
             for (i = 0; i < effects.numoperands; i++) {
                 if ((var = IRO_FindVar(effects.operands[i].object, FALSE, TRUE))) {

@@ -107,7 +107,10 @@ struct Statement {
     struct ExceptionAction* dobjstack;
     SInt32 sourceoffset;
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+// 2.3.3: Statement is 0x1A bytes (CFunc_AppendStatement lalloc(0x1A)), no file path
+#if MWCC_CORE != MWCC_CORE_B233
     HashNameNode* sourcefilepath;
+#endif
 };
 #pragma pack(pop)
 #else

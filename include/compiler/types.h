@@ -187,7 +187,9 @@ struct TypeClass {
 #endif
     VTable* vtable;
     SOMInfo* sominfo;
-#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52
+#if !MWCC_CORE || MWCC_CORE > MWCC_CORE_B52 || MWCC_CORE == MWCC_CORE_B233
+// b69: no Objective-C (CDecl_CompleteType reads flags at +0x26); 2.3.3 has it
+// (flags at +0x2A, dispmap.py: CABI/CClass)
 #if !MWCCPSP
     ObjCInfo* objcinfo;
 #endif
@@ -289,15 +291,33 @@ enum {
     FUNC_PTM = 0x80,
     FUNC_AUTO_GENERATED = 0x100,
     FUNC_INTRINSIC = 0x200,
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3 tests 0x400 where GC 2.0 tests FUNC_IS_TEMPL (CExpr_IsTemplateFunc
+    // 0x46F7F0 and 15 more aligned sites); NOTHROW takes the freed value (unverified)
+    FUNC_NOTHROW = 0x100000,
+#else
     FUNC_NOTHROW = 0x400,
+#endif
     FUNC_AUTO_INLINE = 0x800,
+#if MWCC_CORE == MWCC_CORE_B233
+    // 2.3.3: CClass_IsConstructor (0x462CA0) tests 0x2000, CClass_IsDestructor
+    // (0x462CD0) 0x4000; FUNC_OBJC_METHOD's value is unverified
+    FUNC_OBJC_METHOD = 0x1000,
+    FUNC_IS_CTOR = 0x2000,
+    FUNC_IS_DTOR = 0x4000,
+#else
     FUNC_IS_CTOR = 0x1000,
     FUNC_IS_DTOR = 0x2000,
     FUNC_OBJC_METHOD = 0x4000,
+#endif
     FUNC_CONST = 0x8000,
     FUNC_VOLATILE = 0x10000,
     FUNC_FLAGS_CV = FUNC_CONST | FUNC_VOLATILE,
+#if MWCC_CORE == MWCC_CORE_B233
+    FUNC_IS_TEMPL = 0x400,
+#else
     FUNC_IS_TEMPL = 0x100000,
+#endif
     FUNC_TEMPLATE_ACTION = 0x200000,
     FUNC_COVARIANT = 0x400000,
     FUNC_IS_TEMPL_INSTANCE = 0x800000,
@@ -485,7 +505,11 @@ struct TypeList {
 #define IS_TYPE_CLASS(ty) ((ty)->type == TYPECLASS)
 #define IS_TYPE_SOM_CLASS(ty) ((ty)->type == TYPECLASS && TYPE_CLASS(ty)->sominfo)
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
+#if MWCC_CORE == MWCC_CORE_B233
+#define B69_OBJCINFO(tclass) ((tclass)->objcinfo)
+#else // no Objective-C in b69 (TypeClass has no objcinfo)
 #define B69_OBJCINFO(tclass) ((ObjCInfo*)0)
+#endif
 #define IS_TYPE_OBJC_CLASS(ty) ((ty)->type == TYPECLASS && B69_OBJCINFO(TYPE_CLASS(ty)))
 #else
 #define IS_TYPE_OBJC_CLASS(ty) ((ty)->type == TYPECLASS && TYPE_CLASS(ty)->objcinfo)

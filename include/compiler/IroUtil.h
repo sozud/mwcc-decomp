@@ -52,11 +52,18 @@ extern Boolean DisableDueToAsm;
 extern Boolean LoopOptimizerRun;
 
 extern Object* IRO_IsVariable(IROLinear* linear);
-extern Boolean IRO_IsConstant(IROLinear* linear);
-extern Boolean IRO_IsPow2(IROLinear* linear, int* powvalue);
-extern Boolean IRO_IsIntConstant(IROLinear* linear);
-extern Boolean IRO_IsFloatConstant(IROLinear* linear);
-extern Boolean IRO_IsAssignment(IROLinear* linear);
+// 2.3.3's IroUtil predicates return int (mov eax, 1 / xor eax, eax: IRO_IsIntConstant
+// 0x4B73F0, IRO_IsAssignment 0x4B7430, ...)
+#if MWCC_CORE == MWCC_CORE_B233
+#define IRO_BOOL int
+#else
+#define IRO_BOOL Boolean
+#endif
+extern IRO_BOOL IRO_IsConstant(IROLinear* linear);
+extern IRO_BOOL IRO_IsPow2(IROLinear* linear, int* powvalue);
+extern IRO_BOOL IRO_IsIntConstant(IROLinear* linear);
+extern IRO_BOOL IRO_IsFloatConstant(IROLinear* linear);
+extern IRO_BOOL IRO_IsAssignment(IROLinear* linear);
 extern Boolean IRO_TypesEqual(Type* a, Type* b);
 extern Type* IRO_UnsignedType(Type* type);
 #if MWCC_CORE && MWCC_CORE <= MWCC_CORE_B52
